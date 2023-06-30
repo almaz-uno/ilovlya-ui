@@ -1,11 +1,11 @@
 {
-    "name": "ilovlya",
-    "short_name": "ilovlya",
+    "name": "Ilovlya media center",
+    "short_name": "Ilovlya",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Ilovlya media center. Look and hear!",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

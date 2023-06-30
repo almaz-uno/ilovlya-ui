@@ -1,0 +1,197 @@
+import 'dart:async';
+
+import 'package:ilovlya/src/api/api.dart';
+import 'package:ilovlya/src/api/media.dart' as media_api;
+import 'package:ilovlya/src/media/misc.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:ilovlya/src/model/url_info.dart';
+
+String printDuration(Duration duration) {
+  String twoDigits(int n) => n.toString().padLeft(2, "0");
+  String hoursString = duration.inHours == 0 ? '' : "${duration.inHours}:";
+  String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+  String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+  return "$hoursString$twoDigitMinutes:$twoDigitSeconds";
+}
+
+class MediaAddView extends StatefulWidget {
+  const MediaAddView({
+    super.key,
+    this.forcePaste = false,
+  });
+
+  final bool forcePaste;
+
+  static routeName(bool forcePaste) {
+    return forcePaste ? "/$pathRecordings?add=✓&paste=✓" : "/$pathRecordings?add=✓";
+  }
+
+  @override
+  State<MediaAddView> createState() => _MediaAddViewState();
+}
+
+class _MediaAddViewState extends State<MediaAddView> {
+  final TextEditingController _urlController = TextEditingController();
+
+  Future<URLInfo>? _futurePropositions;
+  bool _isLoading = false;
+  bool _isAdding = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.forcePaste) {
+      fromClipboard();
+    }
+  }
+
+  void fromClipboard() async {
+    try {
+      var data = await Clipboard.getData(Clipboard.kTextPlain);
+      if (data?.text != null) {
+        _urlController.text = data!.text!;
+      }
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  Future<URLInfo> _getURLInfo(String url) async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      return await media_api.getUrlInfo(url);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Add new media'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.paste),
+            tooltip: 'Paste from clipboard',
+            onPressed: fromClipboard,
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            TextField(
+              controller: _urlController,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: 'Enter media URL',
+                prefixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    IconButton(
+                      onPressed: fromClipboard,
+                      icon: const Icon(Icons.paste),
+                      tooltip: 'Paste from clipboard',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.youtube_searched_for),
+                      tooltip: 'Lookup media info',
+                      onPressed: () {
+                        setState(() {
+                          _futurePropositions = _getURLInfo(_urlController.text);
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: _urlController.clear,
+                ),
+              ),
+            ),
+            (_futurePropositions == null) ? const Text('To view info press lookup button above') : buildPropositionList(),
+            Visibility(
+                visible: _isLoading || _isAdding,
+                child: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: CircularProgressIndicator(),
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _addMedia(BuildContext context, String url) async {
+    setState(() {
+      _isAdding = true;
+    });
+    // _futureMediaAdd = ; // the full information about media should be acquired anew
+    media_api.addRecording(url).then((value) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Theme.of(context).colorScheme.background,
+        content: Text('${value.title} successfully added'),
+      ));
+    }).catchError((err) {
+      showDialog(
+          context: context,
+          barrierDismissible: true,
+          builder: (BuildContext context) => Dialog(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(err.toString()),
+                ),
+              ));
+    }).whenComplete(() => setState(() {
+          _isAdding = false;
+        }));
+  }
+
+  FutureBuilder<URLInfo> buildPropositionList() {
+    return FutureBuilder<URLInfo>(
+      future: _futurePropositions,
+      builder: (BuildContext context, AsyncSnapshot<URLInfo> snapshot) {
+        if (snapshot.hasData) {
+          return ListView.builder(
+            scrollDirection: Axis.vertical,
+            shrinkWrap: true,
+            itemCount: snapshot.data!.infos!.length,
+            itemBuilder: (BuildContext context, int index) {
+              var item = snapshot.data!.infos![index];
+              var dur = Duration(seconds: item.duration);
+              return ListTile(
+                leading: SizedBox(
+                  width: 100, // alignment
+                  child: Image.network(
+                    (item.thumbnailDataUrl == null) ? noImage : item.thumbnailDataUrl!,
+                    isAntiAlias: true,
+                    filterQuality: FilterQuality.high,
+                  ),
+                ),
+                title: Text("${item.title} ∙ ${printDuration(dur)}"),
+                subtitle: Text("${item.uploader} ∙ ${item.webpageUrl}"),
+                onTap: () {
+                  _addMedia(context, item.webpageUrl!);
+                },
+              );
+            },
+          );
+        } else if (snapshot.hasError) {
+          return ErrorWidget(snapshot.error!);
+        }
+
+        return const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Text('Media info acquiring in progress...'),
+        );
+      },
+    );
+  }
+}

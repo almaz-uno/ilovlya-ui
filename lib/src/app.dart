@@ -1,9 +1,10 @@
+import 'package:ilovlya/src/media/media_add_view.dart';
+import 'package:ilovlya/src/media/media_detais_view.dart';
+import 'package:ilovlya/src/media/media_list_view.dart';
+import 'package:ilovlya/src/api/api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
-import 'sample_feature/sample_item_details_view.dart';
-import 'sample_feature/sample_item_list_view.dart';
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
 
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
           // returns to the app after it has been killed while running in the
           // background.
           restorationScopeId: 'app',
+          debugShowCheckedModeBanner: false,
 
           // Provide the generated AppLocalizations to the MaterialApp. This
           // allows descendant Widgets to display the correct translations
@@ -50,8 +52,7 @@ class MyApp extends StatelessWidget {
           //
           // The appTitle is defined in .arb files found in the localization
           // directory.
-          onGenerateTitle: (BuildContext context) =>
-              AppLocalizations.of(context)!.appTitle,
+          onGenerateTitle: (BuildContext context) => AppLocalizations.of(context)!.appTitle,
 
           // Define a light and dark color theme. Then, read the user's
           // preferred ThemeMode (light, dark, or system default) from the
@@ -63,23 +64,51 @@ class MyApp extends StatelessWidget {
           // Define a function to handle named routes in order to support
           // Flutter web url navigation and deep linking.
           onGenerateRoute: (RouteSettings routeSettings) {
+            var w = widgetByRoute(routeSettings);
+            if (w == null) return null;
             return MaterialPageRoute<void>(
               settings: routeSettings,
               builder: (BuildContext context) {
-                switch (routeSettings.name) {
-                  case SettingsView.routeName:
-                    return SettingsView(controller: settingsController);
-                  case SampleItemDetailsView.routeName:
-                    return const SampleItemDetailsView();
-                  case SampleItemListView.routeName:
-                  default:
-                    return const SampleItemListView();
-                }
+                return w;
+              },
+            );
+          },
+          onUnknownRoute: (RouteSettings routeSettings) {
+            return MaterialPageRoute<void>(
+              settings: const RouteSettings(
+                name: "/",
+                arguments: null,
+              ),
+              builder: (BuildContext context) {
+                return const MediaListView();
               },
             );
           },
         );
       },
     );
+  }
+
+  Widget? widgetByRoute(RouteSettings routeSettings) {
+    if (routeSettings.name == null) return null;
+
+    var uri = Uri.parse(routeSettings.name!);
+    if (uri.pathSegments.isEmpty) return null;
+
+    if (uri.pathSegments[0] == pathRecordings) {
+      print(uri.queryParameters);
+
+      if (uri.queryParameters.containsKey("add")) {
+        return MediaAddView(forcePaste: uri.queryParameters.containsKey("paste"));
+      } else if (uri.pathSegments.length < 2) {
+        return const MediaListView();
+      } else {
+        return MediaDetailsView(id: uri.pathSegments[1]);
+      }
+    } else if (uri.pathSegments[0] == pathSettings) {
+      return SettingsView(controller: settingsController);
+    } else {
+      return null;
+    }
   }
 }

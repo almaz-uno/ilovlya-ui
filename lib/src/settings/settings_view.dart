@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ilovlya/src/api/api.dart';
 
 import 'settings_controller.dart';
 
@@ -9,7 +10,7 @@ import 'settings_controller.dart';
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key, required this.controller});
 
-  static const routeName = '/settings';
+  static String routeName = "/$pathSettings";
 
   final SettingsController controller;
 
