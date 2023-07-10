@@ -1,7 +1,8 @@
+import 'package:flutter/foundation.dart';
+import 'package:ilovlya/src/api/api.dart';
 import 'package:ilovlya/src/api/media.dart';
 import 'package:ilovlya/src/media/media_add_view.dart';
 import 'package:ilovlya/src/media/media_detais_view.dart';
-import 'package:ilovlya/src/media/misc.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
 import 'package:ilovlya/src/settings/settings_view.dart';
 import 'package:flutter/material.dart';
@@ -24,8 +25,7 @@ class _MediaListViewState extends State<MediaListView> {
       setState(() {
         _isLoading = true;
       });
-      // await Future.delayed(Duration(seconds: 2)); // testing purposes only
-      return await listRecordings(0, 10);
+      return await listRecordings(offset, limit);
     } finally {
       setState(() {
         _isLoading = false;
@@ -37,6 +37,22 @@ class _MediaListViewState extends State<MediaListView> {
   void initState() {
     super.initState();
     _futureRecordingsList = _load(0, 100);
+  }
+
+  @override
+  void deactivate() {
+    super.deactivate();
+    if (kDebugMode) {
+      print("deactivate()");
+    }
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    if (kDebugMode) {
+      print("activate()");
+    }
   }
 
   Future<void> _pullRefresh() async {
@@ -72,22 +88,20 @@ class _MediaListViewState extends State<MediaListView> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: RefreshIndicator(
-          onRefresh: _pullRefresh,
-          child: Column(
-            children: [
-              Center(
-                child: Visibility(
-                    visible: _isLoading,
-                    child: const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: LinearProgressIndicator(),
-                    )),
-              ),
-              Center(child: (_futureRecordingsList == null) ? const Text('Loading in progress') : buildRecordingsList()),
-            ],
-          ),
+      body: RefreshIndicator(
+        onRefresh: _pullRefresh,
+        child: Column(
+          children: [
+            Center(
+              child: Visibility(
+                  visible: _isLoading,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: LinearProgressIndicator(),
+                  )),
+            ),
+            (_futureRecordingsList == null) ? const Center(child: Text('Loading in progress')) : Expanded(child: buildRecordingsList()),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -106,6 +120,7 @@ class _MediaListViewState extends State<MediaListView> {
       builder: (BuildContext context, AsyncSnapshot<List<RecordingInfo>> snapshot) {
         if (snapshot.hasData) {
           return ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
             scrollDirection: Axis.vertical,
             shrinkWrap: true,
             itemCount: snapshot.data!.length,
@@ -116,7 +131,7 @@ class _MediaListViewState extends State<MediaListView> {
                 leading: SizedBox(
                   width: 100, // alignment
                   child: Image.network(
-                    (item.thumbnailDataUrl == null) ? noImage : item.thumbnailDataUrl!,
+                    server() + item.thumbnailUrl,
                     isAntiAlias: true,
                     filterQuality: FilterQuality.high,
                   ),

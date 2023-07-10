@@ -7,6 +7,7 @@ class Format {
   String id;
   String ext;
   String resolution;
+  int fps;
   bool hasAudio;
   bool hasVideo;
 
@@ -14,6 +15,7 @@ class Format {
     this.id = "",
     this.ext = "",
     this.resolution = "",
+    this.fps = 0,
     this.hasAudio = false,
     this.hasVideo = false,
   });

@@ -12,7 +12,7 @@ class RecordingInfo {
   int position;
   int duration;
   String extractor;
-  String? thumbnail;
+  String thumbnailUrl;
   String? thumbnailDataUrl;
   List<Format>? formats;
 
@@ -24,7 +24,7 @@ class RecordingInfo {
     this.position = 0,
     this.duration = 0,
     this.extractor = "",
-    this.thumbnail,
+    this.thumbnailUrl = "",
     this.thumbnailDataUrl,
     this.formats,
   });

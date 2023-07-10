@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:ilovlya/src/api/api.dart';
 import 'package:ilovlya/src/api/media.dart' as media_api;
-import 'package:ilovlya/src/media/misc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ilovlya/src/model/url_info.dart';
@@ -24,7 +23,7 @@ class MediaAddView extends StatefulWidget {
   final bool forcePaste;
 
   static routeName(bool forcePaste) {
-    return forcePaste ? "/$pathRecordings?add=✓&paste=✓" : "/$pathRecordings?add=✓";
+    return forcePaste ? "/$pathRecordings?add&paste" : "/$pathRecordings?add";
   }
 
   @override
@@ -129,7 +128,7 @@ class _MediaAddViewState extends State<MediaAddView> {
     );
   }
 
-  void _addMedia(BuildContext context, String url) async {
+  void _addMedia(BuildContext context, String url, bool doBack) async {
     setState(() {
       _isAdding = true;
     });
@@ -151,6 +150,9 @@ class _MediaAddViewState extends State<MediaAddView> {
               ));
     }).whenComplete(() => setState(() {
           _isAdding = false;
+          if (doBack) {
+            Navigator.pop(context);
+          }
         }));
   }
 
@@ -159,30 +161,35 @@ class _MediaAddViewState extends State<MediaAddView> {
       future: _futurePropositions,
       builder: (BuildContext context, AsyncSnapshot<URLInfo> snapshot) {
         if (snapshot.hasData) {
-          return ListView.builder(
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: snapshot.data!.infos!.length,
-            itemBuilder: (BuildContext context, int index) {
-              var item = snapshot.data!.infos![index];
-              var dur = Duration(seconds: item.duration);
-              return ListTile(
-                leading: SizedBox(
-                  width: 100, // alignment
-                  child: Image.network(
-                    (item.thumbnailDataUrl == null) ? noImage : item.thumbnailDataUrl!,
-                    isAntiAlias: true,
-                    filterQuality: FilterQuality.high,
-                  ),
-                ),
-                title: Text("${item.title} ∙ ${printDuration(dur)}"),
-                subtitle: Text("${item.uploader} ∙ ${item.webpageUrl}"),
-                onTap: () {
-                  _addMedia(context, item.webpageUrl!);
-                },
-              );
-            },
-          );
+          return snapshot.data!.infos == null
+              ? const Text("There is no recordings in the url")
+              : ListView.builder(
+                  scrollDirection: Axis.vertical,
+                  shrinkWrap: true,
+                  itemCount: snapshot.data!.infos!.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    var item = snapshot.data!.infos![index];
+                    var dur = Duration(seconds: item.duration);
+                    return ListTile(
+                      leading: SizedBox(
+                        width: 100, // alignment
+                        child: Image.network(
+                          item.thumbnailDataUrl!,
+                          isAntiAlias: true,
+                          filterQuality: FilterQuality.high,
+                        ),
+                      ),
+                      title: Text("${item.title} ∙ ${printDuration(dur)}"),
+                      subtitle: Text("${item.uploader} ∙ ${item.webpageUrl}"),
+                      onTap: () {
+                        _addMedia(context, item.webpageUrl, false);
+                      },
+                      onLongPress: () async {
+                        _addMedia(context, item.webpageUrl, true);
+                      },
+                    );
+                  },
+                );
         } else if (snapshot.hasError) {
           return ErrorWidget(snapshot.error!);
         }
