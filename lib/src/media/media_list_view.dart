@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:ilovlya/src/api/api.dart';
 import 'package:ilovlya/src/api/media.dart';
 import 'package:ilovlya/src/media/media_add_view.dart';
-import 'package:ilovlya/src/media/media_detais_view.dart';
+import 'package:ilovlya/src/media/media_details_view.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
 import 'package:ilovlya/src/settings/settings_view.dart';
 import 'package:flutter/material.dart';

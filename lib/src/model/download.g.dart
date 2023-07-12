@@ -17,12 +17,13 @@ Download _$DownloadFromJson(Map<String, dynamic> json) => Download(
           : DateTime.parse(json['updated_at'] as String),
       formatId: json['format_id'] as String? ?? "",
       url: json['url'] as String? ?? "",
+      filename: json['filename'] as String? ?? "",
       ext: json['ext'] as String? ?? "",
       resolution: json['resolution'] as String? ?? "",
       hasVideo: json['has_video'] as bool? ?? false,
       hasAudio: json['has_audio'] as bool? ?? false,
       size: json['size'] as int? ?? 0,
-      done: json['done'] as bool? ?? false,
+      status: json['status'] as String? ?? "",
       progress: json['progress'] as String? ?? "",
     );
 
@@ -33,11 +34,12 @@ Map<String, dynamic> _$DownloadToJson(Download instance) => <String, dynamic>{
       'updated_at': instance.updatedAt?.toIso8601String(),
       'format_id': instance.formatId,
       'url': instance.url,
+      'filename': instance.filename,
       'ext': instance.ext,
       'resolution': instance.resolution,
       'has_video': instance.hasVideo,
       'has_audio': instance.hasAudio,
       'size': instance.size,
-      'done': instance.done,
+      'status': instance.status,
       'progress': instance.progress,
     };

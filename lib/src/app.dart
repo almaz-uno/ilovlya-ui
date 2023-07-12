@@ -1,5 +1,5 @@
 import 'package:ilovlya/src/media/media_add_view.dart';
-import 'package:ilovlya/src/media/media_detais_view.dart';
+import 'package:ilovlya/src/media/media_details_view.dart';
 import 'package:ilovlya/src/media/media_list_view.dart';
 import 'package:ilovlya/src/api/api.dart';
 import 'package:flutter/material.dart';

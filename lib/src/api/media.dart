@@ -57,8 +57,8 @@ Future<List<RecordingInfo>> listRecordings(int offset, int limit) async {
   return RecordingInfo.fromJsonList(jsonDecode(res.body));
 }
 
-Future<RecordingInfo> getRecording(String id) async {
-  var path = '/api/recordings/$id';
+Future<RecordingInfo> getRecording(String id, {bool updateFormats = true}) async {
+  var path = '/api/recordings/$id?updateFormats=$updateFormats';
 
   var res = await http
       .get(

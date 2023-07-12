@@ -10,12 +10,13 @@ class Download {
   DateTime? updatedAt;
   String formatId;
   String url;
+  String filename;
   String ext;
   String resolution;
   bool hasVideo;
   bool hasAudio;
   int size;
-  bool done;
+  String status;
   String progress;
 
   Download({
@@ -25,12 +26,13 @@ class Download {
     this.updatedAt,
     this.formatId = "",
     this.url = "",
+    this.filename = "",
     this.ext = "",
     this.resolution = "",
     this.hasVideo = false,
     this.hasAudio = false,
     this.size = 0,
-    this.done = false,
+    this.status = "",
     this.progress = "",
   });
 

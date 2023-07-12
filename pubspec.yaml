@@ -17,6 +17,7 @@ dependencies:
   http: ^1.0.0
   json_annotation: ^4.8.1
   url_launcher: ^6.1.11
+  video_player: ^2.7.0
 
 dev_dependencies:
   flutter_test:
