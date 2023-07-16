@@ -4,15 +4,8 @@ import 'package:ilovlya/src/api/api.dart';
 import 'package:ilovlya/src/api/media.dart' as media_api;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ilovlya/src/media/format.dart';
 import 'package:ilovlya/src/model/url_info.dart';
-
-String printDuration(Duration duration) {
-  String twoDigits(int n) => n.toString().padLeft(2, "0");
-  String hoursString = duration.inHours == 0 ? '' : "${duration.inHours}:";
-  String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
-  String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-  return "$hoursString$twoDigitMinutes:$twoDigitSeconds";
-}
 
 class MediaAddView extends StatefulWidget {
   const MediaAddView({
@@ -51,6 +44,9 @@ class _MediaAddViewState extends State<MediaAddView> {
       if (data?.text != null) {
         _urlController.text = data!.text!;
       }
+      setState(() {
+        _futurePropositions = _getURLInfo(_urlController.text);
+      });
     } on Exception catch (e) {
       debugPrint(e.toString());
     }
@@ -179,7 +175,7 @@ class _MediaAddViewState extends State<MediaAddView> {
                           filterQuality: FilterQuality.high,
                         ),
                       ),
-                      title: Text("${item.title} ∙ ${printDuration(dur)}"),
+                      title: Text("${item.title} ∙ ${formatDuration(dur)}"),
                       subtitle: Text("${item.uploader} ∙ ${item.webpageUrl}"),
                       onTap: () {
                         _addMedia(context, item.webpageUrl, false);

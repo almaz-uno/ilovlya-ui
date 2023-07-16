@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:ilovlya/src/api/api.dart';
 import 'package:ilovlya/src/api/media.dart';
+import 'package:ilovlya/src/media/format.dart';
 import 'package:ilovlya/src/media/media_add_view.dart';
 import 'package:ilovlya/src/media/media_details_view.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
@@ -18,7 +19,9 @@ class MediaListView extends StatefulWidget {
 
 class _MediaListViewState extends State<MediaListView> {
   Future<List<RecordingInfo>>? _futureRecordingsList;
-  var _isLoading = false;
+  bool _isLoading = false;
+  bool _showHidden = false;
+  bool _showSeen = false;
 
   Future<List<RecordingInfo>> _load(int offset, int limit) async {
     try {
@@ -80,6 +83,13 @@ class _MediaListViewState extends State<MediaListView> {
             onPressed: _pullRefresh,
           ),
           IconButton(
+            icon: const Icon(Icons.more_vert),
+            tooltip: 'More options',
+            onPressed: () {
+              Navigator.restorablePushNamed(context, SettingsView.routeName);
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.settings),
             tooltip: 'Settings',
             onPressed: () {
@@ -126,21 +136,46 @@ class _MediaListViewState extends State<MediaListView> {
             itemCount: snapshot.data!.length,
             itemBuilder: (BuildContext context, int index) {
               var item = snapshot.data![index];
-              var dur = Duration(seconds: item.duration ?? 0);
-              return ListTile(
-                leading: SizedBox(
-                  width: 100, // alignment
-                  child: Image.network(
-                    server() + item.thumbnailUrl,
-                    isAntiAlias: true,
-                    filterQuality: FilterQuality.high,
-                  ),
+              var dur = Duration(seconds: item.duration);
+              var opacity = item.seenAt == null ? 1.0 : 0.5;
+              if (item.hiddenAt != null) {
+                opacity = 0.25;
+              }
+              // final TextStyle? textStyle = item.hiddenAt != null ? const TextStyle(decoration: TextDecoration.lineThrough) : null;
+              final Widget? trailing = item.hiddenAt != null ? const Icon(Icons.visibility_off_outlined) : null;
+              return Opacity(
+                opacity: opacity,
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: SizedBox(
+                        width: 100, // alignment
+                        child: Stack(
+                          children: [
+                            Image.network(
+                              server() + item.thumbnailUrl,
+                              isAntiAlias: true,
+                              filterQuality: FilterQuality.high,
+                            ),
+                          ],
+                        ),
+                      ),
+                      title: Text(
+                        "${item.title} ∙ ${formatDuration(dur)}",
+                        // style: textStyle,
+                      ),
+                      subtitle: Text("${item.uploader} ∙ ${item.extractor}"),
+                      trailing: trailing,
+                      onTap: () {
+                        Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);
+                      },
+                    ),
+                    LinearProgressIndicator(
+                      backgroundColor: const Color.fromARGB(127, 158, 158, 158),
+                      value: item.duration == 0 ? null : item.position / item.duration,
+                    ),
+                  ],
                 ),
-                title: Text("${item.title} ∙ ${printDuration(dur)}"),
-                subtitle: Text("${item.uploader} ∙ ${item.extractor}"),
-                onTap: () {
-                  Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);
-                },
               );
             },
           );

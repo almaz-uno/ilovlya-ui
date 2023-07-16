@@ -4,20 +4,23 @@ description: Ilovlya Media Center
 # Prevent accidental publishing to pub.dev.
 publish_to: 'none'
 
-version: 0.1.0+1
+version: 0.6.0+6
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
+  audio_video_progress_bar: ^1.0.1
   flutter:
     sdk: flutter
+  flutter_in_app_pip: ^1.7.3
   flutter_localizations:
     sdk: flutter
   http: ^1.0.0
   json_annotation: ^4.8.1
   url_launcher: ^6.1.11
   video_player: ^2.7.0
+  wakelock: ^0.6.2
 
 dev_dependencies:
   flutter_test:

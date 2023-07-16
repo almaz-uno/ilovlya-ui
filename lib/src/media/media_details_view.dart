@@ -7,8 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:ilovlya/src/api/api.dart';
 import 'package:ilovlya/src/api/media.dart';
 import 'package:ilovlya/src/media/download_details.dart';
-import 'package:ilovlya/src/media/media_add_view.dart';
-import 'package:ilovlya/src/media/size.dart';
+import 'package:ilovlya/src/media/recording_play_view.dart';
+import 'package:ilovlya/src/media/format.dart';
 import 'package:ilovlya/src/model/download.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -123,21 +123,8 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
               _futureRecording!.then((recording) => copyToClipboard(context, recording.webpageUrl));
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.check),
-            tooltip: 'Mark as viewed',
-            onPressed: () async {
-              var r = await _futureRecording!;
-              if (kDebugMode) {
-                print("Mark as viewed at ${r.id}");
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.visibility_off),
-            tooltip: 'Hide this record (move to archive)',
-            onPressed: () {},
-          ),
+          _addSeenButton(),
+          _addHiddenButton(),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh record (reread from the server)',
@@ -230,14 +217,22 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
         Center(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Image.network(
-              server() + recording.thumbnailUrl,
-              fit: BoxFit.fill,
-              scale: 0.5,
+            child: Column(
+              children: [
+                Image.network(
+                  server() + recording.thumbnailUrl,
+                  fit: BoxFit.fill,
+                  scale: 0.5,
+                ),
+                LinearProgressIndicator(
+                  backgroundColor: const Color.fromARGB(127, 158, 158, 158),
+                  value: recording.duration == 0 ? null : recording.position / recording.duration,
+                ),
+              ],
             ),
           ),
         ),
-        Text("${printDuration(Duration(seconds: recording.position))} / ${printDuration(Duration(seconds: recording.duration))}"),
+        Text("${formatDuration(Duration(seconds: recording.position))} / ${formatDuration(Duration(seconds: recording.duration))}"),
         (_downloads == null) ? const Text("Downloads info is loading...") : _downloadsTable(context),
         recording.formats == null || recording.formats!.isEmpty ? const Text("No formats for the record") : _formatsTable(context, recording),
       ],
@@ -265,7 +260,22 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
       }
 
       return DataRow(cells: [
-        DataCell(Opacity(opacity: opacity, child: Text(d.filename.replaceFirst(d.recordingId, "***")))),
+        DataCell(
+          onTap: () {
+            if (d.status == "ready") {
+              _recordView(context, d);
+            } else if (d.status == "stale") {
+              _startPreparation(context, d.formatId);
+            }
+          },
+          Opacity(
+            opacity: opacity,
+            child: Tooltip(
+              message: "${d.filename} tap to play in embedding player",
+              child: Text(d.filename.replaceFirst(d.recordingId, "⏵⏵⏵")),
+            ),
+          ),
+        ),
         DataCell(Opacity(opacity: opacity, child: Text(d.resolution))),
         DataCell(Opacity(
           opacity: opacity,
@@ -336,17 +346,6 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
       rows.add(DataRow(
         cells: <DataCell>[
           DataCell(
-            onTap: () {
-              _startPreparation(context, f.id);
-            },
-            Text(f.id),
-          ),
-          DataCell(Text(f.ext)),
-          DataCell(Text(f.resolution)),
-          DataCell(Visibility(visible: f.fps != 0, child: Text("${f.fps}"))),
-          DataCell(Visibility(visible: f.hasAudio, child: const Icon(Icons.audiotrack_rounded))),
-          DataCell(Visibility(visible: f.hasVideo, child: const Icon(Icons.videocam_rounded))),
-          DataCell(
             IconButton(
               onPressed: () {
                 _startPreparation(context, "${f.id}+ba*");
@@ -356,6 +355,20 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
               icon: const Icon(Icons.file_download_outlined),
             ),
           ),
+          DataCell(
+            onTap: () {
+              _startPreparation(context, f.id);
+            },
+            Tooltip(
+              message: "Download exact this format (prepare this format for viewing)",
+              child: Text(f.id),
+            ),
+          ),
+          DataCell(Text(f.ext)),
+          DataCell(Text(f.resolution)),
+          DataCell(Visibility(visible: f.fps != 0, child: Text("${f.fps}"))),
+          DataCell(Visibility(visible: f.hasAudio, child: const Icon(Icons.audiotrack_rounded))),
+          DataCell(Visibility(visible: f.hasVideo, child: const Icon(Icons.videocam_rounded))),
         ],
       ));
     }
@@ -379,11 +392,11 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
             child: DataTable(
               columnSpacing: 12,
               columns: const <DataColumn>[
+                DataColumn(label: Expanded(child: Text("", style: headerStyle))),
                 DataColumn(label: Expanded(child: Text("id", style: headerStyle))),
                 DataColumn(label: Expanded(child: Text("ext", style: headerStyle))),
                 DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
                 DataColumn(label: Expanded(child: Text("fps", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("", style: headerStyle))),
                 DataColumn(label: Expanded(child: Text("", style: headerStyle))),
                 DataColumn(label: Expanded(child: Text("", style: headerStyle))),
               ],
@@ -414,6 +427,14 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
     });
   }
 
+  void _recordView(BuildContext context, Download d) {
+    _futureRecording!.then((r) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (BuildContext context) => RecordingView(recording: r, download: d)),
+      );
+    });
+  }
+
   Widget _buildActions(BuildContext context, Download d) {
     switch (d.status) {
       case "stale":
@@ -437,11 +458,13 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
               tooltip: "Copy file link to clipboard",
               icon: const Icon(Icons.copy_rounded),
             ),
-            IconButton(
-              onPressed: () {},
-              tooltip: "Play in embedded player",
-              icon: const Icon(Icons.play_arrow),
-            ),
+            // IconButton(
+            //   onPressed: () {
+            //     _recordView(context, d);
+            //   },
+            //   tooltip: "Play in embedded player",
+            //   icon: const Icon(Icons.play_arrow),
+            // ),
             IconButton(
               onPressed: () {
                 launchUrlString(d.url);
@@ -454,6 +477,64 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
       default:
         return ErrorWidget("Unexpected download status ${d.status}");
     }
+  }
+
+  Widget _addSeenButton() {
+    return FutureBuilder<RecordingInfo>(
+      future: _futureRecording,
+      builder: (BuildContext context, AsyncSnapshot<RecordingInfo> snapshot) {
+        if (snapshot.hasData && snapshot.data!.seenAt == null) {
+          return IconButton(
+            icon: const Icon(Icons.check_box_outline_blank_rounded),
+            tooltip: 'Mark this recording as seen',
+            onPressed: () async {
+              await setSeen(snapshot.data!.id);
+              _pullRefresh();
+            },
+          );
+        } else if (snapshot.hasData && snapshot.data!.seenAt != null) {
+          return IconButton(
+            icon: const Icon(Icons.check_box_outlined),
+            tooltip: 'Mark this recording as unseen',
+            onPressed: () async {
+              await unsetSeen(snapshot.data!.id);
+              _pullRefresh();
+            },
+          );
+        } else {
+          return const SizedBox();
+        }
+      },
+    );
+  }
+
+  Widget _addHiddenButton() {
+    return FutureBuilder<RecordingInfo>(
+      future: _futureRecording,
+      builder: (BuildContext context, AsyncSnapshot<RecordingInfo> snapshot) {
+        if (snapshot.hasData && snapshot.data!.hiddenAt == null) {
+          return IconButton(
+            icon: const Icon(Icons.visibility_outlined),
+            tooltip: 'Hide this recording (archive it)',
+            onPressed: () async {
+              await setHidden(snapshot.data!.id);
+              _pullRefresh();
+            },
+          );
+        } else if (snapshot.hasData && snapshot.data!.hiddenAt != null) {
+          return IconButton(
+            icon: const Icon(Icons.visibility_off_outlined),
+            tooltip: 'Show this recording (unarchive it)',
+            onPressed: () async {
+              await unsetHidden(snapshot.data!.id);
+              _pullRefresh();
+            },
+          );
+        } else {
+          return const SizedBox();
+        }
+      },
+    );
   }
 }
 

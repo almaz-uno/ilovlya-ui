@@ -3,9 +3,13 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'recording_info.g.dart';
 
+final zero = DateTime.fromMillisecondsSinceEpoch(0);
+
 @JsonSerializable(fieldRename: FieldRename.snake)
 class RecordingInfo {
   String id;
+  DateTime? createdAt;
+  DateTime? updatedAt;
   String webpageUrl;
   String title;
   String uploader;
@@ -14,10 +18,14 @@ class RecordingInfo {
   String extractor;
   String thumbnailUrl;
   String? thumbnailDataUrl;
+  DateTime? seenAt;
+  DateTime? hiddenAt;
   List<Format>? formats;
 
   RecordingInfo({
     this.id = "",
+    this.createdAt,
+    this.updatedAt,
     this.webpageUrl = "",
     this.title = "",
     this.uploader = "",
@@ -26,6 +34,8 @@ class RecordingInfo {
     this.extractor = "",
     this.thumbnailUrl = "",
     this.thumbnailDataUrl,
+    this.seenAt,
+    this.hiddenAt,
     this.formats,
   });
 

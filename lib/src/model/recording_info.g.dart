@@ -6,9 +6,10 @@ part of 'recording_info.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-RecordingInfo _$RecordingInfoFromJson(Map<String, dynamic> json) =>
-    RecordingInfo(
+RecordingInfo _$RecordingInfoFromJson(Map<String, dynamic> json) => RecordingInfo(
       id: json['id'] as String? ?? "",
+      createdAt: json['created_at'] == null ? null : DateTime.parse(json['created_at'] as String),
+      updatedAt: json['updated_at'] == null ? null : DateTime.parse(json['updated_at'] as String),
       webpageUrl: json['webpage_url'] as String? ?? "",
       title: json['title'] as String? ?? "",
       uploader: json['uploader'] as String? ?? "",
@@ -17,14 +18,15 @@ RecordingInfo _$RecordingInfoFromJson(Map<String, dynamic> json) =>
       extractor: json['extractor'] as String? ?? "",
       thumbnailUrl: json['thumbnail_url'] as String? ?? "",
       thumbnailDataUrl: json['thumbnail_data_url'] as String?,
-      formats: (json['formats'] as List<dynamic>?)
-          ?.map((e) => Format.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      seenAt: json['seen_at'] == null ? null : DateTime.parse(json['seen_at'] as String),
+      hiddenAt: json['hidden_at'] == null ? null : DateTime.parse(json['hidden_at'] as String),
+      formats: (json['formats'] as List<dynamic>?)?.map((e) => Format.fromJson(e as Map<String, dynamic>)).toList(),
     );
 
-Map<String, dynamic> _$RecordingInfoToJson(RecordingInfo instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$RecordingInfoToJson(RecordingInfo instance) => <String, dynamic>{
       'id': instance.id,
+      'created_at': instance.createdAt?.toIso8601String(),
+      'updated_at': instance.updatedAt?.toIso8601String(),
       'webpage_url': instance.webpageUrl,
       'title': instance.title,
       'uploader': instance.uploader,
@@ -33,5 +35,7 @@ Map<String, dynamic> _$RecordingInfoToJson(RecordingInfo instance) =>
       'extractor': instance.extractor,
       'thumbnail_url': instance.thumbnailUrl,
       'thumbnail_data_url': instance.thumbnailDataUrl,
+      'seen_at': instance.seenAt?.toIso8601String(),
+      'hidden_at': instance.hiddenAt?.toIso8601String(),
       'formats': instance.formats,
     };

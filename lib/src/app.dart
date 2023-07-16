@@ -1,3 +1,4 @@
+import 'package:flutter_in_app_pip/pip_material_app.dart';
 import 'package:ilovlya/src/media/media_add_view.dart';
 import 'package:ilovlya/src/media/media_details_view.dart';
 import 'package:ilovlya/src/media/media_list_view.dart';
@@ -26,7 +27,7 @@ class MyApp extends StatelessWidget {
     return AnimatedBuilder(
       animation: settingsController,
       builder: (BuildContext context, Widget? child) {
-        return MaterialApp(
+        return PiPMaterialApp(
           // Providing a restorationScopeId allows the Navigator built by the
           // MaterialApp to restore the navigation stack when a user leaves and
           // returns to the app after it has been killed while running in the
