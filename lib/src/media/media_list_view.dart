@@ -24,6 +24,7 @@ class _MediaListViewState extends State<MediaListView> {
   bool _isLoading = false;
   bool _showHidden = false;
   bool _showSeen = false;
+  String _sortBy = "created_at";
   // final _listScrollController = ScrollController();
 
   Future<List<RecordingInfo>> _load(int offset, int limit) async {
@@ -31,7 +32,7 @@ class _MediaListViewState extends State<MediaListView> {
       setState(() {
         _isLoading = true;
       });
-      return await listRecordings(offset, limit);
+      return await listRecordings(offset, limit, sortBy: _sortBy);
     } finally {
       setState(() {
         _isLoading = false;
@@ -95,6 +96,12 @@ class _MediaListViewState extends State<MediaListView> {
                     _showSeen = !_showSeen;
                   case "hidden":
                     _showHidden = !_showHidden;
+                  case "sort_by_created_at":
+                    _sortBy = "created_at";
+                    _pullRefresh();
+                  case "sort_by_updated_at":
+                    _sortBy = "updated_at";
+                    _pullRefresh();
                 }
                 setState(() {});
               },
@@ -118,6 +125,28 @@ class _MediaListViewState extends State<MediaListView> {
                       children: [
                         Icon(_showHidden ? Icons.check : null, color: primary),
                         Text("show hidden", style: TextStyle(color: primary)),
+                      ],
+                    ),
+                  ),
+                );
+                menuItems.add(
+                  PopupMenuItem<String>(
+                    value: "sort_by_created_at",
+                    child: Row(
+                      children: [
+                        Icon(_sortBy == "created_at" ? Icons.check : null, color: primary),
+                        Text("sort by created", style: TextStyle(color: primary)),
+                      ],
+                    ),
+                  ),
+                );
+                menuItems.add(
+                  PopupMenuItem<String>(
+                    value: "sort_by_updated_at",
+                    child: Row(
+                      children: [
+                        Icon(_sortBy == "updated_at" ? Icons.check : null, color: primary),
+                        Text("sort by updated", style: TextStyle(color: primary)),
                       ],
                     ),
                   ),

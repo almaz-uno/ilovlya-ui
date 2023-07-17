@@ -44,12 +44,12 @@ Future<RecordingInfo> addRecording(String url) async {
   return RecordingInfo.fromJson(jsonDecode(res.body));
 }
 
-Future<List<RecordingInfo>> listRecordings(int offset, int limit) async {
+Future<List<RecordingInfo>> listRecordings(int offset, int limit, {String sortBy = "created_at"}) async {
   const path = '/api/recordings';
 
   var res = await http
       .get(
-        Uri.parse("${server()}$path?offset=$offset&limit=$limit"),
+        Uri.parse("${server()}$path?offset=$offset&limit=$limit&sort_by=$sortBy"),
       )
       .timeout(requestTimeout);
 
