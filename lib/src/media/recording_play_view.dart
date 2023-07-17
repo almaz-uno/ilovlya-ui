@@ -25,8 +25,6 @@ class RecordingView extends StatelessWidget {
     return Scaffold(
       // appBar: AppBar(title: Text(recording.title)),
       body: _RecordingVideo(recording: recording, download: download),
-      floatingActionButton: const BackButton(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
     );
   }
 }
@@ -63,7 +61,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
     );
 
     _controller.addListener(() {
-      if (_controller.value.position == _controller.value.duration) {
+      if (_controller.value.position != Duration.zero && _controller.value.position == _controller.value.duration) {
         _sendPosition(
           widget.recording.id,
           _controller.value.position,
@@ -79,7 +77,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
     });
 
     _positionSendSubs = Stream.periodic(_positionSendPeriod).listen((event) {
-      if (_controller.value.isPlaying) {
+      if (_controller.value.isPlaying && _controller.value.position != Duration.zero) {
         _sendPosition(
           widget.recording.id,
           _controller.value.position,
@@ -100,7 +98,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
   }
 
   void _sendPosition(String recordingId, Duration position, bool finished) {
-    print("$recordingId $position $finished");
+    // print("$recordingId $position $finished");
     putPosition(recordingId, position, finished);
   }
 
@@ -110,11 +108,16 @@ class _RecordingVideoState extends State<_RecordingVideo> {
       child: Column(
         children: <Widget>[
           Container(
-            padding: const EdgeInsets.all(20.0),
-            child: Text(widget.recording.title),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+            child: Row(
+              children: [
+                const BackButton(),
+                Expanded(child: Text(widget.recording.title)),
+              ],
+            ),
           ),
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
             child: AspectRatio(
               aspectRatio: widget.download.hasVideo ? _controller.value.aspectRatio : 8.0,
               child: Stack(
@@ -160,6 +163,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
                     ),
                   ],
                 ),
+                if (widget.recording.seenAt != null) Text("seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)"),
                 Text("duration: ${formatDuration(_controller.value.duration)}"),
                 Text("position: ${formatDuration(_controller.value.position)}"),
                 Text("buffered: ${_controller.value.buffered.isNotEmpty ? formatDuration(_controller.value.buffered.last.end) : ''}"),
@@ -269,7 +273,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
 }
 
 class _ControlsOverlay extends StatelessWidget {
-  const _ControlsOverlay({required this.controller});
+  const _ControlsOverlay({required VideoPlayerController controller}) : _controller = controller;
 
   static const _volumes = <double>[
     0.10,
@@ -294,7 +298,7 @@ class _ControlsOverlay extends StatelessWidget {
     10.0,
   ];
 
-  final VideoPlayerController controller;
+  final VideoPlayerController _controller;
 
   @override
   Widget build(BuildContext context) {
@@ -303,7 +307,7 @@ class _ControlsOverlay extends StatelessWidget {
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 50),
           reverseDuration: const Duration(milliseconds: 200),
-          child: controller.value.isPlaying
+          child: _controller.value.isPlaying
               ? const SizedBox.shrink()
               : Container(
                   color: Colors.black26,
@@ -317,18 +321,38 @@ class _ControlsOverlay extends StatelessWidget {
                   ),
                 ),
         ),
-        GestureDetector(
-          onTap: () {
-            controller.value.isPlaying ? controller.pause() : controller.play();
-          },
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  _controller.seekTo(_controller.value.position - const Duration(seconds: 15));
+                },
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  _controller.value.isPlaying ? _controller.pause() : _controller.play();
+                },
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  _controller.seekTo(_controller.value.position + const Duration(seconds: 15));
+                },
+              ),
+            ),
+          ],
         ),
         Align(
           alignment: Alignment.topLeft,
           child: PopupMenuButton<double>(
-            initialValue: controller.value.volume,
+            initialValue: _controller.value.volume,
             tooltip: 'Sound volume',
             onSelected: (double volume) {
-              controller.setVolume(volume);
+              _controller.setVolume(volume);
             },
             itemBuilder: (BuildContext context) {
               return <PopupMenuItem<double>>[
@@ -347,17 +371,17 @@ class _ControlsOverlay extends StatelessWidget {
                 vertical: 12,
                 horizontal: 16,
               ),
-              child: Text('${controller.value.volume * 100}%'),
+              child: Text('${_controller.value.volume * 100}%'),
             ),
           ),
         ),
         Align(
           alignment: Alignment.topRight,
           child: PopupMenuButton<double>(
-            initialValue: controller.value.playbackSpeed,
+            initialValue: _controller.value.playbackSpeed,
             tooltip: 'Playback speed',
             onSelected: (double speed) {
-              controller.setPlaybackSpeed(speed);
+              _controller.setPlaybackSpeed(speed);
             },
             itemBuilder: (BuildContext context) {
               return <PopupMenuItem<double>>[
@@ -376,7 +400,7 @@ class _ControlsOverlay extends StatelessWidget {
                 vertical: 12,
                 horizontal: 16,
               ),
-              child: Text('${controller.value.playbackSpeed}x'),
+              child: Text('${_controller.value.playbackSpeed}x'),
             ),
           ),
         ),

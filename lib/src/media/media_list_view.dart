@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:ilovlya/src/api/api.dart';
 import 'package:ilovlya/src/api/media.dart';
@@ -22,6 +24,7 @@ class _MediaListViewState extends State<MediaListView> {
   bool _isLoading = false;
   bool _showHidden = false;
   bool _showSeen = false;
+  // final _listScrollController = ScrollController();
 
   Future<List<RecordingInfo>> _load(int offset, int limit) async {
     try {
@@ -66,6 +69,7 @@ class _MediaListViewState extends State<MediaListView> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return Scaffold(
       appBar: AppBar(
         title: const Text('List of recordings'),
@@ -82,13 +86,44 @@ class _MediaListViewState extends State<MediaListView> {
             tooltip: 'Refresh list',
             onPressed: _pullRefresh,
           ),
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            tooltip: 'More options',
-            onPressed: () {
-              Navigator.restorablePushNamed(context, SettingsView.routeName);
-            },
-          ),
+          PopupMenuButton(
+              tooltip: 'More options',
+              icon: const Icon(Icons.more_vert),
+              onSelected: (String choice) {
+                switch (choice) {
+                  case "seen":
+                    _showSeen = !_showSeen;
+                  case "hidden":
+                    _showHidden = !_showHidden;
+                }
+                setState(() {});
+              },
+              itemBuilder: (BuildContext context) {
+                var menuItems = <PopupMenuItem<String>>[];
+                menuItems.add(
+                  PopupMenuItem<String>(
+                    value: "seen",
+                    child: Row(
+                      children: [
+                        Icon(_showSeen ? Icons.check : null, color: primary),
+                        Text("show seen", style: TextStyle(color: primary)),
+                      ],
+                    ),
+                  ),
+                );
+                menuItems.add(
+                  PopupMenuItem<String>(
+                    value: "hidden",
+                    child: Row(
+                      children: [
+                        Icon(_showHidden ? Icons.check : null, color: primary),
+                        Text("show hidden", style: TextStyle(color: primary)),
+                      ],
+                    ),
+                  ),
+                );
+                return menuItems;
+              }),
           IconButton(
             icon: const Icon(Icons.settings),
             tooltip: 'Settings',
@@ -129,56 +164,7 @@ class _MediaListViewState extends State<MediaListView> {
       future: _futureRecordingsList,
       builder: (BuildContext context, AsyncSnapshot<List<RecordingInfo>> snapshot) {
         if (snapshot.hasData) {
-          return ListView.builder(
-            physics: const AlwaysScrollableScrollPhysics(),
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: snapshot.data!.length,
-            itemBuilder: (BuildContext context, int index) {
-              var item = snapshot.data![index];
-              var dur = Duration(seconds: item.duration);
-              var opacity = item.seenAt == null ? 1.0 : 0.5;
-              if (item.hiddenAt != null) {
-                opacity = 0.25;
-              }
-              // final TextStyle? textStyle = item.hiddenAt != null ? const TextStyle(decoration: TextDecoration.lineThrough) : null;
-              final Widget? trailing = item.hiddenAt != null ? const Icon(Icons.visibility_off_outlined) : null;
-              return Opacity(
-                opacity: opacity,
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: SizedBox(
-                        width: 100, // alignment
-                        child: Stack(
-                          children: [
-                            Image.network(
-                              server() + item.thumbnailUrl,
-                              isAntiAlias: true,
-                              filterQuality: FilterQuality.high,
-                            ),
-                          ],
-                        ),
-                      ),
-                      title: Text(
-                        "${item.title} ∙ ${formatDuration(dur)}",
-                        // style: textStyle,
-                      ),
-                      subtitle: Text("${item.uploader} ∙ ${item.extractor}"),
-                      trailing: trailing,
-                      onTap: () {
-                        Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);
-                      },
-                    ),
-                    LinearProgressIndicator(
-                      backgroundColor: const Color.fromARGB(127, 158, 158, 158),
-                      value: item.duration == 0 ? null : item.position / item.duration,
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
+          return _buildList(context, snapshot.data!);
         } else if (snapshot.hasError) {
           return Text('${snapshot.error}');
         }
@@ -188,6 +174,77 @@ class _MediaListViewState extends State<MediaListView> {
           child: Text('Media info acquiring in progress...'),
         );
       },
+    );
+  }
+
+  Widget _buildList(BuildContext context, List<RecordingInfo> recordings) {
+    List<RecordingInfo> filtered = [];
+
+    for (var item in recordings) {
+      if (item.seenAt != null && !_showSeen) {
+        continue;
+      }
+      if (item.hiddenAt != null && !_showHidden) {
+        continue;
+      }
+
+      filtered.add(item);
+    }
+
+    return Scrollbar(
+      // controller: _listScrollController,
+      thumbVisibility: true,
+      interactive: true,
+      child: ListView.builder(
+        //physics: const AlwaysScrollableScrollPhysics(),
+        scrollDirection: Axis.vertical,
+        shrinkWrap: true,
+        itemCount: filtered.length,
+        itemBuilder: (BuildContext context, int index) {
+          var item = filtered[index];
+          var dur = Duration(seconds: item.duration);
+          var opacity = item.seenAt == null ? 1.0 : 0.5;
+          if (item.hiddenAt != null) {
+            opacity = 0.25;
+          }
+          // final TextStyle? textStyle = item.hiddenAt != null ? const TextStyle(decoration: TextDecoration.lineThrough) : null;
+          final Widget? trailing = item.hiddenAt != null ? const Icon(Icons.visibility_off_outlined) : null;
+          return Opacity(
+            opacity: opacity,
+            child: Column(
+              children: [
+                ListTile(
+                  leading: SizedBox(
+                    width: 100, // alignment
+                    child: Stack(
+                      children: [
+                        Image.network(
+                          server() + item.thumbnailUrl,
+                          isAntiAlias: true,
+                          filterQuality: FilterQuality.high,
+                        ),
+                      ],
+                    ),
+                  ),
+                  title: Text(
+                    "${item.title} ∙ ${formatDuration(dur)}",
+                    // style: textStyle,
+                  ),
+                  subtitle: Text("${item.uploader} ∙ ${item.extractor}"),
+                  trailing: trailing,
+                  onTap: () {
+                    Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);
+                  },
+                ),
+                LinearProgressIndicator(
+                  backgroundColor: const Color.fromARGB(127, 158, 158, 158),
+                  value: item.duration == 0 ? null : item.position / item.duration,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

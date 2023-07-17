@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ilovlya/src/api/api.dart';
@@ -145,9 +144,13 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
           ),
           RefreshIndicator(
             onRefresh: _pullRefresh,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: (_futureRecording == null) ? const Center(child: Text('loading...')) : _buildRecordings(),
+            child: Scrollbar(
+              thumbVisibility: true,
+              interactive: true,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: (_futureRecording == null) ? const Center(child: Text('loading...')) : _buildRecordings(),
+              ),
             ),
           ),
         ],
@@ -318,19 +321,24 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
                   "Files for this recordings",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columnSpacing: 12,
-                    columns: const [
-                      DataColumn(label: Expanded(child: Text("file", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("size", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                    ],
-                    rows: rows,
+                Scrollbar(
+                  thumbVisibility: true,
+                  interactive: true,
+                  scrollbarOrientation: ScrollbarOrientation.bottom,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columnSpacing: 12,
+                      columns: const [
+                        DataColumn(label: Expanded(child: Text("file", style: headerStyle))),
+                        DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
+                        DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                        DataColumn(label: Expanded(child: Text("size", style: headerStyle))),
+                        DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                        DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                      ],
+                      rows: rows,
+                    ),
                   ),
                 ),
               ],
