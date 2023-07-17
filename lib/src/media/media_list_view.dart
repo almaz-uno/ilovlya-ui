@@ -237,6 +237,7 @@ class _MediaListViewState extends State<MediaListView> {
             opacity = 0.25;
           }
           // final TextStyle? textStyle = item.hiddenAt != null ? const TextStyle(decoration: TextDecoration.lineThrough) : null;
+          var viewedSrt = item.position == 0 ? "" : " (${formatDuration(Duration(seconds: item.position))})";
           final Widget? trailing = item.hiddenAt != null ? const Icon(Icons.visibility_off_outlined) : null;
           return Opacity(
             opacity: opacity,
@@ -256,7 +257,7 @@ class _MediaListViewState extends State<MediaListView> {
                     ),
                   ),
                   title: Text(
-                    "${item.title} ∙ ${formatDuration(dur)}",
+                    "${item.title} ∙ ${formatDuration(dur)}$viewedSrt",
                     // style: textStyle,
                   ),
                   subtitle: Text("${item.uploader} ∙ ${item.extractor}"),
