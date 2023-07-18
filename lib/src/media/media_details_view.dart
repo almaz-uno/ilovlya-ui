@@ -45,6 +45,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
     setState(() {
       _futureRecording = _load(widget.id, false);
     });
+    _loadDownloads(widget.id);
     _downloadsPullSubs = Stream.periodic(_downloadsPullPeriod).listen((event) {
       setState(() {
         _loadDownloads(widget.id);
@@ -136,13 +137,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
       ),
       body: Stack(
         children: [
-          Visibility(
-            visible: _isLoading,
-            child: Center(
-                child: CircularProgressIndicator(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            )),
-          ),
+          Visibility(visible: _isLoading, child: const LinearProgressIndicator()),
           RefreshIndicator(
             onRefresh: _pullRefresh,
             child: Scrollbar(

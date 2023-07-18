@@ -173,7 +173,7 @@ class _MediaListViewState extends State<MediaListView> {
         child: Stack(
           children: [
             Visibility(visible: _isLoading, child: const LinearProgressIndicator()),
-            (_futureRecordingsList == null) ? const Center(child: Text('Loading in progress')) : Expanded(child: buildRecordingsList()),
+            (_futureRecordingsList == null) ? const Center(child: Text('Loading in progress')) : buildRecordingsList(),
           ],
         ),
       ),
