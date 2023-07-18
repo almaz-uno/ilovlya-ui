@@ -191,6 +191,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
           progressBarColor: Theme.of(context).colorScheme.primary,
           progress: _controller.value.position,
           total: _controller.value.duration,
+          timeLabelType: TimeLabelType.remainingTime,
           buffered: buffered,
           onSeek: (duration) {
             _controller.seekTo(duration);
