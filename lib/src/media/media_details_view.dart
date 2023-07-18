@@ -37,7 +37,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
 
   final _controllerTitle = TextEditingController();
 
-  static const _downloadsPullPeriod = Duration(seconds: 1);
+  static const _downloadsPullPeriod = Duration(seconds: 3);
 
   @override
   void initState() {
@@ -48,6 +48,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
     _downloadsPullSubs = Stream.periodic(_downloadsPullPeriod).listen((event) {
       setState(() {
         _loadDownloads(widget.id);
+        _pullRefresh();
       });
     });
   }

@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:ilovlya/src/api/api.dart';
@@ -19,6 +19,8 @@ class MediaListView extends StatefulWidget {
   State<MediaListView> createState() => _MediaListViewState();
 }
 
+const _listPullPeriod = Duration(seconds: 5);
+
 class _MediaListViewState extends State<MediaListView> {
   Future<List<RecordingInfo>>? _futureRecordingsList;
   bool _isLoading = false;
@@ -26,6 +28,7 @@ class _MediaListViewState extends State<MediaListView> {
   bool _showSeen = false;
   String _sortBy = "created_at";
   // final _listScrollController = ScrollController();
+  StreamSubscription? _listPullSubs;
 
   Future<List<RecordingInfo>> _load(int offset, int limit) async {
     try {
@@ -44,14 +47,17 @@ class _MediaListViewState extends State<MediaListView> {
   void initState() {
     super.initState();
     _futureRecordingsList = _load(0, 100);
+    _listPullSubs = Stream.periodic(_listPullPeriod).listen((event) {
+      setState(() {
+        _pullRefresh();
+      });
+    });
   }
 
   @override
   void deactivate() {
+    _listPullSubs?.cancel();
     super.deactivate();
-    if (kDebugMode) {
-      print("deactivate()");
-    }
   }
 
   @override
@@ -164,16 +170,9 @@ class _MediaListViewState extends State<MediaListView> {
       ),
       body: RefreshIndicator(
         onRefresh: _pullRefresh,
-        child: Column(
+        child: Stack(
           children: [
-            Center(
-              child: Visibility(
-                  visible: _isLoading,
-                  child: const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: LinearProgressIndicator(),
-                  )),
-            ),
+            Visibility(visible: _isLoading, child: const LinearProgressIndicator()),
             (_futureRecordingsList == null) ? const Center(child: Text('Loading in progress')) : Expanded(child: buildRecordingsList()),
           ],
         ),
