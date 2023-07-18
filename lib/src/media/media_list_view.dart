@@ -200,7 +200,7 @@ class _MediaListViewState extends State<MediaListView> {
 
         return const Padding(
           padding: EdgeInsets.all(8.0),
-          child: Text('Media info acquiring in progress...'),
+          child: Text('Recordings list acquiring in progress...'),
         );
       },
     );
