@@ -20,6 +20,7 @@ class MediaListView extends StatefulWidget {
 }
 
 const _listPullPeriod = Duration(seconds: 5);
+const _listLimit = 1000;
 
 class _MediaListViewState extends State<MediaListView> {
   Future<List<RecordingInfo>>? _futureRecordingsList;
@@ -46,7 +47,7 @@ class _MediaListViewState extends State<MediaListView> {
   @override
   void initState() {
     super.initState();
-    _futureRecordingsList = _load(0, 100);
+    _futureRecordingsList = _load(0, _listLimit);
     _listPullSubs = Stream.periodic(_listPullPeriod).listen((event) {
       setState(() {
         _pullRefresh();
@@ -70,7 +71,7 @@ class _MediaListViewState extends State<MediaListView> {
 
   Future<void> _pullRefresh() async {
     setState(() {
-      _futureRecordingsList = _load(0, 100);
+      _futureRecordingsList = _load(0, _listLimit);
     });
   }
 
@@ -245,14 +246,12 @@ class _MediaListViewState extends State<MediaListView> {
                 ListTile(
                   leading: SizedBox(
                     width: 100, // alignment
-                    child: Stack(
-                      children: [
-                        Image.network(
-                          server() + item.thumbnailUrl,
-                          isAntiAlias: true,
-                          filterQuality: FilterQuality.high,
-                        ),
-                      ],
+                    child: Center(
+                      child: Image.network(
+                        server() + item.thumbnailUrl,
+                        isAntiAlias: true,
+                        filterQuality: FilterQuality.high,
+                      ),
                     ),
                   ),
                   title: Text(

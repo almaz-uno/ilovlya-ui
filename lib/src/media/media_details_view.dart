@@ -10,6 +10,7 @@ import 'package:ilovlya/src/media/recording_play_view.dart';
 import 'package:ilovlya/src/media/format.dart';
 import 'package:ilovlya/src/model/download.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class MediaDetailsView extends StatefulWidget {
@@ -216,18 +217,43 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
         Center(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                Image.network(
-                  server() + recording.thumbnailUrl,
-                  fit: BoxFit.fill,
-                  scale: 0.5,
-                ),
-                LinearProgressIndicator(
-                  backgroundColor: const Color.fromARGB(127, 158, 158, 158),
-                  value: recording.duration == 0 ? null : recording.position / recording.duration,
-                ),
-              ],
+            child: InkWell(
+              onTap: () {
+                if (_downloads == null) {
+                  return;
+                }
+                Download? ready;
+                Download? stale;
+                for (var d in _downloads!) {
+                  if (d.updatedAt == null) {
+                    continue;
+                  }
+                  if ((ready == null || d.updatedAt!.isAfter(ready.updatedAt!)) && d.status == "ready") {
+                    ready = d;
+                  }
+                  if ((stale == null || d.updatedAt!.isAfter(stale.updatedAt!)) && d.status == "stale") {
+                    stale = d;
+                  }
+                }
+                if (ready != null) {
+                  _recordView(context, ready);
+                } else if (stale != null) {
+                  _startPreparation(context, stale.formatId);
+                }
+              },
+              child: Column(
+                children: [
+                  Image.network(
+                    server() + recording.thumbnailUrl,
+                    // fit: BoxFit.fill,
+                    // scale: 0.5,
+                  ),
+                  LinearProgressIndicator(
+                    backgroundColor: const Color.fromARGB(127, 158, 158, 158),
+                    value: recording.duration == 0 ? null : recording.position / recording.duration,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -276,6 +302,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
           ),
         ),
         DataCell(Opacity(opacity: opacity, child: Text(d.resolution))),
+        DataCell(Opacity(opacity: opacity, child: Text(d.fps != null ? "${d.fps}" : ""))),
         DataCell(Opacity(
           opacity: opacity,
           child: Row(
@@ -328,6 +355,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
                       columns: const [
                         DataColumn(label: Expanded(child: Text("file", style: headerStyle))),
                         DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
+                        DataColumn(label: Expanded(child: Text("fps", style: headerStyle))),
                         DataColumn(label: Expanded(child: Text("", style: headerStyle))),
                         DataColumn(label: Expanded(child: Text("size", style: headerStyle))),
                         DataColumn(label: Expanded(child: Text("", style: headerStyle))),
@@ -462,20 +490,52 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
               tooltip: "Copy file link to clipboard",
               icon: const Icon(Icons.copy_rounded),
             ),
-            // IconButton(
-            //   onPressed: () {
-            //     _recordView(context, d);
-            //   },
-            //   tooltip: "Play in embedded player",
-            //   icon: const Icon(Icons.play_arrow),
-            // ),
-            IconButton(
-              onPressed: () {
-                launchUrlString(d.url);
-              },
-              tooltip: "Open in default application",
-              icon: const Icon(Icons.open_in_browser),
-            ),
+            PopupMenuButton(
+                tooltip: 'Open in...',
+                icon: const Icon(Icons.more_vert),
+                onSelected: (String choice) async {
+                  switch (choice) {
+                    case "default":
+                      launchUrlString(d.url);
+                    case "vlc":
+                      var u = "vlc://${d.url}";
+                      if (await canLaunchUrl(Uri.parse(u))) {
+                        await launchUrlString(u);
+                      } else {
+                        // ignore: use_build_context_synchronously
+                        copyToClipboard(context, u);
+                      }
+                  }
+                  setState(() {});
+                },
+                itemBuilder: (BuildContext context) {
+                  var menuItems = <PopupMenuItem<String>>[];
+                  menuItems.add(
+                    const PopupMenuItem<String>(
+                      value: "default",
+                      child: Row(
+                        children: [
+                          Icon(Icons.open_in_browser),
+                          Text("Open in default application"),
+                        ],
+                      ),
+                    ),
+                  );
+                  menuItems.add(
+                    const PopupMenuItem<String>(
+                      value: "hidden",
+                      child: Row(
+                        children: [
+                          Icon(null),
+                          Text(
+                            "Open in VLC",
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                  return menuItems;
+                }),
           ],
         );
       default:
@@ -542,8 +602,8 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
   }
 }
 
-void copyToClipboard(BuildContext context, String textData) {
-  Clipboard.setData(ClipboardData(text: textData)).then((value) {
+Future<void> copyToClipboard(BuildContext context, String textData) async {
+  await Clipboard.setData(ClipboardData(text: textData)).then((value) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       backgroundColor: Theme.of(context).colorScheme.background,
       content: Text('$textData copied to clipboard'),

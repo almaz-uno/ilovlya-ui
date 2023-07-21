@@ -72,8 +72,9 @@ class _RecordingVideoState extends State<_RecordingVideo> {
     });
     _controller.setLooping(false);
 
-    _controller.initialize().then((_) {
-      _controller.seekTo(Duration(seconds: widget.recording.position));
+    _controller.initialize().then((_) async {
+      await _controller.seekTo(Duration(seconds: widget.recording.position));
+      _controller.play();
     });
 
     _positionSendSubs = Stream.periodic(_positionSendPeriod).listen((event) {
@@ -112,7 +113,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
             child: Row(
               children: [
                 const BackButton(),
-                Expanded(child: Text(widget.recording.title)),
+                Expanded(child: Text("${widget.recording.title} • ${formatDuration(_controller.value.duration)}")),
               ],
             ),
           ),

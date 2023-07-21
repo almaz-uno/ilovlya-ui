@@ -60,7 +60,7 @@ Future<List<RecordingInfo>> listRecordings(int offset, int limit, {String sortBy
 }
 
 Future<RecordingInfo> getRecording(String id, {bool updateFormats = true}) async {
-  var path = '/api/recordings/$id?updateFormats=$updateFormats';
+  var path = '/api/recordings/$id?update_formats=$updateFormats';
 
   var res = await http
       .get(

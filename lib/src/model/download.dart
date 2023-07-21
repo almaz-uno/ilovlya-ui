@@ -13,6 +13,7 @@ class Download {
   String filename;
   String ext;
   String resolution;
+  int? fps;
   bool hasVideo;
   bool hasAudio;
   int size;
@@ -29,6 +30,7 @@ class Download {
     this.filename = "",
     this.ext = "",
     this.resolution = "",
+    this.fps,
     this.hasVideo = false,
     this.hasAudio = false,
     this.size = 0,
