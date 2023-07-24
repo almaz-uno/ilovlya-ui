@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:json_annotation/json_annotation.dart';
 
 part 'download.g.dart';
@@ -37,6 +39,22 @@ class Download {
     this.status = "",
     this.progress = "",
   });
+
+  static final re = RegExp(r'\d+\.{0,1}\d+');
+  static const splitter = LineSplitter();
+
+  double? progressByLastLine() {
+    var ll = splitter.convert(progress);
+    if (ll.isEmpty) {
+      return null;
+    }
+    var lastLine = ll[ll.length - 1];
+    var fm = re.firstMatch(lastLine);
+    if (fm == null) {
+      return null;
+    }
+    return double.parse(fm.group(0)!) / 100.0;
+  }
 
   factory Download.fromJson(Map<String, dynamic> json) => _$DownloadFromJson(json);
   Map<String, dynamic> toJson() => _$DownloadToJson(this);

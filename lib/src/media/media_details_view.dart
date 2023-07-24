@@ -479,7 +479,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
         );
       case "new":
       case "in_progress":
-        return const Center(child: Icon(Icons.downloading));
+        return Center(child: CircularProgressIndicator(value: d.progressByLastLine()));
       case "ready":
         return Row(
           children: [
