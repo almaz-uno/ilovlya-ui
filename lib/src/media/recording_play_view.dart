@@ -328,7 +328,7 @@ class _ControlsOverlay extends StatelessWidget {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  _controller.seekTo(_controller.value.position - const Duration(seconds: 15));
+                  _controller.seekTo(_controller.value.position - const Duration(seconds: 5));
                 },
               ),
             ),
@@ -342,7 +342,7 @@ class _ControlsOverlay extends StatelessWidget {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  _controller.seekTo(_controller.value.position + const Duration(seconds: 15));
+                  _controller.seekTo(_controller.value.position + const Duration(seconds: 5));
                 },
               ),
             ),
