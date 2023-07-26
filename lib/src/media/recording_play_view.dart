@@ -23,7 +23,7 @@ class RecordingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(title: Text(recording.title)),
+      appBar: AppBar(title: Text(recording.title)),
       body: _RecordingVideo(recording: recording, download: download),
     );
   }
@@ -112,7 +112,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
             child: Row(
               children: [
-                const BackButton(),
+                // const BackButton(),
                 Expanded(child: Text("${widget.recording.title} • ${formatDuration(_controller.value.duration)}")),
               ],
             ),
