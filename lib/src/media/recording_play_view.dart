@@ -109,14 +109,16 @@ class _RecordingVideoState extends State<_RecordingVideo> {
     return Shortcuts(
       shortcuts: const <ShortcutActivator, Intent>{
         SingleActivator(LogicalKeyboardKey.space): PlayPauseIntent(),
-        SingleActivator(LogicalKeyboardKey.arrowLeft, control: true, shift: true): MovePositionIntent(Duration(seconds: -300)),
-        SingleActivator(LogicalKeyboardKey.arrowLeft, control: true, shift: false): MovePositionIntent(Duration(seconds: -60)),
-        SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: true): MovePositionIntent(Duration(seconds: -30)),
-        SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: false): MovePositionIntent(Duration(seconds: -5)),
-        SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: true): MovePositionIntent(Duration(seconds: 300)),
-        SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: false): MovePositionIntent(Duration(seconds: 60)),
-        SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: true): MovePositionIntent(Duration(seconds: 30)),
-        SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: false): MovePositionIntent(Duration(seconds: 5)),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: true, shift: true): ChangePositionIntent(Duration(seconds: -300)),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: true, shift: false): ChangePositionIntent(Duration(seconds: -60)),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: true): ChangePositionIntent(Duration(seconds: -30)),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: false): ChangePositionIntent(Duration(seconds: -5)),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: true): ChangePositionIntent(Duration(seconds: 300)),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: false): ChangePositionIntent(Duration(seconds: 60)),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: true): ChangePositionIntent(Duration(seconds: 30)),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: false): ChangePositionIntent(Duration(seconds: 5)),
+        SingleActivator(LogicalKeyboardKey.arrowDown, control: false, shift: false): ChangeVolumeIntent(-5),
+        SingleActivator(LogicalKeyboardKey.arrowUp, control: false, shift: false): ChangeVolumeIntent(5),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -124,8 +126,20 @@ class _RecordingVideoState extends State<_RecordingVideo> {
             _controller.value.isPlaying ? _controller.pause() : _controller.play();
             return null;
           }),
-          MovePositionIntent: CallbackAction<MovePositionIntent>(onInvoke: (MovePositionIntent intent) {
+          ChangePositionIntent: CallbackAction<ChangePositionIntent>(onInvoke: (ChangePositionIntent intent) {
             _controller.seekTo(_controller.value.position + intent.duration);
+            return null;
+          }),
+          ChangeVolumeIntent: CallbackAction<ChangeVolumeIntent>(onInvoke: (ChangeVolumeIntent intent) {
+            var nv = (_controller.value.volume * 100).toInt() + intent.change;
+            if (nv < 0) {
+              nv = 0;
+            }
+            if (nv > 100) {
+              nv = 100;
+            }
+
+            _controller.setVolume(nv / 100);
             return null;
           }),
         },
@@ -135,7 +149,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
             child: Column(
               children: <Widget>[
                 Container(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                   child: Row(
                     children: [
                       // const BackButton(),
@@ -402,7 +416,7 @@ class _ControlsOverlay extends StatelessWidget {
                 vertical: 12,
                 horizontal: 16,
               ),
-              child: Text('${_controller.value.volume * 100}%'),
+              child: Text('${(_controller.value.volume * 100).toInt()}%'),
             ),
           ),
         ),
@@ -444,9 +458,16 @@ class PlayPauseIntent extends Intent {
   const PlayPauseIntent();
 }
 
-class MovePositionIntent extends Intent {
-  const MovePositionIntent(
+class ChangePositionIntent extends Intent {
+  const ChangePositionIntent(
     this.duration,
   );
   final Duration duration;
+}
+
+class ChangeVolumeIntent extends Intent {
+  const ChangeVolumeIntent(
+    this.change,
+  );
+  final int change;
 }
