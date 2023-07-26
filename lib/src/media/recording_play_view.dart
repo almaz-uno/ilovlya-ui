@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_in_app_pip/flutter_in_app_pip.dart';
 import 'package:ilovlya/src/api/media.dart';
 import 'package:ilovlya/src/media/format.dart';
@@ -105,77 +106,105 @@ class _RecordingVideoState extends State<_RecordingVideo> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-            child: Row(
-              children: [
-                // const BackButton(),
-                Expanded(child: Text("${widget.recording.title} • ${formatDuration(_controller.value.duration)}")),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-            child: AspectRatio(
-              aspectRatio: widget.download.hasVideo ? _controller.value.aspectRatio : 8.0,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: <Widget>[
-                  VideoPlayer(_controller),
-                  _ControlsOverlay(controller: _controller),
-                  VideoProgressIndicator(
-                    _controller,
-                    allowScrubbing: true,
-                    colors: VideoProgressColors(
-                      playedColor: Theme.of(context).colorScheme.primary,
-                      backgroundColor: const Color.fromARGB(127, 158, 158, 158),
+    return Shortcuts(
+      shortcuts: const <ShortcutActivator, Intent>{
+        SingleActivator(LogicalKeyboardKey.space): PlayPauseIntent(),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: true, shift: true): MovePositionIntent(Duration(seconds: -300)),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: true, shift: false): MovePositionIntent(Duration(seconds: -60)),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: true): MovePositionIntent(Duration(seconds: -30)),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: false): MovePositionIntent(Duration(seconds: -5)),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: true): MovePositionIntent(Duration(seconds: 300)),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: false): MovePositionIntent(Duration(seconds: 60)),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: true): MovePositionIntent(Duration(seconds: 30)),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: false): MovePositionIntent(Duration(seconds: 5)),
+      },
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          PlayPauseIntent: CallbackAction<PlayPauseIntent>(onInvoke: (PlayPauseIntent intent) {
+            _controller.value.isPlaying ? _controller.pause() : _controller.play();
+            return null;
+          }),
+          MovePositionIntent: CallbackAction<MovePositionIntent>(onInvoke: (MovePositionIntent intent) {
+            _controller.seekTo(_controller.value.position + intent.duration);
+            return null;
+          }),
+        },
+        child: Focus(
+          autofocus: true,
+          child: SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                  child: Row(
+                    children: [
+                      // const BackButton(),
+                      Expanded(child: Text("${widget.recording.title} • ${formatDuration(_controller.value.duration)}")),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                  child: AspectRatio(
+                    aspectRatio: widget.download.hasVideo ? _controller.value.aspectRatio : 8.0,
+                    child: Stack(
+                      alignment: Alignment.bottomCenter,
+                      children: <Widget>[
+                        VideoPlayer(_controller),
+                        _ControlsOverlay(controller: _controller),
+                        VideoProgressIndicator(
+                          _controller,
+                          allowScrubbing: true,
+                          colors: VideoProgressColors(
+                            playedColor: Theme.of(context).colorScheme.primary,
+                            backgroundColor: const Color.fromARGB(127, 158, 158, 158),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-            child: _buildControls(context),
-          ),
-          Container(
-            alignment: Alignment.topLeft,
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        PictureInPicture.startPiP(pipWidget: VideoPlayer(_controller));
-                      },
-                      icon: const Icon(Icons.picture_in_picture),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        PictureInPicture.stopPiP();
-                      },
-                      icon: const Icon(Icons.exit_to_app),
-                    ),
-                  ],
                 ),
-                if (widget.recording.seenAt != null) Text("seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)"),
-                Text("duration: ${formatDuration(_controller.value.duration)}"),
-                Text("position: ${formatDuration(_controller.value.position)}"),
-                Text("buffered: ${_controller.value.buffered.isNotEmpty ? formatDuration(_controller.value.buffered.last.end) : ''}"),
-                Text("isBuffering: ${_controller.value.isBuffering}"),
-                Text("volume: ${_controller.value.volume}"),
-                Text("size: ${_controller.value.size}"),
-                // Text("${_controller.value}"),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                  child: _buildControls(context),
+                ),
+                Container(
+                  alignment: Alignment.topLeft,
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              PictureInPicture.startPiP(pipWidget: VideoPlayer(_controller));
+                            },
+                            icon: const Icon(Icons.picture_in_picture),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              PictureInPicture.stopPiP();
+                            },
+                            icon: const Icon(Icons.exit_to_app),
+                          ),
+                        ],
+                      ),
+                      if (widget.recording.seenAt != null) Text("seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)"),
+                      Text("duration: ${formatDuration(_controller.value.duration)}"),
+                      Text("position: ${formatDuration(_controller.value.position)}"),
+                      Text("buffered: ${_controller.value.buffered.isNotEmpty ? formatDuration(_controller.value.buffered.last.end) : ''}"),
+                      Text("isBuffering: ${_controller.value.isBuffering}"),
+                      Text("volume: ${_controller.value.volume}"),
+                      Text("size: ${_controller.value.size}"),
+                      // Text("${_controller.value}"),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -409,4 +438,15 @@ class _ControlsOverlay extends StatelessWidget {
       ],
     );
   }
+}
+
+class PlayPauseIntent extends Intent {
+  const PlayPauseIntent();
+}
+
+class MovePositionIntent extends Intent {
+  const MovePositionIntent(
+    this.duration,
+  );
+  final Duration duration;
 }
