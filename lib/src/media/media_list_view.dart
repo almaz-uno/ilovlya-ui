@@ -238,7 +238,16 @@ class _MediaListViewState extends State<MediaListView> {
           }
           // final TextStyle? textStyle = item.hiddenAt != null ? const TextStyle(decoration: TextDecoration.lineThrough) : null;
           var viewedSrt = item.position == 0 ? "" : " (${formatDuration(Duration(seconds: item.position))})";
-          final Widget? trailing = item.hiddenAt != null ? const Icon(Icons.visibility_off_outlined) : null;
+
+          Widget? trailing;
+
+          if (item.hiddenAt != null) {
+            trailing = const Icon(Icons.visibility_off_outlined);
+          }
+          if (item.hasFile) {
+            trailing = const Icon(Icons.file_download_done);
+          }
+
           return Opacity(
             opacity: opacity,
             child: Column(

@@ -21,6 +21,7 @@ class RecordingInfo {
   DateTime? seenAt;
   DateTime? hiddenAt;
   List<Format>? formats;
+  bool hasFile;
 
   RecordingInfo({
     this.id = "",
@@ -37,6 +38,7 @@ class RecordingInfo {
     this.seenAt,
     this.hiddenAt,
     this.formats,
+    this.hasFile = false,
   });
 
   factory RecordingInfo.fromJson(Map<String, dynamic> json) => _$RecordingInfoFromJson(json);

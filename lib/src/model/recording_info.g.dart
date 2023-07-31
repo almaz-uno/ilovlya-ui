@@ -32,6 +32,7 @@ RecordingInfo _$RecordingInfoFromJson(Map<String, dynamic> json) =>
       formats: (json['formats'] as List<dynamic>?)
           ?.map((e) => Format.fromJson(e as Map<String, dynamic>))
           .toList(),
+      hasFile: json['has_file'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$RecordingInfoToJson(RecordingInfo instance) =>
@@ -50,4 +51,5 @@ Map<String, dynamic> _$RecordingInfoToJson(RecordingInfo instance) =>
       'seen_at': instance.seenAt?.toIso8601String(),
       'hidden_at': instance.hiddenAt?.toIso8601String(),
       'formats': instance.formats,
+      'has_file': instance.hasFile,
     };
