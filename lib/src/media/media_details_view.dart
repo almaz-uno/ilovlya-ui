@@ -17,11 +17,17 @@ class MediaDetailsView extends StatefulWidget {
   const MediaDetailsView({
     super.key,
     this.id = "",
+    this.play = false,
   });
   final String id;
+  final bool play;
 
-  static String routeName(String id) {
-    return "/$pathRecordings/$id";
+  static String routeName(String id, {bool play = false}) {
+    String routeName = "/$pathRecordings/$id";
+    if (play) {
+      routeName += "?play";
+    }
+    return routeName;
   }
 
   @override
@@ -33,7 +39,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
   List<Download>? _downloads;
   String? title;
   bool _isLoading = false;
-  bool _isLoadingDownloads = false;
+  bool _shouldPlay = false;
   StreamSubscription? _downloadsPullSubs;
 
   final _controllerTitle = TextEditingController();
@@ -43,6 +49,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
   @override
   void initState() {
     super.initState();
+    _shouldPlay = widget.play;
     setState(() {
       _futureRecording = _load(widget.id, false);
     });
@@ -74,16 +81,33 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
     }
   }
 
+  (Download? ready, Download? stale) _findAppropriateDownloads() {
+    if (_downloads == null) {
+      return (null, null);
+    }
+    Download? ready;
+    Download? stale;
+    for (var d in _downloads!) {
+      if (d.updatedAt == null) {
+        continue;
+      }
+      if ((ready == null || d.updatedAt!.isAfter(ready.updatedAt!)) && d.status == "ready") {
+        ready = d;
+      }
+      if ((stale == null || d.updatedAt!.isAfter(stale.updatedAt!)) && d.status == "stale") {
+        stale = d;
+      }
+    }
+
+    return (ready, stale);
+  }
+
   _loadDownloads(String recordingID) async {
-    try {
-      setState(() {
-        _isLoadingDownloads = true;
-      });
-      _downloads = await listDownloads(recordingID);
-    } finally {
-      setState(() {
-        _isLoadingDownloads = false;
-      });
+    _downloads = await listDownloads(recordingID);
+    var (ready, _) = _findAppropriateDownloads();
+    if (mounted && ready != null && _shouldPlay) {
+      _recordView(context, ready);
+      _shouldPlay = false;
     }
   }
 
@@ -219,22 +243,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
             padding: const EdgeInsets.all(8.0),
             child: InkWell(
               onTap: () {
-                if (_downloads == null) {
-                  return;
-                }
-                Download? ready;
-                Download? stale;
-                for (var d in _downloads!) {
-                  if (d.updatedAt == null) {
-                    continue;
-                  }
-                  if ((ready == null || d.updatedAt!.isAfter(ready.updatedAt!)) && d.status == "ready") {
-                    ready = d;
-                  }
-                  if ((stale == null || d.updatedAt!.isAfter(stale.updatedAt!)) && d.status == "stale") {
-                    stale = d;
-                  }
-                }
+                var (ready, stale) = _findAppropriateDownloads();
                 if (ready != null) {
                   _recordView(context, ready);
                 } else if (stale != null) {
@@ -485,7 +494,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
           children: [
             IconButton(
               onPressed: () {
-                copyToClipboard(context, d.url);
+                copyToClipboard(context, serverURL(d.url));
               },
               tooltip: "Copy file link to clipboard",
               icon: const Icon(Icons.copy_rounded),
@@ -496,9 +505,9 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
                 onSelected: (String choice) async {
                   switch (choice) {
                     case "default":
-                      launchUrlString(d.url);
+                      launchUrlString(serverURL(d.url));
                     case "vlc":
-                      var u = "vlc://${d.url}";
+                      var u = "vlc://${serverURL(d.url)}";
                       if (await canLaunchUrl(Uri.parse(u))) {
                         await launchUrlString(u);
                       } else {

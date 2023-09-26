@@ -115,7 +115,7 @@ class MyApp extends StatelessWidget {
       } else if (uri.pathSegments.length < 2) {
         return const MediaListView();
       } else {
-        return MediaDetailsView(id: uri.pathSegments[1]);
+        return MediaDetailsView(id: uri.pathSegments[1], play: uri.queryParameters.containsKey("play"));
       }
     } else if (uri.pathSegments[0] == pathSettings) {
       return SettingsView(controller: settingsController);

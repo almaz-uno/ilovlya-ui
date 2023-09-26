@@ -272,6 +272,9 @@ class _MediaListViewState extends State<MediaListView> {
                   onTap: () {
                     Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);
                   },
+                  onLongPress: () {
+                    Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id, play: true), arguments: item.id);
+                  },
                 ),
                 LinearProgressIndicator(
                   backgroundColor: const Color.fromARGB(127, 158, 158, 158),

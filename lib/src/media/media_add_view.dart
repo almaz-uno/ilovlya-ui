@@ -44,6 +44,7 @@ class _MediaAddViewState extends State<MediaAddView> {
       if (data?.text != null) {
         _urlController.text = data!.text!;
       }
+
       setState(() {
         _futurePropositions = _getURLInfo(_urlController.text);
       });
@@ -99,7 +100,8 @@ class _MediaAddViewState extends State<MediaAddView> {
                       tooltip: 'Lookup media info',
                       onPressed: () {
                         setState(() {
-                          _futurePropositions = _getURLInfo(_urlController.text);
+                          _futurePropositions =
+                              _getURLInfo(_urlController.text);
                         });
                       },
                     ),
@@ -111,7 +113,9 @@ class _MediaAddViewState extends State<MediaAddView> {
                 ),
               ),
             ),
-            (_futurePropositions == null) ? const Text('To view info press lookup button above') : buildPropositionList(),
+            (_futurePropositions == null)
+                ? const Text('To view info press lookup button above')
+                : buildPropositionList(),
             Visibility(
                 visible: _isLoading || _isAdding,
                 child: const Padding(
@@ -125,9 +129,11 @@ class _MediaAddViewState extends State<MediaAddView> {
   }
 
   void _addMedia(BuildContext context, String url, bool doBack) async {
-    setState(() {
-      _isAdding = true;
-    });
+    if (!widget.forcePaste) {
+      setState(() {
+        _isAdding = true;
+      });
+    }
     // _futureMediaAdd = ; // the full information about media should be acquired anew
     media_api.addRecording(url).then((value) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -157,6 +163,19 @@ class _MediaAddViewState extends State<MediaAddView> {
       future: _futurePropositions,
       builder: (BuildContext context, AsyncSnapshot<URLInfo> snapshot) {
         if (snapshot.hasData) {
+          if (snapshot.data!.infos != null &&
+              widget.forcePaste &&
+              snapshot.data!.infos!.length == 1) {
+                var u = snapshot.data!.infos![0].webpageUrl;
+            _addMedia(context, u, true);
+            return Column(
+              children: [
+                Text("Adding url $u..."),
+                const CircularProgressIndicator(),
+              ],
+            );
+          }
+
           return snapshot.data!.infos == null
               ? const Text("There is no recordings in the url")
               : ListView.builder(
