@@ -11,19 +11,21 @@ environment:
 
 dependencies:
   app_links: ^3.4.3
-  audio_service: ^0.18.12
   audio_video_progress_bar: ^2.0.0
   flutter:
     sdk: flutter
-  flutter_in_app_pip: ^1.7.3
   flutter_localizations:
     sdk: flutter
-  flutter_vlc_player: ^7.3.1
+  fvp: ^0.8.0
   http: ^1.0.0
   json_annotation: ^4.8.1
+  media_kit: ^1.1.7
+  media_kit_libs_video: ^1.0.1
+  media_kit_video: ^1.1.8
+  universal_platform: ^1.0.0+1
   url_launcher: ^6.1.12
-  video_player: ^2.7.0
-  wakelock: ^0.6.2
+  video_player: ^2.7.2
+  wakelock_plus: ^1.1.1
 
 dev_dependencies:
   flutter_test:

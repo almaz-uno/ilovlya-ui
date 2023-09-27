@@ -6,19 +6,21 @@ import FlutterMacOS
 import Foundation
 
 import app_links
-import audio_service
-import audio_session
-import path_provider_foundation
-import sqflite
+import fvp
+import media_kit_libs_macos_video
+import media_kit_video
+import package_info_plus
+import screen_brightness_macos
 import url_launcher_macos
-import wakelock_macos
+import wakelock_plus
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   AppLinksMacosPlugin.register(with: registry.registrar(forPlugin: "AppLinksMacosPlugin"))
-  AudioServicePlugin.register(with: registry.registrar(forPlugin: "AudioServicePlugin"))
-  AudioSessionPlugin.register(with: registry.registrar(forPlugin: "AudioSessionPlugin"))
-  PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))
-  SqflitePlugin.register(with: registry.registrar(forPlugin: "SqflitePlugin"))
+  FvpPlugin.register(with: registry.registrar(forPlugin: "FvpPlugin"))
+  MediaKitLibsMacosVideoPlugin.register(with: registry.registrar(forPlugin: "MediaKitLibsMacosVideoPlugin"))
+  MediaKitVideoPlugin.register(with: registry.registrar(forPlugin: "MediaKitVideoPlugin"))
+  FLTPackageInfoPlusPlugin.register(with: registry.registrar(forPlugin: "FLTPackageInfoPlusPlugin"))
+  ScreenBrightnessMacosPlugin.register(with: registry.registrar(forPlugin: "ScreenBrightnessMacosPlugin"))
   UrlLauncherPlugin.register(with: registry.registrar(forPlugin: "UrlLauncherPlugin"))
-  WakelockMacosPlugin.register(with: registry.registrar(forPlugin: "WakelockMacosPlugin"))
+  WakelockPlusMacosPlugin.register(with: registry.registrar(forPlugin: "WakelockPlusMacosPlugin"))
 }

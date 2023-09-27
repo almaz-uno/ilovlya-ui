@@ -8,14 +8,14 @@ import 'package:ilovlya/src/api/media.dart';
 import 'package:ilovlya/src/media/format.dart';
 import 'package:ilovlya/src/model/download.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
-import 'package:video_player/video_player.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
-class RecordingView extends StatelessWidget {
+class RecordingViewMediaKit extends StatelessWidget {
   final RecordingInfo recording;
   final Download download;
 
-  const RecordingView({
+  const RecordingViewMediaKit({
     super.key,
     required this.recording,
     required this.download,
@@ -46,63 +46,88 @@ class _RecordingVideo extends StatefulWidget {
 const _positionSendPeriod = Duration(seconds: 1);
 
 class _RecordingVideoState extends State<_RecordingVideo> {
-  late VideoPlayerController _controller;
+  String get url => serverURL(widget.download.url);
+
+  // late VideoPlayerController _controller;
+
+  late final player = Player();
+  late final controller = VideoController(player);
+
   StreamSubscription? _positionSendSubs;
 
   @override
   void initState() {
     super.initState();
+    _init();
+  }
 
-    _controller = VideoPlayerController.networkUrl(
-      Uri.parse(serverURL(widget.download.url)),
-      videoPlayerOptions: VideoPlayerOptions(
-        mixWithOthers: false,
-        allowBackgroundPlayback: true,
-      ),
-    );
+  _init() async {
+    await player.open(Media(url), play: false);
 
-    _controller.addListener(() {
-      if (_controller.value.position != Duration.zero &&
-          _controller.value.position == _controller.value.duration) {
-        _sendPosition(
-          widget.recording.id,
-          _controller.value.position,
-          _controller.value.position == _controller.value.duration,
-        );
-      }
+    player.stream.duration.listen((event) {
+      player.seek(Duration(seconds: widget.recording.position));
+      player.play();
       setState(() {});
     });
-    _controller.setLooping(false);
 
-    _controller.initialize().then((_) async {
-      await _controller.seekTo(Duration(seconds: widget.recording.position));
-      _controller.play();
+    player.stream.buffering.listen((event) {
+      setState(() {});
+    });
+
+    player.stream.buffer.listen((event) {
+      setState(() {});
+    });
+
+    // await player.seek(Duration(seconds: widget.recording.position));
+
+    player.stream.playing.listen((event) {
+      setState(() {});
+    });
+
+    player.stream.videoParams.listen((event) {
+      setState(() {});
+    });
+
+    player.stream.completed.listen((event) {
+      _sendPosition(
+        widget.recording.id,
+        player.state.position,
+        event,
+      );
+      setState(() {});
+    });
+
+    player.stream.position.listen((Duration position) {
+      // if (player.state.position != Duration.zero &&
+      //     player.state.position == player.state.duration) {
+      //   _sendPosition(
+      //     widget.recording.id,
+      //     player.state.position,
+      //     player.state.position == player.state.duration,
+      //   );
+      // }
+      setState(() {});
     });
 
     _positionSendSubs = Stream.periodic(_positionSendPeriod).listen((event) {
-      if (_controller.value.isPlaying &&
-          _controller.value.position != Duration.zero) {
+      if (player.state.playing && player.state.position != Duration.zero) {
         _sendPosition(
           widget.recording.id,
-          _controller.value.position,
-          _controller.value.position == _controller.value.duration,
+          player.state.position,
+          player.state.position == player.state.duration,
         );
       }
     });
-
-    WakelockPlus.enable();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    player.dispose();
     _positionSendSubs?.cancel();
     super.dispose();
-    WakelockPlus.disable();
   }
 
   void _sendPosition(String recordingId, Duration position, bool finished) {
-    // print("$recordingId $position $finished");
     putPosition(recordingId, position, finished);
   }
 
@@ -144,19 +169,17 @@ class _RecordingVideoState extends State<_RecordingVideo> {
         actions: <Type, Action<Intent>>{
           PlayPauseIntent: CallbackAction<PlayPauseIntent>(
               onInvoke: (PlayPauseIntent intent) {
-            _controller.value.isPlaying
-                ? _controller.pause()
-                : _controller.play();
+            player.playOrPause();
             return null;
           }),
           ChangePositionIntent: CallbackAction<ChangePositionIntent>(
               onInvoke: (ChangePositionIntent intent) {
-            _controller.seekTo(_controller.value.position + intent.duration);
+            player.seek(player.state.position + intent.duration);
             return null;
           }),
           ChangeVolumeIntent: CallbackAction<ChangeVolumeIntent>(
               onInvoke: (ChangeVolumeIntent intent) {
-            var nv = (_controller.value.volume * 100).toInt() + intent.change;
+            var nv = (player.state.volume).toInt() + intent.change;
             if (nv < 0) {
               nv = 0;
             }
@@ -164,7 +187,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
               nv = 100;
             }
 
-            _controller.setVolume(nv / 100);
+            player.setVolume(nv.toDouble());
             return null;
           }),
         },
@@ -180,30 +203,33 @@ class _RecordingVideoState extends State<_RecordingVideo> {
                       // const BackButton(),
                       Expanded(
                           child: Text(
-                              "${widget.recording.title} • ${formatDuration(_controller.value.duration)}")),
+                              "${widget.recording.title} • ${formatDuration(player.state.duration)}")),
                     ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                  child: AspectRatio(
-                    aspectRatio: widget.download.hasVideo
-                        ? _controller.value.aspectRatio
-                        : 8.0,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.width * 9.0 / 16.0,
                     child: Stack(
                       alignment: Alignment.bottomCenter,
                       children: <Widget>[
-                        VideoPlayer(_controller),
-                        _ControlsOverlay(controller: _controller),
-                        VideoProgressIndicator(
-                          _controller,
-                          allowScrubbing: true,
-                          colors: VideoProgressColors(
-                            playedColor: Theme.of(context).colorScheme.primary,
-                            backgroundColor:
-                                const Color.fromARGB(127, 158, 158, 158),
-                          ),
+                        Video(
+                          controller: controller,
+                          filterQuality: FilterQuality.high,
+                          pauseUponEnteringBackgroundMode: false,
                         ),
+                        // _ControlsOverlay(player: player),
+                        // VideoProgressIndicator(
+                        //   _controller,
+                        //   allowScrubbing: true,
+                        //   colors: VideoProgressColors(
+                        //     playedColor: Theme.of(context).colorScheme.primary,
+                        //     backgroundColor:
+                        //         const Color.fromARGB(127, 158, 158, 158),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
@@ -224,14 +250,18 @@ class _RecordingVideoState extends State<_RecordingVideo> {
                       Text("created at: ${widget.download.createdAt}"),
                       Text("updated at: ${widget.download.updatedAt}"),
                       Text(
-                          "duration: ${formatDuration(_controller.value.duration)}"),
+                          "duration: ${formatDuration(player.state.duration)}"),
                       Text(
-                          "position: ${formatDuration(_controller.value.position)}"),
+                          "position: ${formatDuration(player.state.position)}"),
+                      Text("buffered: ${formatDuration(player.state.buffer)}"),
                       Text(
-                          "buffered: ${_controller.value.buffered.isNotEmpty ? formatDuration(_controller.value.buffered.last.end) : ''}"),
-                      Text("isBuffering: ${_controller.value.isBuffering}"),
-                      Text("volume: ${_controller.value.volume}"),
-                      Text("size: ${_controller.value.size}"),
+                          "buffering: ${player.state.buffering ? 'XX' : '>>'}"),
+                      Text("volume: ${player.state.volume}"),
+                      Text(
+                          "size: ${player.state.width}x${player.state.height}"),
+
+                      Text("video params: ${player.state.videoParams}"),
+                      Text("audio params: ${player.state.audioParams}"),
                       // Text("${_controller.value}"),
                     ],
                   ),
@@ -245,22 +275,18 @@ class _RecordingVideoState extends State<_RecordingVideo> {
   }
 
   Widget _buildControls(BuildContext context) {
-    Duration? buffered;
-    for (var element in _controller.value.buffered) {
-      buffered = element.end;
-    }
     // var c = Theme.of(context).colorScheme.primary;
     return Column(
       children: [
         ProgressBar(
           progressBarColor: Theme.of(context).colorScheme.primary,
           timeLabelLocation: TimeLabelLocation.sides,
-          progress: _controller.value.position,
-          total: _controller.value.duration,
+          progress: player.state.position,
+          total: player.state.duration,
           timeLabelType: TimeLabelType.remainingTime,
-          buffered: buffered,
+          buffered: player.state.buffer,
           onSeek: (duration) {
-            _controller.seekTo(duration);
+            player.seek(duration);
           },
         ),
         Row(
@@ -268,12 +294,10 @@ class _RecordingVideoState extends State<_RecordingVideo> {
           children: [
             TextButton(
               onLongPress: () {
-                _controller.seekTo(
-                    _controller.value.position - const Duration(minutes: 5));
+                player.seek(player.state.position - const Duration(minutes: 5));
               },
               onPressed: () {
-                _controller.seekTo(
-                    _controller.value.position - const Duration(minutes: 1));
+                player.seek(player.state.position - const Duration(minutes: 1));
               },
               child: const Icon(Icons.fast_rewind),
             ),
@@ -281,36 +305,28 @@ class _RecordingVideoState extends State<_RecordingVideo> {
             //label: const Icon(Icons.chevron_left)),
             TextButton(
               onLongPress: () {
-                _controller.seekTo(
-                    _controller.value.position - const Duration(seconds: 30));
+                player
+                    .seek(player.state.position - const Duration(seconds: 30));
               },
               onPressed: () {
-                _controller.seekTo(
-                    _controller.value.position - const Duration(seconds: 15));
+                player
+                    .seek(player.state.position - const Duration(seconds: 15));
               },
               child: const Icon(Icons.fast_rewind),
             ),
-            if (_controller.value.isPlaying)
+            if (player.state.playing)
               TextButton(
-                onLongPress: () {
-                  _controller.seekTo(
-                      _controller.value.position + const Duration(seconds: 30));
-                },
                 onPressed: () {
-                  _controller.pause();
+                  player.pause();
                 },
                 child: const Icon(
                   Icons.pause,
                 ),
               ),
-            if (!_controller.value.isPlaying)
+            if (!player.state.playing)
               TextButton(
-                onLongPress: () {
-                  _controller.seekTo(
-                      _controller.value.position + const Duration(seconds: 30));
-                },
                 onPressed: () {
-                  _controller.play();
+                  player.play();
                 },
                 child: const Icon(
                   Icons.play_arrow,
@@ -318,12 +334,12 @@ class _RecordingVideoState extends State<_RecordingVideo> {
               ),
             TextButton(
               onLongPress: () {
-                _controller.seekTo(
-                    _controller.value.position + const Duration(seconds: 30));
+                player
+                    .seek(player.state.position + const Duration(seconds: 30));
               },
               onPressed: () {
-                _controller.seekTo(
-                    _controller.value.position + const Duration(seconds: 15));
+                player
+                    .seek(player.state.position + const Duration(seconds: 15));
               },
               child: const Icon(
                 Icons.fast_forward,
@@ -331,12 +347,10 @@ class _RecordingVideoState extends State<_RecordingVideo> {
             ),
             TextButton(
               onLongPress: () {
-                _controller.seekTo(
-                    _controller.value.position + const Duration(minutes: 5));
+                player.seek(player.state.position + const Duration(minutes: 5));
               },
               onPressed: () {
-                _controller.seekTo(
-                    _controller.value.position + const Duration(minutes: 1));
+                player.seek(player.state.position + const Duration(minutes: 1));
               },
               child: const Icon(
                 Icons.fast_forward,
@@ -350,20 +364,19 @@ class _RecordingVideoState extends State<_RecordingVideo> {
 }
 
 class _ControlsOverlay extends StatelessWidget {
-  const _ControlsOverlay({required VideoPlayerController controller})
-      : _controller = controller;
+  const _ControlsOverlay({required Player player}) : _player = player;
 
   static const _volumes = <double>[
-    0.10,
-    0.20,
-    0.30,
-    0.40,
-    0.50,
-    0.60,
-    0.70,
-    0.80,
-    0.90,
-    1.00,
+    10,
+    20,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90,
+    100,
   ];
   static const List<double> _examplePlaybackRates = <double>[
     0.25,
@@ -376,7 +389,7 @@ class _ControlsOverlay extends StatelessWidget {
     10.0,
   ];
 
-  final VideoPlayerController _controller;
+  final Player _player;
 
   @override
   Widget build(BuildContext context) {
@@ -385,7 +398,7 @@ class _ControlsOverlay extends StatelessWidget {
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           reverseDuration: const Duration(milliseconds: 200),
-          child: _controller.value.isPlaying
+          child: _player.state.playing
               ? const SizedBox.shrink()
               : Container(
                   color: Colors.black26,
@@ -405,25 +418,23 @@ class _ControlsOverlay extends StatelessWidget {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  _controller.seekTo(
-                      _controller.value.position - const Duration(seconds: 5));
+                  _player.seek(
+                      _player.state.position - const Duration(seconds: 5));
+                },
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onDoubleTap: () {
+                  _player.playOrPause();
                 },
               ),
             ),
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  _controller.value.isPlaying
-                      ? _controller.pause()
-                      : _controller.play();
-                },
-              ),
-            ),
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  _controller.seekTo(
-                      _controller.value.position + const Duration(seconds: 5));
+                  _player.seek(
+                      _player.state.position + const Duration(seconds: 5));
                 },
               ),
             ),
@@ -432,17 +443,17 @@ class _ControlsOverlay extends StatelessWidget {
         Align(
           alignment: Alignment.topLeft,
           child: PopupMenuButton<double>(
-            initialValue: _controller.value.volume,
+            initialValue: _player.state.volume,
             tooltip: 'Sound volume',
             onSelected: (double volume) {
-              _controller.setVolume(volume);
+              _player.setVolume(volume);
             },
             itemBuilder: (BuildContext context) {
               return <PopupMenuItem<double>>[
                 for (var volume in _volumes)
                   PopupMenuItem<double>(
                     value: volume,
-                    child: Text('${volume * 100}%'),
+                    child: Text('$volume%'),
                   )
               ];
             },
@@ -455,8 +466,8 @@ class _ControlsOverlay extends StatelessWidget {
                 horizontal: 16,
               ),
               child: Visibility(
-                visible: !_controller.value.isPlaying,
-                child: Text('${(_controller.value.volume * 100).toInt()}%'),
+                visible: !_player.state.playing,
+                child: Text('${(_player.state.volume).toInt()}%'),
               ),
             ),
           ),
@@ -464,17 +475,17 @@ class _ControlsOverlay extends StatelessWidget {
         Align(
           alignment: Alignment.topRight,
           child: PopupMenuButton<double>(
-            initialValue: _controller.value.playbackSpeed,
-            tooltip: 'Playback speed',
-            onSelected: (double speed) {
-              _controller.setPlaybackSpeed(speed);
+            initialValue: _player.state.rate,
+            tooltip: 'Playback rate',
+            onSelected: (double rate) {
+              _player.setRate(rate);
             },
             itemBuilder: (BuildContext context) {
               return <PopupMenuItem<double>>[
-                for (final double speed in _examplePlaybackRates)
+                for (final double rate in _examplePlaybackRates)
                   PopupMenuItem<double>(
-                    value: speed,
-                    child: Text('${speed}x'),
+                    value: rate,
+                    child: Text('${rate}x'),
                   )
               ];
             },
@@ -486,7 +497,7 @@ class _ControlsOverlay extends StatelessWidget {
                 vertical: 12,
                 horizontal: 16,
               ),
-              child: Text('${_controller.value.playbackSpeed}x'),
+              child: Text('${_player.state.rate}x'),
             ),
           ),
         ),
@@ -512,17 +523,3 @@ class ChangeVolumeIntent extends Intent {
   );
   final int change;
 }
-
-//TODO: remove it!
-// void f() {
-//   var v = VlcPlayerController.network(
-//     'https://media.w3.org/2010/05/sintel/trailer.mp4',
-//     hwAcc: HwAcc.full,
-//     autoPlay: false,
-//     options: VlcPlayerOptions(),
-//   );
-//   VlcPlayer(
-//     controller: v,
-//     aspectRatio: 16 / 9,
-//   );
-// }
