@@ -7,10 +7,12 @@ import 'package:ilovlya/src/api/api.dart';
 import 'package:ilovlya/src/api/media.dart';
 import 'package:ilovlya/src/media/download_details.dart';
 import 'package:ilovlya/src/media/media_kit/recording_play_view_media_kit.dart';
+import 'package:ilovlya/src/media/media_kit/recording_play_view_media_kit_handler.dart';
 import 'package:ilovlya/src/media/recording_play_view.dart';
 import 'package:ilovlya/src/media/format.dart';
 import 'package:ilovlya/src/model/download.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class MediaDetailsView extends StatefulWidget {
@@ -42,8 +44,6 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
   bool _shouldPlay = false;
   StreamSubscription? _downloadsPullSubs;
 
-  final _controllerTitle = TextEditingController();
-
   static const _downloadsPullPeriod = Duration(seconds: 3);
 
   @override
@@ -53,12 +53,12 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
     setState(() {
       _futureRecording = _load(widget.id, false);
     });
+
     _loadDownloads(widget.id);
+
     _downloadsPullSubs = Stream.periodic(_downloadsPullPeriod).listen((event) {
-      setState(() {
-        _loadDownloads(widget.id);
-        _pullRefresh();
-      });
+      _loadDownloads(widget.id);
+      _pullRefresh();
     });
   }
 
@@ -73,7 +73,10 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
       setState(() {
         _isLoading = true;
       });
-      return await getRecording(id, updateFormats: updateFormats);
+
+      var r = await getRecording(id, updateFormats: updateFormats);
+      r.thumbnailUrl = server() + r.thumbnailUrl;
+      return r;
     } finally {
       setState(() {
         _isLoading = false;
@@ -106,11 +109,16 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
 
   _loadDownloads(String recordingID) async {
     _downloads = await listDownloads(recordingID);
+
+    for (var d in _downloads!) {
+      d.url = serverURL(d.url);
+    }
     var (ready, _) = _findAppropriateDownloads();
     if (mounted && ready != null && _shouldPlay && _futureRecording != null) {
       _recordView(context, await _futureRecording!, ready);
       _shouldPlay = false;
     }
+    setState(() {});
   }
 
   Future<void> _pullRefresh({bool updateFormats = false}) async {
@@ -129,25 +137,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
                 future: _futureRecording,
                 builder: (BuildContext context,
                     AsyncSnapshot<RecordingInfo> snapshot) {
-                  _controllerTitle.text =
-                      snapshot.data?.title ?? "Recording...";
-                  return Theme(
-                    data: ThemeData(
-                      textSelectionTheme: const TextSelectionThemeData(
-                        selectionColor: Colors.amber,
-                        cursorColor: Colors.amber,
-                      ),
-                    ),
-                    child: TextField(
-                      controller: _controllerTitle,
-                      decoration: const InputDecoration(),
-                      style: TextStyle(
-                          color: Theme.of(context)
-                              .primaryTextTheme
-                              .titleSmall!
-                              .color),
-                    ),
-                  );
+                  return Text(snapshot.data?.title ?? "Recording...");
                 }),
         actions: [
           IconButton(
@@ -265,7 +255,8 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
               child: Column(
                 children: [
                   Image.network(
-                    server() + recording.thumbnailUrl,
+                    recording.thumbnailUrl,
+                    height: MediaQuery.of(context).size.height * 0.5,
                     // fit: BoxFit.fill,
                     // scale: 0.5,
                   ),
@@ -329,6 +320,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
             ),
           ),
         ),
+        DataCell(_buildActions(context, recording, d)),
         DataCell(Opacity(opacity: opacity, child: Text(d.resolution))),
         DataCell(Opacity(
             opacity: opacity, child: Text(d.fps != null ? "${d.fps}" : ""))),
@@ -346,7 +338,6 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
           ),
         )),
         DataCell(Opacity(opacity: opacity, child: Text(d.size == 0 ? '' : hr))),
-        DataCell(_buildActions(context, recording, d)),
         DataCell(
           onTap: () {
             Navigator.of(context).push(
@@ -392,6 +383,9 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
                             label: Expanded(
                                 child: Text("file", style: headerStyle))),
                         DataColumn(
+                            label:
+                                Expanded(child: Text("", style: headerStyle))),
+                        DataColumn(
                             label: Expanded(
                                 child: Text("resolution", style: headerStyle))),
                         DataColumn(
@@ -403,9 +397,6 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
                         DataColumn(
                             label: Expanded(
                                 child: Text("size", style: headerStyle))),
-                        DataColumn(
-                            label:
-                                Expanded(child: Text("", style: headerStyle))),
                         DataColumn(
                             label:
                                 Expanded(child: Text("", style: headerStyle))),
@@ -522,37 +513,10 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
   }
 
   void _recordView(BuildContext context, RecordingInfo recording, Download d) {
-    // if (UniversalPlatform.isWeb) {
-    //   Navigator.of(context).push(
-    //     MaterialPageRoute(
-    //         builder: (BuildContext context) =>
-    //             RecordingView(recording: recording, download: d)),
-    //   );
-    //   return;
-    // }
-
-    // if (UniversalPlatform.isLinux) {
-    //   Navigator.of(context).push(
-    //     MaterialPageRoute(
-    //         builder: (BuildContext context) =>
-    //             RecordingViewMediaKit(recording: recording, download: d)),
-    //   );
-    //   return;
-    // }
-
-    // if (UniversalPlatform.isIOS) {
-    //   Navigator.of(context).push(
-    //     MaterialPageRoute(
-    //         builder: (BuildContext context) =>
-    //             RecordingViewPlayout(recording: r, download: d)),
-    //   );
-    //   return;
-    // }
-
     Navigator.of(context).push(
       MaterialPageRoute(
           builder: (BuildContext context) =>
-              RecordingView(recording: recording, download: d)),
+              RecordingViewMediaKit(recording: recording, download: d)),
     );
   }
 
@@ -580,30 +544,43 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
           children: [
             IconButton(
               onPressed: () {
-                copyToClipboard(context, serverURL(d.url));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (BuildContext context) =>
+                          RecordingViewMediaKitHandler(
+                              recording: recording, download: d)),
+                );
               },
-              tooltip: "Copy file link to clipboard",
-              icon: const Icon(Icons.copy_rounded),
+              tooltip: "Open with MediaKit with handler",
+              icon: const Icon(Icons.slideshow),
             ),
             PopupMenuButton(
-                tooltip: 'Open in...',
+                tooltip: 'Do with it...',
                 icon: const Icon(Icons.more_vert),
                 onSelected: (String choice) async {
                   switch (choice) {
+                    case "copy":
+                      copyToClipboard(context, d.url);
                     case "default":
-                      launchUrlString(serverURL(d.url));
-                    case "media_kit":
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (BuildContext context) =>
-                                RecordingViewMediaKit(
-                                    recording: recording, download: d)),
-                      );
+                      launchUrlString(d.url);
+                    case "standard_open":
+                      _openWithStandard(context, recording, d);
                   }
                   setState(() {});
                 },
                 itemBuilder: (BuildContext context) {
                   var menuItems = <PopupMenuItem<String>>[];
+                  menuItems.add(
+                    const PopupMenuItem<String>(
+                      value: "copy",
+                      child: Row(
+                        children: [
+                          Icon(Icons.copy_rounded),
+                          Text("Copy file link to clipboard"),
+                        ],
+                      ),
+                    ),
+                  );
                   menuItems.add(
                     const PopupMenuItem<String>(
                       value: "default",
@@ -617,12 +594,12 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
                   );
                   menuItems.add(
                     const PopupMenuItem<String>(
-                      value: "media_kit",
+                      value: "standard_open",
                       child: Row(
                         children: [
-                          Icon(null),
+                          Icon(Icons.slideshow),
                           Text(
-                            "Open with MediaKit",
+                            "Open with standard player",
                           ),
                         ],
                       ),
@@ -635,6 +612,18 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
       default:
         return ErrorWidget("Unexpected download status ${d.status}");
     }
+  }
+
+  void _openWithStandard(
+    BuildContext context,
+    RecordingInfo recording,
+    Download d,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+          builder: (BuildContext context) =>
+              RecordingView(recording: recording, download: d)),
+    );
   }
 
   Widget _addSeenButton() {

@@ -5,7 +5,6 @@ import 'package:ilovlya/src/model/download.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
 class RecordingViewMediaKitBasic extends StatefulWidget {
   final RecordingInfo recording;

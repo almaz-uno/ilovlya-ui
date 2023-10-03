@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ilovlya/src/api/media.dart';
 import 'package:ilovlya/src/media/format.dart';
+import 'package:ilovlya/src/media/media_kit/media_kit_audio_handler.dart';
 import 'package:ilovlya/src/model/download.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
 import 'package:media_kit/media_kit.dart';
@@ -21,12 +22,12 @@ void _seek(Player player, Duration position) {
   player.seek(position);
 }
 
-class RecordingViewMediaKit extends StatefulWidget {
+class RecordingViewMediaKitHandler extends StatefulWidget {
   final RecordingInfo recording;
   final Download download;
   final bool inFull;
 
-  const RecordingViewMediaKit({
+  const RecordingViewMediaKitHandler({
     super.key,
     required this.recording,
     required this.download,
@@ -34,20 +35,18 @@ class RecordingViewMediaKit extends StatefulWidget {
   });
 
   @override
-  State<RecordingViewMediaKit> createState() => _RecordingViewMediaKitState();
+  State<RecordingViewMediaKitHandler> createState() =>
+      _RecordingViewMediaKitHandlerState();
 }
 
 const _positionSendPeriod = Duration(seconds: 1);
 
-class _RecordingViewMediaKitState extends State<RecordingViewMediaKit> {
+class _RecordingViewMediaKitHandlerState
+    extends State<RecordingViewMediaKitHandler> {
   String get url => widget.download.url;
 
-  late final _player = Player(
-      configuration: PlayerConfiguration(
-    bufferSize: 512 * 1024 * 1024,
-    title: widget.recording.title,
-    osc: true,
-  ));
+  Player get _player => MKPlayerHandler.player;
+
   late final _controller = VideoController(_player);
 
   StreamSubscription? _positionSendSubs;
@@ -59,7 +58,9 @@ class _RecordingViewMediaKitState extends State<RecordingViewMediaKit> {
   }
 
   _init() async {
-    await _player.open(Media(url), play: false);
+    // await _player.open(Media(url), play: false);
+
+    MKPlayerHandler.handler.playRecording(widget.recording, widget.download);
 
     if (UniversalPlatform.isDesktopOrWeb) {
       await _player.setVolume(100.0);
@@ -121,7 +122,8 @@ class _RecordingViewMediaKitState extends State<RecordingViewMediaKit> {
 
   @override
   void dispose() {
-    _player.dispose();
+    //_player.dispose();
+    MKPlayerHandler.dispose();
     _positionSendSubs?.cancel();
     super.dispose();
   }
@@ -280,7 +282,7 @@ class _RecordingViewMediaKitState extends State<RecordingViewMediaKit> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("Media Kit!"),
+                        const Text("With audio handler!"),
                         if (widget.recording.seenAt != null)
                           Text(
                               "seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)"),

@@ -24,7 +24,9 @@ class RecordingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(recording.title)),
+      appBar: AppBar(
+        title: Text(recording.title),
+      ),
       body: _RecordingVideo(recording: recording, download: download),
     );
   }
