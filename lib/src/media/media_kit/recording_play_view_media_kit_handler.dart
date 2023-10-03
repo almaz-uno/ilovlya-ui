@@ -63,7 +63,7 @@ class _RecordingViewMediaKitHandlerState
     MKPlayerHandler.handler.playRecording(widget.recording, widget.download);
 
     if (UniversalPlatform.isDesktopOrWeb) {
-      await _player.setVolume(100.0);
+      await _player.setVolume(50.0);
     }
 
     _player.stream.duration.listen((event) {
@@ -238,7 +238,7 @@ class _RecordingViewMediaKitHandlerState
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                     child: Row(
                       children: [
-                        // const BackButton(),
+                        const BackButton(),
                         Expanded(
                             child: Text(
                                 "${widget.recording.title} • ${formatDuration(_player.state.duration)}")),

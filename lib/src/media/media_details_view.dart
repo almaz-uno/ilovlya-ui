@@ -516,7 +516,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
     Navigator.of(context).push(
       MaterialPageRoute(
           builder: (BuildContext context) =>
-              RecordingViewMediaKit(recording: recording, download: d)),
+              RecordingViewMediaKitHandler(recording: recording, download: d)),
     );
   }
 
@@ -547,7 +547,7 @@ class _MediaDetailsViewState extends State<MediaDetailsView> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                       builder: (BuildContext context) =>
-                          RecordingViewMediaKitHandler(
+                          RecordingViewMediaKit(
                               recording: recording, download: d)),
                 );
               },
