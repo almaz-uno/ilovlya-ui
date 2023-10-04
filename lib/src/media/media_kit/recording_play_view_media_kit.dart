@@ -201,6 +201,7 @@ class _RecordingViewMediaKitState extends State<RecordingViewMediaKit> {
             BackIntent: CallbackAction<BackIntent>(
               onInvoke: (BackIntent intent) {
                 Navigator.of(context).pop(true);
+                return null;
               },
             ),
             PlayPauseIntent: CallbackAction<PlayPauseIntent>(

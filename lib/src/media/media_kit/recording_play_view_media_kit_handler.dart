@@ -62,7 +62,7 @@ class _RecordingViewMediaKitHandlerState
 
     MKPlayerHandler.handler.playRecording(widget.recording, widget.download);
 
-    if (UniversalPlatform.isDesktopOrWeb) {
+    if (UniversalPlatform.isDesktop || UniversalPlatform.isWeb) {
       await _player.setVolume(50.0);
     }
 
@@ -203,6 +203,7 @@ class _RecordingViewMediaKitHandlerState
             BackIntent: CallbackAction<BackIntent>(
               onInvoke: (BackIntent intent) {
                 Navigator.of(context).pop(true);
+                return null;
               },
             ),
             PlayPauseIntent: CallbackAction<PlayPauseIntent>(

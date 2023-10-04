@@ -12,7 +12,6 @@ import 'package:ilovlya/src/media/recording_play_view.dart';
 import 'package:ilovlya/src/media/format.dart';
 import 'package:ilovlya/src/model/download.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
-import 'package:media_kit/media_kit.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class MediaDetailsView extends StatefulWidget {
