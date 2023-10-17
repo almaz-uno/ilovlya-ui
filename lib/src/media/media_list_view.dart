@@ -19,7 +19,7 @@ class MediaListView extends StatefulWidget {
   State<MediaListView> createState() => _MediaListViewState();
 }
 
-const _listPullPeriod = Duration(seconds: 5);
+const _listPullPeriod = Duration(minutes: 5);
 const _listLimit = 1000;
 
 class _MediaListViewState extends State<MediaListView> {
