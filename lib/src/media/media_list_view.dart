@@ -1,33 +1,34 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ilovlya/src/api/api.dart';
 import 'package:ilovlya/src/api/media.dart';
 import 'package:ilovlya/src/media/format.dart';
 import 'package:ilovlya/src/media/media_add_view.dart';
 import 'package:ilovlya/src/media/media_details_view.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
+import 'package:ilovlya/src/settings/settings_provider.dart';
 import 'package:ilovlya/src/settings/settings_view.dart';
 import 'package:flutter/material.dart';
 
-class MediaListView extends StatefulWidget {
+class MediaListView extends ConsumerStatefulWidget {
   const MediaListView({
     super.key,
   });
 
   @override
-  State<MediaListView> createState() => _MediaListViewState();
+  ConsumerState<MediaListView> createState() => _MediaListViewState();
 }
 
 const _listPullPeriod = Duration(minutes: 5);
 const _listLimit = 1000;
 
-class _MediaListViewState extends State<MediaListView> {
+class _MediaListViewState extends ConsumerState<MediaListView> {
   Future<List<RecordingInfo>>? _futureRecordingsList;
   bool _isLoading = false;
   bool _showHidden = false;
   bool _showSeen = false;
-  String _sortBy = "created_at";
   // final _listScrollController = ScrollController();
   StreamSubscription? _listPullSubs;
 
@@ -36,7 +37,7 @@ class _MediaListViewState extends State<MediaListView> {
       setState(() {
         _isLoading = true;
       });
-      return await listRecordings(offset, limit, sortBy: _sortBy);
+      return await listRecordings(offset, limit, sortBy: ref.read(settingsNotifierProvider).requireValue.sortBy);
     } finally {
       setState(() {
         _isLoading = false;
@@ -77,6 +78,7 @@ class _MediaListViewState extends State<MediaListView> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = ref.watch(settingsNotifierProvider);
     final primary = Theme.of(context).colorScheme.primary;
     return Scaffold(
       appBar: AppBar(
@@ -104,10 +106,10 @@ class _MediaListViewState extends State<MediaListView> {
                   case "hidden":
                     _showHidden = !_showHidden;
                   case "sort_by_created_at":
-                    _sortBy = "created_at";
+                    ref.read(settingsNotifierProvider.notifier).updateSortBy("created_at");
                     _pullRefresh();
                   case "sort_by_updated_at":
-                    _sortBy = "updated_at";
+                  ref.read(settingsNotifierProvider.notifier).updateSortBy("updated_at");
                     _pullRefresh();
                 }
                 setState(() {});
@@ -141,7 +143,7 @@ class _MediaListViewState extends State<MediaListView> {
                     value: "sort_by_created_at",
                     child: Row(
                       children: [
-                        Icon(_sortBy == "created_at" ? Icons.check : null, color: primary),
+                        Icon(settings.requireValue.sortBy == "created_at" ? Icons.check : null, color: primary),
                         Text("sort by created", style: TextStyle(color: primary)),
                       ],
                     ),
@@ -152,7 +154,7 @@ class _MediaListViewState extends State<MediaListView> {
                     value: "sort_by_updated_at",
                     child: Row(
                       children: [
-                        Icon(_sortBy == "updated_at" ? Icons.check : null, color: primary),
+                        Icon(settings.requireValue.sortBy == "updated_at" ? Icons.check : null, color: primary),
                         Text("sort by updated", style: TextStyle(color: primary)),
                       ],
                     ),

@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ilovlya/src/api/media.dart';
 import 'package:ilovlya/src/media/format.dart';
 import 'package:ilovlya/src/media/media_kit/media_kit_audio_handler.dart';
 import 'package:ilovlya/src/model/download.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
+import 'package:ilovlya/src/settings/settings_provider.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:universal_platform/universal_platform.dart';
@@ -22,7 +24,7 @@ void _seek(Player player, Duration position) {
   player.seek(position);
 }
 
-class RecordingViewMediaKitHandler extends StatefulWidget {
+class RecordingViewMediaKitHandler extends ConsumerStatefulWidget {
   final RecordingInfo recording;
   final Download download;
   final bool inFull;
@@ -35,14 +37,14 @@ class RecordingViewMediaKitHandler extends StatefulWidget {
   });
 
   @override
-  State<RecordingViewMediaKitHandler> createState() =>
+  ConsumerState<RecordingViewMediaKitHandler> createState() =>
       _RecordingViewMediaKitHandlerState();
 }
 
 const _positionSendPeriod = Duration(seconds: 1);
 
 class _RecordingViewMediaKitHandlerState
-    extends State<RecordingViewMediaKitHandler> {
+    extends ConsumerState<RecordingViewMediaKitHandler> {
   String get url => widget.download.url;
 
   Player get _player => MKPlayerHandler.player;
@@ -63,7 +65,8 @@ class _RecordingViewMediaKitHandlerState
     MKPlayerHandler.handler.playRecording(widget.recording, widget.download);
 
     if (UniversalPlatform.isDesktop || UniversalPlatform.isWeb) {
-      await _player.setVolume(50.0);
+      await _player
+          .setVolume(ref.read(settingsNotifierProvider).requireValue.volume);
     }
 
     _player.stream.duration.listen((event) {
@@ -88,6 +91,11 @@ class _RecordingViewMediaKitHandlerState
       setState(() {});
     });
 
+    _player.stream.volume.listen((double volume) {
+      setState(() {});
+      ref.read(settingsNotifierProvider.notifier).updateVolume(volume);
+    });
+
     _player.stream.completed.listen((event) {
       _sendPosition(
         widget.recording.id,
@@ -98,14 +106,6 @@ class _RecordingViewMediaKitHandlerState
     });
 
     _player.stream.position.listen((Duration position) {
-      // if (player.state.position != Duration.zero &&
-      //     player.state.position == player.state.duration) {
-      //   _sendPosition(
-      //     widget.recording.id,
-      //     player.state.position,
-      //     player.state.position == player.state.duration,
-      //   );
-      // }
       setState(() {});
     });
 
@@ -153,6 +153,8 @@ class _RecordingViewMediaKitHandlerState
       playerH = mediaH;
       playerW = playerW * mediaH / playerH;
     }
+
+    final settings = ref.watch(settingsNotifierProvider);
 
     return Scaffold(
       // appBar: AppBar(
@@ -277,34 +279,37 @@ class _RecordingViewMediaKitHandlerState
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                     child: _buildControls(context),
                   ),
-                  Container(
-                    alignment: Alignment.topLeft,
-                    padding: const EdgeInsets.all(8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("With audio handler!"),
-                        if (widget.recording.seenAt != null)
+                  Visibility(
+                    visible: settings.value?.debugMode ?? false,
+                    child: Container(
+                      alignment: Alignment.topLeft,
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("With audio handler!"),
+                          if (widget.recording.seenAt != null)
+                            Text(
+                                "seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)"),
+                          Text("created at: ${widget.download.createdAt}"),
+                          Text("updated at: ${widget.download.updatedAt}"),
                           Text(
-                              "seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)"),
-                        Text("created at: ${widget.download.createdAt}"),
-                        Text("updated at: ${widget.download.updatedAt}"),
-                        Text(
-                            "duration: ${formatDuration(_player.state.duration)}"),
-                        Text(
-                            "position: ${formatDuration(_player.state.position)}"),
-                        Text(
-                            "buffered: ${formatDuration(_player.state.buffer)}"),
-                        Text(
-                            "buffering: ${_player.state.buffering ? 'XX' : '>>'}"),
-                        Text("volume: ${_player.state.volume}"),
-                        Text(
-                            "size: ${_player.state.width}x${_player.state.height}"),
+                              "duration: ${formatDuration(_player.state.duration)}"),
+                          Text(
+                              "position: ${formatDuration(_player.state.position)}"),
+                          Text(
+                              "buffered: ${formatDuration(_player.state.buffer)}"),
+                          Text(
+                              "buffering: ${_player.state.buffering ? 'XX' : '>>'}"),
+                          Text("volume: ${_player.state.volume}"),
+                          Text(
+                              "size: ${_player.state.width}x${_player.state.height}"),
 
-                        Text("video params: ${_player.state.videoParams}"),
-                        Text("audio params: ${_player.state.audioParams}"),
-                        // Text("${_controller.value}"),
-                      ],
+                          Text("video params: ${_player.state.videoParams}"),
+                          Text("audio params: ${_player.state.audioParams}"),
+                          // Text("${_controller.value}"),
+                        ],
+                      ),
                     ),
                   ),
                 ],
