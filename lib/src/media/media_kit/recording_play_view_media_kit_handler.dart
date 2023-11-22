@@ -157,15 +157,15 @@ class _RecordingViewMediaKitHandlerState
     final settings = ref.watch(settingsNotifierProvider);
 
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text(widget.recording.title),
-      //   actions: [
-      //     IconButton(
-      //       onPressed: () {},
-      //       icon: const Icon(Icons.open_in_full),
-      //     )
-      //   ],
-      // ),
+      appBar: AppBar(
+        title: Text("${widget.recording.title} • ${formatDuration(_player.state.duration)}"),
+        // actions: [
+        //   IconButton(
+        //     onPressed: () {},
+        //     icon: const Icon(Icons.open_in_full),
+        //   )
+        // ],
+      ),
       body: Shortcuts(
         shortcuts: const <ShortcutActivator, Intent>{
           SingleActivator(LogicalKeyboardKey.backspace): BackIntent(),
@@ -237,17 +237,17 @@ class _RecordingViewMediaKitHandlerState
             child: SingleChildScrollView(
               child: Column(
                 children: <Widget>[
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-                    child: Row(
-                      children: [
-                        const BackButton(),
-                        Expanded(
-                            child: Text(
-                                "${widget.recording.title} • ${formatDuration(_player.state.duration)}")),
-                      ],
-                    ),
-                  ),
+                  // Container(
+                  //   padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                  //   child: Row(
+                  //     children: [
+                  //       const BackButton(),
+                  //       Expanded(
+                  //           child: Text(
+                  //               "${widget.recording.title} • ${formatDuration(_player.state.duration)}")),
+                  //     ],
+                  //   ),
+                  // ),
                   Container(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
                     child: SizedBox(

@@ -22,6 +22,8 @@ class SettingsNotifier extends _$SettingsNotifier {
       debugMode: prefs.getBool("debug_mode") ?? false,
       volume: prefs.getDouble("volume") ?? 50.0,
       sortBy: prefs.getString("sort_by") ?? "created_at",
+      showHidden: prefs.getBool("show_hidden") ?? false,
+      showSeen: prefs.getBool("show_seen") ?? false,
     );
   }
 
@@ -42,41 +44,49 @@ class SettingsNotifier extends _$SettingsNotifier {
     prefs.setBool("debug_mode", state.value?.debugMode ?? false);
     prefs.setDouble("volume", state.value?.volume ?? 50.0);
     prefs.setString("sort_by", state.value?.sortBy ?? "created_at");
+    prefs.setBool("show_hidden", state.value?.showHidden ?? false);
+    prefs.setBool("show_seen", state.value?.showSeen ?? false);
   }
 
   void updateTheme(ThemeMode theme) {
-    final old = state.value ?? Settings();
-    state = AsyncData(old.copy(theme: theme));
+    state = AsyncData(state.requireValue.copy(theme: theme));
     save();
   }
 
   void updateToken(String token) {
-    final old = state.value ?? Settings();
-    state = AsyncData(old.copy(token: token));
+    state = AsyncData(state.requireValue.copy(token: token));
     save();
   }
 
   void updateServerUrl(String serverUrl) {
-    final old = state.value ?? Settings();
-    state = AsyncData(old.copy(serverUrl: serverUrl));
+    state = AsyncData(state.requireValue.copy(serverUrl: serverUrl));
     save();
   }
 
   void updateDebugMode(bool? debugMode) {
-    final old = state.value ?? Settings();
-    state = AsyncData(old.copy(debugMode: debugMode));
+    state = AsyncData(state.requireValue.copy(debugMode: debugMode));
     save();
   }
 
   void updateVolume(double volume) {
-    final old = state.value ?? Settings();
-    state = AsyncData(old.copy(volume: volume));
+    state = AsyncData(state.requireValue.copy(volume: volume));
     save();
   }
 
   void updateSortBy(String sortBy) {
-    final old = state.value ?? Settings();
-    state = AsyncData(old.copy(sortBy: sortBy));
+    state = AsyncData(state.requireValue.copy(sortBy: sortBy));
+    save();
+  }
+
+  void toggleShowHidden() {
+    state = AsyncData(
+        state.requireValue.copy(showHidden: !state.requireValue.showHidden));
+    save();
+  }
+
+  void toggleShowSeen() {
+    state = AsyncData(
+        state.requireValue.copy(showSeen: !state.requireValue.showSeen));
     save();
   }
 }

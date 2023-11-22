@@ -3,12 +3,12 @@ import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ilovlya/src/media/media_add_view.dart';
 import 'package:ilovlya/src/media/media_details_view.dart';
-import 'package:ilovlya/src/media/media_list_view.dart';
 import 'package:ilovlya/src/api/api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
+import 'media/media_list_riverpod.dart';
 import 'settings/settings_view.dart';
 
 /// The Widget that configures your application.
@@ -84,7 +84,7 @@ class MyApp extends ConsumerWidget {
             arguments: null,
           ),
           builder: (BuildContext context) {
-            return const MediaListView();
+            return const MediaListViewRiverpod();
           },
         );
       },
@@ -104,7 +104,7 @@ class MyApp extends ConsumerWidget {
         return MediaAddView(
             forcePaste: uri.queryParameters.containsKey("paste"));
       } else if (uri.pathSegments.length < 2) {
-        return const MediaListView();
+        return const MediaListViewRiverpod();
       } else {
         return MediaDetailsView(
             id: uri.pathSegments[1],

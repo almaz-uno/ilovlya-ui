@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ilovlya/src/api/api.dart';
-import 'package:ilovlya/src/api/media.dart';
-import 'package:ilovlya/src/media/format.dart';
-import 'package:ilovlya/src/model/download.dart';
-import 'package:ilovlya/src/model/recording_info.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+
+import '../api/api.dart';
+import '../api/media.dart';
+import '../model/download.dart';
+import '../model/recording_info.dart';
+import 'format.dart';
 
 class RecordingView extends StatelessWidget {
   final RecordingInfo recording;
@@ -514,17 +515,3 @@ class ChangeVolumeIntent extends Intent {
   );
   final int change;
 }
-
-//TODO: remove it!
-// void f() {
-//   var v = VlcPlayerController.network(
-//     'https://media.w3.org/2010/05/sintel/trailer.mp4',
-//     hwAcc: HwAcc.full,
-//     autoPlay: false,
-//     options: VlcPlayerOptions(),
-//   );
-//   VlcPlayer(
-//     controller: v,
-//     aspectRatio: 16 / 9,
-//   );
-// }

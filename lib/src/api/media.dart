@@ -14,9 +14,6 @@ Future<URLInfo> getUrlInfo(String url) async {
   var u = Uri.parse("${server()}$path?url=$encodedURL");
   var res = await http.get(u).timeout(requestTimeoutLong);
 
-  // if (res.statusCode == 404) {
-  //   throw notfou
-  // } else
   if (res.statusCode >= 400) {
     throw Exception("unable to get propositions for $url. Status code is: ${res.statusCode}");
   }

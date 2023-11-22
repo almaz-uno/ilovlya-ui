@@ -3,18 +3,20 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ilovlya/src/api/api.dart';
-import 'package:ilovlya/src/api/media.dart';
-import 'package:ilovlya/src/media/download_details.dart';
-import 'package:ilovlya/src/media/media_kit/recording_play_view_media_kit.dart';
-import 'package:ilovlya/src/media/media_kit/recording_play_view_media_kit_handler.dart';
-import 'package:ilovlya/src/media/recording_play_view.dart';
-import 'package:ilovlya/src/media/format.dart';
-import 'package:ilovlya/src/model/download.dart';
-import 'package:ilovlya/src/model/recording_info.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-class MediaDetailsView extends StatefulWidget {
+import '../api/api.dart';
+import '../api/media.dart';
+import '../model/download.dart';
+import '../model/recording_info.dart';
+import 'download_details.dart';
+import 'format.dart';
+import 'media_kit/recording_play_view_media_kit.dart';
+import 'media_kit/recording_play_view_media_kit_handler.dart';
+import 'recording_view.dart';
+
+class MediaDetailsView extends ConsumerStatefulWidget {
   const MediaDetailsView({
     super.key,
     this.id = "",
@@ -32,10 +34,10 @@ class MediaDetailsView extends StatefulWidget {
   }
 
   @override
-  State<MediaDetailsView> createState() => _MediaDetailsViewState();
+  ConsumerState<MediaDetailsView> createState() => _MediaDetailsViewState();
 }
 
-class _MediaDetailsViewState extends State<MediaDetailsView> {
+class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   Future<RecordingInfo>? _futureRecording;
   List<Download>? _downloads;
   String? title;
