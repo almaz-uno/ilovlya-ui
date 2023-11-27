@@ -49,44 +49,42 @@ class SettingsNotifier extends _$SettingsNotifier {
   }
 
   void updateTheme(ThemeMode theme) {
-    state = AsyncData(state.requireValue.copy(theme: theme));
+    state = AsyncData(state.requireValue.copyWith(theme: theme));
     save();
   }
 
   void updateToken(String token) {
-    state = AsyncData(state.requireValue.copy(token: token));
+    state = AsyncData(state.requireValue.copyWith(token: token));
     save();
   }
 
   void updateServerUrl(String serverUrl) {
-    state = AsyncData(state.requireValue.copy(serverUrl: serverUrl));
+    state = AsyncData(state.requireValue.copyWith(serverUrl: serverUrl));
     save();
   }
 
   void updateDebugMode(bool? debugMode) {
-    state = AsyncData(state.requireValue.copy(debugMode: debugMode));
+    state = AsyncData(state.requireValue.copyWith(debugMode: debugMode));
     save();
   }
 
   void updateVolume(double volume) {
-    state = AsyncData(state.requireValue.copy(volume: volume));
+    state = AsyncData(state.requireValue.copyWith(volume: volume));
     save();
   }
 
   void updateSortBy(String sortBy) {
-    state = AsyncData(state.requireValue.copy(sortBy: sortBy));
+    state = AsyncData(state.requireValue.copyWith(sortBy: sortBy));
     save();
   }
 
   void toggleShowHidden() {
-    state = AsyncData(
-        state.requireValue.copy(showHidden: !state.requireValue.showHidden));
+    state = AsyncData(state.requireValue.copyWith(showHidden: !state.requireValue.showHidden));
     save();
   }
 
   void toggleShowSeen() {
-    state = AsyncData(
-        state.requireValue.copy(showSeen: !state.requireValue.showSeen));
+    state = AsyncData(state.requireValue.copyWith(showSeen: !state.requireValue.showSeen));
     save();
   }
 }

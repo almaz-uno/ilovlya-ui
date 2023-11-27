@@ -95,12 +95,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       if (d.updatedAt == null) {
         continue;
       }
-      if ((ready == null || d.updatedAt!.isAfter(ready.updatedAt!)) &&
-          d.status == "ready") {
+      if ((ready == null || d.updatedAt!.isAfter(ready.updatedAt!)) && d.status == "ready") {
         ready = d;
       }
-      if ((stale == null || d.updatedAt!.isAfter(stale.updatedAt!)) &&
-          d.status == "stale") {
+      if ((stale == null || d.updatedAt!.isAfter(stale.updatedAt!)) && d.status == "stale") {
         stale = d;
       }
     }
@@ -136,8 +134,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             ? const Text('Recording info...')
             : FutureBuilder<RecordingInfo>(
                 future: _futureRecording,
-                builder: (BuildContext context,
-                    AsyncSnapshot<RecordingInfo> snapshot) {
+                builder: (BuildContext context, AsyncSnapshot<RecordingInfo> snapshot) {
                   return Text(snapshot.data?.title ?? "Recording...");
                 }),
         actions: [
@@ -145,8 +142,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             icon: const Icon(Icons.copy),
             tooltip: 'Copy video URL to the clipboard',
             onPressed: () {
-              _futureRecording!.then((recording) =>
-                  copyToClipboard(context, recording.webpageUrl));
+              _futureRecording!.then((recording) => copyToClipboard(context, recording.webpageUrl));
             },
           ),
           _addSeenButton(),
@@ -162,8 +158,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       ),
       body: Stack(
         children: [
-          Visibility(
-              visible: _isLoading, child: const LinearProgressIndicator()),
+          Visibility(visible: _isLoading, child: const LinearProgressIndicator()),
           RefreshIndicator(
             onRefresh: _pullRefresh,
             child: Scrollbar(
@@ -171,9 +166,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               interactive: true,
               child: SingleChildScrollView(
                 scrollDirection: Axis.vertical,
-                child: (_futureRecording == null)
-                    ? const Center(child: Text('loading...'))
-                    : _buildRecordings(),
+                child: (_futureRecording == null) ? const Center(child: Text('loading...')) : _buildRecordings(),
               ),
             ),
           ),
@@ -263,23 +256,16 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   ),
                   LinearProgressIndicator(
                     backgroundColor: const Color.fromARGB(127, 158, 158, 158),
-                    value: recording.duration == 0
-                        ? null
-                        : recording.position / recording.duration,
+                    value: recording.duration == 0 ? null : recording.position / recording.duration,
                   ),
                 ],
               ),
             ),
           ),
         ),
-        Text(
-            "${formatDuration(Duration(seconds: recording.position))} / ${formatDuration(Duration(seconds: recording.duration))}"),
-        (_downloads == null)
-            ? const Text("Downloads info is loading...")
-            : _downloadsTable(context, recording),
-        recording.formats == null || recording.formats!.isEmpty
-            ? const Text("No formats for the record")
-            : _formatsTable(context, recording),
+        Text("${formatDuration(Duration(seconds: recording.position))} / ${formatDuration(Duration(seconds: recording.duration))}"),
+        (_downloads == null) ? const Text("Downloads info is loading...") : _downloadsTable(context, recording),
+        recording.formats == null || recording.formats!.isEmpty ? const Text("No formats for the record") : _formatsTable(context, recording),
       ],
     );
   }
@@ -317,24 +303,19 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             opacity: opacity,
             child: Tooltip(
               message: "${d.filename} tap to play in embedding player",
-              child: Text(d.filename.replaceFirst(d.recordingId, "⏵⏵⏵")),
+              child: Text(d.formatId),
             ),
           ),
         ),
         DataCell(_buildActions(context, recording, d)),
         DataCell(Opacity(opacity: opacity, child: Text(d.resolution))),
-        DataCell(Opacity(
-            opacity: opacity, child: Text(d.fps != null ? "${d.fps}" : ""))),
+        DataCell(Opacity(opacity: opacity, child: Text(d.fps != null ? "${d.fps}" : ""))),
         DataCell(Opacity(
           opacity: opacity,
           child: Row(
             children: [
-              Visibility(
-                  visible: d.hasAudio,
-                  child: const Icon(Icons.audiotrack_rounded)),
-              Visibility(
-                  visible: d.hasVideo,
-                  child: const Icon(Icons.videocam_rounded)),
+              Visibility(visible: d.hasAudio, child: const Icon(Icons.audiotrack_rounded)),
+              Visibility(visible: d.hasVideo, child: const Icon(Icons.videocam_rounded)),
             ],
           ),
         )),
@@ -342,9 +323,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         DataCell(
           onTap: () {
             Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (BuildContext context) =>
-                      DownloadDetailsView(download: d)),
+              MaterialPageRoute(builder: (BuildContext context) => DownloadDetailsView(download: d)),
             );
           },
           Opacity(opacity: opacity, child: Text(pr)),
@@ -380,27 +359,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     child: DataTable(
                       columnSpacing: 12,
                       columns: const [
-                        DataColumn(
-                            label: Expanded(
-                                child: Text("file", style: headerStyle))),
-                        DataColumn(
-                            label:
-                                Expanded(child: Text("", style: headerStyle))),
-                        DataColumn(
-                            label: Expanded(
-                                child: Text("resolution", style: headerStyle))),
-                        DataColumn(
-                            label: Expanded(
-                                child: Text("fps", style: headerStyle))),
-                        DataColumn(
-                            label:
-                                Expanded(child: Text("", style: headerStyle))),
-                        DataColumn(
-                            label: Expanded(
-                                child: Text("size", style: headerStyle))),
-                        DataColumn(
-                            label:
-                                Expanded(child: Text("", style: headerStyle))),
+                        DataColumn(label: Expanded(child: Text("format", style: headerStyle))),
+                        DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                        DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
+                        DataColumn(label: Expanded(child: Text("fps", style: headerStyle))),
+                        DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                        DataColumn(label: Expanded(child: Text("size", style: headerStyle))),
+                        DataColumn(label: Expanded(child: Text("", style: headerStyle))),
                       ],
                       rows: rows,
                     ),
@@ -424,9 +389,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 _startPreparation(context, "${f.id}+ba*");
                 // _startPreparation(context, f.id);
               },
-              tooltip:
-                  "Download this format and the best audio on the server (prepare for viewing)",
-              icon: const Icon(Icons.file_download_outlined),
+              tooltip: "Download this format and the best audio on the server (prepare for viewing)",
+              icon: const Icon(Icons.system_update_alt),
             ),
           ),
           DataCell(
@@ -434,19 +398,15 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               _startPreparation(context, f.id);
             },
             Tooltip(
-              message:
-                  "Download exact this format (prepare this format for viewing)",
+              message: "Download exact this format (prepare this format for viewing)",
               child: Text(f.id),
             ),
           ),
           DataCell(Text(f.ext)),
           DataCell(Text(f.resolution)),
           DataCell(Visibility(visible: f.fps != 0, child: Text("${f.fps}"))),
-          DataCell(Visibility(
-              visible: f.hasAudio,
-              child: const Icon(Icons.audiotrack_rounded))),
-          DataCell(Visibility(
-              visible: f.hasVideo, child: const Icon(Icons.videocam_rounded))),
+          DataCell(Visibility(visible: f.hasAudio, child: const Icon(Icons.audiotrack_rounded))),
+          DataCell(Visibility(visible: f.hasVideo, child: const Icon(Icons.videocam_rounded))),
         ],
       ));
     }
@@ -470,21 +430,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             child: DataTable(
               columnSpacing: 12,
               columns: const <DataColumn>[
-                DataColumn(
-                    label: Expanded(child: Text("", style: headerStyle))),
-                DataColumn(
-                    label: Expanded(child: Text("id", style: headerStyle))),
-                DataColumn(
-                    label: Expanded(child: Text("ext", style: headerStyle))),
-                DataColumn(
-                    label: Expanded(
-                        child: Text("resolution", style: headerStyle))),
-                DataColumn(
-                    label: Expanded(child: Text("fps", style: headerStyle))),
-                DataColumn(
-                    label: Expanded(child: Text("", style: headerStyle))),
-                DataColumn(
-                    label: Expanded(child: Text("", style: headerStyle))),
+                DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                DataColumn(label: Expanded(child: Text("id", style: headerStyle))),
+                DataColumn(label: Expanded(child: Text("ext", style: headerStyle))),
+                DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
+                DataColumn(label: Expanded(child: Text("fps", style: headerStyle))),
+                DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                DataColumn(label: Expanded(child: Text("", style: headerStyle))),
               ],
               rows: rows,
             ),
@@ -515,9 +467,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
   void _recordView(BuildContext context, RecordingInfo recording, Download d) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-          builder: (BuildContext context) =>
-              RecordingViewMediaKitHandler(recording: recording, download: d)),
+      MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
     );
   }
 
@@ -532,24 +482,19 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           onPressed: () {
             _startPreparation(context, d.formatId);
           },
-          tooltip:
-              "Download this format again on the server (prepare for viewing)",
-          icon: const Icon(Icons.file_download_outlined),
+          tooltip: "Download this format again on the server (prepare for viewing)",
+          icon: const Icon(Icons.system_update_alt),
         );
       case "new":
       case "in_progress":
-        return Center(
-            child: CircularProgressIndicator(value: d.progressByLastLine()));
+        return Center(child: CircularProgressIndicator(value: d.progressByLastLine()));
       case "ready":
         return Row(
           children: [
             IconButton(
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (BuildContext context) =>
-                          RecordingViewMediaKit(
-                              recording: recording, download: d)),
+                  MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKit(recording: recording, download: d)),
                 );
               },
               tooltip: "Open with MediaKit with handler",
@@ -621,9 +566,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     Download d,
   ) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-          builder: (BuildContext context) =>
-              RecordingView(recording: recording, download: d)),
+      MaterialPageRoute(builder: (BuildContext context) => RecordingView(recording: recording, download: d)),
     );
   }
 

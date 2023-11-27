@@ -1,13 +1,15 @@
 import 'dart:ui';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ilovlya/src/media/media_add_view.dart';
-import 'package:ilovlya/src/media/media_details_view.dart';
-import 'package:ilovlya/src/api/api.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
+import 'api/api.dart';
+import 'media/media_add_view.dart';
+import 'media/media_details_view.dart';
 import 'media/media_list_riverpod.dart';
 import 'settings/settings_view.dart';
 
@@ -20,6 +22,11 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsNotifierProvider);
+
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Theme.of(context).colorScheme.background,
+    ));
+
     return MaterialApp(
       scrollBehavior: const MaterialScrollBehavior().copyWith(
         dragDevices: {
@@ -58,12 +65,18 @@ class MyApp extends ConsumerWidget {
         return "${AppLocalizations.of(context)!.appTitle} • ${Uri.base.host}";
       },
 
-      // Define a light and dark color theme. Then, read the user's
-      // preferred ThemeMode (light, dark, or system default) from the
-      // SettingsController to display the correct theme.
-      theme: ThemeData(),
-      darkTheme: ThemeData.dark(),
-      themeMode: settings.value?.theme ?? ThemeMode.system,
+      theme: ThemeData.from(
+        useMaterial3: true,
+        colorScheme: ThemeData.light().colorScheme,
+        textTheme: GoogleFonts.ptSansTextTheme(),
+      ),
+      darkTheme: ThemeData.from(
+        useMaterial3: true,
+        colorScheme: ThemeData.dark().colorScheme,
+        textTheme: GoogleFonts.ptSansTextTheme(),
+      ),
+
+      themeMode: settings.value?.theme,
 
       // Define a function to handle named routes in order to support
       // Flutter web url navigation and deep linking.
@@ -101,14 +114,11 @@ class MyApp extends ConsumerWidget {
       print(uri.queryParameters);
 
       if (uri.queryParameters.containsKey("add")) {
-        return MediaAddView(
-            forcePaste: uri.queryParameters.containsKey("paste"));
+        return MediaAddView(forcePaste: uri.queryParameters.containsKey("paste"));
       } else if (uri.pathSegments.length < 2) {
         return const MediaListViewRiverpod();
       } else {
-        return MediaDetailsView(
-            id: uri.pathSegments[1],
-            play: uri.queryParameters.containsKey("play"));
+        return MediaDetailsView(id: uri.pathSegments[1], play: uri.queryParameters.containsKey("play"));
       }
     } else if (uri.pathSegments[0] == pathSettings) {
       return const SettingsView();

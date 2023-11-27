@@ -8,6 +8,7 @@ import 'package:fvp/fvp.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   // media_kit
   MediaKit.ensureInitialized();
 
@@ -16,11 +17,5 @@ void main() async {
   // fvp
   registerWith();
 
-  // final container = ProviderContainer();
-  // await container.read(settingsNotifierProvider.notifier).load();
-  // runApp(UncontrolledProviderScope(
-  //   container: container,
-  //   child: const MyApp(),
-  // ));
   runApp(const ProviderScope(child: MyApp()));
 }

@@ -109,7 +109,7 @@ class _MediaListViewState extends ConsumerState<MediaListView> {
                     ref.read(settingsNotifierProvider.notifier).updateSortBy("created_at");
                     _pullRefresh();
                   case "sort_by_updated_at":
-                  ref.read(settingsNotifierProvider.notifier).updateSortBy("updated_at");
+                    ref.read(settingsNotifierProvider.notifier).updateSortBy("updated_at");
                     _pullRefresh();
                 }
                 setState(() {});

@@ -1,18 +1,23 @@
 import 'dart:convert';
 
+import 'package:ilovlya/src/settings/settings_provider.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:http/http.dart' as http;
-
 import '../model/download.dart';
 import '../model/recording_info.dart';
 import '../model/url_info.dart';
 import 'api.dart';
 
+part 'api_riverpod.g.dart';
+
 typedef HttpMethod = Future<http.Response> Function(Uri, {Map<String, String>? headers});
 
-Future<URLInfo> getUrlInfo(String url) async {
+@riverpod
+Future<URLInfo> getUrlInfo(GetUrlInfoRef ref, String serverBaseURL, String url) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/url-info';
   final encodedURL = Uri.encodeComponent(url);
-  var u = Uri.parse("${server()}$path?url=$encodedURL");
+  var u = Uri.parse("$serverURL$path?url=$encodedURL");
   var res = await http.get(u).timeout(requestTimeoutLong);
 
   if (res.statusCode >= 400) {
@@ -21,12 +26,14 @@ Future<URLInfo> getUrlInfo(String url) async {
   return URLInfo.fromJson(jsonDecode(res.body));
 }
 
-Future<RecordingInfo> addRecording(String url) async {
+@riverpod
+Future<RecordingInfo> addRecording(AddRecordingRef ref, String url) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/recordings';
 
   var res = await http
       .post(
-        Uri.parse("${server()}$path"),
+        Uri.parse("$serverURL$path"),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -42,14 +49,12 @@ Future<RecordingInfo> addRecording(String url) async {
   return RecordingInfo.fromJson(jsonDecode(res.body));
 }
 
-Future<List<RecordingInfo>> listRecordings(int offset, int limit, {String sortBy = "created_at"}) async {
+@riverpod
+Future<List<RecordingInfo>> listRecordings(ListRecordingsRef ref, int offset, int limit, {String sortBy = "created_at"}) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/recordings';
 
-  var res = await http
-      .get(
-        Uri.parse("${server()}$path?offset=$offset&limit=$limit&sort_by=$sortBy"),
-      )
-      .timeout(requestTimeout);
+  var res = await http.get(Uri.parse("$serverURL$path?offset=$offset&limit=$limit&sort_by=$sortBy")).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
     throw Exception("unable to get list of recordings. Status code is: ${res.statusCode}");
@@ -57,14 +62,12 @@ Future<List<RecordingInfo>> listRecordings(int offset, int limit, {String sortBy
   return RecordingInfo.fromJsonList(jsonDecode(res.body));
 }
 
-Future<RecordingInfo> getRecording(String id, {bool updateFormats = true}) async {
+@riverpod
+Future<RecordingInfo> getRecording(GetRecordingRef ref, String id, {bool updateFormats = true}) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   var path = '/api/recordings/$id?update_formats=$updateFormats';
 
-  var res = await http
-      .get(
-        Uri.parse("${server()}$path"),
-      )
-      .timeout(requestTimeout);
+  var res = await http.get(Uri.parse("$serverURL$path")).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
     throw Exception("unable to get recording with id=$id. Status code is: ${res.statusCode}");
@@ -72,14 +75,12 @@ Future<RecordingInfo> getRecording(String id, {bool updateFormats = true}) async
   return RecordingInfo.fromJson(jsonDecode(res.body));
 }
 
-Future<List<Download>> listDownloads(String recordingId) async {
+@riverpod
+Future<List<Download>> listDownloads(ListDownloadsRef ref, String recordingId) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   var path = '/api/recordings/$recordingId/downloads';
 
-  var res = await http
-      .get(
-        Uri.parse("${server()}$path"),
-      )
-      .timeout(requestTimeout);
+  var res = await http.get(Uri.parse("$serverURL$path")).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
     throw Exception("unable to get list of downloads for $recordingId. Status code is: ${res.statusCode}");
@@ -87,11 +88,13 @@ Future<List<Download>> listDownloads(String recordingId) async {
   return Download.fromJsonList(jsonDecode(res.body));
 }
 
-Future<Download> newDownload(String recordingId, String format) async {
+@riverpod
+Future<Download> newDownload(NewDownloadRef ref, String recordingId, String format) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   var path = '/api/recordings/$recordingId/downloads';
 
   var res = await http.post(
-    Uri.parse("${server()}$path"),
+    Uri.parse("$serverURL$path"),
     body: <String, String>{
       "format": format,
     },
@@ -103,11 +106,23 @@ Future<Download> newDownload(String recordingId, String format) async {
   return Download.fromJson(jsonDecode(res.body));
 }
 
-Future<void> _hidden(String recordingId, HttpMethod httpMethod) async {
+@riverpod
+Future<void> setHidden(SetHiddenRef ref, String recordingId) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  await _hidden(serverURL, recordingId, http.put);
+}
+
+@riverpod
+Future<void> unsetHidden(UnsetHiddenRef ref, String recordingId) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  await _hidden(serverURL, recordingId, http.delete);
+}
+
+Future<void> _hidden(String serverURL, String recordingId, HttpMethod httpMethod) async {
   var path = '/api/recordings/$recordingId/hidden';
 
   var res = await httpMethod(
-    Uri.parse("${server()}$path"),
+    Uri.parse("$serverURL$path"),
   ).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
@@ -115,19 +130,11 @@ Future<void> _hidden(String recordingId, HttpMethod httpMethod) async {
   }
 }
 
-Future<void> setHidden(String recordingId) async {
-  await _hidden(recordingId, http.put);
-}
-
-Future<void> unsetHidden(String recordingId) async {
-  await _hidden(recordingId, http.delete);
-}
-
-Future<void> _seen(String recordingId, HttpMethod httpMethod) async {
+Future<void> _seen(String serverURL, String recordingId, HttpMethod httpMethod) async {
   var path = '/api/recordings/$recordingId/seen';
 
   var res = await httpMethod(
-    Uri.parse("${server()}$path"),
+    Uri.parse("$serverURL$path"),
   ).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
@@ -135,21 +142,27 @@ Future<void> _seen(String recordingId, HttpMethod httpMethod) async {
   }
 }
 
-Future<void> setSeen(String recordingId) async {
-  await _seen(recordingId, http.put);
+@riverpod
+Future<void> setSeen(SetSeenRef ref, String recordingId) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  await _seen(serverURL, recordingId, http.put);
 }
 
-Future<void> unsetSeen(String recordingId) async {
-  await _seen(recordingId, http.delete);
+@riverpod
+Future<void> unsetSeen(UnsetSeenRef ref, String recordingId) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  await _seen(serverURL, recordingId, http.delete);
 }
 
 //g.PUT("/recordings/:id/position", cont.putPosition)
-Future<void> putPosition(String recordingId, Duration position, bool finished) async {
+@riverpod
+Future<void> putPosition(PutPositionRef ref, String recordingId, Duration position, bool finished) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   var path = '/api/recordings/$recordingId/position';
 
   var res = await http
       .put(
-        Uri.parse("${server()}$path"),
+        Uri.parse("$serverURL$path"),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },

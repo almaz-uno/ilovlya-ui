@@ -22,7 +22,7 @@ class Settings {
     this.showSeen = false,
   });
 
-  Settings copy({
+  Settings copyWith({
     ThemeMode? theme,
     String? token,
     String? serverUrl,

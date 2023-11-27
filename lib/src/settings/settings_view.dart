@@ -18,8 +18,7 @@ class SettingsView extends ConsumerWidget {
     final settings = ref.watch(settingsNotifierProvider);
 
     final tokenController = TextEditingController(text: settings.requireValue.token);
-    final serverUrlController =
-        TextEditingController(text: settings.requireValue.serverUrl);
+    final serverUrlController = TextEditingController(text: settings.requireValue.serverUrl);
 
     return Scaffold(
       appBar: AppBar(
@@ -39,9 +38,7 @@ class SettingsView extends ConsumerWidget {
               value: settings.requireValue.theme,
               // Call the updateThemeMode method any time the user selects a theme.
               onChanged: (ThemeMode? theme) {
-                ref
-                    .read(settingsNotifierProvider.notifier)
-                    .updateTheme(theme ?? ThemeMode.system);
+                ref.read(settingsNotifierProvider.notifier).updateTheme(theme ?? ThemeMode.system);
               },
               items: const [
                 DropdownMenuItem(
@@ -60,8 +57,7 @@ class SettingsView extends ConsumerWidget {
             ),
             TextField(
               controller: tokenController,
-              decoration: const InputDecoration(
-                  labelText: "Your token, provided by the bot"),
+              decoration: const InputDecoration(labelText: "Your token, provided by the bot"),
               textInputAction: TextInputAction.next,
               onSubmitted: (String value) {
                 ref.read(settingsNotifierProvider.notifier).updateToken(value);
@@ -69,22 +65,17 @@ class SettingsView extends ConsumerWidget {
             ),
             TextField(
               controller: serverUrlController,
-              decoration: const InputDecoration(
-                  labelText: "Server URL, provided by the bot"),
+              decoration: const InputDecoration(labelText: "Server URL, provided by the bot"),
               textInputAction: TextInputAction.next,
               onSubmitted: (String value) {
-                ref
-                    .read(settingsNotifierProvider.notifier)
-                    .updateServerUrl(value);
+                ref.read(settingsNotifierProvider.notifier).updateServerUrl(value);
               },
             ),
             CheckboxListTile(
               title: const Text("Show additional technical info. For advanced users only!"),
               value: settings.value?.debugMode,
               onChanged: (bool? debugMode) {
-                ref
-                    .read(settingsNotifierProvider.notifier)
-                    .updateDebugMode(debugMode);
+                ref.read(settingsNotifierProvider.notifier).updateDebugMode(debugMode);
               },
               controlAffinity: ListTileControlAffinity.leading,
             )

@@ -12,7 +12,7 @@ class DownloadDetailsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(download.filename.replaceFirst(download.recordingId, "⏵⏵⏵"))),
+      appBar: AppBar(title: Text("${download.filename} downloading...")),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: SingleChildScrollView(

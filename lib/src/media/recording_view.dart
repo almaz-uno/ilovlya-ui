@@ -65,8 +65,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
     );
 
     _controller.addListener(() {
-      if (_controller.value.position != Duration.zero &&
-          _controller.value.position == _controller.value.duration) {
+      if (_controller.value.position != Duration.zero && _controller.value.position == _controller.value.duration) {
         _sendPosition(
           widget.recording.id,
           _controller.value.position,
@@ -83,8 +82,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
     });
 
     _positionSendSubs = Stream.periodic(_positionSendPeriod).listen((event) {
-      if (_controller.value.isPlaying &&
-          _controller.value.position != Duration.zero) {
+      if (_controller.value.isPlaying && _controller.value.position != Duration.zero) {
         _sendPosition(
           widget.recording.id,
           _controller.value.position,
@@ -114,51 +112,28 @@ class _RecordingVideoState extends State<_RecordingVideo> {
     return Shortcuts(
       shortcuts: const <ShortcutActivator, Intent>{
         SingleActivator(LogicalKeyboardKey.space): PlayPauseIntent(),
-        SingleActivator(LogicalKeyboardKey.arrowLeft,
-            control: true,
-            shift: true): ChangePositionIntent(Duration(seconds: -300)),
-        SingleActivator(LogicalKeyboardKey.arrowLeft,
-            control: true,
-            shift: false): ChangePositionIntent(Duration(seconds: -60)),
-        SingleActivator(LogicalKeyboardKey.arrowLeft,
-            control: false,
-            shift: true): ChangePositionIntent(Duration(seconds: -30)),
-        SingleActivator(LogicalKeyboardKey.arrowLeft,
-            control: false,
-            shift: false): ChangePositionIntent(Duration(seconds: -5)),
-        SingleActivator(LogicalKeyboardKey.arrowRight,
-            control: true,
-            shift: true): ChangePositionIntent(Duration(seconds: 300)),
-        SingleActivator(LogicalKeyboardKey.arrowRight,
-            control: true,
-            shift: false): ChangePositionIntent(Duration(seconds: 60)),
-        SingleActivator(LogicalKeyboardKey.arrowRight,
-            control: false,
-            shift: true): ChangePositionIntent(Duration(seconds: 30)),
-        SingleActivator(LogicalKeyboardKey.arrowRight,
-            control: false,
-            shift: false): ChangePositionIntent(Duration(seconds: 5)),
-        SingleActivator(LogicalKeyboardKey.arrowDown,
-            control: false, shift: false): ChangeVolumeIntent(-5),
-        SingleActivator(LogicalKeyboardKey.arrowUp,
-            control: false, shift: false): ChangeVolumeIntent(5),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: true, shift: true): ChangePositionIntent(Duration(seconds: -300)),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: true, shift: false): ChangePositionIntent(Duration(seconds: -60)),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: true): ChangePositionIntent(Duration(seconds: -30)),
+        SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: false): ChangePositionIntent(Duration(seconds: -5)),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: true): ChangePositionIntent(Duration(seconds: 300)),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: false): ChangePositionIntent(Duration(seconds: 60)),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: true): ChangePositionIntent(Duration(seconds: 30)),
+        SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: false): ChangePositionIntent(Duration(seconds: 5)),
+        SingleActivator(LogicalKeyboardKey.arrowDown, control: false, shift: false): ChangeVolumeIntent(-5),
+        SingleActivator(LogicalKeyboardKey.arrowUp, control: false, shift: false): ChangeVolumeIntent(5),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
-          PlayPauseIntent: CallbackAction<PlayPauseIntent>(
-              onInvoke: (PlayPauseIntent intent) {
-            _controller.value.isPlaying
-                ? _controller.pause()
-                : _controller.play();
+          PlayPauseIntent: CallbackAction<PlayPauseIntent>(onInvoke: (PlayPauseIntent intent) {
+            _controller.value.isPlaying ? _controller.pause() : _controller.play();
             return null;
           }),
-          ChangePositionIntent: CallbackAction<ChangePositionIntent>(
-              onInvoke: (ChangePositionIntent intent) {
+          ChangePositionIntent: CallbackAction<ChangePositionIntent>(onInvoke: (ChangePositionIntent intent) {
             _controller.seekTo(_controller.value.position + intent.duration);
             return null;
           }),
-          ChangeVolumeIntent: CallbackAction<ChangeVolumeIntent>(
-              onInvoke: (ChangeVolumeIntent intent) {
+          ChangeVolumeIntent: CallbackAction<ChangeVolumeIntent>(onInvoke: (ChangeVolumeIntent intent) {
             var nv = (_controller.value.volume * 100).toInt() + intent.change;
             if (nv < 0) {
               nv = 0;
@@ -181,18 +156,14 @@ class _RecordingVideoState extends State<_RecordingVideo> {
                   child: Row(
                     children: [
                       // const BackButton(),
-                      Expanded(
-                          child: Text(
-                              "${widget.recording.title} • ${formatDuration(_controller.value.duration)}")),
+                      Expanded(child: Text("${widget.recording.title} • ${formatDuration(_controller.value.duration)}")),
                     ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
                   child: AspectRatio(
-                    aspectRatio: widget.download.hasVideo
-                        ? _controller.value.aspectRatio
-                        : 8.0,
+                    aspectRatio: widget.download.hasVideo ? _controller.value.aspectRatio : 8.0,
                     child: Stack(
                       alignment: Alignment.bottomCenter,
                       children: <Widget>[
@@ -203,8 +174,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
                           allowScrubbing: true,
                           colors: VideoProgressColors(
                             playedColor: Theme.of(context).colorScheme.primary,
-                            backgroundColor:
-                                const Color.fromARGB(127, 158, 158, 158),
+                            backgroundColor: const Color.fromARGB(127, 158, 158, 158),
                           ),
                         ),
                       ],
@@ -221,17 +191,12 @@ class _RecordingVideoState extends State<_RecordingVideo> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (widget.recording.seenAt != null)
-                        Text(
-                            "seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)"),
+                      if (widget.recording.seenAt != null) Text("seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)"),
                       Text("created at: ${widget.download.createdAt}"),
                       Text("updated at: ${widget.download.updatedAt}"),
-                      Text(
-                          "duration: ${formatDuration(_controller.value.duration)}"),
-                      Text(
-                          "position: ${formatDuration(_controller.value.position)}"),
-                      Text(
-                          "buffered: ${_controller.value.buffered.isNotEmpty ? formatDuration(_controller.value.buffered.last.end) : ''}"),
+                      Text("duration: ${formatDuration(_controller.value.duration)}"),
+                      Text("position: ${formatDuration(_controller.value.position)}"),
+                      Text("buffered: ${_controller.value.buffered.isNotEmpty ? formatDuration(_controller.value.buffered.last.end) : ''}"),
                       Text("isBuffering: ${_controller.value.isBuffering}"),
                       Text("volume: ${_controller.value.volume}"),
                       Text("size: ${_controller.value.size}"),
@@ -271,12 +236,10 @@ class _RecordingVideoState extends State<_RecordingVideo> {
           children: [
             TextButton(
               onLongPress: () {
-                _controller.seekTo(
-                    _controller.value.position - const Duration(minutes: 5));
+                _controller.seekTo(_controller.value.position - const Duration(minutes: 5));
               },
               onPressed: () {
-                _controller.seekTo(
-                    _controller.value.position - const Duration(minutes: 1));
+                _controller.seekTo(_controller.value.position - const Duration(minutes: 1));
               },
               child: const Icon(Icons.fast_rewind),
             ),
@@ -284,20 +247,17 @@ class _RecordingVideoState extends State<_RecordingVideo> {
             //label: const Icon(Icons.chevron_left)),
             TextButton(
               onLongPress: () {
-                _controller.seekTo(
-                    _controller.value.position - const Duration(seconds: 30));
+                _controller.seekTo(_controller.value.position - const Duration(seconds: 30));
               },
               onPressed: () {
-                _controller.seekTo(
-                    _controller.value.position - const Duration(seconds: 15));
+                _controller.seekTo(_controller.value.position - const Duration(seconds: 15));
               },
               child: const Icon(Icons.fast_rewind),
             ),
             if (_controller.value.isPlaying)
               TextButton(
                 onLongPress: () {
-                  _controller.seekTo(
-                      _controller.value.position + const Duration(seconds: 30));
+                  _controller.seekTo(_controller.value.position + const Duration(seconds: 30));
                 },
                 onPressed: () {
                   _controller.pause();
@@ -309,8 +269,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
             if (!_controller.value.isPlaying)
               TextButton(
                 onLongPress: () {
-                  _controller.seekTo(
-                      _controller.value.position + const Duration(seconds: 30));
+                  _controller.seekTo(_controller.value.position + const Duration(seconds: 30));
                 },
                 onPressed: () {
                   _controller.play();
@@ -321,12 +280,10 @@ class _RecordingVideoState extends State<_RecordingVideo> {
               ),
             TextButton(
               onLongPress: () {
-                _controller.seekTo(
-                    _controller.value.position + const Duration(seconds: 30));
+                _controller.seekTo(_controller.value.position + const Duration(seconds: 30));
               },
               onPressed: () {
-                _controller.seekTo(
-                    _controller.value.position + const Duration(seconds: 15));
+                _controller.seekTo(_controller.value.position + const Duration(seconds: 15));
               },
               child: const Icon(
                 Icons.fast_forward,
@@ -334,12 +291,10 @@ class _RecordingVideoState extends State<_RecordingVideo> {
             ),
             TextButton(
               onLongPress: () {
-                _controller.seekTo(
-                    _controller.value.position + const Duration(minutes: 5));
+                _controller.seekTo(_controller.value.position + const Duration(minutes: 5));
               },
               onPressed: () {
-                _controller.seekTo(
-                    _controller.value.position + const Duration(minutes: 1));
+                _controller.seekTo(_controller.value.position + const Duration(minutes: 1));
               },
               child: const Icon(
                 Icons.fast_forward,
@@ -353,8 +308,7 @@ class _RecordingVideoState extends State<_RecordingVideo> {
 }
 
 class _ControlsOverlay extends StatelessWidget {
-  const _ControlsOverlay({required VideoPlayerController controller})
-      : _controller = controller;
+  const _ControlsOverlay({required VideoPlayerController controller}) : _controller = controller;
 
   static const _volumes = <double>[
     0.10,
@@ -408,25 +362,21 @@ class _ControlsOverlay extends StatelessWidget {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  _controller.seekTo(
-                      _controller.value.position - const Duration(seconds: 5));
+                  _controller.seekTo(_controller.value.position - const Duration(seconds: 5));
                 },
               ),
             ),
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  _controller.value.isPlaying
-                      ? _controller.pause()
-                      : _controller.play();
+                  _controller.value.isPlaying ? _controller.pause() : _controller.play();
                 },
               ),
             ),
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  _controller.seekTo(
-                      _controller.value.position + const Duration(seconds: 5));
+                  _controller.seekTo(_controller.value.position + const Duration(seconds: 5));
                 },
               ),
             ),

@@ -1,12 +1,12 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'providers.dart';
+part of 'media_list_riverpod.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$mediaListNotifierHash() => r'c193282980a25e305cbd116c54db487330afb7df';
+String _$mediaListNotifierHash() => r'40119a2c9e76bb4ac0c6aac61bdf9b6b2b1b6206';
 
 /// See also [MediaListNotifier].
 @ProviderFor(MediaListNotifier)
