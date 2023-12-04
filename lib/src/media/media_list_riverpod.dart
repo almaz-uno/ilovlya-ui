@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ilovlya/src/api/media_list_riverpod.dart';
 
+import '../api/media_list_riverpod.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
 import 'format.dart';
@@ -16,6 +18,25 @@ class MediaListViewRiverpod extends ConsumerStatefulWidget {
 }
 
 class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
+  StreamSubscription? _updatePullSubs;
+
+  static const _updatePullPeriod = Duration(minutes: 5);
+
+  @override
+  void initState() {
+    super.initState();
+
+    _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
+      ref.invalidate(mediaListNotifierProvider);
+    });
+  }
+
+  @override
+  void deactivate() {
+    _updatePullSubs?.cancel();
+    super.deactivate();
+  }
+
   @override
   Widget build(BuildContext context) {
     final mediaList = ref.watch(mediaListNotifierProvider);
@@ -164,6 +185,8 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
           trailing = const Icon(Icons.file_download_done);
         }
 
+        final dt = setting.requireValue.sortBy == "updated_at" ? item.updatedAt : item.createdAt;
+
         return Opacity(
           opacity: opacity,
           child: Column(
@@ -173,7 +196,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                   width: 100, // alignment
                   child: Center(
                     child: Image.network(
-                      setting.requireValue.serverUrl + item.thumbnailUrl,
+                      item.thumbnailUrl,
                       isAntiAlias: true,
                       filterQuality: FilterQuality.high,
                     ),
@@ -183,7 +206,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                   "${item.title} ∙ ${formatDuration(dur)}$viewedSrt",
                   // style: textStyle,
                 ),
-                subtitle: Text("${item.uploader} ∙ ${item.extractor}"),
+                subtitle: Text("${item.uploader} ∙ ${item.extractor} • ${formatDate(dt)} (${since(dt, true)})"),
                 trailing: trailing,
                 onTap: () {
                   Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);

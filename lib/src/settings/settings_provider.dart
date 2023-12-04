@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:ilovlya/src/api/api.dart';
-import 'package:ilovlya/src/model/settings.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../api/api.dart';
+import '../model/settings.dart';
 
 part 'settings_provider.g.dart';
 

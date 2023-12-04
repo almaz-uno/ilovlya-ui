@@ -1,10 +1,9 @@
 import 'package:idb_shim/idb.dart';
-import 'package:ilovlya/src/api/api_riverpod.dart';
-import 'package:ilovlya/src/api/db_riverpod.dart';
-import 'package:ilovlya/src/settings/settings_provider.dart';
-import 'package:media_kit/ffi/ffi.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../model/recording_info.dart';
+import '../settings/settings_provider.dart';
+import 'api_riverpod.dart';
+import 'db_riverpod.dart';
 
 part 'media_list_riverpod.g.dart';
 

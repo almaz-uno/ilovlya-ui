@@ -6,7 +6,7 @@ part of 'api_riverpod.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$getUrlInfoHash() => r'add44f790e785e7c49225c2337dd4dbd775044e3';
+String _$getUrlInfoHash() => r'cbdb3f266f918ea46df4c188d65dcfd73d5d8524';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -40,11 +40,9 @@ class GetUrlInfoFamily extends Family<AsyncValue<URLInfo>> {
 
   /// See also [getUrlInfo].
   GetUrlInfoProvider call(
-    String serverBaseURL,
     String url,
   ) {
     return GetUrlInfoProvider(
-      serverBaseURL,
       url,
     );
   }
@@ -54,7 +52,6 @@ class GetUrlInfoFamily extends Family<AsyncValue<URLInfo>> {
     covariant GetUrlInfoProvider provider,
   ) {
     return call(
-      provider.serverBaseURL,
       provider.url,
     );
   }
@@ -78,12 +75,10 @@ class GetUrlInfoFamily extends Family<AsyncValue<URLInfo>> {
 class GetUrlInfoProvider extends AutoDisposeFutureProvider<URLInfo> {
   /// See also [getUrlInfo].
   GetUrlInfoProvider(
-    String serverBaseURL,
     String url,
   ) : this._internal(
           (ref) => getUrlInfo(
             ref as GetUrlInfoRef,
-            serverBaseURL,
             url,
           ),
           from: getUrlInfoProvider,
@@ -95,7 +90,6 @@ class GetUrlInfoProvider extends AutoDisposeFutureProvider<URLInfo> {
           dependencies: GetUrlInfoFamily._dependencies,
           allTransitiveDependencies:
               GetUrlInfoFamily._allTransitiveDependencies,
-          serverBaseURL: serverBaseURL,
           url: url,
         );
 
@@ -106,11 +100,9 @@ class GetUrlInfoProvider extends AutoDisposeFutureProvider<URLInfo> {
     required super.allTransitiveDependencies,
     required super.debugGetCreateSourceHash,
     required super.from,
-    required this.serverBaseURL,
     required this.url,
   }) : super.internal();
 
-  final String serverBaseURL;
   final String url;
 
   @override
@@ -126,7 +118,6 @@ class GetUrlInfoProvider extends AutoDisposeFutureProvider<URLInfo> {
         dependencies: null,
         allTransitiveDependencies: null,
         debugGetCreateSourceHash: null,
-        serverBaseURL: serverBaseURL,
         url: url,
       ),
     );
@@ -139,15 +130,12 @@ class GetUrlInfoProvider extends AutoDisposeFutureProvider<URLInfo> {
 
   @override
   bool operator ==(Object other) {
-    return other is GetUrlInfoProvider &&
-        other.serverBaseURL == serverBaseURL &&
-        other.url == url;
+    return other is GetUrlInfoProvider && other.url == url;
   }
 
   @override
   int get hashCode {
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, serverBaseURL.hashCode);
     hash = _SystemHash.combine(hash, url.hashCode);
 
     return _SystemHash.finish(hash);
@@ -155,9 +143,6 @@ class GetUrlInfoProvider extends AutoDisposeFutureProvider<URLInfo> {
 }
 
 mixin GetUrlInfoRef on AutoDisposeFutureProviderRef<URLInfo> {
-  /// The parameter `serverBaseURL` of this provider.
-  String get serverBaseURL;
-
   /// The parameter `url` of this provider.
   String get url;
 }
@@ -166,8 +151,6 @@ class _GetUrlInfoProviderElement
     extends AutoDisposeFutureProviderElement<URLInfo> with GetUrlInfoRef {
   _GetUrlInfoProviderElement(super.provider);
 
-  @override
-  String get serverBaseURL => (origin as GetUrlInfoProvider).serverBaseURL;
   @override
   String get url => (origin as GetUrlInfoProvider).url;
 }
@@ -301,7 +284,7 @@ class _AddRecordingProviderElement
   String get url => (origin as AddRecordingProvider).url;
 }
 
-String _$listRecordingsHash() => r'a39766bfd2f6973fed2d60f63a4de4fa05208bf3';
+String _$listRecordingsHash() => r'20514d68aa52090ae2d5e6ddba40d38944b60bf3';
 
 /// See also [listRecordings].
 @ProviderFor(listRecordings)
@@ -464,7 +447,7 @@ class _ListRecordingsProviderElement
   String get sortBy => (origin as ListRecordingsProvider).sortBy;
 }
 
-String _$getRecordingHash() => r'de9eec516eb60d2de1b25d8d49202635b08e2ac6';
+String _$getRecordingHash() => r'ca0588d33152a3172686d6a17e4c9f0dcf210afe';
 
 /// See also [getRecording].
 @ProviderFor(getRecording)
@@ -477,12 +460,10 @@ class GetRecordingFamily extends Family<AsyncValue<RecordingInfo>> {
 
   /// See also [getRecording].
   GetRecordingProvider call(
-    String id, {
-    bool updateFormats = true,
-  }) {
+    String id,
+  ) {
     return GetRecordingProvider(
       id,
-      updateFormats: updateFormats,
     );
   }
 
@@ -492,7 +473,6 @@ class GetRecordingFamily extends Family<AsyncValue<RecordingInfo>> {
   ) {
     return call(
       provider.id,
-      updateFormats: provider.updateFormats,
     );
   }
 
@@ -515,13 +495,11 @@ class GetRecordingFamily extends Family<AsyncValue<RecordingInfo>> {
 class GetRecordingProvider extends AutoDisposeFutureProvider<RecordingInfo> {
   /// See also [getRecording].
   GetRecordingProvider(
-    String id, {
-    bool updateFormats = true,
-  }) : this._internal(
+    String id,
+  ) : this._internal(
           (ref) => getRecording(
             ref as GetRecordingRef,
             id,
-            updateFormats: updateFormats,
           ),
           from: getRecordingProvider,
           name: r'getRecordingProvider',
@@ -533,7 +511,6 @@ class GetRecordingProvider extends AutoDisposeFutureProvider<RecordingInfo> {
           allTransitiveDependencies:
               GetRecordingFamily._allTransitiveDependencies,
           id: id,
-          updateFormats: updateFormats,
         );
 
   GetRecordingProvider._internal(
@@ -544,11 +521,9 @@ class GetRecordingProvider extends AutoDisposeFutureProvider<RecordingInfo> {
     required super.debugGetCreateSourceHash,
     required super.from,
     required this.id,
-    required this.updateFormats,
   }) : super.internal();
 
   final String id;
-  final bool updateFormats;
 
   @override
   Override overrideWith(
@@ -564,7 +539,6 @@ class GetRecordingProvider extends AutoDisposeFutureProvider<RecordingInfo> {
         allTransitiveDependencies: null,
         debugGetCreateSourceHash: null,
         id: id,
-        updateFormats: updateFormats,
       ),
     );
   }
@@ -576,16 +550,13 @@ class GetRecordingProvider extends AutoDisposeFutureProvider<RecordingInfo> {
 
   @override
   bool operator ==(Object other) {
-    return other is GetRecordingProvider &&
-        other.id == id &&
-        other.updateFormats == updateFormats;
+    return other is GetRecordingProvider && other.id == id;
   }
 
   @override
   int get hashCode {
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
     hash = _SystemHash.combine(hash, id.hashCode);
-    hash = _SystemHash.combine(hash, updateFormats.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -594,9 +565,6 @@ class GetRecordingProvider extends AutoDisposeFutureProvider<RecordingInfo> {
 mixin GetRecordingRef on AutoDisposeFutureProviderRef<RecordingInfo> {
   /// The parameter `id` of this provider.
   String get id;
-
-  /// The parameter `updateFormats` of this provider.
-  bool get updateFormats;
 }
 
 class _GetRecordingProviderElement
@@ -606,11 +574,137 @@ class _GetRecordingProviderElement
 
   @override
   String get id => (origin as GetRecordingProvider).id;
-  @override
-  bool get updateFormats => (origin as GetRecordingProvider).updateFormats;
 }
 
-String _$listDownloadsHash() => r'47df7abb5bd4d5052cd1247e21902eb1011f25af';
+String _$getDownloadHash() => r'776f40bd20eff19a0a19a34eaba2211e66e5580e';
+
+/// See also [getDownload].
+@ProviderFor(getDownload)
+const getDownloadProvider = GetDownloadFamily();
+
+/// See also [getDownload].
+class GetDownloadFamily extends Family<AsyncValue<Download>> {
+  /// See also [getDownload].
+  const GetDownloadFamily();
+
+  /// See also [getDownload].
+  GetDownloadProvider call(
+    String id,
+  ) {
+    return GetDownloadProvider(
+      id,
+    );
+  }
+
+  @override
+  GetDownloadProvider getProviderOverride(
+    covariant GetDownloadProvider provider,
+  ) {
+    return call(
+      provider.id,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getDownloadProvider';
+}
+
+/// See also [getDownload].
+class GetDownloadProvider extends AutoDisposeFutureProvider<Download> {
+  /// See also [getDownload].
+  GetDownloadProvider(
+    String id,
+  ) : this._internal(
+          (ref) => getDownload(
+            ref as GetDownloadRef,
+            id,
+          ),
+          from: getDownloadProvider,
+          name: r'getDownloadProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$getDownloadHash,
+          dependencies: GetDownloadFamily._dependencies,
+          allTransitiveDependencies:
+              GetDownloadFamily._allTransitiveDependencies,
+          id: id,
+        );
+
+  GetDownloadProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
+  final String id;
+
+  @override
+  Override overrideWith(
+    FutureOr<Download> Function(GetDownloadRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetDownloadProvider._internal(
+        (ref) => create(ref as GetDownloadRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<Download> createElement() {
+    return _GetDownloadProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetDownloadProvider && other.id == id;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, id.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin GetDownloadRef on AutoDisposeFutureProviderRef<Download> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _GetDownloadProviderElement
+    extends AutoDisposeFutureProviderElement<Download> with GetDownloadRef {
+  _GetDownloadProviderElement(super.provider);
+
+  @override
+  String get id => (origin as GetDownloadProvider).id;
+}
+
+String _$listDownloadsHash() => r'5c635817e50fd72512621b2db7313a953cd5e642';
 
 /// See also [listDownloads].
 @ProviderFor(listDownloads)

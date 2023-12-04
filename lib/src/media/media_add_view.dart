@@ -1,13 +1,16 @@
 import 'dart:async';
 
-import 'package:ilovlya/src/api/api.dart';
-import 'package:ilovlya/src/api/media.dart' as media_api;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ilovlya/src/media/format.dart';
-import 'package:ilovlya/src/model/url_info.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MediaAddView extends StatefulWidget {
+import '../api/api.dart';
+import '../api/api_riverpod.dart';
+import '../api/media_list_riverpod.dart';
+import '../model/url_info.dart';
+import 'format.dart';
+
+class MediaAddView extends ConsumerStatefulWidget {
   const MediaAddView({
     super.key,
     this.forcePaste = false,
@@ -20,10 +23,10 @@ class MediaAddView extends StatefulWidget {
   }
 
   @override
-  State<MediaAddView> createState() => _MediaAddViewState();
+  ConsumerState<MediaAddView> createState() => _MediaAddViewState();
 }
 
-class _MediaAddViewState extends State<MediaAddView> {
+class _MediaAddViewState extends ConsumerState<MediaAddView> {
   final TextEditingController _urlController = TextEditingController();
 
   Future<URLInfo>? _futurePropositions;
@@ -58,7 +61,7 @@ class _MediaAddViewState extends State<MediaAddView> {
       setState(() {
         _isLoading = true;
       });
-      return await media_api.getUrlInfo(url);
+      return await ref.read(getUrlInfoProvider(url).future);
     } finally {
       setState(() {
         _isLoading = false;
@@ -100,8 +103,7 @@ class _MediaAddViewState extends State<MediaAddView> {
                       tooltip: 'Lookup media info',
                       onPressed: () {
                         setState(() {
-                          _futurePropositions =
-                              _getURLInfo(_urlController.text);
+                          _futurePropositions = _getURLInfo(_urlController.text);
                         });
                       },
                     ),
@@ -113,9 +115,7 @@ class _MediaAddViewState extends State<MediaAddView> {
                 ),
               ),
             ),
-            (_futurePropositions == null)
-                ? const Text('To view info press lookup button above')
-                : buildPropositionList(),
+            (_futurePropositions == null) ? const Text('To view info press lookup button above') : buildPropositionList(),
             Visibility(
                 visible: _isLoading || _isAdding,
                 child: const Padding(
@@ -135,9 +135,9 @@ class _MediaAddViewState extends State<MediaAddView> {
       });
     }
     // _futureMediaAdd = ; // the full information about media should be acquired anew
-    media_api.addRecording(url).then((value) {
+    ref.read(addRecordingProvider(url).future).then((value) {
+      ref.invalidate(mediaListNotifierProvider);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        backgroundColor: Theme.of(context).colorScheme.background,
         content: Text('${value.title} successfully added'),
       ));
     }).catchError((err) {
@@ -163,10 +163,8 @@ class _MediaAddViewState extends State<MediaAddView> {
       future: _futurePropositions,
       builder: (BuildContext context, AsyncSnapshot<URLInfo> snapshot) {
         if (snapshot.hasData) {
-          if (snapshot.data!.infos != null &&
-              widget.forcePaste &&
-              snapshot.data!.infos!.length == 1) {
-                var u = snapshot.data!.infos![0].webpageUrl;
+          if (snapshot.data!.infos != null && widget.forcePaste && snapshot.data!.infos!.length == 1) {
+            var u = snapshot.data!.infos![0].webpageUrl;
             _addMedia(context, u, true);
             return Column(
               children: [

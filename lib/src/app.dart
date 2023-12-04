@@ -65,15 +65,11 @@ class MyApp extends ConsumerWidget {
         return "${AppLocalizations.of(context)!.appTitle} • ${Uri.base.host}";
       },
 
-      theme: ThemeData.from(
-        useMaterial3: true,
-        colorScheme: ThemeData.light().colorScheme,
-        textTheme: GoogleFonts.ptSansTextTheme(),
+      theme: ThemeData.light().copyWith(
+        textTheme: GoogleFonts.ptSansCaptionTextTheme(ThemeData.light().textTheme),
       ),
-      darkTheme: ThemeData.from(
-        useMaterial3: true,
-        colorScheme: ThemeData.dark().colorScheme,
-        textTheme: GoogleFonts.ptSansTextTheme(),
+      darkTheme: ThemeData.dark().copyWith(
+        textTheme: GoogleFonts.ptSansTextTheme(ThemeData.dark().textTheme),
       ),
 
       themeMode: settings.value?.theme,

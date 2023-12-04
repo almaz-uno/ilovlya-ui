@@ -8,6 +8,7 @@ part of 'download.dart';
 
 Download _$DownloadFromJson(Map<String, dynamic> json) => Download(
       id: json['id'] as String? ?? "",
+      title: json['title'] as String? ?? "",
       recordingId: json['recording_id'] as String? ?? "",
       createdAt: json['created_at'] == null
           ? null
@@ -30,6 +31,7 @@ Download _$DownloadFromJson(Map<String, dynamic> json) => Download(
 
 Map<String, dynamic> _$DownloadToJson(Download instance) => <String, dynamic>{
       'id': instance.id,
+      'title': instance.title,
       'recording_id': instance.recordingId,
       'created_at': instance.createdAt?.toIso8601String(),
       'updated_at': instance.updatedAt?.toIso8601String(),

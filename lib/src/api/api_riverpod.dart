@@ -1,11 +1,11 @@
 import 'dart:convert';
 
-import 'package:ilovlya/src/settings/settings_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:http/http.dart' as http;
 import '../model/download.dart';
 import '../model/recording_info.dart';
 import '../model/url_info.dart';
+import '../settings/settings_provider.dart';
 import 'api.dart';
 
 part 'api_riverpod.g.dart';
@@ -13,7 +13,7 @@ part 'api_riverpod.g.dart';
 typedef HttpMethod = Future<http.Response> Function(Uri, {Map<String, String>? headers});
 
 @riverpod
-Future<URLInfo> getUrlInfo(GetUrlInfoRef ref, String serverBaseURL, String url) async {
+Future<URLInfo> getUrlInfo(GetUrlInfoRef ref, String url) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/url-info';
   final encodedURL = Uri.encodeComponent(url);
@@ -59,20 +59,41 @@ Future<List<RecordingInfo>> listRecordings(ListRecordingsRef ref, int offset, in
   if (res.statusCode >= 400) {
     throw Exception("unable to get list of recordings. Status code is: ${res.statusCode}");
   }
-  return RecordingInfo.fromJsonList(jsonDecode(res.body));
+  final recordings = RecordingInfo.fromJsonList(jsonDecode(res.body));
+  for (var r in recordings) {
+    r.thumbnailUrl = serverURL + r.thumbnailUrl;
+  }
+  return recordings;
 }
 
 @riverpod
-Future<RecordingInfo> getRecording(GetRecordingRef ref, String id, {bool updateFormats = true}) async {
+Future<RecordingInfo> getRecording(GetRecordingRef ref, String id) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
-  var path = '/api/recordings/$id?update_formats=$updateFormats';
+  var path = '/api/recordings/$id';
 
   var res = await http.get(Uri.parse("$serverURL$path")).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
     throw Exception("unable to get recording with id=$id. Status code is: ${res.statusCode}");
   }
-  return RecordingInfo.fromJson(jsonDecode(res.body));
+  final recording = RecordingInfo.fromJson(jsonDecode(res.body));
+  recording.thumbnailUrl = serverURL + recording.thumbnailUrl;
+  return recording;
+}
+
+@riverpod
+Future<Download> getDownload(GetDownloadRef ref, String id) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  var path = '/api/recordings/downloads/$id';
+
+  var res = await http.get(Uri.parse("$serverURL$path")).timeout(requestTimeout);
+
+  if (res.statusCode >= 400) {
+    throw Exception("unable to get download with id=$id. Status code is: ${res.statusCode}");
+  }
+  final download = Download.fromJson(jsonDecode(res.body));
+  download.url = serverURL + download.url;
+  return download;
 }
 
 @riverpod
@@ -85,7 +106,12 @@ Future<List<Download>> listDownloads(ListDownloadsRef ref, String recordingId) a
   if (res.statusCode >= 400) {
     throw Exception("unable to get list of downloads for $recordingId. Status code is: ${res.statusCode}");
   }
-  return Download.fromJsonList(jsonDecode(res.body));
+
+  final downloads = Download.fromJsonList(jsonDecode(res.body));
+  for (var d in downloads) {
+    d.url = serverURL + d.url;
+  }
+  return downloads;
 }
 
 @riverpod

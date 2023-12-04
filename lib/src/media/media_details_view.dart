@@ -7,14 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../api/api.dart';
-import '../api/media.dart';
+import '../api/api_riverpod.dart';
+import '../api/recording_riverpod.dart';
 import '../model/download.dart';
 import '../model/recording_info.dart';
 import 'download_details.dart';
 import 'format.dart';
-import 'media_kit/recording_play_view_media_kit.dart';
 import 'media_kit/recording_play_view_media_kit_handler.dart';
-import 'recording_view.dart';
 
 class MediaDetailsView extends ConsumerStatefulWidget {
   const MediaDetailsView({
@@ -38,60 +37,35 @@ class MediaDetailsView extends ConsumerStatefulWidget {
 }
 
 class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
-  Future<RecordingInfo>? _futureRecording;
-  List<Download>? _downloads;
   String? title;
-  bool _isLoading = false;
   bool _shouldPlay = false;
-  StreamSubscription? _downloadsPullSubs;
+  StreamSubscription? _updatePullSubs;
 
-  static const _downloadsPullPeriod = Duration(seconds: 3);
+  static const _updatePullPeriod = Duration(seconds: 3);
 
   @override
   void initState() {
     super.initState();
     _shouldPlay = widget.play;
-    setState(() {
-      _futureRecording = _load(widget.id, false);
-    });
 
-    _loadDownloads(widget.id);
+    _playIfShould();
 
-    _downloadsPullSubs = Stream.periodic(_downloadsPullPeriod).listen((event) {
-      _loadDownloads(widget.id);
+    _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
+      _playIfShould();
       _pullRefresh();
     });
   }
 
   @override
   void deactivate() {
-    _downloadsPullSubs?.cancel();
+    _updatePullSubs?.cancel();
     super.deactivate();
   }
 
-  Future<RecordingInfo> _load(String id, bool updateFormats) async {
-    try {
-      setState(() {
-        _isLoading = true;
-      });
-
-      var r = await getRecording(id, updateFormats: updateFormats);
-      r.thumbnailUrl = server() + r.thumbnailUrl;
-      return r;
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  (Download? ready, Download? stale) _findAppropriateDownloads() {
-    if (_downloads == null) {
-      return (null, null);
-    }
+  (Download? ready, Download? stale) _findAppropriateDownloads(List<Download> downloads) {
     Download? ready;
     Download? stale;
-    for (var d in _downloads!) {
+    for (var d in downloads) {
       if (d.updatedAt == null) {
         continue;
       }
@@ -106,59 +80,62 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     return (ready, stale);
   }
 
-  _loadDownloads(String recordingID) async {
-    _downloads = await listDownloads(recordingID);
+  _playIfShould() async {
+    if (!_shouldPlay) {
+      return;
+    }
+    final recording = ref.watch(updateRecordingProvider(widget.id));
+    final downloads = ref.watch(listDownloadsProvider(widget.id));
+    if (downloads.hasValue && recording.hasValue) {
+      var (ready, _) = _findAppropriateDownloads(downloads.requireValue);
+      if (ready != null) {
+        _recordView(context, recording.requireValue, ready);
+        _shouldPlay = false;
+      }
+    }
 
-    for (var d in _downloads!) {
-      d.url = serverURL(d.url);
-    }
-    var (ready, _) = _findAppropriateDownloads();
-    if (mounted && ready != null && _shouldPlay && _futureRecording != null) {
-      _recordView(context, await _futureRecording!, ready);
-      _shouldPlay = false;
-    }
     setState(() {});
   }
 
-  Future<void> _pullRefresh({bool updateFormats = false}) async {
-    setState(() {
-      _futureRecording = _load(widget.id, updateFormats);
-    });
+  Future<void> _pullRefresh() async {
+    ref.invalidate(getRecordingProvider(widget.id));
+    ref.invalidate(listDownloadsProvider(widget.id));
   }
 
   @override
   Widget build(BuildContext context) {
+    final recording = ref.watch(updateRecordingProvider(widget.id));
+    // final downloads = ref.watch(listDownloadsProvider(widget.id));
+    // if (downloads.hasValue && recording.hasValue) {
+    //   var (ready, _) = _findAppropriateDownloads(downloads.requireValue);
+    //   if (ready != null && _shouldPlay) {
+    //     _recordView(context, recording.requireValue, ready);
+    //     _shouldPlay = false;
+    //   }
+    // }
     return Scaffold(
       appBar: AppBar(
-        title: (_futureRecording == null)
-            ? const Text('Recording info...')
-            : FutureBuilder<RecordingInfo>(
-                future: _futureRecording,
-                builder: (BuildContext context, AsyncSnapshot<RecordingInfo> snapshot) {
-                  return Text(snapshot.data?.title ?? "Recording...");
-                }),
+        title: recording.hasValue ? Text(recording.requireValue.title) : const Text('Loading info...'),
         actions: [
           IconButton(
             icon: const Icon(Icons.copy),
             tooltip: 'Copy video URL to the clipboard',
             onPressed: () {
-              _futureRecording!.then((recording) => copyToClipboard(context, recording.webpageUrl));
+              if (recording.hasValue) copyToClipboard(context, recording.requireValue.webpageUrl);
             },
           ),
-          _addSeenButton(),
-          _addHiddenButton(),
+          _addSeenButton(recording),
+          _addHiddenButton(recording),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh record (reread from the server)',
-            onPressed: () {
-              _pullRefresh(updateFormats: true);
-            },
+            onPressed: _pullRefresh,
           ),
         ],
       ),
       body: Stack(
         children: [
-          Visibility(visible: _isLoading, child: const LinearProgressIndicator()),
+          // Visibility(visible: recording.isLoading, child: const LinearProgressIndicator()),
           RefreshIndicator(
             onRefresh: _pullRefresh,
             child: Scrollbar(
@@ -166,7 +143,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               interactive: true,
               child: SingleChildScrollView(
                 scrollDirection: Axis.vertical,
-                child: (_futureRecording == null) ? const Center(child: Text('loading...')) : _buildRecordings(),
+                child: _buildRecordings(recording),
               ),
             ),
           ),
@@ -175,25 +152,20 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     );
   }
 
-  FutureBuilder<RecordingInfo> _buildRecordings() {
-    return FutureBuilder<RecordingInfo>(
-        future: _futureRecording,
-        builder: (BuildContext context, AsyncSnapshot<RecordingInfo> snapshot) {
-          if (snapshot.hasData) {
-            title = snapshot.data!.title;
-            return _buildForm(context, snapshot.data!);
-          } else if (snapshot.hasError) {
-            return ErrorWidget(snapshot.error!);
-          }
+  Widget _buildRecordings(AsyncValue<RecordingInfo> recording) {
+    if (!recording.hasValue) {
+      return const Center(child: Text('loading...'));
+    }
 
-          return const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text('Media info acquiring in progress...'),
-          );
-        });
+    if (recording.hasError) {
+      return ErrorWidget(recording.error!);
+    }
+
+    return _buildForm(context, recording.requireValue);
   }
 
   Widget _buildForm(BuildContext context, RecordingInfo recording) {
+    final downloads = ref.watch(listDownloadsProvider(recording.id));
     return Column(
       children: [
         InkWell(
@@ -208,19 +180,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    recording.extractor,
-                    textScaleFactor: 1.5,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    recording.uploader,
-                    textScaleFactor: 1.5,
-                  ),
-                  Text(
                     recording.title,
+                    style: Theme.of(context).textTheme.bodyLarge,
                   ),
+                  Text("${recording.uploader} • ${recording.extractor}"),
+                  Text("Created at: ${formatDateLong(recording.createdAt)} (${since(recording.createdAt, false)} ago)"),
+                  Text("Updated at: ${formatDateLong(recording.updatedAt)} (${since(recording.updatedAt, false)} ago)"),
                   Text(
                     recording.webpageUrl,
                     style: const TextStyle(
@@ -239,7 +204,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             padding: const EdgeInsets.all(8.0),
             child: InkWell(
               onTap: () {
-                var (ready, stale) = _findAppropriateDownloads();
+                var (ready, stale) = downloads.hasValue ? _findAppropriateDownloads(downloads.requireValue) : (null, null);
                 if (ready != null) {
                   _recordView(context, recording, ready);
                 } else if (stale != null) {
@@ -264,21 +229,20 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           ),
         ),
         Text("${formatDuration(Duration(seconds: recording.position))} / ${formatDuration(Duration(seconds: recording.duration))}"),
-        (_downloads == null) ? const Text("Downloads info is loading...") : _downloadsTable(context, recording),
+        downloads.hasValue ? _downloadsTable(context, recording, downloads.requireValue) : const Text("Downloads info is loading..."),
         recording.formats == null || recording.formats!.isEmpty ? const Text("No formats for the record") : _formatsTable(context, recording),
       ],
     );
   }
 
-  Widget _downloadsTable(BuildContext context, RecordingInfo recording) {
-    var downloads = _downloads!;
+  Widget _downloadsTable(BuildContext context, RecordingInfo recording, List<Download> downloads) {
     const splitter = LineSplitter();
 
     var rows = List<DataRow>.generate(downloads.length, (i) {
-      var d = downloads[i];
-      var ll = splitter.convert(d.progress);
-      var pr = ll.isEmpty ? '' : ll[ll.length - 1];
-      var hr = fileSizeHumanReadable(d.size);
+      final d = downloads[i];
+      final ll = splitter.convert(d.progress);
+      final pr = ll.isEmpty ? '' : ll[ll.length - 1];
+      final hr = fileSizeHumanReadable(d.size);
       var opacity = 0.25;
       switch (d.status) {
         case "stale":
@@ -323,7 +287,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         DataCell(
           onTap: () {
             Navigator.of(context).push(
-              MaterialPageRoute(builder: (BuildContext context) => DownloadDetailsView(download: d)),
+              MaterialPageRoute(builder: (BuildContext context) => DownloadDetailsView(downloadId: d.id)),
             );
           },
           Opacity(opacity: opacity, child: Text(pr)),
@@ -347,7 +311,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Files for this recordings",
+                  "Files for this recording",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Scrollbar(
@@ -447,9 +411,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Future<void> _startPreparation(BuildContext context, String format) async {
-    newDownload(widget.id, format).then((d) {
+    ref.read(newDownloadProvider(widget.id, format).future).then((d) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        backgroundColor: Theme.of(context).colorScheme.background,
         content: Text('Preparation for ${d.formatId} is starting'),
       ));
     }).catchError((err) {
@@ -494,7 +457,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             IconButton(
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKit(recording: recording, download: d)),
+                  MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
                 );
               },
               tooltip: "Open with MediaKit with handler",
@@ -509,8 +472,6 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       copyToClipboard(context, d.url);
                     case "default":
                       launchUrlString(d.url);
-                    case "standard_open":
-                      _openWithStandard(context, recording, d);
                   }
                   setState(() {});
                 },
@@ -538,19 +499,6 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       ),
                     ),
                   );
-                  menuItems.add(
-                    const PopupMenuItem<String>(
-                      value: "standard_open",
-                      child: Row(
-                        children: [
-                          Icon(Icons.slideshow),
-                          Text(
-                            "Open with standard player",
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
                   return menuItems;
                 }),
           ],
@@ -560,79 +508,66 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     }
   }
 
-  void _openWithStandard(
-    BuildContext context,
-    RecordingInfo recording,
-    Download d,
-  ) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (BuildContext context) => RecordingView(recording: recording, download: d)),
-    );
+  Widget _addSeenButton(AsyncValue<RecordingInfo> recording) {
+    if (!recording.hasValue) {
+      return const SizedBox();
+    }
+
+    final r = recording.requireValue;
+
+    if (r.seenAt == null) {
+      return IconButton(
+        icon: const Icon(Icons.check_box_outline_blank_rounded),
+        tooltip: 'Mark this recording as seen',
+        onPressed: () async {
+          await ref.read(setSeenProvider(r.id).future);
+          _pullRefresh();
+        },
+      );
+    } else {
+      return IconButton(
+        icon: const Icon(Icons.check_box_outlined),
+        tooltip: 'Mark this recording as unseen',
+        onPressed: () async {
+          await ref.read(unsetSeenProvider(r.id).future);
+          _pullRefresh();
+        },
+      );
+    }
   }
 
-  Widget _addSeenButton() {
-    return FutureBuilder<RecordingInfo>(
-      future: _futureRecording,
-      builder: (BuildContext context, AsyncSnapshot<RecordingInfo> snapshot) {
-        if (snapshot.hasData && snapshot.data!.seenAt == null) {
-          return IconButton(
-            icon: const Icon(Icons.check_box_outline_blank_rounded),
-            tooltip: 'Mark this recording as seen',
-            onPressed: () async {
-              await setSeen(snapshot.data!.id);
-              _pullRefresh();
-            },
-          );
-        } else if (snapshot.hasData && snapshot.data!.seenAt != null) {
-          return IconButton(
-            icon: const Icon(Icons.check_box_outlined),
-            tooltip: 'Mark this recording as unseen',
-            onPressed: () async {
-              await unsetSeen(snapshot.data!.id);
-              _pullRefresh();
-            },
-          );
-        } else {
-          return const SizedBox();
-        }
-      },
-    );
-  }
+  Widget _addHiddenButton(AsyncValue<RecordingInfo> recording) {
+    if (!recording.hasValue) {
+      return const Icon(null);
+    }
 
-  Widget _addHiddenButton() {
-    return FutureBuilder<RecordingInfo>(
-      future: _futureRecording,
-      builder: (BuildContext context, AsyncSnapshot<RecordingInfo> snapshot) {
-        if (snapshot.hasData && snapshot.data!.hiddenAt == null) {
-          return IconButton(
-            icon: const Icon(Icons.visibility_outlined),
-            tooltip: 'Hide this recording (archive it)',
-            onPressed: () async {
-              await setHidden(snapshot.data!.id);
-              _pullRefresh();
-            },
-          );
-        } else if (snapshot.hasData && snapshot.data!.hiddenAt != null) {
-          return IconButton(
-            icon: const Icon(Icons.visibility_off_outlined),
-            tooltip: 'Show this recording (unarchive it)',
-            onPressed: () async {
-              await unsetHidden(snapshot.data!.id);
-              _pullRefresh();
-            },
-          );
-        } else {
-          return const SizedBox();
-        }
-      },
-    );
+    final r = recording.requireValue;
+
+    if (r.hiddenAt == null) {
+      return IconButton(
+        icon: const Icon(Icons.visibility_outlined),
+        tooltip: 'Hide this recording (archive it)',
+        onPressed: () async {
+          await ref.read(setHiddenProvider(r.id).future);
+          _pullRefresh();
+        },
+      );
+    } else {
+      return IconButton(
+        icon: const Icon(Icons.visibility_off_outlined),
+        tooltip: 'Show this recording (unarchive it)',
+        onPressed: () async {
+          await ref.read(unsetHiddenProvider(r.id).future);
+          _pullRefresh();
+        },
+      );
+    }
   }
 }
 
 Future<void> copyToClipboard(BuildContext context, String textData) async {
   await Clipboard.setData(ClipboardData(text: textData)).then((value) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      backgroundColor: Theme.of(context).colorScheme.background,
       content: Text('$textData copied to clipboard'),
     ));
   });
