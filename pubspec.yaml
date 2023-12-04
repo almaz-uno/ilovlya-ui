@@ -13,16 +13,23 @@ dependencies:
   app_links: ^3.4.3
   audio_service: ^0.18.12
   audio_video_progress_bar: ^2.0.0
+  duration: ^3.0.13
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  fvp: ^0.8.0
-  http: ^1.0.0
+  flutter_riverpod: ^2.4.4
+  fvp: ^0.11.0
+  google_fonts: ^6.1.0
+  http: ^1.1.0
+  idb_shim: ^2.3.2
+  intl: ^0.18.1
   json_annotation: ^4.8.1
-  media_kit: ^1.1.7
+  media_kit: ^1.1.10+1
   media_kit_libs_video: ^1.0.1
   media_kit_video: ^1.1.8
+  riverpod_annotation: ^2.2.1
+  shared_preferences: ^2.2.2
   universal_platform: ^1.0.0+1
   url_launcher: ^6.1.12
   video_player: ^2.7.2
@@ -32,9 +39,12 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^2.0.0
-  build_runner: ^2.4.5
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.6
   json_serializable: ^6.7.0
+  riverpod_generator: ^2.3.5
+  custom_lint: ^0.5.5
+  riverpod_lint: ^2.3.2
 
 flutter:
   uses-material-design: true

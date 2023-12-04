@@ -7,6 +7,7 @@ part 'download.g.dart';
 @JsonSerializable(fieldRename: FieldRename.snake)
 class Download {
   String id;
+  String title;
   String recordingId;
   DateTime? createdAt;
   DateTime? updatedAt;
@@ -24,6 +25,7 @@ class Download {
 
   Download({
     this.id = "",
+    this.title = "",
     this.recordingId = "",
     this.createdAt,
     this.updatedAt,

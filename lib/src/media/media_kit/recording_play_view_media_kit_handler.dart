@@ -3,14 +3,18 @@ import 'dart:async';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ilovlya/src/api/media.dart';
-import 'package:ilovlya/src/media/format.dart';
-import 'package:ilovlya/src/media/media_kit/media_kit_audio_handler.dart';
-import 'package:ilovlya/src/model/download.dart';
-import 'package:ilovlya/src/model/recording_info.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:universal_platform/universal_platform.dart';
+
+import '../../api/api_riverpod.dart';
+import '../../model/download.dart';
+import '../../model/recording_info.dart';
+import '../../settings/settings_provider.dart';
+import '../format.dart';
+import 'media_kit_audio_handler.dart';
 
 void _seek(Player player, Duration position) {
   if (position.isNegative) {
@@ -22,7 +26,7 @@ void _seek(Player player, Duration position) {
   player.seek(position);
 }
 
-class RecordingViewMediaKitHandler extends StatefulWidget {
+class RecordingViewMediaKitHandler extends ConsumerStatefulWidget {
   final RecordingInfo recording;
   final Download download;
   final bool inFull;
@@ -35,14 +39,14 @@ class RecordingViewMediaKitHandler extends StatefulWidget {
   });
 
   @override
-  State<RecordingViewMediaKitHandler> createState() =>
+  ConsumerState<RecordingViewMediaKitHandler> createState() =>
       _RecordingViewMediaKitHandlerState();
 }
 
 const _positionSendPeriod = Duration(seconds: 1);
 
 class _RecordingViewMediaKitHandlerState
-    extends State<RecordingViewMediaKitHandler> {
+    extends ConsumerState<RecordingViewMediaKitHandler> {
   String get url => widget.download.url;
 
   Player get _player => MKPlayerHandler.player;
@@ -63,7 +67,8 @@ class _RecordingViewMediaKitHandlerState
     MKPlayerHandler.handler.playRecording(widget.recording, widget.download);
 
     if (UniversalPlatform.isDesktop || UniversalPlatform.isWeb) {
-      await _player.setVolume(50.0);
+      await _player
+          .setVolume(ref.read(settingsNotifierProvider).requireValue.volume);
     }
 
     _player.stream.duration.listen((event) {
@@ -88,6 +93,11 @@ class _RecordingViewMediaKitHandlerState
       setState(() {});
     });
 
+    _player.stream.volume.listen((double volume) {
+      setState(() {});
+      ref.read(settingsNotifierProvider.notifier).updateVolume(volume);
+    });
+
     _player.stream.completed.listen((event) {
       _sendPosition(
         widget.recording.id,
@@ -98,14 +108,6 @@ class _RecordingViewMediaKitHandlerState
     });
 
     _player.stream.position.listen((Duration position) {
-      // if (player.state.position != Duration.zero &&
-      //     player.state.position == player.state.duration) {
-      //   _sendPosition(
-      //     widget.recording.id,
-      //     player.state.position,
-      //     player.state.position == player.state.duration,
-      //   );
-      // }
       setState(() {});
     });
 
@@ -129,7 +131,7 @@ class _RecordingViewMediaKitHandlerState
   }
 
   void _sendPosition(String recordingId, Duration position, bool finished) {
-    putPosition(recordingId, position, finished);
+    ref.read(putPositionProvider(recordingId, position, finished));
   }
 
   @override
@@ -154,90 +156,100 @@ class _RecordingViewMediaKitHandlerState
       playerW = playerW * mediaH / playerH;
     }
 
+    final settings = ref.watch(settingsNotifierProvider);
+// final titleSmall = Theme.of(context).textTheme.titleSmall;
+    final techInfoStyle = GoogleFonts.ptMono();
     return Scaffold(
       // appBar: AppBar(
-      //   title: Text(widget.recording.title),
-      //   actions: [
-      //     IconButton(
-      //       onPressed: () {},
-      //       icon: const Icon(Icons.open_in_full),
-      //     )
-      //   ],
+      //   centerTitle: true,
+      //   // toolbarHeight: titleSmall?.height,
+      //   scrolledUnderElevation: null,
+      //   elevation: null,
+      //   title: Text(
+      //     "${widget.recording.title} • ${formatDuration(_player.state.duration)}",
+      //     // textScaler: TextScaler.linear(0.5),
+      //     style: titleSmall,
+      //   ),
+      //   // actions: [
+      //   //   IconButton(
+      //   //     onPressed: () {},
+      //   //     icon: const Icon(Icons.open_in_full),
+      //   //   )
+      //   // ],
       // ),
-      body: Shortcuts(
-        shortcuts: const <ShortcutActivator, Intent>{
-          SingleActivator(LogicalKeyboardKey.backspace): BackIntent(),
-          SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
-          SingleActivator(LogicalKeyboardKey.space): PlayPauseIntent(),
-          SingleActivator(LogicalKeyboardKey.arrowLeft,
-              control: true,
-              shift: true): ChangePositionIntent(Duration(seconds: -300)),
-          SingleActivator(LogicalKeyboardKey.arrowLeft,
-              control: true,
-              shift: false): ChangePositionIntent(Duration(seconds: -60)),
-          SingleActivator(LogicalKeyboardKey.arrowLeft,
-              control: false,
-              shift: true): ChangePositionIntent(Duration(seconds: -30)),
-          SingleActivator(LogicalKeyboardKey.arrowLeft,
-              control: false,
-              shift: false): ChangePositionIntent(Duration(seconds: -5)),
-          SingleActivator(LogicalKeyboardKey.arrowRight,
-              control: true,
-              shift: true): ChangePositionIntent(Duration(seconds: 300)),
-          SingleActivator(LogicalKeyboardKey.arrowRight,
-              control: true,
-              shift: false): ChangePositionIntent(Duration(seconds: 60)),
-          SingleActivator(LogicalKeyboardKey.arrowRight,
-              control: false,
-              shift: true): ChangePositionIntent(Duration(seconds: 30)),
-          SingleActivator(LogicalKeyboardKey.arrowRight,
-              control: false,
-              shift: false): ChangePositionIntent(Duration(seconds: 5)),
-          SingleActivator(LogicalKeyboardKey.arrowDown,
-              control: false, shift: false): ChangeVolumeIntent(-5),
-          SingleActivator(LogicalKeyboardKey.arrowUp,
-              control: false, shift: false): ChangeVolumeIntent(5),
-        },
-        child: Actions(
-          actions: <Type, Action<Intent>>{
-            BackIntent: CallbackAction<BackIntent>(
-              onInvoke: (BackIntent intent) {
-                Navigator.of(context).pop(true);
-                return null;
-              },
-            ),
-            PlayPauseIntent: CallbackAction<PlayPauseIntent>(
-                onInvoke: (PlayPauseIntent intent) {
-              _player.playOrPause();
-              return null;
-            }),
-            ChangePositionIntent: CallbackAction<ChangePositionIntent>(
-                onInvoke: (ChangePositionIntent intent) {
-              _seek(_player, _player.state.position + intent.duration);
-              return null;
-            }),
-            ChangeVolumeIntent: CallbackAction<ChangeVolumeIntent>(
-                onInvoke: (ChangeVolumeIntent intent) {
-              var nv = (_player.state.volume).toInt() + intent.change;
-              if (nv < 0) {
-                nv = 0;
-              }
-              if (nv > 100) {
-                nv = 100;
-              }
-
-              _player.setVolume(nv.toDouble());
-              return null;
-            }),
+      body: SafeArea(
+        child: Shortcuts(
+          shortcuts: const <ShortcutActivator, Intent>{
+            SingleActivator(LogicalKeyboardKey.backspace): BackIntent(),
+            SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
+            SingleActivator(LogicalKeyboardKey.space): PlayPauseIntent(),
+            SingleActivator(LogicalKeyboardKey.arrowLeft,
+                control: true,
+                shift: true): ChangePositionIntent(Duration(seconds: -300)),
+            SingleActivator(LogicalKeyboardKey.arrowLeft,
+                control: true,
+                shift: false): ChangePositionIntent(Duration(seconds: -60)),
+            SingleActivator(LogicalKeyboardKey.arrowLeft,
+                control: false,
+                shift: true): ChangePositionIntent(Duration(seconds: -30)),
+            SingleActivator(LogicalKeyboardKey.arrowLeft,
+                control: false,
+                shift: false): ChangePositionIntent(Duration(seconds: -10)),
+            SingleActivator(LogicalKeyboardKey.arrowRight,
+                control: true,
+                shift: true): ChangePositionIntent(Duration(seconds: 300)),
+            SingleActivator(LogicalKeyboardKey.arrowRight,
+                control: true,
+                shift: false): ChangePositionIntent(Duration(seconds: 60)),
+            SingleActivator(LogicalKeyboardKey.arrowRight,
+                control: false,
+                shift: true): ChangePositionIntent(Duration(seconds: 30)),
+            SingleActivator(LogicalKeyboardKey.arrowRight,
+                control: false,
+                shift: false): ChangePositionIntent(Duration(seconds: 10)),
+            SingleActivator(LogicalKeyboardKey.arrowDown,
+                control: false, shift: false): ChangeVolumeIntent(-5),
+            SingleActivator(LogicalKeyboardKey.arrowUp,
+                control: false, shift: false): ChangeVolumeIntent(5),
           },
-          child: Focus(
-            autofocus: true,
-            child: SingleChildScrollView(
-              child: Column(
-                children: <Widget>[
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-                    child: Row(
+          child: Actions(
+            actions: <Type, Action<Intent>>{
+              BackIntent: CallbackAction<BackIntent>(
+                onInvoke: (BackIntent intent) {
+                  Navigator.of(context).pop(true);
+                  return null;
+                },
+              ),
+              PlayPauseIntent: CallbackAction<PlayPauseIntent>(
+                  onInvoke: (PlayPauseIntent intent) {
+                _player.playOrPause();
+                return null;
+              }),
+              ChangePositionIntent: CallbackAction<ChangePositionIntent>(
+                  onInvoke: (ChangePositionIntent intent) {
+                _seek(_player, _player.state.position + intent.duration);
+                return null;
+              }),
+              ChangeVolumeIntent: CallbackAction<ChangeVolumeIntent>(
+                  onInvoke: (ChangeVolumeIntent intent) {
+                var nv = (_player.state.volume).toInt() + intent.change;
+                if (nv < 0) {
+                  nv = 0;
+                }
+                if (nv > 100) {
+                  nv = 100;
+                }
+
+                _player.setVolume(nv.toDouble());
+                return null;
+              }),
+            },
+            child: Focus(
+              autofocus: true,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: <Widget>[
+                    Row(
                       children: [
                         const BackButton(),
                         Expanded(
@@ -245,69 +257,89 @@ class _RecordingViewMediaKitHandlerState
                                 "${widget.recording.title} • ${formatDuration(_player.state.duration)}")),
                       ],
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                    child: SizedBox(
-                      width: playerW,
-                      height: playerH,
-                      child: Stack(
-                        alignment: Alignment.bottomCenter,
-                        children: <Widget>[
-                          Video(
-                            controller: _controller,
-                            filterQuality: FilterQuality.high,
-                            pauseUponEnteringBackgroundMode: false,
-                          ),
-                          // _ControlsOverlay(player: player),
-                          // VideoProgressIndicator(
-                          //   _controller,
-                          //   allowScrubbing: true,
-                          //   colors: VideoProgressColors(
-                          //     playedColor: Theme.of(context).colorScheme.primary,
-                          //     backgroundColor:
-                          //         const Color.fromARGB(127, 158, 158, 158),
-                          //   ),
-                          // ),
-                        ],
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                      child: SizedBox(
+                        width: playerW,
+                        height: playerH,
+                        child: Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: <Widget>[
+                            Video(
+                              controller: _controller,
+                              filterQuality: FilterQuality.high,
+                              pauseUponEnteringBackgroundMode: false,
+                            ),
+                            // _ControlsOverlay(player: player),
+                            // VideoProgressIndicator(
+                            //   _controller,
+                            //   allowScrubbing: true,
+                            //   colors: VideoProgressColors(
+                            //     playedColor: Theme.of(context).colorScheme.primary,
+                            //     backgroundColor:
+                            //         const Color.fromARGB(127, 158, 158, 158),
+                            //   ),
+                            // ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                    child: _buildControls(context),
-                  ),
-                  Container(
-                    alignment: Alignment.topLeft,
-                    padding: const EdgeInsets.all(8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("With audio handler!"),
-                        if (widget.recording.seenAt != null)
-                          Text(
-                              "seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)"),
-                        Text("created at: ${widget.download.createdAt}"),
-                        Text("updated at: ${widget.download.updatedAt}"),
-                        Text(
-                            "duration: ${formatDuration(_player.state.duration)}"),
-                        Text(
-                            "position: ${formatDuration(_player.state.position)}"),
-                        Text(
-                            "buffered: ${formatDuration(_player.state.buffer)}"),
-                        Text(
-                            "buffering: ${_player.state.buffering ? 'XX' : '>>'}"),
-                        Text("volume: ${_player.state.volume}"),
-                        Text(
-                            "size: ${_player.state.width}x${_player.state.height}"),
-
-                        Text("video params: ${_player.state.videoParams}"),
-                        Text("audio params: ${_player.state.audioParams}"),
-                        // Text("${_controller.value}"),
-                      ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                      child: _buildControls(context),
                     ),
-                  ),
-                ],
+                    Container(
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.all(8),
+                      child: Text(
+                          "Created at: ${formatDateLong(widget.recording.createdAt)} (${since(widget.recording.createdAt, false)} ago)"),
+                    ),
+                    Visibility(
+                      visible: settings.value?.debugMode ?? false,
+                      child: Container(
+                        alignment: Alignment.topLeft,
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("With audio handler!", style: techInfoStyle),
+                            if (widget.recording.seenAt != null)
+                              Text(
+                                  "seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)",
+                                  style: techInfoStyle),
+                            Text("created at: ${widget.download.createdAt}",
+                                style: techInfoStyle),
+                            Text("updated at: ${widget.download.updatedAt}",
+                                style: techInfoStyle),
+                            Text(
+                                "duration: ${formatDuration(_player.state.duration)}",
+                                style: techInfoStyle),
+                            Text(
+                                "position: ${formatDuration(_player.state.position)}",
+                                style: techInfoStyle),
+                            Text(
+                                "buffered: ${formatDuration(_player.state.buffer)}",
+                                style: techInfoStyle),
+                            Text(
+                                "buffering: ${_player.state.buffering ? 'XX' : '>>'}",
+                                style: techInfoStyle),
+                            Text("volume: ${_player.state.volume}",
+                                style: techInfoStyle),
+                            Text(
+                                "size: ${_player.state.width}x${_player.state.height}",
+                                style: techInfoStyle),
+
+                            Text("video params: ${_player.state.videoParams}",
+                                style: techInfoStyle),
+                            Text("audio params: ${_player.state.audioParams}",
+                                style: techInfoStyle),
+                            // Text("${_controller.value}"),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

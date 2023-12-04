@@ -1,26 +1,67 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ilovlya/src/api/api_riverpod.dart';
 import 'package:ilovlya/src/model/download.dart';
 
-class DownloadDetailsView extends StatelessWidget {
+class DownloadDetailsView extends ConsumerStatefulWidget {
   const DownloadDetailsView({
     super.key,
-    required this.download,
+    required this.downloadId,
   });
 
-  final Download download;
+  final String downloadId;
+
+  @override
+  ConsumerState<DownloadDetailsView> createState() => _DownloadDetailsViewState();
+}
+
+class _DownloadDetailsViewState extends ConsumerState<DownloadDetailsView> {
+  static const _pullPeriod = Duration(seconds: 1);
+
+  StreamSubscription? _pullSubs;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _pullSubs = Stream.periodic(_pullPeriod).listen((event) {
+      ref.invalidate(getDownloadProvider(widget.downloadId));
+    });
+  }
+
+  @override
+  void deactivate() {
+    _pullSubs?.cancel();
+    super.deactivate();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final download = ref.watch(getDownloadProvider(widget.downloadId));
     return Scaffold(
-      appBar: AppBar(title: Text(download.filename.replaceFirst(download.recordingId, "⏵⏵⏵"))),
-      body: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Text(
-            softWrap: false,
-            download.progress,
-          ),
+      appBar: AppBar(title: download.hasValue ? Text("${download.requireValue.title} downloading...") : const Text("Acquiring info...")),
+      body: _buildOutput(download),
+    );
+  }
+
+  Widget _buildOutput(AsyncValue<Download> download) {
+    if (download.hasError) {
+      return ErrorWidget(download.error!);
+    }
+
+    if (!download.hasValue) {
+      return const Text("waiting data from the server...");
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Text(
+          softWrap: false,
+          download.requireValue.progress,
         ),
       ),
     );
