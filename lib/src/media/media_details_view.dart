@@ -15,6 +15,8 @@ import 'download_details.dart';
 import 'format.dart';
 import 'media_kit/recording_play_view_media_kit_handler.dart';
 
+const _downloadFormatIcon = Icon(Icons.start);
+
 class MediaDetailsView extends ConsumerStatefulWidget {
   const MediaDetailsView({
     super.key,
@@ -354,7 +356,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 // _startPreparation(context, f.id);
               },
               tooltip: "Download this format and the best audio on the server (prepare for viewing)",
-              icon: const Icon(Icons.system_update_alt),
+              icon: _downloadFormatIcon,
             ),
           ),
           DataCell(
@@ -446,7 +448,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             _startPreparation(context, d.formatId);
           },
           tooltip: "Download this format again on the server (prepare for viewing)",
-          icon: const Icon(Icons.system_update_alt),
+          icon: _downloadFormatIcon,
         );
       case "new":
       case "in_progress":

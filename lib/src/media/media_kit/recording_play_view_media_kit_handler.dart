@@ -112,7 +112,7 @@ class _RecordingViewMediaKitHandlerState
     });
 
     _positionSendSubs = Stream.periodic(_positionSendPeriod).listen((event) {
-      if (_player.state.playing && _player.state.position != Duration.zero) {
+      if (_player.state.playing && !_player.state.buffering && _player.state.position != Duration.zero) {
         _sendPosition(
           widget.recording.id,
           _player.state.position,
@@ -321,7 +321,7 @@ class _RecordingViewMediaKitHandlerState
                                 "buffered: ${formatDuration(_player.state.buffer)}",
                                 style: techInfoStyle),
                             Text(
-                                "buffering: ${_player.state.buffering ? 'XX' : '>>'}",
+                                "buffering: ${_player.state.buffering ? '>>' : '__'}",
                                 style: techInfoStyle),
                             Text("volume: ${_player.state.volume}",
                                 style: techInfoStyle),

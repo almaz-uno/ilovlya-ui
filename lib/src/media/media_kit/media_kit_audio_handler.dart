@@ -1,8 +1,9 @@
-import 'package:ilovlya/src/model/download.dart';
-import 'package:ilovlya/src/model/recording_info.dart';
+import 'package:audio_service/audio_service.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:universal_platform/universal_platform.dart';
-import 'package:audio_service/audio_service.dart';
+
+import '../../model/download.dart';
+import '../../model/recording_info.dart';
 
 // if (!UniversalPlatform.isDesktop)
 

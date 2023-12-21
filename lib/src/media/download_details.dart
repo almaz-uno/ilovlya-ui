@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ilovlya/src/api/api_riverpod.dart';
-import 'package:ilovlya/src/model/download.dart';
+
+import '../api/api_riverpod.dart';
+import '../model/download.dart';
 
 class DownloadDetailsView extends ConsumerStatefulWidget {
   const DownloadDetailsView({
@@ -41,7 +42,7 @@ class _DownloadDetailsViewState extends ConsumerState<DownloadDetailsView> {
   Widget build(BuildContext context) {
     final download = ref.watch(getDownloadProvider(widget.downloadId));
     return Scaffold(
-      appBar: AppBar(title: download.hasValue ? Text("${download.requireValue.title} downloading...") : const Text("Acquiring info...")),
+      appBar: AppBar(title: download.hasValue ? Text("${download.requireValue.title} preparing...") : const Text("Acquiring info...")),
       body: _buildOutput(download),
     );
   }
