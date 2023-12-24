@@ -1,5 +1,7 @@
 const serverBaseURL = String.fromEnvironment("SERVER_BASE_URL",
-    defaultValue: "https://dev.almaz.uno:2443");
+    defaultValue: "https://ilovlya.space");
+// const serverBaseURL = String.fromEnvironment("SERVER_BASE_URL",
+//     defaultValue: "https://dev.almaz.uno:2443");
 // const serverBaseURL = String.fromEnvironment("SERVER_BASE_URL",
 //     defaultValue: "http://localhost:18080");
 

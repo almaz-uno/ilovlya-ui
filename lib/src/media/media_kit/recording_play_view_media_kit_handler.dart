@@ -112,7 +112,7 @@ class _RecordingViewMediaKitHandlerState
     });
 
     _positionSendSubs = Stream.periodic(_positionSendPeriod).listen((event) {
-      if (_player.state.playing && _player.state.position != Duration.zero) {
+      if (_player.state.playing && !_player.state.buffering && _player.state.position != Duration.zero) {
         _sendPosition(
           widget.recording.id,
           _player.state.position,
@@ -187,11 +187,11 @@ class _RecordingViewMediaKitHandlerState
                 control: true,
                 shift: true): ChangePositionIntent(Duration(seconds: -300)),
             SingleActivator(LogicalKeyboardKey.arrowLeft,
-                control: true,
-                shift: false): ChangePositionIntent(Duration(seconds: -60)),
-            SingleActivator(LogicalKeyboardKey.arrowLeft,
                 control: false,
-                shift: true): ChangePositionIntent(Duration(seconds: -30)),
+                shift: true): ChangePositionIntent(Duration(seconds: -60)),
+            SingleActivator(LogicalKeyboardKey.arrowLeft,
+                control: true,
+                shift: false): ChangePositionIntent(Duration(seconds: -30)),
             SingleActivator(LogicalKeyboardKey.arrowLeft,
                 control: false,
                 shift: false): ChangePositionIntent(Duration(seconds: -10)),
@@ -199,11 +199,11 @@ class _RecordingViewMediaKitHandlerState
                 control: true,
                 shift: true): ChangePositionIntent(Duration(seconds: 300)),
             SingleActivator(LogicalKeyboardKey.arrowRight,
-                control: true,
-                shift: false): ChangePositionIntent(Duration(seconds: 60)),
-            SingleActivator(LogicalKeyboardKey.arrowRight,
                 control: false,
-                shift: true): ChangePositionIntent(Duration(seconds: 30)),
+                shift: true): ChangePositionIntent(Duration(seconds: 60)),
+            SingleActivator(LogicalKeyboardKey.arrowRight,
+                control: true,
+                shift: false): ChangePositionIntent(Duration(seconds: 30)),
             SingleActivator(LogicalKeyboardKey.arrowRight,
                 control: false,
                 shift: false): ChangePositionIntent(Duration(seconds: 10)),
@@ -321,7 +321,7 @@ class _RecordingViewMediaKitHandlerState
                                 "buffered: ${formatDuration(_player.state.buffer)}",
                                 style: techInfoStyle),
                             Text(
-                                "buffering: ${_player.state.buffering ? 'XX' : '>>'}",
+                                "buffering: ${_player.state.buffering ? '>>' : '__'}",
                                 style: techInfoStyle),
                             Text("volume: ${_player.state.volume}",
                                 style: techInfoStyle),

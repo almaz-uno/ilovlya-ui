@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../api/exceptions.dart';
 import '../api/media_list_riverpod.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
@@ -42,6 +44,22 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     final mediaList = ref.watch(mediaListNotifierProvider);
     final settings = ref.watch(settingsNotifierProvider);
     final primary = Theme.of(context).colorScheme.primary;
+
+    if (mediaList.hasError) {
+      if (mediaList.error is HttpStatusError && (mediaList.error as HttpStatusError).statusCode == HttpStatus.unauthorized) {
+        Future.microtask(() {
+          Navigator.restorablePushNamed(context, SettingsView.routeName);
+          showDialog(
+              context: context,
+              barrierDismissible: true,
+              builder: (BuildContext context) => const AlertDialog(
+                    title: Text("Unauthorized"),
+                    content: Text('Fill token and check server URL settings'),
+                  ));
+        });
+      }
+      return ErrorWidget(mediaList.error!);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -158,10 +176,6 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     final mediaList = ref.watch(mediaListNotifierProvider);
     final setting = ref.watch(settingsNotifierProvider);
 
-    if (mediaList.hasError) {
-      return ErrorWidget(mediaList.error!);
-    }
-
     return ListView.builder(
       scrollDirection: Axis.vertical,
       shrinkWrap: true,
@@ -182,7 +196,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
           trailing = const Icon(Icons.visibility_off_outlined);
         }
         if (item.hasFile) {
-          trailing = const Icon(Icons.file_download_done);
+          trailing = const Icon(Icons.flag_circle_outlined);
         }
 
         final dt = setting.requireValue.sortBy == "updated_at" ? item.updatedAt : item.createdAt;

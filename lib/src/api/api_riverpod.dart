@@ -1,16 +1,24 @@
 import 'dart:convert';
 
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../model/download.dart';
 import '../model/recording_info.dart';
+import '../model/tenant.dart';
 import '../model/url_info.dart';
 import '../settings/settings_provider.dart';
 import 'api.dart';
+import 'exceptions.dart';
 
 part 'api_riverpod.g.dart';
 
 typedef HttpMethod = Future<http.Response> Function(Uri, {Map<String, String>? headers});
+
+Map<String, String> getAuthHeader(AutoDisposeRef ref) {
+  return <String, String>{"Authorization": ref.watch(settingsNotifierProvider.select((value) => value.requireValue.token))};
+}
 
 @riverpod
 Future<URLInfo> getUrlInfo(GetUrlInfoRef ref, String url) async {
@@ -18,10 +26,10 @@ Future<URLInfo> getUrlInfo(GetUrlInfoRef ref, String url) async {
   const path = '/api/url-info';
   final encodedURL = Uri.encodeComponent(url);
   var u = Uri.parse("$serverURL$path?url=$encodedURL");
-  var res = await http.get(u).timeout(requestTimeoutLong);
+  var res = await http.get(u, headers: getAuthHeader(ref)).timeout(requestTimeoutLong);
 
   if (res.statusCode >= 400) {
-    throw Exception("unable to get propositions for $url. Status code is: ${res.statusCode}");
+    throw HttpStatusError.by("Unable to get propositions for $url", res);
   }
   return URLInfo.fromJson(jsonDecode(res.body));
 }
@@ -34,9 +42,10 @@ Future<RecordingInfo> addRecording(AddRecordingRef ref, String url) async {
   var res = await http
       .post(
         Uri.parse("$serverURL$path"),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
+        headers: getAuthHeader(ref)
+          ..addAll({
+            'Content-Type': 'application/json; charset=UTF-8',
+          }),
         body: jsonEncode(<String, String>{
           'url': url,
         }),
@@ -44,7 +53,7 @@ Future<RecordingInfo> addRecording(AddRecordingRef ref, String url) async {
       .timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
-    throw Exception("unable to post recording for $url. Status code is: ${res.statusCode}");
+    throw HttpStatusError.by("Unable to post recording for $url", res);
   }
   return RecordingInfo.fromJson(jsonDecode(res.body));
 }
@@ -54,10 +63,10 @@ Future<List<RecordingInfo>> listRecordings(ListRecordingsRef ref, int offset, in
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/recordings';
 
-  var res = await http.get(Uri.parse("$serverURL$path?offset=$offset&limit=$limit&sort_by=$sortBy")).timeout(requestTimeout);
+  var res = await http.get(Uri.parse("$serverURL$path?offset=$offset&limit=$limit&sort_by=$sortBy"), headers: getAuthHeader(ref)).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
-    throw Exception("unable to get list of recordings. Status code is: ${res.statusCode}");
+    throw HttpStatusError.by("Unable to get list of recordings", res);
   }
   final recordings = RecordingInfo.fromJsonList(jsonDecode(res.body));
   for (var r in recordings) {
@@ -71,10 +80,10 @@ Future<RecordingInfo> getRecording(GetRecordingRef ref, String id) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   var path = '/api/recordings/$id';
 
-  var res = await http.get(Uri.parse("$serverURL$path")).timeout(requestTimeout);
+  var res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
-    throw Exception("unable to get recording with id=$id. Status code is: ${res.statusCode}");
+    throw HttpStatusError.by("Unable to get recording with id=$id", res);
   }
   final recording = RecordingInfo.fromJson(jsonDecode(res.body));
   recording.thumbnailUrl = serverURL + recording.thumbnailUrl;
@@ -86,10 +95,10 @@ Future<Download> getDownload(GetDownloadRef ref, String id) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   var path = '/api/recordings/downloads/$id';
 
-  var res = await http.get(Uri.parse("$serverURL$path")).timeout(requestTimeout);
+  var res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
-    throw Exception("unable to get download with id=$id. Status code is: ${res.statusCode}");
+    throw HttpStatusError.by("Unable to get download with id=$id", res);
   }
   final download = Download.fromJson(jsonDecode(res.body));
   download.url = serverURL + download.url;
@@ -101,10 +110,10 @@ Future<List<Download>> listDownloads(ListDownloadsRef ref, String recordingId) a
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   var path = '/api/recordings/$recordingId/downloads';
 
-  var res = await http.get(Uri.parse("$serverURL$path")).timeout(requestTimeout);
+  var res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
-    throw Exception("unable to get list of downloads for $recordingId. Status code is: ${res.statusCode}");
+    throw HttpStatusError.by("Unable to get list of downloads for $recordingId", res);
   }
 
   final downloads = Download.fromJsonList(jsonDecode(res.body));
@@ -119,15 +128,18 @@ Future<Download> newDownload(NewDownloadRef ref, String recordingId, String form
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   var path = '/api/recordings/$recordingId/downloads';
 
-  var res = await http.post(
-    Uri.parse("$serverURL$path"),
-    body: <String, String>{
-      "format": format,
-    },
-  ).timeout(requestTimeout);
+  var res = await http
+      .post(
+        Uri.parse("$serverURL$path"),
+        body: <String, String>{
+          "format": format,
+        },
+        headers: getAuthHeader(ref),
+      )
+      .timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
-    throw Exception("unable to start downloading format $format for $recordingId. Status code is: ${res.statusCode}");
+    throw HttpStatusError.by("Unable to start downloading format $format for $recordingId", res);
   }
   return Download.fromJson(jsonDecode(res.body));
 }
@@ -135,49 +147,51 @@ Future<Download> newDownload(NewDownloadRef ref, String recordingId, String form
 @riverpod
 Future<void> setHidden(SetHiddenRef ref, String recordingId) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
-  await _hidden(serverURL, recordingId, http.put);
+  await _hidden(serverURL, recordingId, http.put, getAuthHeader(ref));
 }
 
 @riverpod
 Future<void> unsetHidden(UnsetHiddenRef ref, String recordingId) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
-  await _hidden(serverURL, recordingId, http.delete);
+  await _hidden(serverURL, recordingId, http.delete, getAuthHeader(ref));
 }
 
-Future<void> _hidden(String serverURL, String recordingId, HttpMethod httpMethod) async {
+Future<void> _hidden(String serverURL, String recordingId, HttpMethod httpMethod, Map<String, String> headers) async {
   var path = '/api/recordings/$recordingId/hidden';
 
   var res = await httpMethod(
     Uri.parse("$serverURL$path"),
+    headers: headers,
   ).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
-    throw Exception("unable to set or unset hidden for $recordingId. Status code is: ${res.statusCode}");
+    throw HttpStatusError.by("Unable to set or unset hidden for $recordingId", res);
   }
 }
 
-Future<void> _seen(String serverURL, String recordingId, HttpMethod httpMethod) async {
+Future<void> _seen(String serverURL, String recordingId, HttpMethod httpMethod, Map<String, String> headers) async {
   var path = '/api/recordings/$recordingId/seen';
 
   var res = await httpMethod(
     Uri.parse("$serverURL$path"),
+    headers: headers,
   ).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
-    throw Exception("unable to set or unset seen for $recordingId. Status code is: ${res.statusCode}");
+    throw HttpStatusError.by("Unable to set or unset seen for $recordingId", res);
   }
 }
 
 @riverpod
 Future<void> setSeen(SetSeenRef ref, String recordingId) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
-  await _seen(serverURL, recordingId, http.put);
+  await _seen(serverURL, recordingId, http.put, getAuthHeader(ref));
 }
 
 @riverpod
 Future<void> unsetSeen(UnsetSeenRef ref, String recordingId) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
-  await _seen(serverURL, recordingId, http.delete);
+  await _seen(serverURL, recordingId, http.delete, getAuthHeader(ref));
 }
 
 //g.PUT("/recordings/:id/position", cont.putPosition)
@@ -189,9 +203,10 @@ Future<void> putPosition(PutPositionRef ref, String recordingId, Duration positi
   var res = await http
       .put(
         Uri.parse("$serverURL$path"),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
+        headers: getAuthHeader(ref)
+          ..addAll({
+            'Content-Type': 'application/json; charset=UTF-8',
+          }),
         body: jsonEncode(<String, dynamic>{
           'position': position.inSeconds,
           'finished': finished,
@@ -200,6 +215,19 @@ Future<void> putPosition(PutPositionRef ref, String recordingId, Duration positi
       .timeout(const Duration(seconds: 5));
 
   if (res.statusCode >= 400) {
-    throw Exception("unable to post position $position for $recordingId. Status code is: ${res.statusCode}");
+    throw HttpStatusError.by("Unable to post position $position for $recordingId", res);
   }
+}
+
+@riverpod
+Future<Tenant> getTenant(GetTenantRef ref) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  var path = '/api/tenant';
+
+  var res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
+
+  if (res.statusCode >= 400) {
+    throw HttpStatusError.by("Unable to get tenant info", res);
+  }
+  return Tenant.fromJson(jsonDecode(res.body));
 }

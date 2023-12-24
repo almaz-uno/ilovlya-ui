@@ -9,12 +9,15 @@ var metrics = <String, int>{
 };
 
 String fileSizeHumanReadable(int size) {
+  final sign = size < 0 ? -1 : 1;
+  final ss = sign < 0 ? '-' : '';
+  size = size * sign;
   for (var m in ["Tb", "Gb", "Mb", "Kb"]) {
     if (size >= metrics[m]!) {
-      return "${(size / metrics[m]!).toStringAsFixed(1)}$m";
+      return "$ss${(size / metrics[m]!).toStringAsFixed(1)}$m";
     }
   }
-  return "${size}b";
+  return "$ss${size}b";
 }
 
 String formatDuration(Duration duration) {
@@ -26,7 +29,7 @@ String formatDuration(Duration duration) {
 }
 
 final _formatDate = DateFormat('yyyy-MM-dd');
-final _formatDateLong = DateFormat('yyyy-MM-dd hh:mm');
+final _formatDateLong = DateFormat('yyyy-MM-dd HH:mm');
 String formatDate(DateTime? dt) {
   if (dt == null) {
     return "";
@@ -53,7 +56,7 @@ String since(DateTime? dt, bool short) {
     tersity = DurationTersity.minute;
   }
 
-  if (dura < const Duration(hours: 1)) {
+  if (dura < const Duration(minutes: 10)) {
     tersity = DurationTersity.second;
   }
 
