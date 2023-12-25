@@ -6,7 +6,7 @@
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
     "description": "Ilovlya media center. Look and hear!",
-    "orientation": "portrait-primary",
+    "orientation": "natural",
     "prefer_related_applications": false,
     "icons": [
         {

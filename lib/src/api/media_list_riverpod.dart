@@ -61,6 +61,7 @@ class MediaListNotifier extends _$MediaListNotifier {
 
     for (var i = 0; i < list.length; i++) {
       if (list[i].id == recording.id) {
+        recording.hasFile = list[i].hasFile;
         list[i] = recording;
         state = AsyncData(list);
         // _save(recordings);

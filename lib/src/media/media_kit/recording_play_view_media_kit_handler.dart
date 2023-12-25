@@ -267,8 +267,8 @@ class _RecordingViewMediaKitHandlerState
                           children: <Widget>[
                             Video(
                               controller: _controller,
-                              filterQuality: FilterQuality.high,
                               pauseUponEnteringBackgroundMode: false,
+                              resumeUponEnteringForegroundMode: true,
                             ),
                             // _ControlsOverlay(player: player),
                             // VideoProgressIndicator(
