@@ -1,5 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
 
+import '../media/format.dart';
+
 part 'tenant.g.dart';
 
 @JsonSerializable(fieldRename: FieldRename.snake)
@@ -29,6 +31,18 @@ class Tenant {
     this.files = 0,
     this.blockedAt,
   });
+
+  String quotaStr() {
+    return fileSizeHumanReadable(diskQuota);
+  }
+
+  String usageStr() {
+    return fileSizeHumanReadable(diskUsage);
+  }
+
+  String freeStr() {
+    return fileSizeHumanReadable(diskQuota - diskUsage);
+  }
 
   factory Tenant.fromJson(Map<String, dynamic> json) => _$TenantFromJson(json);
   Map<String, dynamic> toJson() => _$TenantToJson(this);

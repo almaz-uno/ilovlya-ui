@@ -99,9 +99,9 @@ class SettingsView extends ConsumerWidget {
       final t = tenant.requireValue;
       w.add(Text("${t.firstName} ${t.lastName} (${t.username})"));
       if (t.blockedAt != null) w.add(Text("Blocked at ${tenant.requireValue.blockedAt}"));
-      w.add(Text("Quota: ${fileSizeHumanReadable(t.diskQuota)}"));
-      w.add(Text("Used: ${fileSizeHumanReadable(t.diskUsage)}"));
-      w.add(Text("Free: ${fileSizeHumanReadable(t.diskQuota - t.diskUsage)}"));
+      w.add(Text("Quota: ${t.quotaStr()}"));
+      w.add(Text("Used: ${t.usageStr()}"));
+      w.add(Text("Free: ${t.freeStr()}"));
       w.add(Text("Files: ${t.files}"));
     }
     return w;

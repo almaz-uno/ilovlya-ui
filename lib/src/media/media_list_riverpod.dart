@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ilovlya/src/api/api_riverpod.dart';
 
 import '../api/exceptions.dart';
 import '../api/media_list_riverpod.dart';
@@ -22,7 +23,7 @@ class MediaListViewRiverpod extends ConsumerStatefulWidget {
 class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   StreamSubscription? _updatePullSubs;
 
-  static const _updatePullPeriod = Duration(minutes: 5);
+  static const _updatePullPeriod = Duration(minutes: 1);
 
   @override
   void initState() {
@@ -44,21 +45,25 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     final mediaList = ref.watch(mediaListNotifierProvider);
     final settings = ref.watch(settingsNotifierProvider);
     final primary = Theme.of(context).colorScheme.primary;
+    final tenant = ref.watch(getTenantProvider);
+    String usageInfo = "";
+    if (tenant.hasValue) {
+      final t = tenant.requireValue;
+      usageInfo = "quote: ${t.quotaStr()} usage: ${t.usageStr()} (${t.files}) free: ${t.freeStr()} ";
+    }
 
     if (mediaList.hasError) {
       if (mediaList.error is HttpStatusError && (mediaList.error as HttpStatusError).statusCode == HttpStatus.unauthorized) {
         Future.microtask(() {
           Navigator.restorablePushNamed(context, SettingsView.routeName);
-          showDialog(
-              context: context,
-              barrierDismissible: true,
-              builder: (BuildContext context) => const AlertDialog(
-                    title: Text("Unauthorized"),
-                    content: Text('Fill token and check server URL settings'),
-                  ));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: const Text('Fill token and check server URL settings'),
+            behavior: SnackBarBehavior.fixed,
+            duration: const Duration(seconds: 10),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ));
         });
       }
-      return ErrorWidget(mediaList.error!);
     }
 
     return Scaffold(
@@ -157,6 +162,12 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
           ),
         ],
       ),
+      bottomNavigationBar: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(usageInfo),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: () {
           ref.invalidate(mediaListNotifierProvider);
@@ -175,6 +186,10 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   Widget _buildRecordingsList(BuildContext context) {
     final mediaList = ref.watch(mediaListNotifierProvider);
     final setting = ref.watch(settingsNotifierProvider);
+
+    if (mediaList.hasError) {
+      return ErrorWidget(mediaList.error!);
+    }
 
     return ListView.builder(
       scrollDirection: Axis.vertical,

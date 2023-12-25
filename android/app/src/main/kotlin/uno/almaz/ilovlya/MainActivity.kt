@@ -1,4 +1,4 @@
-package com.example.ilovlya
+package uno.almaz.ilovlya
 
 import io.flutter.embedding.android.FlutterActivity
 
