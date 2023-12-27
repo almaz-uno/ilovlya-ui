@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
+import 'package:universal_platform/universal_platform.dart';
+
 import 'api/api.dart';
 import 'media/media_add_view.dart';
 import 'media/media_details_view.dart';
@@ -26,6 +28,20 @@ class MyApp extends ConsumerWidget {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Theme.of(context).colorScheme.background,
     ));
+
+    var pageTransitionsTheme = const PageTransitionsTheme();
+
+    if (UniversalPlatform.isLinux || UniversalPlatform.isWindows) {
+      pageTransitionsTheme = const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.windows: OpenUpwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: OpenUpwardsPageTransitionsBuilder(),
+          TargetPlatform.macOS: OpenUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: OpenUpwardsPageTransitionsBuilder(),
+          TargetPlatform.android: OpenUpwardsPageTransitionsBuilder(),
+        },
+      );
+    }
 
     return MaterialApp(
       scrollBehavior: const MaterialScrollBehavior().copyWith(
@@ -66,10 +82,13 @@ class MyApp extends ConsumerWidget {
       },
 
       theme: ThemeData.light().copyWith(
-        textTheme: GoogleFonts.ptSansCaptionTextTheme(ThemeData.light().textTheme),
+        textTheme:
+            GoogleFonts.ptSansCaptionTextTheme(ThemeData.light().textTheme),
+        pageTransitionsTheme: pageTransitionsTheme,
       ),
       darkTheme: ThemeData.dark().copyWith(
         textTheme: GoogleFonts.ptSansTextTheme(ThemeData.dark().textTheme),
+        pageTransitionsTheme: pageTransitionsTheme,
       ),
 
       themeMode: settings.value?.theme,
@@ -110,11 +129,14 @@ class MyApp extends ConsumerWidget {
       print(uri.queryParameters);
 
       if (uri.queryParameters.containsKey("add")) {
-        return MediaAddView(forcePaste: uri.queryParameters.containsKey("paste"));
+        return MediaAddView(
+            forcePaste: uri.queryParameters.containsKey("paste"));
       } else if (uri.pathSegments.length < 2) {
         return const MediaListViewRiverpod();
       } else {
-        return MediaDetailsView(id: uri.pathSegments[1], play: uri.queryParameters.containsKey("play"));
+        return MediaDetailsView(
+            id: uri.pathSegments[1],
+            play: uri.queryParameters.containsKey("play"));
       }
     } else if (uri.pathSegments[0] == pathSettings) {
       return const SettingsView();

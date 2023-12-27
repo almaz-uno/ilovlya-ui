@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ilovlya/src/api/api_riverpod.dart';
 
+import '../api/api_riverpod.dart';
 import '../api/exceptions.dart';
 import '../api/media_list_riverpod.dart';
 import '../settings/settings_provider.dart';
@@ -59,7 +59,6 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: const Text('Fill token and check server URL settings'),
             behavior: SnackBarBehavior.fixed,
-            duration: const Duration(seconds: 10),
             backgroundColor: Theme.of(context).colorScheme.error,
           ));
         });

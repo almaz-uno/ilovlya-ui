@@ -138,16 +138,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       body: Stack(
         children: [
           // Visibility(visible: recording.isLoading, child: const LinearProgressIndicator()),
-          RefreshIndicator(
-            onRefresh: _pullRefresh,
-            child: Scrollbar(
-              thumbVisibility: true,
-              interactive: true,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: _buildRecordings(recording),
-              ),
-            ),
+          SingleChildScrollView(
+            child: _buildRecordings(recording),
           ),
         ],
       ),
@@ -309,35 +301,30 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           )
         : Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Files for this recording",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Scrollbar(
-                  thumbVisibility: true,
-                  interactive: true,
-                  scrollbarOrientation: ScrollbarOrientation.bottom,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      columnSpacing: 12,
-                      columns: const [
-                        DataColumn(label: Expanded(child: Text("format", style: headerStyle))),
-                        DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                        DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
-                        DataColumn(label: Expanded(child: Text("fps", style: headerStyle))),
-                        DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                        DataColumn(label: Expanded(child: Text("size", style: headerStyle))),
-                        DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                      ],
-                      rows: rows,
-                    ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Files for this recording",
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                ),
-              ],
+                  DataTable(
+                    columnSpacing: 12,
+                    columns: const [
+                      DataColumn(label: Expanded(child: Text("format", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text("fps", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text("size", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                    ],
+                    rows: rows,
+                  ),
+                ],
+              ),
             ),
           );
   }

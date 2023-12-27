@@ -51,7 +51,9 @@ class _RecordingViewMediaKitHandlerState
 
   Player get _player => MKPlayerHandler.player;
 
-  late final _controller = VideoController(_player);
+  late final _controller = VideoController(_player,
+      configuration: VideoControllerConfiguration(
+          enableHardwareAcceleration: !UniversalPlatform.isLinux));
 
   StreamSubscription? _positionSendSubs;
 
@@ -86,7 +88,9 @@ class _RecordingViewMediaKitHandlerState
     });
 
     _player.stream.playing.listen((event) {
-      setState(() {});
+      if (event) {
+        setState(() {});
+      }
     });
 
     _player.stream.videoParams.listen((event) {
@@ -112,7 +116,9 @@ class _RecordingViewMediaKitHandlerState
     });
 
     _positionSendSubs = Stream.periodic(_positionSendPeriod).listen((event) {
-      if (_player.state.playing && !_player.state.buffering && _player.state.position != Duration.zero) {
+      if (_player.state.playing &&
+          !_player.state.buffering &&
+          _player.state.position != Duration.zero) {
         _sendPosition(
           widget.recording.id,
           _player.state.position,
@@ -124,7 +130,6 @@ class _RecordingViewMediaKitHandlerState
 
   @override
   void dispose() {
-    //_player.dispose();
     MKPlayerHandler.dispose();
     _positionSendSubs?.cancel();
     super.dispose();
@@ -183,9 +188,11 @@ class _RecordingViewMediaKitHandlerState
             SingleActivator(LogicalKeyboardKey.backspace): BackIntent(),
             SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
             SingleActivator(LogicalKeyboardKey.space): PlayPauseIntent(),
-            SingleActivator(LogicalKeyboardKey.arrowLeft,
-                control: true,
-                shift: true): ChangePositionIntent(Duration(seconds: -300)),
+            SingleActivator(
+              LogicalKeyboardKey.arrowLeft,
+              control: true,
+              shift: true,
+            ): ChangePositionIntent(Duration(seconds: -300)),
             SingleActivator(LogicalKeyboardKey.arrowLeft,
                 control: false,
                 shift: true): ChangePositionIntent(Duration(seconds: -60)),
