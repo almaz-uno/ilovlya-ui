@@ -39,21 +39,17 @@ class RecordingViewMediaKitHandler extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<RecordingViewMediaKitHandler> createState() =>
-      _RecordingViewMediaKitHandlerState();
+  ConsumerState<RecordingViewMediaKitHandler> createState() => _RecordingViewMediaKitHandlerState();
 }
 
 const _positionSendPeriod = Duration(seconds: 1);
 
-class _RecordingViewMediaKitHandlerState
-    extends ConsumerState<RecordingViewMediaKitHandler> {
+class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMediaKitHandler> {
   String get url => widget.download.url;
 
   Player get _player => MKPlayerHandler.player;
 
-  late final _controller = VideoController(_player,
-      configuration: VideoControllerConfiguration(
-          enableHardwareAcceleration: !UniversalPlatform.isLinux));
+  late final _controller = VideoController(_player, configuration: VideoControllerConfiguration(enableHardwareAcceleration: !UniversalPlatform.isLinux));
 
   StreamSubscription? _positionSendSubs;
 
@@ -69,8 +65,7 @@ class _RecordingViewMediaKitHandlerState
     MKPlayerHandler.handler.playRecording(widget.recording, widget.download);
 
     if (UniversalPlatform.isDesktop || UniversalPlatform.isWeb) {
-      await _player
-          .setVolume(ref.read(settingsNotifierProvider).requireValue.volume);
+      await _player.setVolume(ref.read(settingsNotifierProvider).requireValue.volume);
     }
 
     _player.stream.duration.listen((event) {
@@ -116,9 +111,7 @@ class _RecordingViewMediaKitHandlerState
     });
 
     _positionSendSubs = Stream.periodic(_positionSendPeriod).listen((event) {
-      if (_player.state.playing &&
-          !_player.state.buffering &&
-          _player.state.position != Duration.zero) {
+      if (_player.state.playing && !_player.state.buffering && _player.state.position != Duration.zero) {
         _sendPosition(
           widget.recording.id,
           _player.state.position,
@@ -142,12 +135,8 @@ class _RecordingViewMediaKitHandlerState
   @override
   Widget build(BuildContext context) {
     double aspectRatio = 9.0 / 16.0;
-    if (_player.state.width != null &&
-        _player.state.height != null &&
-        _player.state.width != 0 &&
-        _player.state.height != 0) {
-      aspectRatio =
-          _player.state.height!.toDouble() / _player.state.width!.toDouble();
+    if (_player.state.width != null && _player.state.height != null && _player.state.width != 0 && _player.state.height != 0) {
+      aspectRatio = _player.state.height!.toDouble() / _player.state.width!.toDouble();
     }
 
     double mediaW = MediaQuery.of(context).size.width * 0.8;
@@ -193,31 +182,15 @@ class _RecordingViewMediaKitHandlerState
               control: true,
               shift: true,
             ): ChangePositionIntent(Duration(seconds: -300)),
-            SingleActivator(LogicalKeyboardKey.arrowLeft,
-                control: false,
-                shift: true): ChangePositionIntent(Duration(seconds: -60)),
-            SingleActivator(LogicalKeyboardKey.arrowLeft,
-                control: true,
-                shift: false): ChangePositionIntent(Duration(seconds: -30)),
-            SingleActivator(LogicalKeyboardKey.arrowLeft,
-                control: false,
-                shift: false): ChangePositionIntent(Duration(seconds: -10)),
-            SingleActivator(LogicalKeyboardKey.arrowRight,
-                control: true,
-                shift: true): ChangePositionIntent(Duration(seconds: 300)),
-            SingleActivator(LogicalKeyboardKey.arrowRight,
-                control: false,
-                shift: true): ChangePositionIntent(Duration(seconds: 60)),
-            SingleActivator(LogicalKeyboardKey.arrowRight,
-                control: true,
-                shift: false): ChangePositionIntent(Duration(seconds: 30)),
-            SingleActivator(LogicalKeyboardKey.arrowRight,
-                control: false,
-                shift: false): ChangePositionIntent(Duration(seconds: 10)),
-            SingleActivator(LogicalKeyboardKey.arrowDown,
-                control: false, shift: false): ChangeVolumeIntent(-5),
-            SingleActivator(LogicalKeyboardKey.arrowUp,
-                control: false, shift: false): ChangeVolumeIntent(5),
+            SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: true): ChangePositionIntent(Duration(seconds: -60)),
+            SingleActivator(LogicalKeyboardKey.arrowLeft, control: true, shift: false): ChangePositionIntent(Duration(seconds: -30)),
+            SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: false): ChangePositionIntent(Duration(seconds: -10)),
+            SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: true): ChangePositionIntent(Duration(seconds: 300)),
+            SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: true): ChangePositionIntent(Duration(seconds: 60)),
+            SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: false): ChangePositionIntent(Duration(seconds: 30)),
+            SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: false): ChangePositionIntent(Duration(seconds: 10)),
+            SingleActivator(LogicalKeyboardKey.arrowDown, control: false, shift: false): ChangeVolumeIntent(-5),
+            SingleActivator(LogicalKeyboardKey.arrowUp, control: false, shift: false): ChangeVolumeIntent(5),
           },
           child: Actions(
             actions: <Type, Action<Intent>>{
@@ -227,18 +200,15 @@ class _RecordingViewMediaKitHandlerState
                   return null;
                 },
               ),
-              PlayPauseIntent: CallbackAction<PlayPauseIntent>(
-                  onInvoke: (PlayPauseIntent intent) {
+              PlayPauseIntent: CallbackAction<PlayPauseIntent>(onInvoke: (PlayPauseIntent intent) {
                 _player.playOrPause();
                 return null;
               }),
-              ChangePositionIntent: CallbackAction<ChangePositionIntent>(
-                  onInvoke: (ChangePositionIntent intent) {
+              ChangePositionIntent: CallbackAction<ChangePositionIntent>(onInvoke: (ChangePositionIntent intent) {
                 _seek(_player, _player.state.position + intent.duration);
                 return null;
               }),
-              ChangeVolumeIntent: CallbackAction<ChangeVolumeIntent>(
-                  onInvoke: (ChangeVolumeIntent intent) {
+              ChangeVolumeIntent: CallbackAction<ChangeVolumeIntent>(onInvoke: (ChangeVolumeIntent intent) {
                 var nv = (_player.state.volume).toInt() + intent.change;
                 if (nv < 0) {
                   nv = 0;
@@ -259,9 +229,7 @@ class _RecordingViewMediaKitHandlerState
                     Row(
                       children: [
                         const BackButton(),
-                        Expanded(
-                            child: Text(
-                                "${widget.recording.title} • ${formatDuration(_player.state.duration)}")),
+                        Expanded(child: Text("${widget.recording.title} • ${formatDuration(_player.state.duration)}")),
                       ],
                     ),
                     Container(
@@ -298,8 +266,7 @@ class _RecordingViewMediaKitHandlerState
                     Container(
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.all(8),
-                      child: Text(
-                          "Created at: ${formatDateLong(widget.recording.createdAt)} (${since(widget.recording.createdAt, false)} ago)"),
+                      child: Text("Created at: ${formatDateLong(widget.recording.createdAt)} (${since(widget.recording.createdAt, false)} ago)"),
                     ),
                     Visibility(
                       visible: settings.value?.debugMode ?? false,
@@ -310,36 +277,18 @@ class _RecordingViewMediaKitHandlerState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("With audio handler!", style: techInfoStyle),
-                            if (widget.recording.seenAt != null)
-                              Text(
-                                  "seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)",
-                                  style: techInfoStyle),
-                            Text("created at: ${widget.download.createdAt}",
-                                style: techInfoStyle),
-                            Text("updated at: ${widget.download.updatedAt}",
-                                style: techInfoStyle),
-                            Text(
-                                "duration: ${formatDuration(_player.state.duration)}",
-                                style: techInfoStyle),
-                            Text(
-                                "position: ${formatDuration(_player.state.position)}",
-                                style: techInfoStyle),
-                            Text(
-                                "buffered: ${formatDuration(_player.state.buffer)}",
-                                style: techInfoStyle),
-                            Text(
-                                "buffering: ${_player.state.buffering ? '>>' : '__'}",
-                                style: techInfoStyle),
-                            Text("volume: ${_player.state.volume}",
-                                style: techInfoStyle),
-                            Text(
-                                "size: ${_player.state.width}x${_player.state.height}",
-                                style: techInfoStyle),
+                            if (widget.recording.seenAt != null) Text("seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)", style: techInfoStyle),
+                            Text("created at: ${widget.download.createdAt}", style: techInfoStyle),
+                            Text("updated at: ${widget.download.updatedAt}", style: techInfoStyle),
+                            Text("duration: ${formatDuration(_player.state.duration)}", style: techInfoStyle),
+                            Text("position: ${formatDuration(_player.state.position)}", style: techInfoStyle),
+                            Text("buffered: ${formatDuration(_player.state.buffer)}", style: techInfoStyle),
+                            Text("buffering: ${_player.state.buffering ? '>>' : '__'}", style: techInfoStyle),
+                            Text("volume: ${_player.state.volume}", style: techInfoStyle),
+                            Text("size: ${_player.state.width}x${_player.state.height}", style: techInfoStyle),
 
-                            Text("video params: ${_player.state.videoParams}",
-                                style: techInfoStyle),
-                            Text("audio params: ${_player.state.audioParams}",
-                                style: techInfoStyle),
+                            Text("video params: ${_player.state.videoParams}", style: techInfoStyle),
+                            Text("audio params: ${_player.state.audioParams}", style: techInfoStyle),
                             // Text("${_controller.value}"),
                           ],
                         ),
@@ -375,12 +324,10 @@ class _RecordingViewMediaKitHandlerState
           children: [
             TextButton(
               onLongPress: () {
-                _seek(_player,
-                    _player.state.position - const Duration(minutes: 5));
+                _seek(_player, _player.state.position - const Duration(minutes: 5));
               },
               onPressed: () {
-                _seek(_player,
-                    _player.state.position - const Duration(minutes: 1));
+                _seek(_player, _player.state.position - const Duration(minutes: 1));
               },
               child: const Icon(Icons.fast_rewind),
             ),
@@ -388,12 +335,10 @@ class _RecordingViewMediaKitHandlerState
             //label: const Icon(Icons.chevron_left)),
             TextButton(
               onLongPress: () {
-                _seek(_player,
-                    _player.state.position - const Duration(seconds: 30));
+                _seek(_player, _player.state.position - const Duration(seconds: 30));
               },
               onPressed: () {
-                _seek(_player,
-                    _player.state.position - const Duration(seconds: 15));
+                _seek(_player, _player.state.position - const Duration(seconds: 15));
               },
               child: const Icon(Icons.fast_rewind),
             ),
@@ -417,12 +362,10 @@ class _RecordingViewMediaKitHandlerState
               ),
             TextButton(
               onLongPress: () {
-                _seek(_player,
-                    _player.state.position + const Duration(seconds: 30));
+                _seek(_player, _player.state.position + const Duration(seconds: 30));
               },
               onPressed: () {
-                _seek(_player,
-                    _player.state.position + const Duration(seconds: 15));
+                _seek(_player, _player.state.position + const Duration(seconds: 15));
               },
               child: const Icon(
                 Icons.fast_forward,
@@ -430,12 +373,10 @@ class _RecordingViewMediaKitHandlerState
             ),
             TextButton(
               onLongPress: () {
-                _seek(_player,
-                    _player.state.position + const Duration(minutes: 5));
+                _seek(_player, _player.state.position + const Duration(minutes: 5));
               },
               onPressed: () {
-                _seek(_player,
-                    _player.state.position + const Duration(minutes: 1));
+                _seek(_player, _player.state.position + const Duration(minutes: 1));
               },
               child: const Icon(
                 Icons.fast_forward,
@@ -503,8 +444,7 @@ class _ControlsOverlay extends StatelessWidget {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  _seek(_player,
-                      _player.state.position - const Duration(seconds: 5));
+                  _seek(_player, _player.state.position - const Duration(seconds: 5));
                 },
               ),
             ),
@@ -518,8 +458,7 @@ class _ControlsOverlay extends StatelessWidget {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  _seek(_player,
-                      _player.state.position + const Duration(seconds: 5));
+                  _seek(_player, _player.state.position + const Duration(seconds: 5));
                 },
               ),
             ),

@@ -1662,5 +1662,269 @@ final getTenantProvider = AutoDisposeFutureProvider<Tenant>.internal(
 );
 
 typedef GetTenantRef = AutoDisposeFutureProviderRef<Tenant>;
+String _$deleteDownloadContentHash() =>
+    r'4a512d40ae77d605158010748d48e95a0685665a';
+
+/// See also [deleteDownloadContent].
+@ProviderFor(deleteDownloadContent)
+const deleteDownloadContentProvider = DeleteDownloadContentFamily();
+
+/// See also [deleteDownloadContent].
+class DeleteDownloadContentFamily extends Family<AsyncValue<void>> {
+  /// See also [deleteDownloadContent].
+  const DeleteDownloadContentFamily();
+
+  /// See also [deleteDownloadContent].
+  DeleteDownloadContentProvider call(
+    String downloadId,
+  ) {
+    return DeleteDownloadContentProvider(
+      downloadId,
+    );
+  }
+
+  @override
+  DeleteDownloadContentProvider getProviderOverride(
+    covariant DeleteDownloadContentProvider provider,
+  ) {
+    return call(
+      provider.downloadId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'deleteDownloadContentProvider';
+}
+
+/// See also [deleteDownloadContent].
+class DeleteDownloadContentProvider extends AutoDisposeFutureProvider<void> {
+  /// See also [deleteDownloadContent].
+  DeleteDownloadContentProvider(
+    String downloadId,
+  ) : this._internal(
+          (ref) => deleteDownloadContent(
+            ref as DeleteDownloadContentRef,
+            downloadId,
+          ),
+          from: deleteDownloadContentProvider,
+          name: r'deleteDownloadContentProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$deleteDownloadContentHash,
+          dependencies: DeleteDownloadContentFamily._dependencies,
+          allTransitiveDependencies:
+              DeleteDownloadContentFamily._allTransitiveDependencies,
+          downloadId: downloadId,
+        );
+
+  DeleteDownloadContentProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.downloadId,
+  }) : super.internal();
+
+  final String downloadId;
+
+  @override
+  Override overrideWith(
+    FutureOr<void> Function(DeleteDownloadContentRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: DeleteDownloadContentProvider._internal(
+        (ref) => create(ref as DeleteDownloadContentRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        downloadId: downloadId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<void> createElement() {
+    return _DeleteDownloadContentProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is DeleteDownloadContentProvider &&
+        other.downloadId == downloadId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, downloadId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin DeleteDownloadContentRef on AutoDisposeFutureProviderRef<void> {
+  /// The parameter `downloadId` of this provider.
+  String get downloadId;
+}
+
+class _DeleteDownloadContentProviderElement
+    extends AutoDisposeFutureProviderElement<void>
+    with DeleteDownloadContentRef {
+  _DeleteDownloadContentProviderElement(super.provider);
+
+  @override
+  String get downloadId => (origin as DeleteDownloadContentProvider).downloadId;
+}
+
+String _$deleteRecordingDownloadsContentHash() =>
+    r'05f7ac950a0fde295ec0f53a4763e3104253f6a6';
+
+/// See also [deleteRecordingDownloadsContent].
+@ProviderFor(deleteRecordingDownloadsContent)
+const deleteRecordingDownloadsContentProvider =
+    DeleteRecordingDownloadsContentFamily();
+
+/// See also [deleteRecordingDownloadsContent].
+class DeleteRecordingDownloadsContentFamily extends Family<AsyncValue<void>> {
+  /// See also [deleteRecordingDownloadsContent].
+  const DeleteRecordingDownloadsContentFamily();
+
+  /// See also [deleteRecordingDownloadsContent].
+  DeleteRecordingDownloadsContentProvider call(
+    String recordingId,
+  ) {
+    return DeleteRecordingDownloadsContentProvider(
+      recordingId,
+    );
+  }
+
+  @override
+  DeleteRecordingDownloadsContentProvider getProviderOverride(
+    covariant DeleteRecordingDownloadsContentProvider provider,
+  ) {
+    return call(
+      provider.recordingId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'deleteRecordingDownloadsContentProvider';
+}
+
+/// See also [deleteRecordingDownloadsContent].
+class DeleteRecordingDownloadsContentProvider
+    extends AutoDisposeFutureProvider<void> {
+  /// See also [deleteRecordingDownloadsContent].
+  DeleteRecordingDownloadsContentProvider(
+    String recordingId,
+  ) : this._internal(
+          (ref) => deleteRecordingDownloadsContent(
+            ref as DeleteRecordingDownloadsContentRef,
+            recordingId,
+          ),
+          from: deleteRecordingDownloadsContentProvider,
+          name: r'deleteRecordingDownloadsContentProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$deleteRecordingDownloadsContentHash,
+          dependencies: DeleteRecordingDownloadsContentFamily._dependencies,
+          allTransitiveDependencies:
+              DeleteRecordingDownloadsContentFamily._allTransitiveDependencies,
+          recordingId: recordingId,
+        );
+
+  DeleteRecordingDownloadsContentProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.recordingId,
+  }) : super.internal();
+
+  final String recordingId;
+
+  @override
+  Override overrideWith(
+    FutureOr<void> Function(DeleteRecordingDownloadsContentRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: DeleteRecordingDownloadsContentProvider._internal(
+        (ref) => create(ref as DeleteRecordingDownloadsContentRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        recordingId: recordingId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<void> createElement() {
+    return _DeleteRecordingDownloadsContentProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is DeleteRecordingDownloadsContentProvider &&
+        other.recordingId == recordingId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, recordingId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin DeleteRecordingDownloadsContentRef on AutoDisposeFutureProviderRef<void> {
+  /// The parameter `recordingId` of this provider.
+  String get recordingId;
+}
+
+class _DeleteRecordingDownloadsContentProviderElement
+    extends AutoDisposeFutureProviderElement<void>
+    with DeleteRecordingDownloadsContentRef {
+  _DeleteRecordingDownloadsContentProviderElement(super.provider);
+
+  @override
+  String get recordingId =>
+      (origin as DeleteRecordingDownloadsContentProvider).recordingId;
+}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

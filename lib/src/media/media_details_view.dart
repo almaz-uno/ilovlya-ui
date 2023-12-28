@@ -120,10 +120,22 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         title: recording.hasValue ? Text(recording.requireValue.title) : const Text('Loading info...'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.clear),
+            tooltip: 'Clean all downloaded content on the server',
+            onPressed: () {
+              if (recording.hasValue) {
+                ref.read(deleteRecordingDownloadsContentProvider(recording.requireValue.id));
+                _pullRefresh();
+              }
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.copy),
             tooltip: 'Copy video URL to the clipboard',
             onPressed: () {
-              if (recording.hasValue) copyToClipboard(context, recording.requireValue.webpageUrl);
+              if (recording.hasValue) {
+                copyToClipboard(context, recording.requireValue.webpageUrl);
+              }
             },
           ),
           _addSeenButton(recording),
@@ -461,6 +473,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       copyToClipboard(context, d.url);
                     case "default":
                       launchUrlString(d.url);
+                    case "server-delete":
+                      ref.read(deleteDownloadContentProvider(d.id));
+                      _pullRefresh();
                   }
                   setState(() {});
                 },
@@ -472,7 +487,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       child: Row(
                         children: [
                           Icon(Icons.copy_rounded),
-                          Text("Copy file link to clipboard"),
+                          Expanded(child: Text("Copy file link to clipboard")),
                         ],
                       ),
                     ),
@@ -483,7 +498,20 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       child: Row(
                         children: [
                           Icon(Icons.open_in_browser),
-                          Text("Open in default application"),
+                          Expanded(child: Text("Open in default application")),
+                        ],
+                      ),
+                    ),
+                  );
+                  menuItems.add(
+                    const PopupMenuItem<String>(
+                      value: "server-delete",
+                      child: Row(
+                        children: [
+                          Icon(Icons.clear),
+                          Expanded(
+                            child: Text("Delete file on the server and free server usage quota"),
+                          ),
                         ],
                       ),
                     ),

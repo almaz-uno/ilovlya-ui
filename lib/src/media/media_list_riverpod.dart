@@ -31,6 +31,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
       ref.invalidate(mediaListNotifierProvider);
+      ref.invalidate(getTenantProvider);
     });
   }
 
