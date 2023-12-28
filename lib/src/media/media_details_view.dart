@@ -120,10 +120,22 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         title: recording.hasValue ? Text(recording.requireValue.title) : const Text('Loading info...'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.clear),
+            tooltip: 'Clean all downloaded content on the server',
+            onPressed: () {
+              if (recording.hasValue) {
+                ref.read(deleteRecordingDownloadsContentProvider(recording.requireValue.id));
+                _pullRefresh();
+              }
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.copy),
             tooltip: 'Copy video URL to the clipboard',
             onPressed: () {
-              if (recording.hasValue) copyToClipboard(context, recording.requireValue.webpageUrl);
+              if (recording.hasValue) {
+                copyToClipboard(context, recording.requireValue.webpageUrl);
+              }
             },
           ),
           _addSeenButton(recording),
@@ -138,16 +150,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       body: Stack(
         children: [
           // Visibility(visible: recording.isLoading, child: const LinearProgressIndicator()),
-          RefreshIndicator(
-            onRefresh: _pullRefresh,
-            child: Scrollbar(
-              thumbVisibility: true,
-              interactive: true,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: _buildRecordings(recording),
-              ),
-            ),
+          SingleChildScrollView(
+            child: _buildRecordings(recording),
           ),
         ],
       ),
@@ -309,35 +313,30 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           )
         : Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Files for this recording",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Scrollbar(
-                  thumbVisibility: true,
-                  interactive: true,
-                  scrollbarOrientation: ScrollbarOrientation.bottom,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      columnSpacing: 12,
-                      columns: const [
-                        DataColumn(label: Expanded(child: Text("format", style: headerStyle))),
-                        DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                        DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
-                        DataColumn(label: Expanded(child: Text("fps", style: headerStyle))),
-                        DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                        DataColumn(label: Expanded(child: Text("size", style: headerStyle))),
-                        DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                      ],
-                      rows: rows,
-                    ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Files for this recording",
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                ),
-              ],
+                  DataTable(
+                    columnSpacing: 12,
+                    columns: const [
+                      DataColumn(label: Expanded(child: Text("format", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text("fps", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text("size", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                    ],
+                    rows: rows,
+                  ),
+                ],
+              ),
             ),
           );
   }
@@ -474,6 +473,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       copyToClipboard(context, d.url);
                     case "default":
                       launchUrlString(d.url);
+                    case "server-delete":
+                      ref.read(deleteDownloadContentProvider(d.id));
+                      _pullRefresh();
                   }
                   setState(() {});
                 },
@@ -485,7 +487,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       child: Row(
                         children: [
                           Icon(Icons.copy_rounded),
-                          Text("Copy file link to clipboard"),
+                          Expanded(child: Text("Copy file link to clipboard")),
                         ],
                       ),
                     ),
@@ -496,7 +498,20 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       child: Row(
                         children: [
                           Icon(Icons.open_in_browser),
-                          Text("Open in default application"),
+                          Expanded(child: Text("Open in default application")),
+                        ],
+                      ),
+                    ),
+                  );
+                  menuItems.add(
+                    const PopupMenuItem<String>(
+                      value: "server-delete",
+                      child: Row(
+                        children: [
+                          Icon(Icons.clear),
+                          Expanded(
+                            child: Text("Delete file on the server and free server usage quota"),
+                          ),
                         ],
                       ),
                     ),

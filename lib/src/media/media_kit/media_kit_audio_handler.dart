@@ -30,6 +30,7 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     _player = Player(
         configuration: const PlayerConfiguration(
       bufferSize: 512 * 1024 * 1024,
+
       //title: widget.recording.title,
       // osc: true,
     ));

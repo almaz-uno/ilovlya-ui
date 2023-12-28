@@ -231,3 +231,23 @@ Future<Tenant> getTenant(GetTenantRef ref) async {
   }
   return Tenant.fromJson(jsonDecode(res.body));
 }
+
+@riverpod
+Future<void> deleteDownloadContent(DeleteDownloadContentRef ref, String downloadId) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  var path = '/api/recordings/downloads/$downloadId/content';
+  var res = await http.delete(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
+  if (res.statusCode >= 400) {
+    throw HttpStatusError.by("Unable to delete content for download $downloadId", res);
+  }
+}
+
+@riverpod
+Future<void> deleteRecordingDownloadsContent(DeleteRecordingDownloadsContentRef ref, String recordingId) async {
+  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  var path = '/api/recordings/$recordingId/content';
+  var res = await http.delete(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
+  if (res.statusCode >= 400) {
+    throw HttpStatusError.by("Unable to delete content all downloads for recording $recordingId", res);
+  }
+}

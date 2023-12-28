@@ -1,0 +1,48 @@
+# refer to https://editorconfig.org/
+root = true
+
+[*]
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+#end_of_line = lf
+
+[*.hex]
+insert_final_newline = false
+
+[{*.py,*.python}]
+indent_size = 4
+max_line_length = 200
+
+[{Makefile,*.mk,go.mod,go.sum,*.go,.gitmodules}]
+indent_style = tab
+indent_size = 4
+
+[*.md]
+indent_size = 4
+trim_trailing_whitespace = false
+
+[*.lua]
+indent_size = 4
+
+[{*.yaml,*.yml}]
+indent_style = space
+indent_size = 2
+
+[{docker-compose.yml,*.dockercompose}]
+indent_style = space
+indent_size = 2
+
+[Dockerfile]
+indent_size = 4
+
+[*.dart]
+indent_style = space
+indent_size = 2
+max_line_length = 200
+
+[*.java]
+indent_style = space
+indent_size = 4
