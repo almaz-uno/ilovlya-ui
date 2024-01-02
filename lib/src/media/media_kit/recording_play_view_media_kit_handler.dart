@@ -83,9 +83,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     });
 
     _player.stream.playing.listen((event) {
-      if (event) {
-        setState(() {});
-      }
+      setState(() {});
     });
 
     _player.stream.videoParams.listen((event) {
