@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_share/flutter_share.dart';
+import 'package:universal_platform/universal_platform.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../api/api.dart';
@@ -476,6 +478,19 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     case "server-delete":
                       ref.read(deleteDownloadContentProvider(d.id));
                       _pullRefresh();
+                    case "download-local":
+                    case "share-url":
+                      if (UniversalPlatform.isWeb || !UniversalPlatform.isIOS) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('At now this ability is allowed only for iOS devices'),
+                        ));
+                        return;
+                      }
+                      await FlutterShare.share(
+                        title: 'Share the download',
+                        text: d.title,
+                        linkUrl: d.url,
+                      );
                   }
                   setState(() {});
                 },
@@ -511,6 +526,19 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                           Icon(Icons.clear),
                           Expanded(
                             child: Text("Delete file on the server and free server usage quota"),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                  menuItems.add(
+                    const PopupMenuItem<String>(
+                      value: "share-url",
+                      child: Row(
+                        children: [
+                          Icon(Icons.ios_share),
+                          Expanded(
+                            child: Text("Share the download URL in..."),
                           ),
                         ],
                       ),
