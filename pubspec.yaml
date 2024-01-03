@@ -10,9 +10,10 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
-  app_links: ^3.4.3
+  app_links: ^3.5.0
   audio_service: ^0.18.12
   audio_video_progress_bar: ^2.0.0
+  background_downloader: ^8.0.5
   device_info_plus: ^9.1.1
   duration: ^3.0.13
   flutter:
@@ -21,7 +22,7 @@ dependencies:
     sdk: flutter
   flutter_riverpod: ^2.4.4
   flutter_share: ^2.0.0
-  fvp: ^0.11.0
+  fvp: ^0.12.0
   google_fonts: ^6.1.0
   http: ^1.1.0
   idb_shim: ^2.3.2

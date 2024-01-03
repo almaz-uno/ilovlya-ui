@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -491,6 +492,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                         text: d.title,
                         linkUrl: d.url,
                       );
+                    case "download":
+                      if (UniversalPlatform.isWeb) {
+                        return;
+                      }
+                      downloadFile(context, d);
                   }
                   setState(() {});
                 },
@@ -539,6 +545,19 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                           Icon(Icons.ios_share),
                           Expanded(
                             child: Text("Share the download URL in..."),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                  menuItems.add(
+                    const PopupMenuItem<String>(
+                      value: "download",
+                      child: Row(
+                        children: [
+                          Icon(Icons.download),
+                          Expanded(
+                            child: Text("EXPERIMENTAL: Download local file"),
                           ),
                         ],
                       ),
@@ -607,6 +626,19 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         },
       );
     }
+  }
+
+  Future<void> downloadFile(BuildContext context, Download download) async {
+    final task = DownloadTask(
+      url: download.url,
+      filename: download.filename,
+    );
+
+    final result = await FileDownloader().download(task, onStatus: (TaskStatus status) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('${download.filename}: $status'),
+      ));
+    });
   }
 }
 
