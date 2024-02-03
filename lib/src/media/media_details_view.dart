@@ -5,7 +5,7 @@ import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_share/flutter_share.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -481,17 +481,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       _pullRefresh();
                     case "download-local":
                     case "share-url":
-                      if (UniversalPlatform.isWeb || !UniversalPlatform.isIOS) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('At now this ability is allowed only for iOS devices'),
-                        ));
-                        return;
-                      }
-                      await FlutterShare.share(
-                        title: 'Share the download',
-                        text: d.title,
-                        linkUrl: d.url,
-                      );
+                      await Share.shareUri(Uri.parse(d.url));
                     case "download":
                       if (UniversalPlatform.isWeb) {
                         return;
