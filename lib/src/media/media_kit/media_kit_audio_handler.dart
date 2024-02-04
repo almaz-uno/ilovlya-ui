@@ -5,7 +5,6 @@ import 'package:universal_platform/universal_platform.dart';
 import '../../model/download.dart';
 import '../../model/recording_info.dart';
 
-// if (!UniversalPlatform.isDesktop)
 
 class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   static late final MKPlayerHandler _handler;
@@ -61,9 +60,7 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   void updatePlaybackState() {
     _handler.playbackState.add(PlaybackState(
-      processingState: mediaItem.value == null
-          ? AudioProcessingState.idle
-          : AudioProcessingState.ready,
+      processingState: mediaItem.value == null ? AudioProcessingState.idle : AudioProcessingState.ready,
       controls: [
         MediaControl.rewind,
         if (_player.state.playing) MediaControl.pause else MediaControl.play,
