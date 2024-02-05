@@ -22,6 +22,7 @@ class MediaListViewRiverpod extends ConsumerStatefulWidget {
 
 class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   StreamSubscription? _updatePullSubs;
+  final ScrollController _scrollController = ScrollController();
 
   static const _updatePullPeriod = Duration(minutes: 1);
 
@@ -39,6 +40,14 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   void deactivate() {
     _updatePullSubs?.cancel();
     super.deactivate();
+  }
+
+  void _scrollDown() {
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(seconds: 2),
+      curve: Curves.fastOutSlowIn,
+    );
   }
 
   @override
@@ -162,6 +171,10 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.small(
+        onPressed: _scrollDown,
+        child: const Icon(Icons.arrow_downward),
+      ),
       bottomNavigationBar: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -192,6 +205,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     }
 
     return ListView.builder(
+      controller: _scrollController,
       scrollDirection: Axis.vertical,
       shrinkWrap: true,
       itemCount: mediaList.requireValue.length,
