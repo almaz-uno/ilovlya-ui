@@ -173,7 +173,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     }
 
     final settings = ref.watch(settingsNotifierProvider);
-// final titleSmall = Theme.of(context).textTheme.titleSmall;
+    // final rewindTextStyle = Theme.of(context).textTheme.titleSmall;
     final techInfoStyle = GoogleFonts.ptMono();
     return Scaffold(
       // appBar: AppBar(
@@ -260,23 +260,21 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                         width: playerW,
                         height: playerH,
                         child: Stack(
-                          alignment: Alignment.bottomCenter,
+                          alignment: Alignment.topCenter,
                           children: <Widget>[
                             Video(
                               controller: _controller,
                               pauseUponEnteringBackgroundMode: false,
                               resumeUponEnteringForegroundMode: true,
                             ),
-                            // _ControlsOverlay(player: player),
-                            // VideoProgressIndicator(
-                            //   _controller,
-                            //   allowScrubbing: true,
-                            //   colors: VideoProgressColors(
-                            //     playedColor: Theme.of(context).colorScheme.primary,
-                            //     backgroundColor:
-                            //         const Color.fromARGB(127, 158, 158, 158),
-                            //   ),
-                            // ),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 500),
+                              child: Text(
+                                _rewinding != Duration.zero ? _formatDuration(_rewinding) : "",
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+                                key: ValueKey(_rewinding),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -327,7 +325,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   }
 
   Widget _buildControls(BuildContext context) {
-    // var c = Theme.of(context).colorScheme.primary;
     return Column(
       children: [
         ProgressBar(
@@ -354,8 +351,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                 },
                 child: const Icon(Icons.fast_rewind),
               ),
-
-              //label: const Icon(Icons.chevron_left)),
               TextButton(
                 onLongPress: () {
                   _rewind(-const Duration(seconds: 30));
@@ -406,13 +401,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                 ),
               ),
             ],
-          ),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 1000),
-            // transitionBuilder: (Widget child, Animation<double> animation) {
-            //   return ScaleTransition(scale: animation, child: child);
-            // },
-            child: Text(_rewinding != Duration.zero ? _formatDuration(_rewinding) : "", key: ValueKey(_rewinding)),
           ),
         ]),
       ],
