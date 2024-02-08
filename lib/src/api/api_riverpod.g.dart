@@ -704,7 +704,7 @@ class _GetDownloadProviderElement
   String get id => (origin as GetDownloadProvider).id;
 }
 
-String _$listDownloadsHash() => r'74d1d0e43efbe326cb74a5b56fd44337516e4275';
+String _$listDownloadsHash() => r'3d8ac4ccfc026949e2b70495f8e4871a4907de57';
 
 /// See also [listDownloads].
 @ProviderFor(listDownloads)

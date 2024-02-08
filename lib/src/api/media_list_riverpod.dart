@@ -4,7 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import 'api_riverpod.dart';
-import 'db_riverpod.dart';
+import 'persistent_riverpod.dart';
 
 part 'media_list_riverpod.g.dart';
 
@@ -35,8 +35,7 @@ class MediaListNotifier extends _$MediaListNotifier {
     final showHidden = settings.showHidden;
     final showSeen = settings.showSeen;
 
-    final recordings = await ref
-        .read(listRecordingsProvider(0, limit, sortBy: settings.sortBy).future);
+    final recordings = await ref.read(listRecordingsProvider(0, limit, sortBy: settings.sortBy).future);
 
     // _save(recordings);
 

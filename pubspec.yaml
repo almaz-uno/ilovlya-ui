@@ -30,6 +30,8 @@ dependencies:
   media_kit: ^1.1.10+1
   media_kit_libs_video: ^1.0.1
   media_kit_video: ^1.1.8
+  path: ^1.8.3
+  path_provider: ^2.1.2
   riverpod_annotation: ^2.2.1
   share_plus: ^7.2.2
   shared_preferences: ^2.2.2

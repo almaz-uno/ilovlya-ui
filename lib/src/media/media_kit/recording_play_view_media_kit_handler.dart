@@ -45,12 +45,12 @@ class RecordingViewMediaKitHandler extends ConsumerStatefulWidget {
 const _positionSendPeriod = Duration(seconds: 1);
 
 class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMediaKitHandler> {
-  String get url => widget.download.url;
+  // String get url => widget.download.url;
   Player get _player => MKPlayerHandler.player;
   late final _controller = VideoController(_player, configuration: VideoControllerConfiguration(enableHardwareAcceleration: !UniversalPlatform.isLinux));
   StreamSubscription? _positionSendSubs;
   Duration _rewinding = Duration.zero;
-  Timer? _rewindTimer = null;
+  Timer? _rewindTimer;
 
   @override
   void initState() {
@@ -297,6 +297,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("With audio handler!", style: techInfoStyle),
+                            Text("With audio handler! ${_player.state.playlist}", style: techInfoStyle),
                             if (widget.recording.seenAt != null) Text("seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)", style: techInfoStyle),
                             Text("created at: ${widget.download.createdAt}", style: techInfoStyle),
                             Text("updated at: ${widget.download.updatedAt}", style: techInfoStyle),
@@ -305,6 +306,8 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                             Text("buffered: ${formatDuration(_player.state.buffer)}", style: techInfoStyle),
                             Text("buffering: ${_player.state.buffering ? '>>' : '__'}", style: techInfoStyle),
                             Text("volume: ${_player.state.volume}", style: techInfoStyle),
+                            Text("audio bitrate: ${_player.state.audioBitrate}", style: techInfoStyle),
+                            Text("audio device: ${_player.state.audioDevice}", style: techInfoStyle),
                             Text("size: ${_player.state.width}x${_player.state.height}", style: techInfoStyle),
 
                             Text("video params: ${_player.state.videoParams}", style: techInfoStyle),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:background_downloader/background_downloader.dart';
+import 'package:duration/duration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,8 +12,11 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import '../api/api.dart';
 import '../api/api_riverpod.dart';
+import '../api/local_download_task_riverpod.dart';
+import '../api/persistent_riverpod.dart';
 import '../api/recording_riverpod.dart';
 import '../model/download.dart';
+import '../model/local_download.dart';
 import '../model/recording_info.dart';
 import 'download_details.dart';
 import 'format.dart';
@@ -154,14 +158,14 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         children: [
           // Visibility(visible: recording.isLoading, child: const LinearProgressIndicator()),
           SingleChildScrollView(
-            child: _buildRecordings(recording),
+            child: _buildRecording(recording),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRecordings(AsyncValue<RecordingInfo> recording) {
+  Widget _buildRecording(AsyncValue<RecordingInfo> recording) {
     if (!recording.hasValue) {
       return const Center(child: Text('loading...'));
     }
@@ -238,9 +242,41 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           ),
         ),
         Text("${formatDuration(Duration(seconds: recording.position))} / ${formatDuration(Duration(seconds: recording.duration))}"),
+        downloads.hasValue ? _localDownloadsTable(context, recording, downloads.requireValue) : const SizedBox.shrink(),
         downloads.hasValue ? _downloadsTable(context, recording, downloads.requireValue) : const Text("Downloads info is loading..."),
         recording.formats == null || recording.formats!.isEmpty ? const Text("No formats for the record") : _formatsTable(context, recording),
       ],
+    );
+  }
+
+  Widget ldline(LocalDownloadTask dt) {
+    var st = dt.status?.toString() ?? "";
+    const p = "TaskStatus.";
+    st = st.startsWith(p) ? st.replaceFirst(p, "") : st;
+    var eta = dt.timeRemaining == null ? "" : prettyDuration(dt.timeRemaining!, abbreviated: true);
+    //Text(dt.status?.toString()?.trimLeft())
+    return Column(
+      children: [
+        Text("$st: ${dt.filename} ${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta"),
+        if (dt.status?.isFinalState != true) LinearProgressIndicator(value: dt.progress),
+      ],
+    );
+  }
+
+  Widget _localDownloadsTable(BuildContext context, RecordingInfo recording, List<Download> downloads) {
+    final downloadTasks = ref.watch(localDTNotifierProvider.select((value) {
+      return <String, LocalDownloadTask>{
+        for (final d in downloads)
+          if (value.containsKey(d.id)) d.id: value[d.id]!
+      };
+    }));
+
+    if (downloadTasks.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: [for (final dt in downloadTasks.values) ldline(dt)],
     );
   }
 
@@ -355,7 +391,6 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             IconButton(
               onPressed: () {
                 _startPreparation(context, "${f.id}+ba*");
-                // _startPreparation(context, f.id);
               },
               tooltip: "Download this format and the best audio on the server (prepare for viewing)",
               icon: _downloadFormatIcon,
@@ -465,7 +500,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 );
               },
               tooltip: "Open with MediaKit with handler",
-              icon: const Icon(Icons.slideshow),
+              icon: d.fullPathMedia != null ? const Icon(Icons.download_done) : const Icon(Icons.slideshow),
             ),
             PopupMenuButton(
                 tooltip: 'Do with it...',
@@ -527,32 +562,36 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       ),
                     ),
                   );
-                  menuItems.add(
-                    const PopupMenuItem<String>(
-                      value: "share-url",
-                      child: Row(
-                        children: [
-                          Icon(Icons.ios_share),
-                          Expanded(
-                            child: Text("Share the download URL in..."),
-                          ),
-                        ],
+                  if (!UniversalPlatform.isWeb) {
+                    menuItems.add(
+                      const PopupMenuItem<String>(
+                        value: "share-url",
+                        child: Row(
+                          children: [
+                            Icon(Icons.ios_share),
+                            Expanded(
+                              child: Text("Share the download URL in..."),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                  menuItems.add(
-                    const PopupMenuItem<String>(
-                      value: "download",
-                      child: Row(
-                        children: [
-                          Icon(Icons.download),
-                          Expanded(
-                            child: Text("EXPERIMENTAL: Download local file"),
-                          ),
-                        ],
+                    );
+                  }
+                  if (!UniversalPlatform.isWeb) {
+                    menuItems.add(
+                      const PopupMenuItem<String>(
+                        value: "download",
+                        child: Row(
+                          children: [
+                            Icon(Icons.download),
+                            Expanded(
+                              child: Text("Download local file"),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  }
                   return menuItems;
                 }),
           ],
@@ -619,16 +658,20 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Future<void> downloadFile(BuildContext context, Download download) async {
+    final mediaDir = await (context as WidgetRef).watch(mediaDirProvider.future);
+
     final task = DownloadTask(
+      taskId: download.id,
       url: download.url,
+      directory: mediaDir.path,
+      baseDirectory: BaseDirectory.root,
       filename: download.filename,
+      retries: 8,
+      updates: Updates.statusAndProgress,
+      displayName: download.title,
     );
 
-    final result = await FileDownloader().download(task, onStatus: (TaskStatus status) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('${download.filename}: $status'),
-      ));
-    });
+    FileDownloader().enqueue(task);
   }
 }
 

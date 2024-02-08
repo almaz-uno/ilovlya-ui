@@ -25,9 +25,12 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
+ext.kotlin_version = '1.9.20'
+
 android {
     namespace "uno.almaz.ilovlya"
-    compileSdkVersion flutter.compileSdkVersion
+//    compileSdkVersion flutter.compileSdkVersion
+    compileSdkVersion 34
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -48,7 +51,8 @@ android {
         applicationId "uno.almaz.ilovlya"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion flutter.minSdkVersion
+//        minSdkVersion flutter.minSdkVersion
+        minSdkVersion 21
         targetSdkVersion flutter.targetSdkVersion
         // minSdkVersion 20
         // targetSdkVersion 30

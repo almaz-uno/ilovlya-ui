@@ -1,8 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:ilovlya/src/api/persistent_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 import '../model/download.dart';
 import '../model/recording_info.dart';
@@ -105,9 +109,17 @@ Future<Download> getDownload(GetDownloadRef ref, String id) async {
   return download;
 }
 
+void _setLocalMedia(AutoDisposeRef ref, Download d) async {
+  if (UniversalPlatform.isWeb) return;
+  final mediaDir = await ref.watch(mediaDirProvider.future);
+  final fpm = File(p.join(mediaDir.path, d.filename));
+  if (fpm.existsSync()) d.fullPathMedia = fpm.path;
+}
+
 @riverpod
 Future<List<Download>> listDownloads(ListDownloadsRef ref, String recordingId) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+
   var path = '/api/recordings/$recordingId/downloads';
 
   var res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
@@ -119,6 +131,7 @@ Future<List<Download>> listDownloads(ListDownloadsRef ref, String recordingId) a
   final downloads = Download.fromJsonList(jsonDecode(res.body));
   for (var d in downloads) {
     d.url = serverURL + d.url;
+    _setLocalMedia(ref, d);
   }
   return downloads;
 }

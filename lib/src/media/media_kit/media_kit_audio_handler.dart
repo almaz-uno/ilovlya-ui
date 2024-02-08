@@ -5,7 +5,6 @@ import 'package:universal_platform/universal_platform.dart';
 import '../../model/download.dart';
 import '../../model/recording_info.dart';
 
-
 class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   static late final MKPlayerHandler _handler;
 
@@ -28,13 +27,15 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   void playRecording(RecordingInfo recording, Download download) {
     _player = Player(
         configuration: const PlayerConfiguration(
-      bufferSize: 512 * 1024 * 1024,
+      bufferSize: 128 * 1024 * 1024,
 
       //title: widget.recording.title,
       // osc: true,
     ));
 
-    player.open(Media(download.url));
+    var url = download.fullPathMedia == null ? download.url : "file://${download.fullPathMedia}";
+
+    player.open(Media(url));
 
     player.stream.playing.listen((event) {
       _handler.updatePlaybackState();
@@ -44,7 +45,7 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     });
     player.stream.duration.listen((event) {
       mediaItem.add(MediaItem(
-        id: download.url,
+        id: url,
         title: recording.title,
         artist: recording.uploader,
         album: recording.extractor,

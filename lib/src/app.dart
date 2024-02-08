@@ -126,7 +126,6 @@ class MyApp extends ConsumerWidget {
     if (uri.pathSegments.isEmpty) return null;
 
     if (uri.pathSegments[0] == pathRecordings) {
-      print(uri.queryParameters);
 
       if (uri.queryParameters.containsKey("add")) {
         return MediaAddView(
