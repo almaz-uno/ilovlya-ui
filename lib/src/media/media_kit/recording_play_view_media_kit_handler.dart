@@ -15,6 +15,7 @@ import '../../model/download.dart';
 import '../../model/recording_info.dart';
 import '../../settings/settings_provider.dart';
 import '../format.dart';
+import '../media_details_view.dart';
 import 'media_kit_audio_handler.dart';
 
 String _formatDuration(Duration duration) {
@@ -23,7 +24,7 @@ String _formatDuration(Duration duration) {
     positive = false;
     duration = -duration;
   }
-  return (positive ? "⏵⏵ " : "⏴⏴ ") + prettyDuration(duration, abbreviated: true);
+  return (positive ? "" : "⏴⏴ ") + prettyDuration(duration, abbreviated: true) + (positive ? " ⏵⏵" : "");
 }
 
 class RecordingViewMediaKitHandler extends ConsumerStatefulWidget {
@@ -286,7 +287,28 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                     Container(
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.all(8),
-                      child: Text("Created at: ${formatDateLong(widget.recording.createdAt)} (${since(widget.recording.createdAt, false)} ago)"),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Created at: ${formatDateLong(widget.recording.createdAt)} (${since(widget.recording.createdAt, false)} ago)"),
+                            if (_player.state.playlist.medias.isNotEmpty)
+                              Row(
+                                children: [
+                                  Text("Playing from: ${_player.state.playlist.medias[0].uri}"),
+                                  IconButton(
+                                    onPressed: () {
+                                      copyToClipboard(context, _player.state.playlist.medias[0].uri);
+                                    },
+                                    icon: const Icon(Icons.copy),
+                                  )
+                                ],
+                              ),
+                            Text("Size: ${fileSizeHumanReadable(widget.download.size)}"),
+                          ],
+                        ),
+                      ),
                     ),
                     Visibility(
                       visible: settings.value?.debugMode ?? false,
@@ -297,7 +319,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("With audio handler!", style: techInfoStyle),
-                            Text("With audio handler! ${_player.state.playlist}", style: techInfoStyle),
                             if (widget.recording.seenAt != null) Text("seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)", style: techInfoStyle),
                             Text("created at: ${widget.download.createdAt}", style: techInfoStyle),
                             Text("updated at: ${widget.download.updatedAt}", style: techInfoStyle),

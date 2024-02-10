@@ -33,7 +33,7 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
       // osc: true,
     ));
 
-    var url = download.fullPathMedia == null ? download.url : "file://${download.fullPathMedia}";
+    var url = download.fullPathMedia ?? download.url;
 
     player.open(Media(url));
 

@@ -136,15 +136,6 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               }
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.copy),
-            tooltip: 'Copy video URL to the clipboard',
-            onPressed: () {
-              if (recording.hasValue) {
-                copyToClipboard(context, recording.requireValue.webpageUrl);
-              }
-            },
-          ),
           _addSeenButton(recording),
           _addHiddenButton(recording),
           IconButton(
@@ -189,25 +180,39 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           child: Center(
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    recording.title,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  Text("${recording.uploader} • ${recording.extractor}"),
-                  Text("Created at: ${formatDateLong(recording.createdAt)} (${since(recording.createdAt, false)} ago)"),
-                  Text("Updated at: ${formatDateLong(recording.updatedAt)} (${since(recording.updatedAt, false)} ago)"),
-                  Text(
-                    recording.webpageUrl,
-                    style: const TextStyle(
-                      overflow: TextOverflow.fade,
-                      decoration: TextDecoration.underline,
-                      color: Colors.blue,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      recording.title,
+                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
-                  ),
-                ],
+                    Text("${recording.uploader} • ${recording.extractor}"),
+                    Text("Created at: ${formatDateLong(recording.createdAt)} (${since(recording.createdAt, false)} ago)"),
+                    Text("Updated at: ${formatDateLong(recording.updatedAt)} (${since(recording.updatedAt, false)} ago)"),
+                    Row(
+                      children: [
+                        Text(
+                          recording.webpageUrl,
+                          style: const TextStyle(
+                            overflow: TextOverflow.fade,
+                            decoration: TextDecoration.underline,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy),
+                          tooltip: 'Copy video URL to the clipboard',
+                          onPressed: () {
+                            copyToClipboard(context, recording.webpageUrl);
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -254,10 +259,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     const p = "TaskStatus.";
     st = st.startsWith(p) ? st.replaceFirst(p, "") : st;
     var eta = dt.timeRemaining == null ? "" : prettyDuration(dt.timeRemaining!, abbreviated: true);
+
     //Text(dt.status?.toString()?.trimLeft())
     return Column(
       children: [
-        Text("$st: ${dt.filename} ${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta"),
+        Text("$st: ${dt.filename} ${dt.status?.isNotFinalState == true ? "${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta" : ""}"),
         if (dt.status?.isFinalState != true) LinearProgressIndicator(value: dt.progress),
       ],
     );
@@ -275,8 +281,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       return const SizedBox.shrink();
     }
 
-    return Column(
-      children: [for (final dt in downloadTasks.values) ldline(dt)],
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        children: [for (final dt in downloadTasks.values) ldline(dt)],
+      ),
     );
   }
 
