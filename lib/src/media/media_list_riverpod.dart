@@ -50,6 +50,14 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     );
   }
 
+  void _scrollUp() {
+    _scrollController.animateTo(
+      _scrollController.position.minScrollExtent,
+      duration: const Duration(seconds: 2),
+      curve: Curves.fastOutSlowIn,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final mediaList = ref.watch(mediaListNotifierProvider);
@@ -171,9 +179,18 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.small(
-        onPressed: _scrollDown,
-        child: const Icon(Icons.arrow_downward),
+      floatingActionButton: Wrap(
+        spacing: 8.0,
+        children: [
+          FloatingActionButton.small(
+            onPressed: _scrollUp,
+            child: const Icon(Icons.arrow_upward),
+          ),
+          FloatingActionButton.small(
+            onPressed: _scrollDown,
+            child: const Icon(Icons.arrow_downward),
+          ),
+        ],
       ),
       bottomNavigationBar: Row(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -259,11 +259,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     const p = "TaskStatus.";
     st = st.startsWith(p) ? st.replaceFirst(p, "") : st;
     var eta = dt.timeRemaining == null ? "" : prettyDuration(dt.timeRemaining!, abbreviated: true);
+    var est = dt.networkSpeed == null || dt.networkSpeed! < 0 ? "" : "${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta";
 
     //Text(dt.status?.toString()?.trimLeft())
     return Column(
       children: [
-        Text("$st: ${dt.filename} ${dt.status?.isNotFinalState == true ? "${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta" : ""}"),
+        Text("$st: ${dt.filename} $est"),
         if (dt.status?.isFinalState != true) LinearProgressIndicator(value: dt.progress),
       ],
     );
@@ -325,7 +326,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             ),
           ),
         ),
-        DataCell(_buildActions(context, recording, d)),
+        DataCell(Row(
+          children: [
+            _buildActions(context, recording, d),
+            _buildLocalActions(context, recording, d),
+          ],
+        )),
         DataCell(Opacity(opacity: opacity, child: Text(d.resolution))),
         DataCell(Opacity(opacity: opacity, child: Text(d.fps != null ? "${d.fps}" : ""))),
         DataCell(Opacity(
@@ -509,7 +515,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 );
               },
               tooltip: "Open with MediaKit with handler",
-              icon: d.fullPathMedia != null ? const Icon(Icons.download_done) : const Icon(Icons.slideshow),
+              icon: const Icon(Icons.flag_circle_outlined),
             ),
             PopupMenuButton(
                 tooltip: 'Do with it...',
@@ -604,6 +610,42 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   return menuItems;
                 }),
           ],
+        );
+      default:
+        return ErrorWidget("Unexpected download status ${d.status}");
+    }
+  }
+
+  Widget _buildLocalActions(
+    BuildContext context,
+    RecordingInfo recording,
+    Download d,
+  ) {
+    if (d.fullPathMedia != null) {
+      return IconButton(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
+          );
+        },
+        icon: const Icon(Icons.download_done),
+      );
+    }
+    switch (d.status) {
+      case "stale":
+      case "new":
+      case "in_progress":
+        return const SizedBox.shrink();
+      case "ready":
+        if (UniversalPlatform.isWeb) {
+          return const SizedBox.shrink();
+        }
+        return IconButton(
+          onPressed: () {
+            downloadFile(context, d);
+          },
+          icon: const Icon(Icons.download),
+          tooltip: "Download media to local storage",
         );
       default:
         return ErrorWidget("Unexpected download status ${d.status}");
