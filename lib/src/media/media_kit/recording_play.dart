@@ -15,8 +15,8 @@ import '../../model/download.dart';
 import '../../model/recording_info.dart';
 import '../../settings/settings_provider.dart';
 import '../format.dart';
-import '../media_details_view.dart';
-import 'media_kit_audio_handler.dart';
+import '../media_details.dart';
+import 'audio_handler.dart';
 
 String _formatDuration(Duration duration) {
   var positive = true;

@@ -10,9 +10,9 @@ import 'package:ilovlya/src/settings/settings_provider.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import 'api/api.dart';
-import 'media/media_add_view.dart';
-import 'media/media_details_view.dart';
-import 'media/media_list_riverpod.dart';
+import 'media/media_add.dart';
+import 'media/media_details.dart';
+import 'media/media_list.dart';
 import 'settings/settings_view.dart';
 
 /// The Widget that configures your application.

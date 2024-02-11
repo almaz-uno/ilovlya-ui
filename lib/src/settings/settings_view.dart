@@ -113,19 +113,3 @@ class SettingsView extends ConsumerWidget {
     return w;
   }
 }
-
-class _TenantInfoView extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tenant = ref.watch(getTenantProvider);
-
-    return Column(
-      children: [
-        if (tenant.isLoading) const CircularProgressIndicator(),
-        if (tenant.hasError) Text("${tenant.error}"),
-        if (tenant.hasValue) Text("${tenant.requireValue.firstName} ${tenant.requireValue.lastName} (${tenant.requireValue.username})"),
-        if (tenant.hasValue && tenant.requireValue.blockedAt != null) Text("Blocked at ${tenant.requireValue.blockedAt}")
-      ],
-    );
-  }
-}

@@ -20,7 +20,7 @@ import '../model/local_download.dart';
 import '../model/recording_info.dart';
 import 'download_details.dart';
 import 'format.dart';
-import 'media_kit/recording_play_view_media_kit_handler.dart';
+import 'media_kit/recording_play.dart';
 
 const _downloadFormatIcon = Icon(Icons.start);
 
@@ -628,6 +628,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
           );
         },
+        tooltip: "Local file is downloaded. Click to play.",
         icon: const Icon(Icons.download_done),
       );
     }

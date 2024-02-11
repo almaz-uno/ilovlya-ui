@@ -10,8 +10,8 @@ import '../api/media_list_riverpod.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
 import 'format.dart';
-import 'media_add_view.dart';
-import 'media_details_view.dart';
+import 'media_add.dart';
+import 'media_details.dart';
 
 class MediaListViewRiverpod extends ConsumerStatefulWidget {
   const MediaListViewRiverpod({super.key});
