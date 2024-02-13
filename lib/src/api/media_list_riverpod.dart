@@ -34,20 +34,38 @@ class MediaListNotifier extends _$MediaListNotifier {
       final showHidden = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.showHidden));
       final showSeen = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.showSeen));
 
+      final withServerFile = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.withServerFile));
+      final withLocalFile = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.withLocalFile));
+
       final resultList = <RecordingInfo>[];
 
       final recordingsDir = sp.recordings();
 
       final list = recordingsDir.listSync();
-      for (var entity in list) {
+      for (final entity in list) {
         if (entity is! File) continue;
 
         final recording = RecordingInfo.fromJson(jsonDecode(entity.readAsStringSync()));
+
+        for (final df in recording.files) {
+          if (File(p.join(sp.media().path, df)).existsSync()) {
+            recording.hasLocalFile = true;
+            break;
+          }
+        }
 
         if (recording.seenAt != null && !showSeen) {
           continue;
         }
         if (recording.hiddenAt != null && !showHidden) {
+          continue;
+        }
+
+        if (withServerFile && !recording.hasFile) {
+          continue;
+        }
+
+        if (withLocalFile && !recording.hasLocalFile) {
           continue;
         }
 

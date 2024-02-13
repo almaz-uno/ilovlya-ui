@@ -29,7 +29,14 @@ class RecordingNotifier extends _$RecordingNotifier {
 
       final recordingFile = File(p.join(sp.recordings().path, recordingId));
 
-      return RecordingInfo.fromJson(jsonDecode(recordingFile.readAsStringSync()));
+      final recording = RecordingInfo.fromJson(jsonDecode(recordingFile.readAsStringSync()));
+      for (final df in recording.files) {
+        if (File(p.join(sp.media().path, df)).existsSync()) {
+          recording.hasLocalFile = true;
+          break;
+        }
+      }
+      return recording;
     } catch (e, s) {
       debugPrintStack(stackTrace: s, label: e.toString());
       rethrow;
@@ -70,5 +77,4 @@ class RecordingNotifier extends _$RecordingNotifier {
     if (!UniversalPlatform.isWeb) await _pullFromServer();
     ref.invalidateSelf();
   }
-
 }

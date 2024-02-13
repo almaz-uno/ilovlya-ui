@@ -25,6 +25,8 @@ class SettingsNotifier extends _$SettingsNotifier {
       sortBy: prefs.getString("sort_by") ?? "created_at",
       showHidden: prefs.getBool("show_hidden") ?? false,
       showSeen: prefs.getBool("show_seen") ?? false,
+      withServerFile: prefs.getBool("with_server_file") ?? false,
+      withLocalFile: prefs.getBool("with_local_file") ?? false,
     );
   }
 
@@ -47,6 +49,8 @@ class SettingsNotifier extends _$SettingsNotifier {
     prefs.setString("sort_by", state.value?.sortBy ?? "created_at");
     prefs.setBool("show_hidden", state.value?.showHidden ?? false);
     prefs.setBool("show_seen", state.value?.showSeen ?? false);
+    prefs.setBool("with_server_file", state.value?.withServerFile ?? false);
+    prefs.setBool("with_local_file", state.value?.withLocalFile ?? false);
   }
 
   void updateTheme(ThemeMode theme) {
@@ -86,6 +90,16 @@ class SettingsNotifier extends _$SettingsNotifier {
 
   void toggleShowSeen() {
     state = AsyncData(state.requireValue.copyWith(showSeen: !state.requireValue.showSeen));
+    save();
+  }
+
+  void toggleWithServerFile() {
+    state = AsyncData(state.requireValue.copyWith(withServerFile: !state.requireValue.withServerFile));
+    save();
+  }
+
+  void toggleWithLocalFile() {
+    state = AsyncData(state.requireValue.copyWith(withLocalFile: !state.requireValue.withLocalFile));
     save();
   }
 }
