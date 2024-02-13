@@ -1,3 +1,4 @@
+import 'package:ilovlya/src/model/download.dart';
 import 'package:ilovlya/src/model/format.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -23,6 +24,9 @@ class RecordingInfo {
   List<Format>? formats;
   bool hasFile;
   List<String> files;
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool hasLocalFile;
+  List<String> downloads;
 
   RecordingInfo({
     this.id = "",
@@ -41,6 +45,8 @@ class RecordingInfo {
     this.formats,
     this.hasFile = false,
     this.files = const [],
+    this.hasLocalFile = false,
+    this.downloads = const [],
   });
 
   factory RecordingInfo.fromJson(Map<String, dynamic> json) => _$RecordingInfoFromJson(json);

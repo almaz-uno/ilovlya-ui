@@ -6,6 +6,7 @@ import 'package:duration/duration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ilovlya/src/api/downloads_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -13,7 +14,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../api/api.dart';
 import '../api/api_riverpod.dart';
 import '../api/local_download_task_riverpod.dart';
-import '../api/persistent_riverpod.dart';
+import '../api/directories_riverpod.dart';
 import '../api/recording_riverpod.dart';
 import '../model/download.dart';
 import '../model/local_download.dart';
@@ -58,6 +59,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     _shouldPlay = widget.play;
 
     _playIfShould();
+    _pullRefresh();
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
       _playIfShould();
@@ -93,8 +95,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     if (!_shouldPlay) {
       return;
     }
-    final recording = ref.watch(updateRecordingProvider(widget.id));
-    final downloads = ref.watch(listDownloadsProvider(widget.id));
+    final recording = ref.watch(recordingNotifierProvider(widget.id));
+    final downloads = ref.watch(downloadsNotifierProvider(widget.id));
     if (downloads.hasValue && recording.hasValue) {
       var (ready, _) = _findAppropriateDownloads(downloads.requireValue);
       if (ready != null) {
@@ -107,13 +109,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Future<void> _pullRefresh() async {
-    ref.invalidate(getRecordingProvider(widget.id));
-    ref.invalidate(listDownloadsProvider(widget.id));
+    ref.read(recordingNotifierProvider(widget.id).notifier).refreshFromServer();
+    ref.read(downloadsNotifierProvider(widget.id).notifier).refreshFromServer();
   }
 
   @override
   Widget build(BuildContext context) {
-    final recording = ref.watch(updateRecordingProvider(widget.id));
+    final recording = ref.watch(recordingNotifierProvider(widget.id));
     // final downloads = ref.watch(listDownloadsProvider(widget.id));
     // if (downloads.hasValue && recording.hasValue) {
     //   var (ready, _) = _findAppropriateDownloads(downloads.requireValue);
@@ -169,50 +171,49 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Widget _buildForm(BuildContext context, RecordingInfo recording) {
-    final downloads = ref.watch(listDownloadsProvider(recording.id));
+    final downloads = ref.watch(downloadsNotifierProvider(recording.id));
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InkWell(
           onTap: () async {
             await launchUrlString(recording.webpageUrl);
           },
           onLongPress: () async {},
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      recording.title,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                    Text("${recording.uploader} • ${recording.extractor}"),
-                    Text("Created at: ${formatDateLong(recording.createdAt)} (${since(recording.createdAt, false)} ago)"),
-                    Text("Updated at: ${formatDateLong(recording.updatedAt)} (${since(recording.updatedAt, false)} ago)"),
-                    Row(
-                      children: [
-                        Text(
-                          recording.webpageUrl,
-                          style: const TextStyle(
-                            overflow: TextOverflow.fade,
-                            decoration: TextDecoration.underline,
-                            color: Colors.blue,
-                          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    recording.title,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  Text("${recording.uploader} • ${recording.extractor}"),
+                  Text("Created at: ${formatDateLong(recording.createdAt)} (${since(recording.createdAt, false)} ago)"),
+                  Text("Updated at: ${formatDateLong(recording.updatedAt)} (${since(recording.updatedAt, false)} ago)"),
+                  Row(
+                    children: [
+                      Text(
+                        recording.webpageUrl,
+                        style: const TextStyle(
+                          overflow: TextOverflow.fade,
+                          decoration: TextDecoration.underline,
+                          color: Colors.blue,
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.copy),
-                          tooltip: 'Copy video URL to the clipboard',
-                          onPressed: () {
-                            copyToClipboard(context, recording.webpageUrl);
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.copy),
+                        tooltip: 'Copy video URL to the clipboard',
+                        onPressed: () {
+                          copyToClipboard(context, recording.webpageUrl);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
@@ -241,15 +242,15 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     backgroundColor: const Color.fromARGB(127, 158, 158, 158),
                     value: recording.duration == 0 ? null : recording.position / recording.duration,
                   ),
+                  Text("${formatDuration(Duration(seconds: recording.position))} / ${formatDuration(Duration(seconds: recording.duration))}"),
                 ],
               ),
             ),
           ),
         ),
-        Text("${formatDuration(Duration(seconds: recording.position))} / ${formatDuration(Duration(seconds: recording.duration))}"),
-        downloads.hasValue ? _localDownloadsTable(context, recording, downloads.requireValue) : const SizedBox.shrink(),
-        downloads.hasValue ? _downloadsTable(context, recording, downloads.requireValue) : const Text("Downloads info is loading..."),
-        recording.formats == null || recording.formats!.isEmpty ? const Text("No formats for the record") : _formatsTable(context, recording),
+        Center(child: downloads.hasValue ? _localDownloadsTable(context, recording, downloads.requireValue) : const SizedBox.shrink()),
+        Center(child: downloads.hasValue ? _downloadsTable(context, recording, downloads.requireValue) : const Text("Downloads info is loading...")),
+        Center(child: recording.formats == null || recording.formats!.isEmpty ? const Text("No formats for the record") : _formatsTable(context, recording)),
       ],
     );
   }
@@ -259,12 +260,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     const p = "TaskStatus.";
     st = st.startsWith(p) ? st.replaceFirst(p, "") : st;
     var eta = dt.timeRemaining == null ? "" : prettyDuration(dt.timeRemaining!, abbreviated: true);
-    var est = dt.networkSpeed == null || dt.networkSpeed! < 0 ? "" : "${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta";
+    var est = dt.networkSpeed == null || dt.networkSpeed! < 0 ? "" : " ≈ ${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta";
 
-    //Text(dt.status?.toString()?.trimLeft())
     return Column(
       children: [
-        Text("$st: ${dt.filename} $est"),
+        Text("Local downloading $st: ${dt.filename} $est"),
         if (dt.status?.isFinalState != true) LinearProgressIndicator(value: dt.progress),
       ],
     );
@@ -710,12 +710,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Future<void> downloadFile(BuildContext context, Download download) async {
-    final mediaDir = await (context as WidgetRef).watch(mediaDirProvider.future);
+    final sp = await (context as WidgetRef).watch(storePlacesProvider.future);
 
     final task = DownloadTask(
       taskId: download.id,
       url: download.url,
-      directory: mediaDir.path,
+      directory: sp.media().path,
       baseDirectory: BaseDirectory.root,
       filename: download.filename,
       retries: 8,

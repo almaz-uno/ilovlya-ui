@@ -30,8 +30,10 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   void initState() {
     super.initState();
 
+    ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
-      ref.invalidate(mediaListNotifierProvider);
+      ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
       ref.invalidate(getTenantProvider);
     });
   }
@@ -102,10 +104,11 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh list',
-            onPressed: () => ref.invalidate(mediaListNotifierProvider),
-          ),
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Refresh list',
+              onPressed: () {
+                ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+              }),
           PopupMenuButton(
               tooltip: 'More options',
               icon: const Icon(Icons.more_vert),
@@ -183,10 +186,12 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         spacing: 8.0,
         children: [
           FloatingActionButton.small(
+            heroTag: "up",
             onPressed: _scrollUp,
             child: const Icon(Icons.arrow_upward),
           ),
           FloatingActionButton.small(
+            heroTag: "down",
             onPressed: _scrollDown,
             child: const Icon(Icons.arrow_downward),
           ),
@@ -219,6 +224,10 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
 
     if (mediaList.hasError) {
       return ErrorWidget(mediaList.error!);
+    }
+
+    if (mediaList.requireValue.isEmpty) {
+      return const Center(child: Text("No recordings"));
     }
 
     return ListView.builder(

@@ -1,17 +1,74 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 import '../model/recording_info.dart';
 import 'api_riverpod.dart';
-import 'media_list_riverpod.dart';
+import 'directories_riverpod.dart';
 
 part 'recording_riverpod.g.dart';
 
 @riverpod
-Future<RecordingInfo> updateRecording(
-  UpdateRecordingRef ref,
-  String recordingId,
-) async {
-  final recording = await ref.watch(getRecordingProvider(recordingId).future);
-  ref.read(mediaListNotifierProvider.notifier).updateRecording(recording);
-  return recording;
+class RecordingNotifier extends _$RecordingNotifier {
+  @override
+  Future<RecordingInfo> build(String recordingId) async {
+    if (UniversalPlatform.isWeb) {
+      return _fromWeb();
+    }
+    return _fromDisk();
+  }
+
+  Future<RecordingInfo> _fromDisk() async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      final sp = await ref.watch(storePlacesProvider.future);
+
+      final recordingFile = File(p.join(sp.recordings().path, recordingId));
+
+      return RecordingInfo.fromJson(jsonDecode(recordingFile.readAsStringSync()));
+    } catch (e, s) {
+      debugPrintStack(stackTrace: s, label: e.toString());
+      rethrow;
+    } finally {
+      debugPrint("load recording $recordingId from disk in ${stopwatch.elapsed}");
+    }
+  }
+
+  Future<RecordingInfo> _fromWeb() async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      return await ref.watch(getRecordingProvider(recordingId).future);
+    } catch (e, s) {
+      debugPrintStack(stackTrace: s, label: e.toString());
+      rethrow;
+    } finally {
+      debugPrint("load recording $recordingId from server in ${stopwatch.elapsed}");
+    }
+  }
+
+  Future<void> _pullFromServer() async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      final sp = await ref.watch(storePlacesProvider.future);
+      final recording = await ref.read(getRecordingProvider(recordingId).future);
+
+      final recordingFile = File(p.join(sp.recordings().path, recordingId));
+      recordingFile.writeAsStringSync(jsonEncode(recording.toJson()));
+    } catch (e, s) {
+      debugPrintStack(stackTrace: s, label: e.toString());
+      rethrow;
+    } finally {
+      debugPrint("pull recording $recordingId from server in ${stopwatch.elapsed}");
+    }
+  }
+
+  Future<void> refreshFromServer() async {
+    if (!UniversalPlatform.isWeb) await _pullFromServer();
+    ref.invalidateSelf();
+  }
+
 }

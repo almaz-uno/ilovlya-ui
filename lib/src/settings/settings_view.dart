@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ilovlya/src/api/persistent_riverpod.dart';
+import 'package:ilovlya/src/api/directories_riverpod.dart';
 
 import '../api/api.dart';
 import '../api/api_riverpod.dart';
@@ -22,8 +22,7 @@ class SettingsView extends ConsumerWidget {
 
     final tokenController = TextEditingController(text: settings.requireValue.token);
     final serverUrlController = TextEditingController(text: settings.requireValue.serverUrl);
-    final recordingsDir = ref.watch(recordingsDirProvider);
-    final mediaDir = ref.watch(mediaDirProvider);
+    final sp = ref.watch(storePlacesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -87,8 +86,8 @@ class SettingsView extends ConsumerWidget {
                 ] +
                 tenantInfo(ref) +
                 [
-                  if (recordingsDir.hasValue) Text("Recordings local path: ${recordingsDir.requireValue.path}"),
-                  if (mediaDir.hasValue) Text("Downloaded local media path: ${mediaDir.requireValue.path}"),
+                  if (sp.hasValue) Text("Data local path: ${sp.requireValue.data().path}"),
+                  if (sp.hasValue) Text("Downloaded local media path: ${sp.requireValue.media().path}"),
                 ]),
       ),
     );

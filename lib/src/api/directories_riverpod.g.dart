@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'persistent_riverpod.dart';
+part of 'directories_riverpod.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -152,48 +152,19 @@ class _DbProviderElement extends AutoDisposeFutureProviderElement<Database>
   String get storeName => (origin as DbProvider).storeName;
 }
 
-String _$documentsDirHash() => r'6b7da129e144bd04f1521ab8c9abd060948eb61b';
+String _$storePlacesHash() => r'd13abc3525395439152295617862c59965bf4482';
 
-/// See also [documentsDir].
-@ProviderFor(documentsDir)
-final documentsDirProvider = AutoDisposeFutureProvider<Directory>.internal(
-  documentsDir,
-  name: r'documentsDirProvider',
+/// See also [storePlaces].
+@ProviderFor(storePlaces)
+final storePlacesProvider = AutoDisposeFutureProvider<StorePlaces>.internal(
+  storePlaces,
+  name: r'storePlacesProvider',
   debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$documentsDirHash,
+      const bool.fromEnvironment('dart.vm.product') ? null : _$storePlacesHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef DocumentsDirRef = AutoDisposeFutureProviderRef<Directory>;
-String _$recordingsDirHash() => r'020b4edee60f4b5098ef26ac79399e308e9465c7';
-
-/// See also [recordingsDir].
-@ProviderFor(recordingsDir)
-final recordingsDirProvider = AutoDisposeFutureProvider<Directory>.internal(
-  recordingsDir,
-  name: r'recordingsDirProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$recordingsDirHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef RecordingsDirRef = AutoDisposeFutureProviderRef<Directory>;
-String _$mediaDirHash() => r'5603d2a259e000bb1b15103d660ac9e2523c5690';
-
-/// See also [mediaDir].
-@ProviderFor(mediaDir)
-final mediaDirProvider = AutoDisposeFutureProvider<Directory>.internal(
-  mediaDir,
-  name: r'mediaDirProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$mediaDirHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef MediaDirRef = AutoDisposeFutureProviderRef<Directory>;
+typedef StorePlacesRef = AutoDisposeFutureProviderRef<StorePlaces>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
