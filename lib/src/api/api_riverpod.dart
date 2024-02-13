@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:ilovlya/src/api/directories_riverpod.dart';
-import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
 
@@ -109,13 +108,6 @@ Future<Download> getDownload(GetDownloadRef ref, String id) async {
   return download;
 }
 
-void _setLocalMedia(AutoDisposeRef ref, Download d) async {
-  if (UniversalPlatform.isWeb) return;
-  final sp = await ref.watch(storePlacesProvider.future);
-  final fpm = File(p.join(sp.media().path, d.filename));
-  if (fpm.existsSync()) d.fullPathMedia = fpm.path;
-}
-
 @riverpod
 Future<List<Download>> listDownloads(ListDownloadsRef ref, String recordingId) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
@@ -131,7 +123,6 @@ Future<List<Download>> listDownloads(ListDownloadsRef ref, String recordingId) a
   final downloads = Download.fromJsonList(jsonDecode(res.body));
   for (var d in downloads) {
     d.url = serverURL + d.url;
-    _setLocalMedia(ref, d);
   }
   return downloads;
 }

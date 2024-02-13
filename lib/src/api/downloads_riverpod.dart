@@ -34,9 +34,11 @@ class DownloadsNotifier extends _$DownloadsNotifier {
       for (var did in recording.downloads) {
         final f = File(p.join(sp.downloads().path, did));
 
-        final recording = Download.fromJson(jsonDecode(f.readAsStringSync()));
+        final download = Download.fromJson(jsonDecode(f.readAsStringSync()));
+        final mediaFile = p.join(sp.media().path, download.filename);
+        download.fullPathMedia = File(mediaFile).existsSync() ? mediaFile : null;
 
-        resultList.add(recording);
+        resultList.add(download);
       }
 
       resultList.sort((a, b) => a.id.compareTo(b.id));
