@@ -253,7 +253,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     }
 
     if (mediaList.requireValue.isEmpty) {
-      return const Center(child: Text("No recordings"));
+      return const Center(child: Text("No recordings. Check you filter settings or API token value."));
     }
 
     return ListView.builder(

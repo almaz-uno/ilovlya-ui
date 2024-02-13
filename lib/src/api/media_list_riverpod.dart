@@ -26,20 +26,13 @@ class MediaListNotifier extends _$MediaListNotifier {
     return _fromDisk();
   }
 
-  Future<List<RecordingInfo>> _fromDisk() async {
+  Future<List<RecordingInfo>> allFromDisk() async {
     final stopwatch = Stopwatch()..start();
     try {
       final sp = await ref.watch(storePlacesProvider.future);
-      final sortBy = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.sortBy));
-      final showHidden = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.showHidden));
-      final showSeen = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.showSeen));
-
-      final withServerFile = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.withServerFile));
-      final withLocalFile = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.withLocalFile));
+      final recordingsDir = sp.recordings();
 
       final resultList = <RecordingInfo>[];
-
-      final recordingsDir = sp.recordings();
 
       final list = recordingsDir.listSync();
       for (final entity in list) {
@@ -53,7 +46,30 @@ class MediaListNotifier extends _$MediaListNotifier {
             break;
           }
         }
+        resultList.add(recording);
+      }
+      return resultList;
+    } catch (e, s) {
+      debugPrintStack(stackTrace: s, label: e.toString());
+      rethrow;
+    } finally {
+      debugPrint("load recordings from disk in ${stopwatch.elapsed}");
+    }
+  }
 
+  Future<List<RecordingInfo>> _fromDisk() async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      final sortBy = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.sortBy));
+      final showHidden = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.showHidden));
+      final showSeen = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.showSeen));
+
+      final withServerFile = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.withServerFile));
+      final withLocalFile = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.withLocalFile));
+
+      final resultList = <RecordingInfo>[];
+
+      for (final recording in await allFromDisk()) {
         if (recording.seenAt != null && !showSeen) {
           continue;
         }
@@ -68,7 +84,6 @@ class MediaListNotifier extends _$MediaListNotifier {
         if (withLocalFile && !recording.hasLocalFile) {
           continue;
         }
-
         resultList.add(recording);
       }
 
