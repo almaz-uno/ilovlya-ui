@@ -56,12 +56,12 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
   @override
   void initState() {
-    super.initState();
     _init();
+    super.initState();
   }
 
   void _init() async {
-    final tf = await ref.watch(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).future);
+    final tf = await ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).future);
     final thumbnailUrl = UniversalPlatform.isWeb ? Uri.parse(widget.recording.thumbnailUrl) : tf.uri;
 
     MKPlayerHandler.handler.playRecording(widget.recording, widget.download, thumbnailUrl);
@@ -123,7 +123,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
   @override
   void dispose() {
-    MKPlayerHandler.dispose();
+    MKPlayerHandler.player.stop();
     _positionSendSubs?.cancel();
     super.dispose();
   }

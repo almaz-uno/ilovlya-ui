@@ -8,6 +8,15 @@ import '../../model/recording_info.dart';
 class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   static late final MKPlayerHandler _handler;
 
+  static MKPlayerHandler get handler => _handler;
+
+  static Player get player => _handler._player;
+
+  final _player = Player(
+      configuration: const PlayerConfiguration(
+    bufferSize: 128 * 1024 * 1024,
+  ));
+
   static void init() async {
     if (UniversalPlatform.isDesktop) {
       _handler = MKPlayerHandler();
@@ -25,11 +34,6 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   }
 
   void playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl) {
-    _player = Player(
-        configuration: const PlayerConfiguration(
-      bufferSize: 128 * 1024 * 1024,
-    ));
-
     var url = download.fullPathMedia ?? download.url;
 
     player.open(Media(url));
@@ -85,12 +89,6 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     _handler.mediaItem.add(null);
     //_handler.playbackState.add(_handler.playbackState.value.copyWith());
   }
-
-  static MKPlayerHandler get handler => _handler;
-
-  static Player get player => _handler._player;
-
-  late Player _player;
 
   @override
   Future<void> play() => _player.play();
