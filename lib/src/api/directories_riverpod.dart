@@ -23,6 +23,10 @@ class StorePlaces {
     return Directory(p.join(_dataDir.path, "downloads"))..createSync(recursive: true);
   }
 
+  Directory thumbnails() {
+    return Directory(p.join(_dataDir.path, "thumbnails"))..createSync(recursive: true);
+  }
+
   Directory media() {
     return _mediaDir;
   }

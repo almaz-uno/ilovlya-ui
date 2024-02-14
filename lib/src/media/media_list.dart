@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ilovlya/src/api/local_download_task_riverpod.dart';
+import 'package:ilovlya/src/api/thumbnail_riverpod.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 import '../api/api_riverpod.dart';
 import '../api/exceptions.dart';
@@ -13,6 +15,28 @@ import '../settings/settings_view.dart';
 import 'format.dart';
 import 'media_add.dart';
 import 'media_details.dart';
+
+Widget createThumb(WidgetRef ref, String url) {
+  late Widget thumbWidget;
+  if (UniversalPlatform.isWeb) {
+    thumbWidget = Image.network(
+      url,
+      isAntiAlias: true,
+      filterQuality: FilterQuality.high,
+    );
+  } else {
+    final thumbProvider = ref.watch(thumbnailDataNotifierProvider(url));
+    if (!thumbProvider.hasValue) {
+      thumbWidget = const CircularProgressIndicator();
+    } else {
+      thumbWidget = Image.file(
+        thumbProvider.requireValue,
+      );
+    }
+  }
+
+  return thumbWidget;
+}
 
 class MediaListViewRiverpod extends ConsumerStatefulWidget {
   const MediaListViewRiverpod({super.key});
@@ -296,11 +320,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                 leading: SizedBox(
                   width: 100, // alignment
                   child: Center(
-                    child: Image.network(
-                      item.thumbnailUrl,
-                      isAntiAlias: true,
-                      filterQuality: FilterQuality.high,
-                    ),
+                    child: createThumb(ref, item.thumbnailUrl),
                   ),
                 ),
                 title: Text(

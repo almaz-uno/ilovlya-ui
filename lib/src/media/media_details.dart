@@ -22,6 +22,7 @@ import '../model/recording_info.dart';
 import 'download_details.dart';
 import 'format.dart';
 import 'media_kit/recording_play.dart';
+import 'media_list.dart';
 
 const _downloadFormatIcon = Icon(Icons.start);
 
@@ -232,11 +233,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               },
               child: Column(
                 children: [
-                  Image.network(
-                    recording.thumbnailUrl,
+                  SizedBox(
                     height: MediaQuery.of(context).size.height * 0.5,
-                    // fit: BoxFit.fill,
-                    // scale: 0.5,
+                    child: createThumb(ref, recording.thumbnailUrl),
                   ),
                   LinearProgressIndicator(
                     backgroundColor: const Color.fromARGB(127, 158, 158, 158),
