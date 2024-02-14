@@ -1,4 +1,5 @@
 import 'package:background_downloader/background_downloader.dart';
+import 'package:ilovlya/src/api/media_list_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
 import '../model/local_download.dart';
@@ -32,6 +33,9 @@ class LocalDTNotifier extends _$LocalDTNotifier {
       switch (update) {
         case TaskStatusUpdate _:
           ldt.status = update.status;
+          if (update.status.isFinalState) {
+            ref.invalidate(mediaListNotifierProvider);
+          }
         case TaskProgressUpdate _:
           ldt.progress = update.progress;
           ldt.networkSpeed = update.networkSpeed;
