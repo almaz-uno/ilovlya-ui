@@ -19,6 +19,7 @@ import '../api/recording_riverpod.dart';
 import '../model/download.dart';
 import '../model/local_download.dart';
 import '../model/recording_info.dart';
+import '../settings/settings_view.dart';
 import 'download_details.dart';
 import 'format.dart';
 import 'media_kit/recording_play.dart';
@@ -145,6 +146,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh record (reread from the server)',
             onPressed: _pullRefresh,
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+            onPressed: () {
+              Navigator.restorablePushNamed(context, SettingsView.routeName);
+            },
           ),
         ],
       ),
