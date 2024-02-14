@@ -136,7 +136,7 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
     }
     // _futureMediaAdd = ; // the full information about media should be acquired anew
     ref.read(addRecordingProvider(url).future).then((value) {
-      ref.invalidate(mediaListNotifierProvider);
+      ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('${value.title} successfully added'),
       ));

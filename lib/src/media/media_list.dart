@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ilovlya/src/api/local_download_task_riverpod.dart';
 
 import '../api/api_riverpod.dart';
 import '../api/exceptions.dart';
@@ -24,7 +25,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   StreamSubscription? _updatePullSubs;
   final ScrollController _scrollController = ScrollController();
 
-  static const _updatePullPeriod = Duration(minutes: 1);
+  static const _updatePullPeriod = Duration(seconds: 30);
 
   @override
   void initState() {
@@ -230,10 +231,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () {
-          ref.invalidate(mediaListNotifierProvider);
-          return Future.value(null);
-        },
+        onRefresh: () => ref.read(mediaListNotifierProvider.notifier).refreshFromServer(),
         child: Stack(
           children: [
             Visibility(visible: mediaList.isLoading, child: const LinearProgressIndicator()),
@@ -271,11 +269,23 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         // final TextStyle? textStyle = item.hiddenAt != null ? const TextStyle(decoration: TextDecoration.lineThrough) : null;
         var viewedSrt = item.position == 0 ? "" : " (${formatDuration(Duration(seconds: item.position))})";
 
-        final List<Widget> right = [
+        List<Widget> right = [];
+
+        final tt = ref.watch(localDTNotifierProvider);
+        for (final did in item.downloads) {
+          if (!tt.containsKey(did) || tt[did]?.status?.isFinalState == true) continue;
+          right.add(Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CircularProgressIndicator(value: tt[did]?.progress),
+          ));
+        }
+
+        right += [
           if (item.hiddenAt != null) const Icon(Icons.visibility_off_outlined),
           if (item.hasLocalFile) const Icon(Icons.download_done),
           if (item.hasFile) const Icon(Icons.flag_circle_outlined),
         ];
+
         final dt = setting.requireValue.sortBy == "updated_at" ? item.updatedAt : item.createdAt;
 
         return Opacity(

@@ -39,7 +39,7 @@ class LocalDTNotifier extends _$LocalDTNotifier {
       }
       return ldt;
     });
+
+    state = <String, LocalDownloadTask>{}..addAll(state);
   }
-
-
 }

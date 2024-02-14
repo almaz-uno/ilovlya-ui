@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:ilovlya/src/api/media_list_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
@@ -76,5 +77,6 @@ class RecordingNotifier extends _$RecordingNotifier {
   Future<void> refreshFromServer() async {
     if (!UniversalPlatform.isWeb) await _pullFromServer();
     ref.invalidateSelf();
+    ref.invalidate(mediaListNotifierProvider);
   }
 }
