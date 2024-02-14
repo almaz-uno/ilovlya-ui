@@ -24,7 +24,7 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     );
   }
 
-  void playRecording(RecordingInfo recording, Download download) {
+  void playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl) {
     _player = Player(
         configuration: const PlayerConfiguration(
       bufferSize: 128 * 1024 * 1024,
@@ -43,13 +43,14 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     player.stream.position.listen((event) {
       _handler.updatePlaybackState();
     });
+
     player.stream.duration.listen((event) {
       mediaItem.add(MediaItem(
         id: url,
         title: recording.title,
         artist: recording.uploader,
         album: recording.extractor,
-        artUri: Uri.parse(recording.thumbnailUrl),
+        artUri: thumbnailUrl,
         duration: player.state.duration,
       ));
       _handler.updatePlaybackState();

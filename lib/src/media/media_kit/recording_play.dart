@@ -11,6 +11,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import '../../api/api_riverpod.dart';
+import '../../api/thumbnail_riverpod.dart';
 import '../../model/download.dart';
 import '../../model/recording_info.dart';
 import '../../settings/settings_provider.dart';
@@ -60,7 +61,10 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   }
 
   void _init() async {
-    MKPlayerHandler.handler.playRecording(widget.recording, widget.download);
+    final tf = await ref.watch(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).future);
+    final thumbnailUrl = UniversalPlatform.isWeb ? Uri.parse(widget.recording.thumbnailUrl) : tf.uri;
+
+    MKPlayerHandler.handler.playRecording(widget.recording, widget.download, thumbnailUrl);
 
     if (UniversalPlatform.isDesktop || UniversalPlatform.isWeb) {
       await _player.setVolume(ref.read(settingsNotifierProvider).requireValue.volume);
