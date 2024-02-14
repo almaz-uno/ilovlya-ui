@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ilovlya/src/api/directories_riverpod.dart';
-import 'package:ilovlya/src/api/housekeeper_riverpod.dart';
-import 'package:ilovlya/src/media/format.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 
 import '../api/api.dart';
 import '../api/api_riverpod.dart';
+import '../api/directories_riverpod.dart';
+import '../api/housekeeper_riverpod.dart';
+import '../media/format.dart';
 import 'settings_provider.dart';
 
-/// Displays the various settings that can be customized by the user.
-///
-/// Color theme, server URL, token and other settings.
-class SettingsView extends ConsumerWidget {
+class SettingsView extends ConsumerStatefulWidget {
   const SettingsView({
     super.key,
   });
@@ -19,7 +17,14 @@ class SettingsView extends ConsumerWidget {
   static String routeName = "/$pathSettings";
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsView> createState() => _SettingsViewState();
+}
+
+class _SettingsViewState extends ConsumerState<SettingsView> {
+  bool _cleaningStaleMedia = false;
+
+  @override
+  Widget build(BuildContext context) {
     final settings = ref.watch(settingsNotifierProvider);
 
     final tokenController = TextEditingController(text: settings.requireValue.token);
@@ -154,10 +159,20 @@ class SettingsView extends ConsumerWidget {
         OutlinedButton(
           child: const Text("Clean stale downloaded media"),
           onPressed: () async {
-            final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanStale();
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('$number files, ${fileSizeHumanReadable(size)} cleaned'),
-            ));
+            if (_cleaningStaleMedia) return;
+            try {
+              setState(() {
+                _cleaningStaleMedia = true;
+              });
+              final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanStale();
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('$number files, ${fileSizeHumanReadable(size)} cleaned'),
+              ));
+            } finally {
+              setState(() {
+                _cleaningStaleMedia = false;
+              });
+            }
           },
         ),
         OutlinedButton(
@@ -169,6 +184,17 @@ class SettingsView extends ConsumerWidget {
             ));
           },
         ),
+        if (_cleaningStaleMedia)
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Wrap(
+              spacing: 8.0,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+              CircularProgressIndicator(),
+              Text("cleaning stale media local files..."),
+            ]),
+          ),
       ],
     );
   }
