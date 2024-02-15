@@ -5,10 +5,17 @@ import 'package:universal_platform/universal_platform.dart';
 import '../../model/download.dart';
 import '../../model/recording_info.dart';
 
-// if (!UniversalPlatform.isDesktop)
-
 class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   static late final MKPlayerHandler _handler;
+
+  static MKPlayerHandler get handler => _handler;
+
+  static Player get player => _handler._player;
+
+  final _player = Player(
+      configuration: const PlayerConfiguration(
+    bufferSize: 128 * 1024 * 1024,
+  ));
 
   static void init() async {
     if (UniversalPlatform.isDesktop) {
@@ -26,16 +33,10 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     );
   }
 
-  void playRecording(RecordingInfo recording, Download download) {
-    _player = Player(
-        configuration: const PlayerConfiguration(
-      bufferSize: 512 * 1024 * 1024,
+  void playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl) {
+    var url = download.fullPathMedia ?? download.url;
 
-      //title: widget.recording.title,
-      // osc: true,
-    ));
-
-    player.open(Media(download.url));
+    player.open(Media(url));
 
     player.stream.playing.listen((event) {
       _handler.updatePlaybackState();
@@ -43,13 +44,14 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     player.stream.position.listen((event) {
       _handler.updatePlaybackState();
     });
+
     player.stream.duration.listen((event) {
       mediaItem.add(MediaItem(
-        id: download.url,
+        id: url,
         title: recording.title,
         artist: recording.uploader,
         album: recording.extractor,
-        artUri: Uri.parse(recording.thumbnailUrl),
+        artUri: thumbnailUrl,
         duration: player.state.duration,
       ));
       _handler.updatePlaybackState();
@@ -61,9 +63,7 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   void updatePlaybackState() {
     _handler.playbackState.add(PlaybackState(
-      processingState: mediaItem.value == null
-          ? AudioProcessingState.idle
-          : AudioProcessingState.ready,
+      processingState: mediaItem.value == null ? AudioProcessingState.idle : AudioProcessingState.ready,
       controls: [
         MediaControl.rewind,
         if (_player.state.playing) MediaControl.pause else MediaControl.play,
@@ -89,12 +89,6 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     _handler.mediaItem.add(null);
     //_handler.playbackState.add(_handler.playbackState.value.copyWith());
   }
-
-  static MKPlayerHandler get handler => _handler;
-
-  static Player get player => _handler._player;
-
-  late Player _player;
 
   @override
   Future<void> play() => _player.play();

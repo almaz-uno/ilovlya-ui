@@ -22,6 +22,9 @@ class Download {
   int size;
   String status;
   String progress;
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  String? fullPathMedia;
+
 
   Download({
     this.id = "",

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'db_riverpod.dart';
+part of 'directories_riverpod.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -151,5 +151,20 @@ class _DbProviderElement extends AutoDisposeFutureProviderElement<Database>
   @override
   String get storeName => (origin as DbProvider).storeName;
 }
+
+String _$storePlacesHash() => r'd13abc3525395439152295617862c59965bf4482';
+
+/// See also [storePlaces].
+@ProviderFor(storePlaces)
+final storePlacesProvider = AutoDisposeFutureProvider<StorePlaces>.internal(
+  storePlaces,
+  name: r'storePlacesProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$storePlacesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef StorePlacesRef = AutoDisposeFutureProviderRef<StorePlaces>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

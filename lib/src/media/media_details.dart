@@ -1,19 +1,29 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:background_downloader/background_downloader.dart';
+import 'package:duration/duration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ilovlya/src/api/downloads_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:universal_platform/universal_platform.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../api/api.dart';
 import '../api/api_riverpod.dart';
+import '../api/local_download_task_riverpod.dart';
+import '../api/directories_riverpod.dart';
 import '../api/recording_riverpod.dart';
 import '../model/download.dart';
+import '../model/local_download.dart';
 import '../model/recording_info.dart';
+import '../settings/settings_view.dart';
 import 'download_details.dart';
 import 'format.dart';
-import 'media_kit/recording_play_view_media_kit_handler.dart';
+import 'media_kit/recording_play.dart';
+import 'media_list.dart';
 
 const _downloadFormatIcon = Icon(Icons.start);
 
@@ -51,6 +61,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     _shouldPlay = widget.play;
 
     _playIfShould();
+    _pullRefresh();
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
       _playIfShould();
@@ -86,8 +97,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     if (!_shouldPlay) {
       return;
     }
-    final recording = ref.watch(updateRecordingProvider(widget.id));
-    final downloads = ref.watch(listDownloadsProvider(widget.id));
+    final recording = ref.watch(recordingNotifierProvider(widget.id));
+    final downloads = ref.watch(downloadsNotifierProvider(widget.id));
     if (downloads.hasValue && recording.hasValue) {
       var (ready, _) = _findAppropriateDownloads(downloads.requireValue);
       if (ready != null) {
@@ -100,13 +111,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Future<void> _pullRefresh() async {
-    ref.invalidate(getRecordingProvider(widget.id));
-    ref.invalidate(listDownloadsProvider(widget.id));
+    ref.read(recordingNotifierProvider(widget.id).notifier).refreshFromServer();
+    ref.read(downloadsNotifierProvider(widget.id).notifier).refreshFromServer();
   }
 
   @override
   Widget build(BuildContext context) {
-    final recording = ref.watch(updateRecordingProvider(widget.id));
+    final recording = ref.watch(recordingNotifierProvider(widget.id));
     // final downloads = ref.watch(listDownloadsProvider(widget.id));
     // if (downloads.hasValue && recording.hasValue) {
     //   var (ready, _) = _findAppropriateDownloads(downloads.requireValue);
@@ -129,15 +140,6 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               }
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.copy),
-            tooltip: 'Copy video URL to the clipboard',
-            onPressed: () {
-              if (recording.hasValue) {
-                copyToClipboard(context, recording.requireValue.webpageUrl);
-              }
-            },
-          ),
           _addSeenButton(recording),
           _addHiddenButton(recording),
           IconButton(
@@ -145,20 +147,27 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             tooltip: 'Refresh record (reread from the server)',
             onPressed: _pullRefresh,
           ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+            onPressed: () {
+              Navigator.restorablePushNamed(context, SettingsView.routeName);
+            },
+          ),
         ],
       ),
       body: Stack(
         children: [
           // Visibility(visible: recording.isLoading, child: const LinearProgressIndicator()),
           SingleChildScrollView(
-            child: _buildRecordings(recording),
+            child: _buildRecording(recording),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRecordings(AsyncValue<RecordingInfo> recording) {
+  Widget _buildRecording(AsyncValue<RecordingInfo> recording) {
     if (!recording.hasValue) {
       return const Center(child: Text('loading...'));
     }
@@ -171,19 +180,21 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Widget _buildForm(BuildContext context, RecordingInfo recording) {
-    final downloads = ref.watch(listDownloadsProvider(recording.id));
+    final downloads = ref.watch(downloadsNotifierProvider(recording.id));
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InkWell(
           onTap: () async {
             await launchUrlString(recording.webpageUrl);
           },
           onLongPress: () async {},
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     recording.title,
@@ -192,13 +203,24 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   Text("${recording.uploader} • ${recording.extractor}"),
                   Text("Created at: ${formatDateLong(recording.createdAt)} (${since(recording.createdAt, false)} ago)"),
                   Text("Updated at: ${formatDateLong(recording.updatedAt)} (${since(recording.updatedAt, false)} ago)"),
-                  Text(
-                    recording.webpageUrl,
-                    style: const TextStyle(
-                      overflow: TextOverflow.fade,
-                      decoration: TextDecoration.underline,
-                      color: Colors.blue,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        recording.webpageUrl,
+                        style: const TextStyle(
+                          overflow: TextOverflow.fade,
+                          decoration: TextDecoration.underline,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.copy),
+                        tooltip: 'Copy video URL to the clipboard',
+                        onPressed: () {
+                          copyToClipboard(context, recording.webpageUrl);
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -219,25 +241,59 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               },
               child: Column(
                 children: [
-                  Image.network(
-                    recording.thumbnailUrl,
+                  SizedBox(
                     height: MediaQuery.of(context).size.height * 0.5,
-                    // fit: BoxFit.fill,
-                    // scale: 0.5,
+                    child: createThumb(ref, recording.thumbnailUrl),
                   ),
                   LinearProgressIndicator(
                     backgroundColor: const Color.fromARGB(127, 158, 158, 158),
                     value: recording.duration == 0 ? null : recording.position / recording.duration,
                   ),
+                  Text("${formatDuration(Duration(seconds: recording.position))} / ${formatDuration(Duration(seconds: recording.duration))}"),
                 ],
               ),
             ),
           ),
         ),
-        Text("${formatDuration(Duration(seconds: recording.position))} / ${formatDuration(Duration(seconds: recording.duration))}"),
-        downloads.hasValue ? _downloadsTable(context, recording, downloads.requireValue) : const Text("Downloads info is loading..."),
-        recording.formats == null || recording.formats!.isEmpty ? const Text("No formats for the record") : _formatsTable(context, recording),
+        Center(child: downloads.hasValue ? _localDownloadsTable(context, recording, downloads.requireValue) : const SizedBox.shrink()),
+        Center(child: downloads.hasValue ? _downloadsTable(context, recording, downloads.requireValue) : const Text("Downloads info is loading...")),
+        Center(child: recording.formats == null || recording.formats!.isEmpty ? const Text("No formats for the record") : _formatsTable(context, recording)),
       ],
+    );
+  }
+
+  Widget ldline(LocalDownloadTask dt) {
+    var st = dt.status?.toString() ?? "";
+    const p = "TaskStatus.";
+    st = st.startsWith(p) ? st.replaceFirst(p, "") : st;
+    var eta = dt.timeRemaining == null ? "" : prettyDuration(dt.timeRemaining!, abbreviated: true);
+    var est = dt.networkSpeed == null || dt.networkSpeed! < 0 ? "" : " ≈ ${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta";
+
+    return Column(
+      children: [
+        Text("Local downloading $st: ${dt.filename} $est"),
+        if (dt.status?.isFinalState != true) LinearProgressIndicator(value: dt.progress),
+      ],
+    );
+  }
+
+  Widget _localDownloadsTable(BuildContext context, RecordingInfo recording, List<Download> downloads) {
+    final downloadTasks = ref.watch(localDTNotifierProvider.select((value) {
+      return <String, LocalDownloadTask>{
+        for (final d in downloads)
+          if (value.containsKey(d.id)) d.id: value[d.id]!
+      };
+    }));
+
+    if (downloadTasks.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        children: [for (final dt in downloadTasks.values) ldline(dt)],
+      ),
     );
   }
 
@@ -277,7 +333,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             ),
           ),
         ),
-        DataCell(_buildActions(context, recording, d)),
+        DataCell(Row(
+          children: [
+            _buildActions(context, recording, d),
+            _buildLocalActions(context, recording, d),
+          ],
+        )),
         DataCell(Opacity(opacity: opacity, child: Text(d.resolution))),
         DataCell(Opacity(opacity: opacity, child: Text(d.fps != null ? "${d.fps}" : ""))),
         DataCell(Opacity(
@@ -352,7 +413,6 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             IconButton(
               onPressed: () {
                 _startPreparation(context, "${f.id}+ba*");
-                // _startPreparation(context, f.id);
               },
               tooltip: "Download this format and the best audio on the server (prepare for viewing)",
               icon: _downloadFormatIcon,
@@ -462,7 +522,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 );
               },
               tooltip: "Open with MediaKit with handler",
-              icon: const Icon(Icons.slideshow),
+              icon: const Icon(Icons.flag_circle_outlined),
             ),
             PopupMenuButton(
                 tooltip: 'Do with it...',
@@ -476,6 +536,14 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     case "server-delete":
                       ref.read(deleteDownloadContentProvider(d.id));
                       _pullRefresh();
+                    case "download-local":
+                    case "share-url":
+                      await Share.shareUri(Uri.parse(d.url));
+                    case "download":
+                      if (UniversalPlatform.isWeb) {
+                        return;
+                      }
+                      downloadFile(context, d);
                   }
                   setState(() {});
                 },
@@ -516,9 +584,76 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       ),
                     ),
                   );
+                  if (!UniversalPlatform.isWeb) {
+                    menuItems.add(
+                      const PopupMenuItem<String>(
+                        value: "share-url",
+                        child: Row(
+                          children: [
+                            Icon(Icons.ios_share),
+                            Expanded(
+                              child: Text("Share the download URL in..."),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  if (!UniversalPlatform.isWeb) {
+                    menuItems.add(
+                      const PopupMenuItem<String>(
+                        value: "download",
+                        child: Row(
+                          children: [
+                            Icon(Icons.download),
+                            Expanded(
+                              child: Text("Download local file"),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
                   return menuItems;
                 }),
           ],
+        );
+      default:
+        return ErrorWidget("Unexpected download status ${d.status}");
+    }
+  }
+
+  Widget _buildLocalActions(
+    BuildContext context,
+    RecordingInfo recording,
+    Download d,
+  ) {
+    if (d.fullPathMedia != null) {
+      return IconButton(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
+          );
+        },
+        tooltip: "Local file is downloaded. Click to play.",
+        icon: const Icon(Icons.download_done),
+      );
+    }
+    switch (d.status) {
+      case "stale":
+      case "new":
+      case "in_progress":
+        return const SizedBox.shrink();
+      case "ready":
+        if (UniversalPlatform.isWeb) {
+          return const SizedBox.shrink();
+        }
+        return IconButton(
+          onPressed: () {
+            downloadFile(context, d);
+          },
+          icon: const Icon(Icons.download),
+          tooltip: "Download media to local storage",
         );
       default:
         return ErrorWidget("Unexpected download status ${d.status}");
@@ -579,6 +714,23 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         },
       );
     }
+  }
+
+  Future<void> downloadFile(BuildContext context, Download download) async {
+    final sp = await (context as WidgetRef).watch(storePlacesProvider.future);
+
+    final task = DownloadTask(
+      taskId: download.id,
+      url: download.url,
+      directory: sp.media().path,
+      baseDirectory: BaseDirectory.root,
+      filename: download.filename,
+      retries: 8,
+      updates: Updates.statusAndProgress,
+      displayName: download.title,
+    );
+
+    FileDownloader().enqueue(task);
   }
 }
 

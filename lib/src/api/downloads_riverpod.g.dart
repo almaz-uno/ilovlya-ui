@@ -1,12 +1,12 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'recording_riverpod.dart';
+part of 'downloads_riverpod.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$recordingNotifierHash() => r'2a68aa67fba10127667be307a2e65737eb03108f';
+String _$downloadsNotifierHash() => r'6b5d20c8290190482d5cfe335c20c65434c71ac9';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -29,36 +29,36 @@ class _SystemHash {
   }
 }
 
-abstract class _$RecordingNotifier
-    extends BuildlessAutoDisposeAsyncNotifier<RecordingInfo> {
+abstract class _$DownloadsNotifier
+    extends BuildlessAutoDisposeAsyncNotifier<List<Download>> {
   late final String recordingId;
 
-  FutureOr<RecordingInfo> build(
+  FutureOr<List<Download>> build(
     String recordingId,
   );
 }
 
-/// See also [RecordingNotifier].
-@ProviderFor(RecordingNotifier)
-const recordingNotifierProvider = RecordingNotifierFamily();
+/// See also [DownloadsNotifier].
+@ProviderFor(DownloadsNotifier)
+const downloadsNotifierProvider = DownloadsNotifierFamily();
 
-/// See also [RecordingNotifier].
-class RecordingNotifierFamily extends Family<AsyncValue<RecordingInfo>> {
-  /// See also [RecordingNotifier].
-  const RecordingNotifierFamily();
+/// See also [DownloadsNotifier].
+class DownloadsNotifierFamily extends Family<AsyncValue<List<Download>>> {
+  /// See also [DownloadsNotifier].
+  const DownloadsNotifierFamily();
 
-  /// See also [RecordingNotifier].
-  RecordingNotifierProvider call(
+  /// See also [DownloadsNotifier].
+  DownloadsNotifierProvider call(
     String recordingId,
   ) {
-    return RecordingNotifierProvider(
+    return DownloadsNotifierProvider(
       recordingId,
     );
   }
 
   @override
-  RecordingNotifierProvider getProviderOverride(
-    covariant RecordingNotifierProvider provider,
+  DownloadsNotifierProvider getProviderOverride(
+    covariant DownloadsNotifierProvider provider,
   ) {
     return call(
       provider.recordingId,
@@ -77,30 +77,30 @@ class RecordingNotifierFamily extends Family<AsyncValue<RecordingInfo>> {
       _allTransitiveDependencies;
 
   @override
-  String? get name => r'recordingNotifierProvider';
+  String? get name => r'downloadsNotifierProvider';
 }
 
-/// See also [RecordingNotifier].
-class RecordingNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
-    RecordingNotifier, RecordingInfo> {
-  /// See also [RecordingNotifier].
-  RecordingNotifierProvider(
+/// See also [DownloadsNotifier].
+class DownloadsNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
+    DownloadsNotifier, List<Download>> {
+  /// See also [DownloadsNotifier].
+  DownloadsNotifierProvider(
     String recordingId,
   ) : this._internal(
-          () => RecordingNotifier()..recordingId = recordingId,
-          from: recordingNotifierProvider,
-          name: r'recordingNotifierProvider',
+          () => DownloadsNotifier()..recordingId = recordingId,
+          from: downloadsNotifierProvider,
+          name: r'downloadsNotifierProvider',
           debugGetCreateSourceHash:
               const bool.fromEnvironment('dart.vm.product')
                   ? null
-                  : _$recordingNotifierHash,
-          dependencies: RecordingNotifierFamily._dependencies,
+                  : _$downloadsNotifierHash,
+          dependencies: DownloadsNotifierFamily._dependencies,
           allTransitiveDependencies:
-              RecordingNotifierFamily._allTransitiveDependencies,
+              DownloadsNotifierFamily._allTransitiveDependencies,
           recordingId: recordingId,
         );
 
-  RecordingNotifierProvider._internal(
+  DownloadsNotifierProvider._internal(
     super._createNotifier, {
     required super.name,
     required super.dependencies,
@@ -113,8 +113,8 @@ class RecordingNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
   final String recordingId;
 
   @override
-  FutureOr<RecordingInfo> runNotifierBuild(
-    covariant RecordingNotifier notifier,
+  FutureOr<List<Download>> runNotifierBuild(
+    covariant DownloadsNotifier notifier,
   ) {
     return notifier.build(
       recordingId,
@@ -122,10 +122,10 @@ class RecordingNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
   }
 
   @override
-  Override overrideWith(RecordingNotifier Function() create) {
+  Override overrideWith(DownloadsNotifier Function() create) {
     return ProviderOverride(
       origin: this,
-      override: RecordingNotifierProvider._internal(
+      override: DownloadsNotifierProvider._internal(
         () => create()..recordingId = recordingId,
         from: from,
         name: null,
@@ -138,14 +138,14 @@ class RecordingNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
   }
 
   @override
-  AutoDisposeAsyncNotifierProviderElement<RecordingNotifier, RecordingInfo>
+  AutoDisposeAsyncNotifierProviderElement<DownloadsNotifier, List<Download>>
       createElement() {
-    return _RecordingNotifierProviderElement(this);
+    return _DownloadsNotifierProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is RecordingNotifierProvider &&
+    return other is DownloadsNotifierProvider &&
         other.recordingId == recordingId;
   }
 
@@ -158,19 +158,19 @@ class RecordingNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
   }
 }
 
-mixin RecordingNotifierRef
-    on AutoDisposeAsyncNotifierProviderRef<RecordingInfo> {
+mixin DownloadsNotifierRef
+    on AutoDisposeAsyncNotifierProviderRef<List<Download>> {
   /// The parameter `recordingId` of this provider.
   String get recordingId;
 }
 
-class _RecordingNotifierProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<RecordingNotifier,
-        RecordingInfo> with RecordingNotifierRef {
-  _RecordingNotifierProviderElement(super.provider);
+class _DownloadsNotifierProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<DownloadsNotifier,
+        List<Download>> with DownloadsNotifierRef {
+  _DownloadsNotifierProviderElement(super.provider);
 
   @override
-  String get recordingId => (origin as RecordingNotifierProvider).recordingId;
+  String get recordingId => (origin as DownloadsNotifierProvider).recordingId;
 }
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

@@ -6,7 +6,7 @@ part of 'api_riverpod.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$getUrlInfoHash() => r'b6d915662872c9fd28c05effa7104796b9ccc825';
+String _$getUrlInfoHash() => r'888dc8c997d5780227d3c68453bf6694859a11ae';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -155,7 +155,7 @@ class _GetUrlInfoProviderElement
   String get url => (origin as GetUrlInfoProvider).url;
 }
 
-String _$addRecordingHash() => r'8abe30ed4bac5171045e2e4faad9cc2e57a22f73';
+String _$addRecordingHash() => r'fa58f5b66845acbc24171816ec95a5f9faf76cea';
 
 /// See also [addRecording].
 @ProviderFor(addRecording)
@@ -284,7 +284,7 @@ class _AddRecordingProviderElement
   String get url => (origin as AddRecordingProvider).url;
 }
 
-String _$listRecordingsHash() => r'a0db940b72cb2b6ae29bc73fe389f59e250524aa';
+String _$listRecordingsHash() => r'1f669ebd8f1b0cf33cdc2376d7e7aaea09f628b8';
 
 /// See also [listRecordings].
 @ProviderFor(listRecordings)
@@ -447,7 +447,7 @@ class _ListRecordingsProviderElement
   String get sortBy => (origin as ListRecordingsProvider).sortBy;
 }
 
-String _$getRecordingHash() => r'4583f11039ad747861fac52f14083615501bb45a';
+String _$getRecordingHash() => r'6363a2db7efbbe9454fadff8249324d80ed1cd87';
 
 /// See also [getRecording].
 @ProviderFor(getRecording)
@@ -576,7 +576,7 @@ class _GetRecordingProviderElement
   String get id => (origin as GetRecordingProvider).id;
 }
 
-String _$getDownloadHash() => r'406a352d6d31c916f257dcb847df7eecb5f8d3e6';
+String _$getDownloadHash() => r'27f763660f4903739659f326bfb3d211753a6fcc';
 
 /// See also [getDownload].
 @ProviderFor(getDownload)
@@ -704,7 +704,7 @@ class _GetDownloadProviderElement
   String get id => (origin as GetDownloadProvider).id;
 }
 
-String _$listDownloadsHash() => r'74d1d0e43efbe326cb74a5b56fd44337516e4275';
+String _$listDownloadsHash() => r'dec5c3885e792e5d2902abf3e575ddf335a468af';
 
 /// See also [listDownloads].
 @ProviderFor(listDownloads)
@@ -833,7 +833,7 @@ class _ListDownloadsProviderElement
   String get recordingId => (origin as ListDownloadsProvider).recordingId;
 }
 
-String _$newDownloadHash() => r'a3fff48716e4aca74568da8737c82e477eba8c25';
+String _$newDownloadHash() => r'7bfa45aebf50abd9c361fdae7b6201e3234ba0cd';
 
 /// See also [newDownload].
 @ProviderFor(newDownload)
@@ -1487,7 +1487,7 @@ class _UnsetSeenProviderElement extends AutoDisposeFutureProviderElement<void>
   String get recordingId => (origin as UnsetSeenProvider).recordingId;
 }
 
-String _$putPositionHash() => r'0eb640195347240dc48bff8fff96f9d59b52d6da';
+String _$putPositionHash() => r'8c67a97251f54dbeef57a02dafde2436e7dc1f49';
 
 /// See also [putPosition].
 @ProviderFor(putPosition)
@@ -1648,7 +1648,7 @@ class _PutPositionProviderElement extends AutoDisposeFutureProviderElement<void>
   bool get finished => (origin as PutPositionProvider).finished;
 }
 
-String _$getTenantHash() => r'ebbcaa7de7c89bcd2e1c5e1c20f441fec1c96447';
+String _$getTenantHash() => r'dde7fc46ebc366f7b68f4a339d6083fa7db016d0';
 
 /// See also [getTenant].
 @ProviderFor(getTenant)
@@ -1663,7 +1663,7 @@ final getTenantProvider = AutoDisposeFutureProvider<Tenant>.internal(
 
 typedef GetTenantRef = AutoDisposeFutureProviderRef<Tenant>;
 String _$deleteDownloadContentHash() =>
-    r'4a512d40ae77d605158010748d48e95a0685665a';
+    r'a8f63f2d5d7f93f82b3fcdbef06991985e20cb27';
 
 /// See also [deleteDownloadContent].
 @ProviderFor(deleteDownloadContent)
@@ -1794,7 +1794,7 @@ class _DeleteDownloadContentProviderElement
 }
 
 String _$deleteRecordingDownloadsContentHash() =>
-    r'05f7ac950a0fde295ec0f53a4763e3104253f6a6';
+    r'32c7c772f33a4393a6c8ffe966be7d773b17f6d7';
 
 /// See also [deleteRecordingDownloadsContent].
 @ProviderFor(deleteRecordingDownloadsContent)

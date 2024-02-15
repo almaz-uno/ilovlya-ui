@@ -10,6 +10,8 @@ class Settings {
   final String sortBy;
   final bool showHidden;
   final bool showSeen;
+  final bool withServerFile;
+  final bool withLocalFile;
 
   Settings({
     this.theme = ThemeMode.system,
@@ -20,6 +22,8 @@ class Settings {
     this.sortBy = "created_at",
     this.showHidden = false,
     this.showSeen = false,
+    this.withServerFile = false,
+    this.withLocalFile = false,
   });
 
   Settings copyWith({
@@ -31,6 +35,8 @@ class Settings {
     String? sortBy,
     bool? showHidden,
     bool? showSeen,
+    bool? withServerFile,
+    bool? withLocalFile,
   }) =>
       Settings(
         theme: theme ?? this.theme,
@@ -41,5 +47,7 @@ class Settings {
         sortBy: sortBy ?? this.sortBy,
         showHidden: showHidden ?? this.showHidden,
         showSeen: showSeen ?? this.showSeen,
+        withServerFile: withServerFile ?? this.withServerFile,
+        withLocalFile: withLocalFile ?? this.withLocalFile,
       );
 }

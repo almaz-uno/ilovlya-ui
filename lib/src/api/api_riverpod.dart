@@ -25,8 +25,8 @@ Future<URLInfo> getUrlInfo(GetUrlInfoRef ref, String url) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/url-info';
   final encodedURL = Uri.encodeComponent(url);
-  var u = Uri.parse("$serverURL$path?url=$encodedURL");
-  var res = await http.get(u, headers: getAuthHeader(ref)).timeout(requestTimeoutLong);
+  final u = Uri.parse("$serverURL$path?url=$encodedURL");
+  final res = await http.get(u, headers: getAuthHeader(ref)).timeout(requestTimeoutLong);
 
   if (res.statusCode >= 400) {
     throw HttpStatusError.by("Unable to get propositions for $url", res);
@@ -39,7 +39,7 @@ Future<RecordingInfo> addRecording(AddRecordingRef ref, String url) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/recordings';
 
-  var res = await http
+  final res = await http
       .post(
         Uri.parse("$serverURL$path"),
         headers: getAuthHeader(ref)
@@ -63,13 +63,13 @@ Future<List<RecordingInfo>> listRecordings(ListRecordingsRef ref, int offset, in
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/recordings';
 
-  var res = await http.get(Uri.parse("$serverURL$path?offset=$offset&limit=$limit&sort_by=$sortBy"), headers: getAuthHeader(ref)).timeout(requestTimeout);
+  final res = await http.get(Uri.parse("$serverURL$path?offset=$offset&limit=$limit&sort_by=$sortBy"), headers: getAuthHeader(ref)).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
     throw HttpStatusError.by("Unable to get list of recordings", res);
   }
   final recordings = RecordingInfo.fromJsonList(jsonDecode(res.body));
-  for (var r in recordings) {
+  for (final r in recordings) {
     r.thumbnailUrl = serverURL + r.thumbnailUrl;
   }
   return recordings;
@@ -78,9 +78,9 @@ Future<List<RecordingInfo>> listRecordings(ListRecordingsRef ref, int offset, in
 @riverpod
 Future<RecordingInfo> getRecording(GetRecordingRef ref, String id) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
-  var path = '/api/recordings/$id';
+  final path = '/api/recordings/$id';
 
-  var res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
+  final res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
     throw HttpStatusError.by("Unable to get recording with id=$id", res);
@@ -93,9 +93,9 @@ Future<RecordingInfo> getRecording(GetRecordingRef ref, String id) async {
 @riverpod
 Future<Download> getDownload(GetDownloadRef ref, String id) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
-  var path = '/api/recordings/downloads/$id';
+  final path = '/api/recordings/downloads/$id';
 
-  var res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
+  final res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
     throw HttpStatusError.by("Unable to get download with id=$id", res);
@@ -108,16 +108,17 @@ Future<Download> getDownload(GetDownloadRef ref, String id) async {
 @riverpod
 Future<List<Download>> listDownloads(ListDownloadsRef ref, String recordingId) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
-  var path = '/api/recordings/$recordingId/downloads';
 
-  var res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
+  final path = '/api/recordings/$recordingId/downloads';
+
+  final res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
     throw HttpStatusError.by("Unable to get list of downloads for $recordingId", res);
   }
 
   final downloads = Download.fromJsonList(jsonDecode(res.body));
-  for (var d in downloads) {
+  for (final d in downloads) {
     d.url = serverURL + d.url;
   }
   return downloads;
@@ -126,9 +127,9 @@ Future<List<Download>> listDownloads(ListDownloadsRef ref, String recordingId) a
 @riverpod
 Future<Download> newDownload(NewDownloadRef ref, String recordingId, String format) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
-  var path = '/api/recordings/$recordingId/downloads';
+  final path = '/api/recordings/$recordingId/downloads';
 
-  var res = await http
+  final res = await http
       .post(
         Uri.parse("$serverURL$path"),
         body: <String, String>{
@@ -157,9 +158,9 @@ Future<void> unsetHidden(UnsetHiddenRef ref, String recordingId) async {
 }
 
 Future<void> _hidden(String serverURL, String recordingId, HttpMethod httpMethod, Map<String, String> headers) async {
-  var path = '/api/recordings/$recordingId/hidden';
+  final path = '/api/recordings/$recordingId/hidden';
 
-  var res = await httpMethod(
+  final res = await httpMethod(
     Uri.parse("$serverURL$path"),
     headers: headers,
   ).timeout(requestTimeout);
@@ -170,9 +171,9 @@ Future<void> _hidden(String serverURL, String recordingId, HttpMethod httpMethod
 }
 
 Future<void> _seen(String serverURL, String recordingId, HttpMethod httpMethod, Map<String, String> headers) async {
-  var path = '/api/recordings/$recordingId/seen';
+  final path = '/api/recordings/$recordingId/seen';
 
-  var res = await httpMethod(
+  final res = await httpMethod(
     Uri.parse("$serverURL$path"),
     headers: headers,
   ).timeout(requestTimeout);
@@ -198,9 +199,9 @@ Future<void> unsetSeen(UnsetSeenRef ref, String recordingId) async {
 @riverpod
 Future<void> putPosition(PutPositionRef ref, String recordingId, Duration position, bool finished) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
-  var path = '/api/recordings/$recordingId/position';
+  final path = '/api/recordings/$recordingId/position';
 
-  var res = await http
+  final res = await http
       .put(
         Uri.parse("$serverURL$path"),
         headers: getAuthHeader(ref)
@@ -222,9 +223,9 @@ Future<void> putPosition(PutPositionRef ref, String recordingId, Duration positi
 @riverpod
 Future<Tenant> getTenant(GetTenantRef ref) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
-  var path = '/api/tenant';
+  const path = '/api/tenant';
 
-  var res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
+  final res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
 
   if (res.statusCode >= 400) {
     throw HttpStatusError.by("Unable to get tenant info", res);
@@ -235,8 +236,8 @@ Future<Tenant> getTenant(GetTenantRef ref) async {
 @riverpod
 Future<void> deleteDownloadContent(DeleteDownloadContentRef ref, String downloadId) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
-  var path = '/api/recordings/downloads/$downloadId/content';
-  var res = await http.delete(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
+  final path = '/api/recordings/downloads/$downloadId/content';
+  final res = await http.delete(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
   if (res.statusCode >= 400) {
     throw HttpStatusError.by("Unable to delete content for download $downloadId", res);
   }
@@ -245,8 +246,8 @@ Future<void> deleteDownloadContent(DeleteDownloadContentRef ref, String download
 @riverpod
 Future<void> deleteRecordingDownloadsContent(DeleteRecordingDownloadsContentRef ref, String recordingId) async {
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
-  var path = '/api/recordings/$recordingId/content';
-  var res = await http.delete(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
+  final path = '/api/recordings/$recordingId/content';
+  final res = await http.delete(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
   if (res.statusCode >= 400) {
     throw HttpStatusError.by("Unable to delete content all downloads for recording $recordingId", res);
   }

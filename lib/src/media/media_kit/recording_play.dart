@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
+import 'package:duration/duration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,20 +11,21 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import '../../api/api_riverpod.dart';
+import '../../api/thumbnail_riverpod.dart';
 import '../../model/download.dart';
 import '../../model/recording_info.dart';
 import '../../settings/settings_provider.dart';
 import '../format.dart';
-import 'media_kit_audio_handler.dart';
+import '../media_details.dart';
+import 'audio_handler.dart';
 
-void _seek(Player player, Duration position) {
-  if (position.isNegative) {
-    position = Duration.zero;
+String _formatDuration(Duration duration) {
+  var positive = true;
+  if (duration.isNegative) {
+    positive = false;
+    duration = -duration;
   }
-  if (position > player.state.duration) {
-    position = player.state.duration;
-  }
-  player.seek(position);
+  return (positive ? "" : "⏴⏴ ") + prettyDuration(duration, abbreviated: true) + (positive ? " ⏵⏵" : "");
 }
 
 class RecordingViewMediaKitHandler extends ConsumerStatefulWidget {
@@ -45,31 +47,31 @@ class RecordingViewMediaKitHandler extends ConsumerStatefulWidget {
 const _positionSendPeriod = Duration(seconds: 1);
 
 class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMediaKitHandler> {
-  String get url => widget.download.url;
-
+  // String get url => widget.download.url;
   Player get _player => MKPlayerHandler.player;
-
   late final _controller = VideoController(_player, configuration: VideoControllerConfiguration(enableHardwareAcceleration: !UniversalPlatform.isLinux));
-
   StreamSubscription? _positionSendSubs;
+  Duration _rewinding = Duration.zero;
+  Timer? _rewindTimer;
 
   @override
   void initState() {
-    super.initState();
     _init();
+    super.initState();
   }
 
-  _init() async {
-    // await _player.open(Media(url), play: false);
+  void _init() async {
+    final tf = await ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).future);
+    final thumbnailUrl = UniversalPlatform.isWeb ? Uri.parse(widget.recording.thumbnailUrl) : tf.uri;
 
-    MKPlayerHandler.handler.playRecording(widget.recording, widget.download);
+    MKPlayerHandler.handler.playRecording(widget.recording, widget.download, thumbnailUrl);
 
     if (UniversalPlatform.isDesktop || UniversalPlatform.isWeb) {
       await _player.setVolume(ref.read(settingsNotifierProvider).requireValue.volume);
     }
 
     _player.stream.duration.listen((event) {
-      _seek(_player, Duration(seconds: widget.recording.position));
+      _seek(Duration(seconds: widget.recording.position));
       _player.play();
       setState(() {});
     });
@@ -83,9 +85,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     });
 
     _player.stream.playing.listen((event) {
-      if (event) {
-        setState(() {});
-      }
+      setState(() {});
     });
 
     _player.stream.videoParams.listen((event) {
@@ -123,9 +123,36 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
   @override
   void dispose() {
-    MKPlayerHandler.dispose();
+    MKPlayerHandler.player.stop();
     _positionSendSubs?.cancel();
     super.dispose();
+  }
+
+  void _rewind(Duration interval) {
+    _seek(_player.state.position + interval);
+
+    if (_rewindTimer != null) {
+      _rewinding += interval;
+      _rewindTimer?.cancel();
+    } else {
+      _rewinding = interval;
+    }
+
+    _rewindTimer = Timer(const Duration(seconds: 3), () {
+      setState(() {
+        _rewinding = Duration.zero;
+      });
+    });
+  }
+
+  void _seek(Duration position) {
+    if (position.isNegative) {
+      position = Duration.zero;
+    }
+    if (position > _player.state.duration) {
+      position = _player.state.duration;
+    }
+    _player.seek(position);
   }
 
   void _sendPosition(String recordingId, Duration position, bool finished) {
@@ -151,7 +178,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     }
 
     final settings = ref.watch(settingsNotifierProvider);
-// final titleSmall = Theme.of(context).textTheme.titleSmall;
+    // final rewindTextStyle = Theme.of(context).textTheme.titleSmall;
     final techInfoStyle = GoogleFonts.ptMono();
     return Scaffold(
       // appBar: AppBar(
@@ -205,7 +232,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                 return null;
               }),
               ChangePositionIntent: CallbackAction<ChangePositionIntent>(onInvoke: (ChangePositionIntent intent) {
-                _seek(_player, _player.state.position + intent.duration);
+                _rewind(intent.duration);
                 return null;
               }),
               ChangeVolumeIntent: CallbackAction<ChangeVolumeIntent>(onInvoke: (ChangeVolumeIntent intent) {
@@ -238,23 +265,21 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                         width: playerW,
                         height: playerH,
                         child: Stack(
-                          alignment: Alignment.bottomCenter,
+                          alignment: Alignment.topCenter,
                           children: <Widget>[
                             Video(
                               controller: _controller,
                               pauseUponEnteringBackgroundMode: false,
                               resumeUponEnteringForegroundMode: true,
                             ),
-                            // _ControlsOverlay(player: player),
-                            // VideoProgressIndicator(
-                            //   _controller,
-                            //   allowScrubbing: true,
-                            //   colors: VideoProgressColors(
-                            //     playedColor: Theme.of(context).colorScheme.primary,
-                            //     backgroundColor:
-                            //         const Color.fromARGB(127, 158, 158, 158),
-                            //   ),
-                            // ),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 500),
+                              child: Text(
+                                _rewinding != Duration.zero ? _formatDuration(_rewinding) : "",
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+                                key: ValueKey(_rewinding),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -266,7 +291,28 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                     Container(
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.all(8),
-                      child: Text("Created at: ${formatDateLong(widget.recording.createdAt)} (${since(widget.recording.createdAt, false)} ago)"),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Created at: ${formatDateLong(widget.recording.createdAt)} (${since(widget.recording.createdAt, false)} ago)"),
+                            if (_player.state.playlist.medias.isNotEmpty)
+                              Row(
+                                children: [
+                                  Text("Playing from: ${_player.state.playlist.medias[0].uri}"),
+                                  IconButton(
+                                    onPressed: () {
+                                      copyToClipboard(context, _player.state.playlist.medias[0].uri);
+                                    },
+                                    icon: const Icon(Icons.copy),
+                                  )
+                                ],
+                              ),
+                            Text("Size: ${fileSizeHumanReadable(widget.download.size)}"),
+                          ],
+                        ),
+                      ),
                     ),
                     Visibility(
                       visible: settings.value?.debugMode ?? false,
@@ -285,6 +331,8 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                             Text("buffered: ${formatDuration(_player.state.buffer)}", style: techInfoStyle),
                             Text("buffering: ${_player.state.buffering ? '>>' : '__'}", style: techInfoStyle),
                             Text("volume: ${_player.state.volume}", style: techInfoStyle),
+                            Text("audio bitrate: ${_player.state.audioBitrate}", style: techInfoStyle),
+                            Text("audio device: ${_player.state.audioDevice}", style: techInfoStyle),
                             Text("size: ${_player.state.width}x${_player.state.height}", style: techInfoStyle),
 
                             Text("video params: ${_player.state.videoParams}", style: techInfoStyle),
@@ -305,7 +353,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   }
 
   Widget _buildControls(BuildContext context) {
-    // var c = Theme.of(context).colorScheme.primary;
     return Column(
       children: [
         ProgressBar(
@@ -316,215 +363,74 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
           timeLabelType: TimeLabelType.remainingTime,
           buffered: _player.state.buffer,
           onSeek: (duration) {
-            _seek(_player, duration);
+            _seek(duration);
           },
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextButton(
-              onLongPress: () {
-                _seek(_player, _player.state.position - const Duration(minutes: 5));
-              },
-              onPressed: () {
-                _seek(_player, _player.state.position - const Duration(minutes: 1));
-              },
-              child: const Icon(Icons.fast_rewind),
-            ),
-
-            //label: const Icon(Icons.chevron_left)),
-            TextButton(
-              onLongPress: () {
-                _seek(_player, _player.state.position - const Duration(seconds: 30));
-              },
-              onPressed: () {
-                _seek(_player, _player.state.position - const Duration(seconds: 15));
-              },
-              child: const Icon(Icons.fast_rewind),
-            ),
-            if (_player.state.playing)
+        Stack(children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
               TextButton(
-                onPressed: () {
-                  _player.pause();
+                onLongPress: () {
+                  _rewind(-const Duration(minutes: 5));
                 },
-                child: const Icon(
-                  Icons.pause,
-                ),
+                onPressed: () {
+                  _rewind(-const Duration(minutes: 1));
+                },
+                child: const Icon(Icons.fast_rewind),
               ),
-            if (!_player.state.playing)
               TextButton(
-                onPressed: () {
-                  _player.play();
+                onLongPress: () {
+                  _rewind(-const Duration(seconds: 30));
                 },
-                child: const Icon(
-                  Icons.play_arrow,
-                ),
+                onPressed: () {
+                  _rewind(-const Duration(seconds: 15));
+                },
+                child: const Icon(Icons.fast_rewind),
               ),
-            TextButton(
-              onLongPress: () {
-                _seek(_player, _player.state.position + const Duration(seconds: 30));
-              },
-              onPressed: () {
-                _seek(_player, _player.state.position + const Duration(seconds: 15));
-              },
-              child: const Icon(
-                Icons.fast_forward,
-              ),
-            ),
-            TextButton(
-              onLongPress: () {
-                _seek(_player, _player.state.position + const Duration(minutes: 5));
-              },
-              onPressed: () {
-                _seek(_player, _player.state.position + const Duration(minutes: 1));
-              },
-              child: const Icon(
-                Icons.fast_forward,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _ControlsOverlay extends StatelessWidget {
-  const _ControlsOverlay({required Player player}) : _player = player;
-
-  static const _volumes = <double>[
-    10,
-    20,
-    30,
-    40,
-    50,
-    60,
-    70,
-    80,
-    90,
-    100,
-  ];
-  static const List<double> _examplePlaybackRates = <double>[
-    0.25,
-    0.5,
-    1.0,
-    1.5,
-    2.0,
-    3.0,
-    5.0,
-    10.0,
-  ];
-
-  final Player _player;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
-          reverseDuration: const Duration(milliseconds: 200),
-          child: _player.state.playing
-              ? const SizedBox.shrink()
-              : Container(
-                  color: Colors.black26,
-                  child: const Center(
-                    child: Icon(
-                      // Icons.play_arrow,
-                      null,
-                      color: Colors.white,
-                      size: 32.0,
-                      semanticLabel: 'Play',
-                    ),
+              if (_player.state.playing)
+                TextButton(
+                  onPressed: () {
+                    _player.pause();
+                  },
+                  child: const Icon(
+                    Icons.pause,
                   ),
                 ),
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  _seek(_player, _player.state.position - const Duration(seconds: 5));
+              if (!_player.state.playing)
+                TextButton(
+                  onPressed: () {
+                    _player.play();
+                  },
+                  child: const Icon(
+                    Icons.play_arrow,
+                  ),
+                ),
+              TextButton(
+                onLongPress: () {
+                  _rewind(const Duration(seconds: 30));
                 },
-              ),
-            ),
-            Expanded(
-              child: GestureDetector(
-                onDoubleTap: () {
-                  _player.playOrPause();
+                onPressed: () {
+                  _rewind(const Duration(seconds: 15));
                 },
+                child: const Icon(
+                  Icons.fast_forward,
+                ),
               ),
-            ),
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  _seek(_player, _player.state.position + const Duration(seconds: 5));
+              TextButton(
+                onLongPress: () {
+                  _rewind(const Duration(minutes: 5));
                 },
+                onPressed: () {
+                  _rewind(const Duration(minutes: 1));
+                },
+                child: const Icon(
+                  Icons.fast_forward,
+                ),
               ),
-            ),
-          ],
-        ),
-        Align(
-          alignment: Alignment.topLeft,
-          child: PopupMenuButton<double>(
-            initialValue: _player.state.volume,
-            tooltip: 'Sound volume',
-            onSelected: (double volume) {
-              _player.setVolume(volume);
-            },
-            itemBuilder: (BuildContext context) {
-              return <PopupMenuItem<double>>[
-                for (var volume in _volumes)
-                  PopupMenuItem<double>(
-                    value: volume,
-                    child: Text('$volume%'),
-                  )
-              ];
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                // Using less vertical padding as the text is also longer
-                // horizontally, so it feels like it would need more spacing
-                // horizontally (matching the aspect ratio of the video).
-                vertical: 12,
-                horizontal: 16,
-              ),
-              child: Visibility(
-                visible: !_player.state.playing,
-                child: Text('${(_player.state.volume).toInt()}%'),
-              ),
-            ),
+            ],
           ),
-        ),
-        Align(
-          alignment: Alignment.topRight,
-          child: PopupMenuButton<double>(
-            initialValue: _player.state.rate,
-            tooltip: 'Playback rate',
-            onSelected: (double rate) {
-              _player.setRate(rate);
-            },
-            itemBuilder: (BuildContext context) {
-              return <PopupMenuItem<double>>[
-                for (final double rate in _examplePlaybackRates)
-                  PopupMenuItem<double>(
-                    value: rate,
-                    child: Text('${rate}x'),
-                  )
-              ];
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                // Using less vertical padding as the text is also longer
-                // horizontally, so it feels like it would need more spacing
-                // horizontally (matching the aspect ratio of the video).
-                vertical: 12,
-                horizontal: 16,
-              ),
-              child: Text('${_player.state.rate}x'),
-            ),
-          ),
-        ),
+        ]),
       ],
     );
   }

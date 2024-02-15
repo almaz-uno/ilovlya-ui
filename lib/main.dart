@@ -4,7 +4,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:fvp/fvp.dart';
 
 import 'src/app.dart';
-import 'src/media/media_kit/media_kit_audio_handler.dart';
+import 'src/media/media_kit/audio_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

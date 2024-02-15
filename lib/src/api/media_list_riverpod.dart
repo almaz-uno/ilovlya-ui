@@ -1,14 +1,18 @@
-import 'package:idb_shim/idb.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import 'api_riverpod.dart';
-import 'db_riverpod.dart';
+import 'directories_riverpod.dart';
 
 part 'media_list_riverpod.g.dart';
-
-const _storeName = "recordings";
 
 @riverpod
 class MediaListNotifier extends _$MediaListNotifier {
@@ -16,55 +20,139 @@ class MediaListNotifier extends _$MediaListNotifier {
 
   @override
   Future<List<RecordingInfo>> build() async {
-    return _loadList();
+    if (UniversalPlatform.isWeb) {
+      return _fromWeb();
+    }
+    return _fromDisk();
   }
 
-  Future<void> _save(List<RecordingInfo> recordings) async {
-    final db = await ref.watch(dbProvider(_storeName).future);
+  Future<List<RecordingInfo>> allFromDisk() async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      final sp = await ref.watch(storePlacesProvider.future);
+      final recordingsDir = sp.recordings();
 
-    final txn = db.transaction(_storeName, idbModeReadWrite);
-    final store = txn.objectStore(_storeName);
-    for (var recording in recordings) {
-      store.put(recording, recording.id);
+      final resultList = <RecordingInfo>[];
+
+      final list = recordingsDir.listSync();
+      for (final entity in list) {
+        if (entity is! File) continue;
+
+        final recording = RecordingInfo.fromJson(jsonDecode(entity.readAsStringSync()));
+
+        for (final df in recording.files) {
+          if (File(p.join(sp.media().path, df)).existsSync()) {
+            recording.hasLocalFile = true;
+            break;
+          }
+        }
+        resultList.add(recording);
+      }
+      return resultList;
+    } catch (e, s) {
+      debugPrintStack(stackTrace: s, label: e.toString());
+      rethrow;
+    } finally {
+      debugPrint("load recordings from disk in ${stopwatch.elapsed}");
     }
-    await txn.completed;
   }
 
-  Future<List<RecordingInfo>> _loadList() async {
-    final settings = await ref.watch(settingsNotifierProvider.future);
-    final showHidden = settings.showHidden;
-    final showSeen = settings.showSeen;
+  Future<List<RecordingInfo>> _fromDisk() async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      final sortBy = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.sortBy));
+      final showHidden = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.showHidden));
+      final showSeen = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.showSeen));
 
-    final recordings = await ref
-        .read(listRecordingsProvider(0, limit, sortBy: settings.sortBy).future);
+      final withServerFile = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.withServerFile));
+      final withLocalFile = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.withLocalFile));
 
-    // _save(recordings);
+      final resultList = <RecordingInfo>[];
 
-    return recordings.where((RecordingInfo recording) {
-      if (recording.seenAt != null && !showSeen) {
-        return false;
+      for (final recording in await allFromDisk()) {
+        if (recording.seenAt != null && !showSeen) {
+          continue;
+        }
+        if (recording.hiddenAt != null && !showHidden) {
+          continue;
+        }
+
+        if (withServerFile && !recording.hasFile) {
+          continue;
+        }
+
+        if (withLocalFile && !recording.hasLocalFile) {
+          continue;
+        }
+        resultList.add(recording);
       }
-      if (recording.hiddenAt != null && !showHidden) {
-        return false;
-      }
 
-      return true;
-    }).toList();
+      resultList.sort((a, b) {
+        final n = DateTime.fromMillisecondsSinceEpoch(0);
+        if (sortBy == "updated_at") {
+          return (b.updatedAt ?? n).compareTo(a.updatedAt ?? n);
+        }
+        return (b.createdAt ?? n).compareTo(a.createdAt ?? n);
+      });
+
+      return resultList;
+    } catch (e, s) {
+      debugPrintStack(stackTrace: s, label: e.toString());
+      rethrow;
+    } finally {
+      debugPrint("load recordings from disk in ${stopwatch.elapsed}");
+    }
   }
 
-  void updateRecording(RecordingInfo recording) {
-    if (!state.hasValue) {
-      return;
+  Future<List<RecordingInfo>> _fromWeb() async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      final settings = await ref.watch(settingsNotifierProvider.future);
+      final showHidden = settings.showHidden;
+      final showSeen = settings.showSeen;
+
+      final recordings = await ref.read(listRecordingsProvider(0, limit, sortBy: settings.sortBy).future);
+
+      return recordings.where((RecordingInfo recording) {
+        if (recording.seenAt != null && !showSeen) {
+          return false;
+        }
+        if (recording.hiddenAt != null && !showHidden) {
+          return false;
+        }
+
+        return true;
+      }).toList();
+    } catch (e, s) {
+      debugPrintStack(stackTrace: s, label: e.toString());
+      rethrow;
+    } finally {
+      debugPrint("load recordings from server in ${stopwatch.elapsed}");
     }
+  }
 
-    final list = state.requireValue;
+  Future<void> _pullFromServer() async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      final sp = await ref.watch(storePlacesProvider.future);
+      final recordings = await ref.read(listRecordingsProvider(0, limit).future);
 
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].id == recording.id) {
-        list[i] = recording;
-        state = AsyncData(list);
-        // _save(recordings);
+      final recordingsDir = sp.recordings();
+
+      for (var recording in recordings) {
+        final r = jsonEncode(recording.toJson());
+        File(p.join(recordingsDir.path, recording.id)).writeAsStringSync(r);
       }
+    } catch (e, s) {
+      debugPrintStack(stackTrace: s, label: e.toString());
+      rethrow;
+    } finally {
+      debugPrint("pull recordings from server in ${stopwatch.elapsed}");
     }
+  }
+
+  Future<void> refreshFromServer() async {
+    if (!UniversalPlatform.isWeb) await _pullFromServer();
+    ref.invalidateSelf();
   }
 }

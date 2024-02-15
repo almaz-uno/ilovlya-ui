@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 
 import '../api/api.dart';
 import '../api/api_riverpod.dart';
+import '../api/directories_riverpod.dart';
+import '../api/housekeeper_riverpod.dart';
+import '../media/format.dart';
 import 'settings_provider.dart';
 
-/// Displays the various settings that can be customized by the user.
-///
-/// Color theme, server URL, token and other settings.
-class SettingsView extends ConsumerWidget {
+class SettingsView extends ConsumerStatefulWidget {
   const SettingsView({
     super.key,
   });
@@ -16,86 +17,104 @@ class SettingsView extends ConsumerWidget {
   static String routeName = "/$pathSettings";
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsView> createState() => _SettingsViewState();
+}
+
+class _SettingsViewState extends ConsumerState<SettingsView> {
+  bool _cleaningStaleMedia = false;
+
+  @override
+  Widget build(BuildContext context) {
     final settings = ref.watch(settingsNotifierProvider);
 
-    final tokenController =
-        TextEditingController(text: settings.requireValue.token);
-    final serverUrlController =
-        TextEditingController(text: settings.requireValue.serverUrl);
+    final tokenController = TextEditingController(text: settings.requireValue.token);
+    final serverUrlController = TextEditingController(text: settings.requireValue.serverUrl);
+    final sp = ref.watch(storePlacesProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        // Glue the SettingsController to the theme selection DropdownButton.
-        //
-        // When a user selects a theme from the dropdown list, the
-        // SettingsController is updated, which rebuilds the MaterialApp.
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-                DropdownButton<ThemeMode>(
-                  // Read the selected themeMode from the controller
-                  value: settings.requireValue.theme,
-                  // Call the updateThemeMode method any time the user selects a theme.
-                  onChanged: (ThemeMode? theme) {
-                    ref
-                        .read(settingsNotifierProvider.notifier)
-                        .updateTheme(theme ?? ThemeMode.system);
-                  },
-                  items: const [
-                    DropdownMenuItem(
-                      value: ThemeMode.system,
-                      child: Text('System Theme'),
-                    ),
-                    DropdownMenuItem(
-                      value: ThemeMode.light,
-                      child: Text('Light Theme'),
-                    ),
-                    DropdownMenuItem(
-                      value: ThemeMode.dark,
-                      child: Text('Dark Theme'),
-                    )
-                  ],
-                ),
-                TextField(
-                  controller: tokenController,
-                  decoration: const InputDecoration(
-                      labelText: "Your token, provided by the bot"),
-                  textInputAction: TextInputAction.next,
-                  onSubmitted: (String value) {
-                    ref
-                        .read(settingsNotifierProvider.notifier)
-                        .updateToken(value);
-                  },
-                ),
-                TextField(
-                  controller: serverUrlController,
-                  decoration: const InputDecoration(
-                      labelText: "Server URL, provided by the bot"),
-                  textInputAction: TextInputAction.next,
-                  onSubmitted: (String value) {
-                    ref
-                        .read(settingsNotifierProvider.notifier)
-                        .updateServerUrl(value);
-                  },
-                ),
-                CheckboxListTile(
-                  title: const Text(
-                      "Show additional technical info. For advanced users only!"),
-                  value: settings.value?.debugMode,
-                  onChanged: (bool? debugMode) {
-                    ref
-                        .read(settingsNotifierProvider.notifier)
-                        .updateDebugMode(debugMode);
-                  },
-                  controlAffinity: ListTileControlAffinity.leading,
-                ),
-              ] +
-              tenantInfo(ref),
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(
+          bottom: const TabBar(
+            tabs: [
+              Tab(icon: Icon(Icons.person), text: "User profile"),
+              Tab(icon: Icon(Icons.settings), text: "Settings"),
+              Tab(icon: Icon(Icons.cleaning_services), text: "Housekeeping"),
+            ],
+          ),
+          title: const Text('Settings'),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: TabBarView(
+            children: [
+              Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                        TextField(
+                          controller: tokenController,
+                          decoration: const InputDecoration(labelText: "Your token, provided by the bot"),
+                          textInputAction: TextInputAction.next,
+                          onSubmitted: (String value) {
+                            ref.read(settingsNotifierProvider.notifier).updateToken(value);
+                          },
+                        ),
+                        TextField(
+                          controller: serverUrlController,
+                          decoration: const InputDecoration(labelText: "Server URL, provided by the bot"),
+                          textInputAction: TextInputAction.next,
+                          onSubmitted: (String value) {
+                            ref.read(settingsNotifierProvider.notifier).updateServerUrl(value);
+                          },
+                        ),
+                      ] +
+                      tenantInfo(ref) +
+                      [
+                        if (sp.hasValue) Text("Data local path: ${sp.requireValue.data().path}"),
+                        if (sp.hasValue) Text("Downloaded local media path: ${sp.requireValue.media().path}"),
+                      ]),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DropdownButton<ThemeMode>(
+                    value: settings.requireValue.theme,
+                    alignment: AlignmentDirectional.topStart,
+                    onChanged: (ThemeMode? theme) {
+                      ref.read(settingsNotifierProvider.notifier).updateTheme(theme ?? ThemeMode.system);
+                    },
+                    items: const [
+                      DropdownMenuItem(
+                        value: ThemeMode.system,
+                        child: Text('System Theme'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.light,
+                        child: Text('Light Theme'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.dark,
+                        child: Text('Dark Theme'),
+                      )
+                    ],
+                  ),
+                  CheckboxListTile(
+                    title: const Text("Show additional technical info. For advanced users only!"),
+                    value: settings.value?.debugMode,
+                    onChanged: (bool? debugMode) {
+                      ref.read(settingsNotifierProvider.notifier).updateDebugMode(debugMode);
+                    },
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _housekeeping(context),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -119,22 +138,63 @@ class SettingsView extends ConsumerWidget {
     }
     return w;
   }
-}
 
-class _TenantInfoView extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tenant = ref.watch(getTenantProvider);
+  Widget _housekeeping(BuildContext context) {
+    final ref = (context as WidgetRef);
+    final media = ref.watch(localMediaHousekeeperProvider);
 
-    return Column(
+    if (!media.hasValue) {
+      return const CircularProgressIndicator();
+    }
+
+    final (number, size) = media.requireValue;
+
+    return Wrap(
+      spacing: 8.0,
+      direction: Axis.vertical,
+      // crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (tenant.isLoading) const CircularProgressIndicator(),
-        if (tenant.hasError) Text("${tenant.error}"),
-        if (tenant.hasValue)
-          Text(
-              "${tenant.requireValue.firstName} ${tenant.requireValue.lastName} (${tenant.requireValue.username})"),
-        if (tenant.hasValue && tenant.requireValue.blockedAt != null)
-          Text("Blocked at ${tenant.requireValue.blockedAt}")
+        Text("Local media info", style: Theme.of(context).textTheme.bodyLarge),
+        Text("Files: $number, total size: ${fileSizeHumanReadable(size)}"),
+        OutlinedButton(
+          child: const Text("Clean stale downloaded media"),
+          onPressed: () async {
+            if (_cleaningStaleMedia) return;
+            try {
+              setState(() {
+                _cleaningStaleMedia = true;
+              });
+              final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanStale();
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('$number files, ${fileSizeHumanReadable(size)} cleaned'),
+              ));
+            } finally {
+              setState(() {
+                _cleaningStaleMedia = false;
+              });
+            }
+          },
+        ),
+        OutlinedButton(
+          child: const Text("Clean ALL downloaded media"),
+          onPressed: () async {
+            final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanAll();
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('$number files, ${fileSizeHumanReadable(size)} cleaned'),
+            ));
+          },
+        ),
+        if (_cleaningStaleMedia)
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Wrap(
+              spacing: 8.0,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+              CircularProgressIndicator(),
+              Text("cleaning stale media local files..."),
+            ]),
+          ),
       ],
     );
   }

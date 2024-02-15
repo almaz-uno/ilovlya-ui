@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ilovlya/src/api/local_download_task_riverpod.dart';
+import 'package:ilovlya/src/api/thumbnail_riverpod.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 import '../api/api_riverpod.dart';
 import '../api/exceptions.dart';
@@ -10,8 +13,30 @@ import '../api/media_list_riverpod.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
 import 'format.dart';
-import 'media_add_view.dart';
-import 'media_details_view.dart';
+import 'media_add.dart';
+import 'media_details.dart';
+
+Widget createThumb(WidgetRef ref, String url) {
+  late Widget thumbWidget;
+  if (UniversalPlatform.isWeb) {
+    thumbWidget = Image.network(
+      url,
+      isAntiAlias: true,
+      filterQuality: FilterQuality.high,
+    );
+  } else {
+    final thumbProvider = ref.watch(thumbnailDataNotifierProvider(url));
+    if (!thumbProvider.hasValue) {
+      thumbWidget = const CircularProgressIndicator();
+    } else {
+      thumbWidget = Image.file(
+        thumbProvider.requireValue,
+      );
+    }
+  }
+
+  return thumbWidget;
+}
 
 class MediaListViewRiverpod extends ConsumerStatefulWidget {
   const MediaListViewRiverpod({super.key});
@@ -22,15 +47,18 @@ class MediaListViewRiverpod extends ConsumerStatefulWidget {
 
 class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   StreamSubscription? _updatePullSubs;
+  final ScrollController _scrollController = ScrollController();
 
-  static const _updatePullPeriod = Duration(minutes: 1);
+  static const _updatePullPeriod = Duration(seconds: 30);
 
   @override
   void initState() {
     super.initState();
 
+    ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
-      ref.invalidate(mediaListNotifierProvider);
+      ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
       ref.invalidate(getTenantProvider);
     });
   }
@@ -39,6 +67,22 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   void deactivate() {
     _updatePullSubs?.cancel();
     super.deactivate();
+  }
+
+  void _scrollDown() {
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(seconds: 2),
+      curve: Curves.fastOutSlowIn,
+    );
+  }
+
+  void _scrollUp() {
+    _scrollController.animateTo(
+      _scrollController.position.minScrollExtent,
+      duration: const Duration(seconds: 2),
+      curve: Curves.fastOutSlowIn,
+    );
   }
 
   @override
@@ -85,10 +129,11 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh list',
-            onPressed: () => ref.invalidate(mediaListNotifierProvider),
-          ),
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Refresh list',
+              onPressed: () {
+                ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+              }),
           PopupMenuButton(
               tooltip: 'More options',
               icon: const Icon(Icons.more_vert),
@@ -102,6 +147,10 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                     ref.read(settingsNotifierProvider.notifier).updateSortBy("created_at");
                   case "sort_by_updated_at":
                     ref.read(settingsNotifierProvider.notifier).updateSortBy("updated_at");
+                  case "with_server_file":
+                    ref.read(settingsNotifierProvider.notifier).toggleWithServerFile();
+                  case "with_local_file":
+                    ref.read(settingsNotifierProvider.notifier).toggleWithLocalFile();
                 }
                 //setState(() {});
               },
@@ -151,6 +200,28 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                     ),
                   ),
                 );
+                menuItems.add(
+                  PopupMenuItem<String>(
+                    value: "with_server_file",
+                    child: Row(
+                      children: [
+                        Icon(settings.requireValue.withServerFile ? Icons.flag_circle_outlined : null, color: primary),
+                        Text("show only with server file", style: TextStyle(color: primary)),
+                      ],
+                    ),
+                  ),
+                );
+                menuItems.add(
+                  PopupMenuItem<String>(
+                    value: "with_local_file",
+                    child: Row(
+                      children: [
+                        Icon(settings.requireValue.withLocalFile ? Icons.download_done : null, color: primary),
+                        Text("show only with local file", style: TextStyle(color: primary)),
+                      ],
+                    ),
+                  ),
+                );
                 return menuItems;
               }),
           IconButton(
@@ -162,6 +233,21 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
           ),
         ],
       ),
+      floatingActionButton: Wrap(
+        spacing: 8.0,
+        children: [
+          FloatingActionButton.small(
+            heroTag: "up",
+            onPressed: _scrollUp,
+            child: const Icon(Icons.arrow_upward),
+          ),
+          FloatingActionButton.small(
+            heroTag: "down",
+            onPressed: _scrollDown,
+            child: const Icon(Icons.arrow_downward),
+          ),
+        ],
+      ),
       bottomNavigationBar: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -169,10 +255,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () {
-          ref.invalidate(mediaListNotifierProvider);
-          return Future.value(null);
-        },
+        onRefresh: () => ref.read(mediaListNotifierProvider.notifier).refreshFromServer(),
         child: Stack(
           children: [
             Visibility(visible: mediaList.isLoading, child: const LinearProgressIndicator()),
@@ -191,7 +274,12 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
       return ErrorWidget(mediaList.error!);
     }
 
+    if (mediaList.requireValue.isEmpty) {
+      return const Center(child: Text("No recordings. Check you filter settings or API token value."));
+    }
+
     return ListView.builder(
+      controller: _scrollController,
       scrollDirection: Axis.vertical,
       shrinkWrap: true,
       itemCount: mediaList.requireValue.length,
@@ -205,14 +293,22 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         // final TextStyle? textStyle = item.hiddenAt != null ? const TextStyle(decoration: TextDecoration.lineThrough) : null;
         var viewedSrt = item.position == 0 ? "" : " (${formatDuration(Duration(seconds: item.position))})";
 
-        Widget? trailing;
+        List<Widget> right = [];
 
-        if (item.hiddenAt != null) {
-          trailing = const Icon(Icons.visibility_off_outlined);
+        final tt = ref.watch(localDTNotifierProvider);
+        for (final did in item.downloads) {
+          if (!tt.containsKey(did) || tt[did]?.status?.isFinalState == true) continue;
+          right.add(Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CircularProgressIndicator(value: tt[did]?.progress),
+          ));
         }
-        if (item.hasFile) {
-          trailing = const Icon(Icons.flag_circle_outlined);
-        }
+
+        right += [
+          if (item.hiddenAt != null) const Icon(Icons.visibility_off_outlined),
+          if (item.hasLocalFile) const Icon(Icons.download_done),
+          if (item.hasFile) const Icon(Icons.flag_circle_outlined),
+        ];
 
         final dt = setting.requireValue.sortBy == "updated_at" ? item.updatedAt : item.createdAt;
 
@@ -224,11 +320,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                 leading: SizedBox(
                   width: 100, // alignment
                   child: Center(
-                    child: Image.network(
-                      item.thumbnailUrl,
-                      isAntiAlias: true,
-                      filterQuality: FilterQuality.high,
-                    ),
+                    child: createThumb(ref, item.thumbnailUrl),
                   ),
                 ),
                 title: Text(
@@ -236,7 +328,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                   // style: textStyle,
                 ),
                 subtitle: Text("${item.uploader} ∙ ${item.extractor} • ${formatDate(dt)} (${since(dt, true)})"),
-                trailing: trailing,
+                trailing: right.isEmpty ? null : Wrap(children: right),
                 onTap: () {
                   Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);
                 },
