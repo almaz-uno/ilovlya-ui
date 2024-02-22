@@ -61,8 +61,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   }
 
   void _init() async {
-    final tf = await ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).future);
-    final thumbnailUrl = UniversalPlatform.isWeb ? Uri.parse(widget.recording.thumbnailUrl) : tf.uri;
+    final thumbnailUrl = UniversalPlatform.isWeb ? Uri.parse(widget.recording.thumbnailUrl) : (await ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).future)).uri;
 
     MKPlayerHandler.handler.playRecording(widget.recording, widget.download, thumbnailUrl);
 
