@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:ilovlya/src/api/directories_riverpod.dart';
-import 'package:ilovlya/src/api/downloads_riverpod.dart';
-import 'package:ilovlya/src/api/media_list_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
+
+import '../model/recording_info.dart';
+import 'directories_riverpod.dart';
+import 'recording_riverpod.dart';
 
 part 'housekeeper_riverpod.g.dart';
 
@@ -37,26 +39,29 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
     final sp = await ref.watch(storePlacesProvider.future);
     final (number, size) = state.value!;
     sp.media().deleteSync(recursive: true);
-    sp.media().create(recursive: true);
+    sp.media().createSync(recursive: true);
     ref.invalidateSelf();
     return Future.value((number, size));
   }
 
   Future<(int, int)> cleanStale() async {
-    final recordings = await ref.watch(mediaListNotifierProvider.notifier).allFromDisk();
+    final sp = await ref.watch(storePlacesProvider.future);
 
     int number = 0, size = 0;
-    for (final recording in recordings) {
-      if (recording.seenAt == null && recording.hiddenAt == null) continue;
-      for (final download in await ref.read(downloadsNotifierProvider(recording.id).future)) {
-        if (download.fullPathMedia != null) {
-          final f = File(download.fullPathMedia!);
-          if (f.existsSync()) {
-            number++;
-            size += f.lengthSync();
-            f.deleteSync();
-          }
-        }
+    for (final e in sp.media().listSync()) {
+      switch (e) {
+        case File f:
+          final bn = p.basename(f.path);
+          final pos = bn.indexOf('-');
+          if (pos < 0) continue;
+          final id = bn.substring(0, pos);
+          await ref.read(recordingNotifierProvider(id).future).then((RecordingInfo ri) {
+            if (ri.seenAt != null || ri.hiddenAt != null) {
+              number++;
+              size += f.lengthSync();
+              f.deleteSync();
+            }
+          });
       }
     }
     ref.invalidateSelf();
