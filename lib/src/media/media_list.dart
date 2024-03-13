@@ -10,6 +10,7 @@ import 'package:universal_platform/universal_platform.dart';
 import '../api/api_riverpod.dart';
 import '../api/exceptions.dart';
 import '../api/media_list_riverpod.dart';
+import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
 import 'format.dart';
@@ -95,19 +96,6 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     if (tenant.hasValue) {
       final t = tenant.requireValue;
       usageInfo = "quote: ${t.quotaStr()} usage: ${t.usageStr()} (${t.files}) free: ${t.freeStr()} ";
-    }
-
-    if (mediaList.hasError) {
-      if (mediaList.error is HttpStatusError && (mediaList.error as HttpStatusError).statusCode == HttpStatus.unauthorized) {
-        Future.microtask(() {
-          Navigator.restorablePushNamed(context, SettingsView.routeName);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: const Text('Fill token and check server URL settings'),
-            behavior: SnackBarBehavior.fixed,
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ));
-        });
-      }
     }
 
     return Scaffold(
@@ -259,19 +247,25 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         child: Stack(
           children: [
             Visibility(visible: mediaList.isLoading, child: const LinearProgressIndicator()),
-            mediaList.hasValue ? _buildRecordingsList(context) : const Center(child: Text('Loading in progress...')),
+            _buildRecordingsList(context, mediaList),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRecordingsList(BuildContext context) {
-    final mediaList = ref.watch(mediaListNotifierProvider);
+  Widget _buildRecordingsList(BuildContext context, AsyncValue<List<RecordingInfo>> mediaList) {
     final setting = ref.watch(settingsNotifierProvider);
 
     if (mediaList.hasError) {
-      return ErrorWidget(mediaList.error!);
+      if (mediaList.error is HttpStatusError && (mediaList.error as HttpStatusError).statusCode == HttpStatus.unauthorized) {
+        return ErrorWidget("Unauthorized: please check and specify token and server URL in settings");
+      }
+      return ErrorWidget("${mediaList.error}: please check and specify token and server URL in settings");
+    }
+
+    if (!mediaList.hasValue) {
+      return const Center(child: Text('Loading in progress...'));
     }
 
     if (mediaList.requireValue.isEmpty) {
