@@ -6,7 +6,7 @@ part of 'local_download_task_riverpod.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$localDTNotifierHash() => r'0f2eea16f7399d69273a4d229e71d51ae706f0ba';
+String _$localDTNotifierHash() => r'25e584620599163a887e071b7718562c406ad331';
 
 /// See also [LocalDTNotifier].
 @ProviderFor(LocalDTNotifier)

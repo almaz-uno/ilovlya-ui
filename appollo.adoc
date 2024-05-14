@@ -1,7 +1,0 @@
-= appollo commands and infos
-
-----
-appollo app mk --name Ilovlya --bundle-id uno.almaz.ilovlya
-appollo app import --name Ilovlya --bundle-id uno.almaz.ilovlya
-appollo build start --build-type ad-hoc
-----

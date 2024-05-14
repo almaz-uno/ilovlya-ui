@@ -16,7 +16,7 @@ LocalDownloadTask _$LocalDownloadTaskFromJson(Map<String, dynamic> json) =>
       networkSpeed: (json['network_speed'] as num?)?.toDouble(),
       timeRemaining: json['time_remaining'] == null
           ? null
-          : Duration(microseconds: json['time_remaining'] as int),
+          : Duration(microseconds: (json['time_remaining'] as num).toInt()),
     );
 
 Map<String, dynamic> _$LocalDownloadTaskToJson(LocalDownloadTask instance) =>
