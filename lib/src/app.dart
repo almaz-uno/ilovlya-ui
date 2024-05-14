@@ -82,8 +82,7 @@ class MyApp extends ConsumerWidget {
       },
 
       theme: ThemeData.light().copyWith(
-        textTheme:
-            GoogleFonts.ptSansCaptionTextTheme(ThemeData.light().textTheme),
+        textTheme: GoogleFonts.ptSansCaptionTextTheme(ThemeData.light().textTheme),
         pageTransitionsTheme: pageTransitionsTheme,
       ),
       darkTheme: ThemeData.dark().copyWith(
@@ -126,16 +125,12 @@ class MyApp extends ConsumerWidget {
     if (uri.pathSegments.isEmpty) return null;
 
     if (uri.pathSegments[0] == pathRecordings) {
-
       if (uri.queryParameters.containsKey("add")) {
-        return MediaAddView(
-            forcePaste: uri.queryParameters.containsKey("paste"));
+        return MediaAddView(forcePaste: uri.queryParameters.containsKey("paste"));
       } else if (uri.pathSegments.length < 2) {
         return const MediaListViewRiverpod();
       } else {
-        return MediaDetailsView(
-            id: uri.pathSegments[1],
-            play: uri.queryParameters.containsKey("play"));
+        return MediaDetailsView(id: uri.pathSegments[1]);
       }
     } else if (uri.pathSegments[0] == pathSettings) {
       return const SettingsView();

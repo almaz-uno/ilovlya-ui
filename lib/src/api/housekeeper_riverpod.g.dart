@@ -7,7 +7,7 @@ part of 'housekeeper_riverpod.dart';
 // **************************************************************************
 
 String _$localMediaHousekeeperHash() =>
-    r'acdd179141d8b3cc1545d7684ad8f4a7e4604330';
+    r'e7a8de294b3c83b3adcf22cdfc005234aa7caff5';
 
 /// See also [LocalMediaHousekeeper].
 @ProviderFor(LocalMediaHousekeeper)

@@ -31,17 +31,11 @@ class MediaDetailsView extends ConsumerStatefulWidget {
   const MediaDetailsView({
     super.key,
     this.id = "",
-    this.play = false,
   });
   final String id;
-  final bool play;
 
-  static String routeName(String id, {bool play = false}) {
-    String routeName = "/$pathRecordings/$id";
-    if (play) {
-      routeName += "?play";
-    }
-    return routeName;
+  static String routeName(String id) {
+    return "/$pathRecordings/$id";
   }
 
   @override
@@ -50,7 +44,6 @@ class MediaDetailsView extends ConsumerStatefulWidget {
 
 class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   String? title;
-  bool _shouldPlay = false;
   StreamSubscription? _updatePullSubs;
 
   static const _updatePullPeriod = Duration(seconds: 3);
@@ -58,13 +51,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   @override
   void initState() {
     super.initState();
-    _shouldPlay = widget.play;
 
-    _playIfShould();
     _pullRefresh();
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
-      _playIfShould();
       _pullRefresh();
     });
   }
@@ -75,12 +65,16 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     super.deactivate();
   }
 
-  (Download? ready, Download? stale) _findAppropriateDownloads(List<Download> downloads) {
+  (Download? local, Download? ready, Download? stale) _findAppropriateDownloads(List<Download> downloads) {
+    Download? local;
     Download? ready;
     Download? stale;
     for (var d in downloads) {
       if (d.updatedAt == null) {
         continue;
+      }
+      if ((local == null || d.size > local.size) && d.fullPathMedia != null) {
+        local = d;
       }
       if ((ready == null || d.updatedAt!.isAfter(ready.updatedAt!)) && d.status == "ready") {
         ready = d;
@@ -90,29 +84,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       }
     }
 
-    return (ready, stale);
-  }
-
-  _playIfShould() async {
-    if (!_shouldPlay) {
-      return;
-    }
-    final recording = ref.watch(recordingNotifierProvider(widget.id));
-    final downloads = ref.watch(downloadsNotifierProvider(widget.id));
-    if (downloads.hasValue && recording.hasValue) {
-      var (ready, _) = _findAppropriateDownloads(downloads.requireValue);
-      if (ready != null) {
-        _recordView(context, recording.requireValue, ready);
-        _shouldPlay = false;
-      }
-    }
-
-    setState(() {});
+    return (local, ready, stale);
   }
 
   Future<void> _pullRefresh() async {
-    ref.read(recordingNotifierProvider(widget.id).notifier).refreshFromServer();
-    ref.read(downloadsNotifierProvider(widget.id).notifier).refreshFromServer();
+    await ref.read(recordingNotifierProvider(widget.id).notifier).refreshFromServer();
+    await ref.read(downloadsNotifierProvider(widget.id).notifier).refreshFromServer();
   }
 
   @override
@@ -232,8 +209,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             padding: const EdgeInsets.all(8.0),
             child: InkWell(
               onTap: () {
-                var (ready, stale) = downloads.hasValue ? _findAppropriateDownloads(downloads.requireValue) : (null, null);
-                if (ready != null) {
+                var (local, ready, stale) = downloads.hasValue ? _findAppropriateDownloads(downloads.requireValue) : (null, null, null);
+                if (local != null) {
+                  _recordView(context, recording, local);
+                } else if (ready != null) {
                   _recordView(context, recording, ready);
                 } else if (stale != null) {
                   _startPreparation(context, stale.formatId);

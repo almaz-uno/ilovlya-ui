@@ -21,10 +21,10 @@ Download _$DownloadFromJson(Map<String, dynamic> json) => Download(
       filename: json['filename'] as String? ?? "",
       ext: json['ext'] as String? ?? "",
       resolution: json['resolution'] as String? ?? "",
-      fps: json['fps'] as int?,
+      fps: (json['fps'] as num?)?.toInt(),
       hasVideo: json['has_video'] as bool? ?? false,
       hasAudio: json['has_audio'] as bool? ?? false,
-      size: json['size'] as int? ?? 0,
+      size: (json['size'] as num?)?.toInt() ?? 0,
       status: json['status'] as String? ?? "",
       progress: json['progress'] as String? ?? "",
     );
