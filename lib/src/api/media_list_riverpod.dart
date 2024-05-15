@@ -111,7 +111,7 @@ class MediaListNotifier extends _$MediaListNotifier {
       final showHidden = settings.showHidden;
       final showSeen = settings.showSeen;
 
-      final recordings = await ref.read(listRecordingsProvider(0, limit, sortBy: settings.sortBy).future);
+      final recordings = await ref.refresh(listRecordingsProvider(0, limit, sortBy: settings.sortBy).future);
 
       return recordings.where((RecordingInfo recording) {
         if (recording.seenAt != null && !showSeen) {
@@ -135,7 +135,7 @@ class MediaListNotifier extends _$MediaListNotifier {
     final stopwatch = Stopwatch()..start();
     try {
       final sp = await ref.watch(storePlacesProvider.future);
-      final recordings = await ref.read(listRecordingsProvider(0, limit).future);
+      final recordings = await ref.refresh(listRecordingsProvider(0, limit).future);
 
       final recordingsDir = sp.recordings();
 
