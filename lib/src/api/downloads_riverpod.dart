@@ -57,7 +57,7 @@ class DownloadsNotifier extends _$DownloadsNotifier {
   Future<List<Download>> _fromWeb() async {
     final stopwatch = Stopwatch()..start();
     try {
-      return await ref.read(listDownloadsProvider(recordingId).future);
+      return await ref.refresh(listDownloadsProvider(recordingId).future);
     } catch (e, s) {
       debugPrintStack(stackTrace: s, label: e.toString());
       rethrow;
@@ -70,7 +70,7 @@ class DownloadsNotifier extends _$DownloadsNotifier {
     final stopwatch = Stopwatch()..start();
     try {
       final sp = await ref.watch(storePlacesProvider.future);
-      final downloads = await ref.read(listDownloadsProvider(recordingId).future);
+      final downloads = await ref.refresh(listDownloadsProvider(recordingId).future);
 
       final recordingFile = File(p.join(sp.recordings().path, recordingId));
       final recording = RecordingInfo.fromJson(jsonDecode(recordingFile.readAsStringSync()));
