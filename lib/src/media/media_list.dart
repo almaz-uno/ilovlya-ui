@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:animated_search_bar/animated_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ilovlya/src/api/local_download_task_riverpod.dart';
@@ -49,6 +50,7 @@ class MediaListViewRiverpod extends ConsumerStatefulWidget {
 class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   StreamSubscription? _updatePullSubs;
   final ScrollController _scrollController = ScrollController();
+  String searchPhrase = "";
 
   static const _updatePullPeriod = Duration(seconds: 30);
 
@@ -100,7 +102,13 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('List of recordings'),
+        title: AnimatedSearchBar(
+          label: "Search...",
+          labelAlignment: Alignment.centerRight,
+          onChanged: (String value){
+            ref.read(searchPhraseNotifierProvider.notifier).setPhrase(value);
+          },
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),

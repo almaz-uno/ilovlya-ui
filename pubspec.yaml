@@ -10,6 +10,7 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
+  animated_search_bar: ^2.7.1
   app_links: ^6.0.2
   audio_service: ^0.18.13
   audio_video_progress_bar: ^2.0.2
@@ -21,6 +22,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flutter_riverpod: ^2.5.1
+  fuzzywuzzy: ^1.1.6
   fvp: ^0.17.0
   google_fonts: ^6.2.1
   http: ^1.1.0

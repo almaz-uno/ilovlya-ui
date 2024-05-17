@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
@@ -16,14 +17,14 @@ part 'media_list_riverpod.g.dart';
 
 @riverpod
 class MediaListNotifier extends _$MediaListNotifier {
-  static const limit = 1000;
+  static const limit = 100000;
 
   @override
   Future<List<RecordingInfo>> build() async {
     if (UniversalPlatform.isWeb) {
-      return _fromWeb();
+      return _filter(_fromWeb());
     }
-    return _fromDisk();
+    return _filter(_fromDisk());
   }
 
   Future<List<RecordingInfo>> allFromDisk() async {
@@ -104,6 +105,21 @@ class MediaListNotifier extends _$MediaListNotifier {
     }
   }
 
+  Future<List<RecordingInfo>> _filter(Future<List<RecordingInfo>> list) async {
+    final phrase = ref.watch(searchPhraseNotifierProvider).trim();
+
+    if (phrase == '') {
+      return list;
+    }
+
+    return extractAllSorted<RecordingInfo>(
+      query: phrase,
+      choices: await list,
+      getter: (r) => "${r.title} ${r.uploader} ${r.extractor} ${r.webpageUrl}",
+    ).map((e) => e.choice).toList();
+
+  }
+
   Future<List<RecordingInfo>> _fromWeb() async {
     final stopwatch = Stopwatch()..start();
     try {
@@ -154,5 +170,17 @@ class MediaListNotifier extends _$MediaListNotifier {
   Future<void> refreshFromServer() async {
     if (!UniversalPlatform.isWeb) await _pullFromServer();
     ref.invalidateSelf();
+  }
+}
+
+@riverpod
+class SearchPhraseNotifier extends _$SearchPhraseNotifier {
+  @override
+  String build() {
+    return '';
+  }
+
+  void setPhrase(String value) {
+    state = value;
   }
 }
