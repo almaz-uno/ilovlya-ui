@@ -116,6 +116,7 @@ class MediaListNotifier extends _$MediaListNotifier {
       query: phrase,
       choices: await list,
       getter: (r) => "${r.title} ${r.uploader} ${r.extractor} ${r.webpageUrl}",
+      cutoff: 50,
     ).map((e) => e.choice).toList();
 
   }

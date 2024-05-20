@@ -50,7 +50,7 @@ class MediaListViewRiverpod extends ConsumerStatefulWidget {
 class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   StreamSubscription? _updatePullSubs;
   final ScrollController _scrollController = ScrollController();
-  String searchPhrase = "";
+  final TextEditingController _searchController = TextEditingController();
 
   static const _updatePullPeriod = Duration(seconds: 30);
 
@@ -104,26 +104,13 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
       appBar: AppBar(
         title: AnimatedSearchBar(
           label: "Search...",
-          labelAlignment: Alignment.centerRight,
-          onChanged: (String value){
+          controller: _searchController,
+          labelAlignment: Alignment.centerLeft,
+          onChanged: (String value) {
             ref.read(searchPhraseNotifierProvider.notifier).setPhrase(value);
           },
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Add an arbitrary media',
-            onPressed: () {
-              Navigator.restorablePushNamed(context, MediaAddView.routeName(false));
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.content_paste_go_rounded),
-            tooltip: 'Add from clipboard',
-            onPressed: () {
-              Navigator.restorablePushNamed(context, MediaAddView.routeName(true));
-            },
-          ),
           IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: 'Refresh list',
@@ -232,6 +219,20 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
       floatingActionButton: Wrap(
         spacing: 8.0,
         children: [
+          FloatingActionButton.small(
+            tooltip: 'Add an arbitrary media',
+            onPressed: () {
+              Navigator.restorablePushNamed(context, MediaAddView.routeName(false));
+            },
+            child: const Icon(Icons.add),
+          ),
+          FloatingActionButton.small(
+            tooltip: 'Add from clipboard',
+            onPressed: () {
+              Navigator.restorablePushNamed(context, MediaAddView.routeName(true));
+            },
+            child: const Icon(Icons.content_paste_go_rounded),
+          ),
           FloatingActionButton.small(
             heroTag: "up",
             onPressed: _scrollUp,
