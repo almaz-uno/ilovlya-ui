@@ -391,7 +391,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           DataCell(
             IconButton(
               onPressed: () {
-                _startPreparation(context, "${f.id}+ba*");
+                _startPreparation(context, "${f.id}+ba");
               },
               tooltip: "Download this format and the best audio on the server (prepare for viewing)",
               icon: _downloadFormatIcon,
