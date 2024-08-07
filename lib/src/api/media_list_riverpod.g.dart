@@ -6,7 +6,7 @@ part of 'media_list_riverpod.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$mediaListNotifierHash() => r'4342d81ca9b76903f60be2865254595dcfdb37a7';
+String _$mediaListNotifierHash() => r'a386ba93708a6bf3084995414226d79eea81fa50';
 
 /// See also [MediaListNotifier].
 @ProviderFor(MediaListNotifier)

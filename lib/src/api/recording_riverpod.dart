@@ -79,4 +79,41 @@ class RecordingNotifier extends _$RecordingNotifier {
     ref.invalidateSelf();
     ref.invalidate(mediaListNotifierProvider);
   }
+
+  Future<RecordingInfo> putPosition(Duration? position, bool finished) async {
+    final stopwatch = Stopwatch()..start();
+
+    try {
+      final sp = await ref.watch(storePlacesProvider.future);
+
+      final recordingFile = File(p.join(sp.recordings().path, recordingId));
+
+      final recording = RecordingInfo.fromJson(jsonDecode(recordingFile.readAsStringSync()));
+      for (final df in recording.files) {
+        if (File(p.join(sp.media().path, df)).existsSync()) {
+          recording.hasLocalFile = true;
+          break;
+        }
+      }
+      if (position != null) {
+        recording.position = position.inSeconds;
+      }
+      if (finished) {
+        recording.seenAt = recording.seenAt ?? DateTime.now();
+      } else {
+        recording.seenAt = null;
+      }
+      recording.updatedAt = DateTime.now();
+
+      //save back
+      recordingFile.writeAsStringSync(jsonEncode(recording.toJson()));
+
+      return recording;
+    } catch (e, s) {
+      debugPrintStack(stackTrace: s, label: e.toString());
+      rethrow;
+    } finally {
+      debugPrint("load recording $recordingId from disk in ${stopwatch.elapsed}");
+    }
+  }
 }

@@ -41,7 +41,7 @@ dependencies:
   url_launcher: ^6.1.12
   video_player: ^2.7.2
   wakelock_plus: ^1.1.1
-
+  audio_session: ^0.1.21
 dev_dependencies:
   flutter_test:
     sdk: flutter
