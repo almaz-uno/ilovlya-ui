@@ -80,7 +80,9 @@ class RecordingNotifier extends _$RecordingNotifier {
     ref.invalidate(mediaListNotifierProvider);
   }
 
-  Future<RecordingInfo> putPosition(Duration? position, bool finished) async {
+  Future<void> putPosition(Duration? position, bool finished) async {
+    if (UniversalPlatform.isWeb) return;
+
     final stopwatch = Stopwatch()..start();
 
     try {
@@ -104,16 +106,15 @@ class RecordingNotifier extends _$RecordingNotifier {
         recording.seenAt = null;
       }
       recording.updatedAt = DateTime.now();
-
       //save back
       recordingFile.writeAsStringSync(jsonEncode(recording.toJson()));
-
-      return recording;
+      ref.invalidateSelf();
+      ref.invalidate(mediaListNotifierProvider);
     } catch (e, s) {
       debugPrintStack(stackTrace: s, label: e.toString());
       rethrow;
     } finally {
-      debugPrint("load recording $recordingId from disk in ${stopwatch.elapsed}");
+      debugPrint("put position for recording $recordingId in ${stopwatch.elapsed}");
     }
   }
 }
