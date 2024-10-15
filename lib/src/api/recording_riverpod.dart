@@ -49,7 +49,7 @@ class RecordingNotifier extends _$RecordingNotifier {
   Future<RecordingInfo> _fromWeb() async {
     final stopwatch = Stopwatch()..start();
     try {
-      return await ref.watch(getRecordingProvider(recordingId).future);
+      return await ref.refresh(getRecordingProvider(recordingId).future);
     } catch (e, s) {
       debugPrintStack(stackTrace: s, label: e.toString());
       rethrow;
@@ -62,7 +62,7 @@ class RecordingNotifier extends _$RecordingNotifier {
     final stopwatch = Stopwatch()..start();
     try {
       final sp = await ref.watch(storePlacesProvider.future);
-      final recording = await ref.read(getRecordingProvider(recordingId).future);
+      final recording = await ref.refresh(getRecordingProvider(recordingId).future);
 
       final recordingFile = File(p.join(sp.recordings().path, recordingId));
       recordingFile.writeAsStringSync(jsonEncode(recording.toJson()));
@@ -78,5 +78,43 @@ class RecordingNotifier extends _$RecordingNotifier {
     if (!UniversalPlatform.isWeb) await _pullFromServer();
     ref.invalidateSelf();
     ref.invalidate(mediaListNotifierProvider);
+  }
+
+  Future<void> putPosition(Duration? position, bool finished) async {
+    if (UniversalPlatform.isWeb) return;
+
+    final stopwatch = Stopwatch()..start();
+
+    try {
+      final sp = await ref.watch(storePlacesProvider.future);
+
+      final recordingFile = File(p.join(sp.recordings().path, recordingId));
+
+      final recording = RecordingInfo.fromJson(jsonDecode(recordingFile.readAsStringSync()));
+      for (final df in recording.files) {
+        if (File(p.join(sp.media().path, df)).existsSync()) {
+          recording.hasLocalFile = true;
+          break;
+        }
+      }
+      if (position != null) {
+        recording.position = position.inSeconds;
+      }
+      if (finished) {
+        recording.seenAt = recording.seenAt ?? DateTime.now();
+      } else {
+        recording.seenAt = null;
+      }
+      recording.updatedAt = DateTime.now();
+      //save back
+      recordingFile.writeAsStringSync(jsonEncode(recording.toJson()));
+      ref.invalidateSelf();
+      ref.invalidate(mediaListNotifierProvider);
+    } catch (e, s) {
+      debugPrintStack(stackTrace: s, label: e.toString());
+      rethrow;
+    } finally {
+      debugPrint("put position for recording $recordingId in ${stopwatch.elapsed}");
+    }
   }
 }

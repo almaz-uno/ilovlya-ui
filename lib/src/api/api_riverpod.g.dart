@@ -1233,7 +1233,7 @@ class _UnsetHiddenProviderElement extends AutoDisposeFutureProviderElement<void>
   String get recordingId => (origin as UnsetHiddenProvider).recordingId;
 }
 
-String _$setSeenHash() => r'f2a057ca7e608329dfb12198ba5e25977e0db437';
+String _$setSeenHash() => r'da59269b5dd962699398e2052f0feca9469f87ee';
 
 /// See also [setSeen].
 @ProviderFor(setSeen)
@@ -1360,7 +1360,7 @@ class _SetSeenProviderElement extends AutoDisposeFutureProviderElement<void>
   String get recordingId => (origin as SetSeenProvider).recordingId;
 }
 
-String _$unsetSeenHash() => r'db231f2f7cd2fd34315a9cf1eda72bca8749306b';
+String _$unsetSeenHash() => r'b6c7f1e453634dad71768d6d63df7bd652eea1cb';
 
 /// See also [unsetSeen].
 @ProviderFor(unsetSeen)
@@ -1487,7 +1487,7 @@ class _UnsetSeenProviderElement extends AutoDisposeFutureProviderElement<void>
   String get recordingId => (origin as UnsetSeenProvider).recordingId;
 }
 
-String _$putPositionHash() => r'8c67a97251f54dbeef57a02dafde2436e7dc1f49';
+String _$putPositionHash() => r'2b4e07f5f850e6409fb5d572d341219ae17759f0';
 
 /// See also [putPosition].
 @ProviderFor(putPosition)

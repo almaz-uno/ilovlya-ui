@@ -1,4 +1,5 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:universal_platform/universal_platform.dart';
 
@@ -31,9 +32,11 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
         androidNotificationOngoing: true,
       ),
     );
+
   }
 
   void playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl) {
+
     var url = download.fullPathMedia ?? download.url;
 
     player.open(Media(url));
@@ -101,6 +104,8 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> stop() async {
+    final session = await AudioSession.instance;
+    await session.setActive(false);
     super.stop();
     _player.stop();
   }

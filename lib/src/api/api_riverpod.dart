@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:ilovlya/src/api/recording_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../model/download.dart';
@@ -185,12 +186,14 @@ Future<void> _seen(String serverURL, String recordingId, HttpMethod httpMethod, 
 
 @riverpod
 Future<void> setSeen(SetSeenRef ref, String recordingId) async {
+  ref.read(recordingNotifierProvider(recordingId).notifier).putPosition(null, true);
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   await _seen(serverURL, recordingId, http.put, getAuthHeader(ref));
 }
 
 @riverpod
 Future<void> unsetSeen(UnsetSeenRef ref, String recordingId) async {
+  ref.read(recordingNotifierProvider(recordingId).notifier).putPosition(null, false);
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   await _seen(serverURL, recordingId, http.delete, getAuthHeader(ref));
 }
@@ -198,6 +201,9 @@ Future<void> unsetSeen(UnsetSeenRef ref, String recordingId) async {
 //g.PUT("/recordings/:id/position", cont.putPosition)
 @riverpod
 Future<void> putPosition(PutPositionRef ref, String recordingId, Duration position, bool finished) async {
+
+  ref.read(recordingNotifierProvider(recordingId).notifier).putPosition(position, finished);
+
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   final path = '/api/recordings/$recordingId/position';
 

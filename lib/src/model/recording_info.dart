@@ -1,4 +1,3 @@
-import 'package:ilovlya/src/model/download.dart';
 import 'package:ilovlya/src/model/format.dart';
 import 'package:json_annotation/json_annotation.dart';
 
