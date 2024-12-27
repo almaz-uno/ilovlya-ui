@@ -142,6 +142,8 @@ class GetUrlInfoProvider extends AutoDisposeFutureProvider<URLInfo> {
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin GetUrlInfoRef on AutoDisposeFutureProviderRef<URLInfo> {
   /// The parameter `url` of this provider.
   String get url;
@@ -270,6 +272,8 @@ class AddRecordingProvider extends AutoDisposeFutureProvider<RecordingInfo> {
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin AddRecordingRef on AutoDisposeFutureProviderRef<RecordingInfo> {
   /// The parameter `url` of this provider.
   String get url;
@@ -423,6 +427,8 @@ class ListRecordingsProvider
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin ListRecordingsRef on AutoDisposeFutureProviderRef<List<RecordingInfo>> {
   /// The parameter `offset` of this provider.
   int get offset;
@@ -562,6 +568,8 @@ class GetRecordingProvider extends AutoDisposeFutureProvider<RecordingInfo> {
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin GetRecordingRef on AutoDisposeFutureProviderRef<RecordingInfo> {
   /// The parameter `id` of this provider.
   String get id;
@@ -691,6 +699,8 @@ class GetDownloadProvider extends AutoDisposeFutureProvider<Download> {
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin GetDownloadRef on AutoDisposeFutureProviderRef<Download> {
   /// The parameter `id` of this provider.
   String get id;
@@ -819,6 +829,8 @@ class ListDownloadsProvider extends AutoDisposeFutureProvider<List<Download>> {
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin ListDownloadsRef on AutoDisposeFutureProviderRef<List<Download>> {
   /// The parameter `recordingId` of this provider.
   String get recordingId;
@@ -960,6 +972,8 @@ class NewDownloadProvider extends AutoDisposeFutureProvider<Download> {
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin NewDownloadRef on AutoDisposeFutureProviderRef<Download> {
   /// The parameter `recordingId` of this provider.
   String get recordingId;
@@ -1092,6 +1106,8 @@ class SetHiddenProvider extends AutoDisposeFutureProvider<void> {
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin SetHiddenRef on AutoDisposeFutureProviderRef<void> {
   /// The parameter `recordingId` of this provider.
   String get recordingId;
@@ -1220,6 +1236,8 @@ class UnsetHiddenProvider extends AutoDisposeFutureProvider<void> {
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin UnsetHiddenRef on AutoDisposeFutureProviderRef<void> {
   /// The parameter `recordingId` of this provider.
   String get recordingId;
@@ -1347,6 +1365,8 @@ class SetSeenProvider extends AutoDisposeFutureProvider<void> {
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin SetSeenRef on AutoDisposeFutureProviderRef<void> {
   /// The parameter `recordingId` of this provider.
   String get recordingId;
@@ -1474,6 +1494,8 @@ class UnsetSeenProvider extends AutoDisposeFutureProvider<void> {
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin UnsetSeenRef on AutoDisposeFutureProviderRef<void> {
   /// The parameter `recordingId` of this provider.
   String get recordingId;
@@ -1625,6 +1647,8 @@ class PutPositionProvider extends AutoDisposeFutureProvider<void> {
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin PutPositionRef on AutoDisposeFutureProviderRef<void> {
   /// The parameter `recordingId` of this provider.
   String get recordingId;
@@ -1661,6 +1685,8 @@ final getTenantProvider = AutoDisposeFutureProvider<Tenant>.internal(
   allTransitiveDependencies: null,
 );
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 typedef GetTenantRef = AutoDisposeFutureProviderRef<Tenant>;
 String _$deleteDownloadContentHash() =>
     r'a8f63f2d5d7f93f82b3fcdbef06991985e20cb27';
@@ -1779,6 +1805,8 @@ class DeleteDownloadContentProvider extends AutoDisposeFutureProvider<void> {
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin DeleteDownloadContentRef on AutoDisposeFutureProviderRef<void> {
   /// The parameter `downloadId` of this provider.
   String get downloadId;
@@ -1912,6 +1940,8 @@ class DeleteRecordingDownloadsContentProvider
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin DeleteRecordingDownloadsContentRef on AutoDisposeFutureProviderRef<void> {
   /// The parameter `recordingId` of this provider.
   String get recordingId;
@@ -1927,4 +1957,4 @@ class _DeleteRecordingDownloadsContentProviderElement
       (origin as DeleteRecordingDownloadsContentProvider).recordingId;
 }
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

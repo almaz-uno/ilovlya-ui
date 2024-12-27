@@ -6,13 +6,13 @@ import 'package:duration/duration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ilovlya/src/api/downloads_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../api/api.dart';
 import '../api/api_riverpod.dart';
+import '../api/downloads_riverpod.dart';
 import '../api/local_download_task_riverpod.dart';
 import '../api/directories_riverpod.dart';
 import '../api/recording_riverpod.dart';
@@ -115,6 +115,14 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 ref.read(deleteRecordingDownloadsContentProvider(recording.requireValue.id));
                 _pullRefresh();
               }
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.cleaning_services),
+            tooltip: 'Clean all downloaded media from the device',
+            onPressed: () {
+              ref.read(downloadsNotifierProvider(widget.id).notifier).cleanAll();
+              _pullRefresh();
             },
           ),
           _addSeenButton(recording),
@@ -515,7 +523,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     case "server-delete":
                       ref.read(deleteDownloadContentProvider(d.id));
                       _pullRefresh();
-                    case "download-local":
+                    case "local-delete":
+                      ref.read(downloadsNotifierProvider(recording.id).notifier).clean(d.id);
                     case "share-url":
                       await Share.shareUri(Uri.parse(d.url));
                     case "download":
@@ -563,6 +572,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       ),
                     ),
                   );
+
                   if (!UniversalPlatform.isWeb) {
                     menuItems.add(
                       const PopupMenuItem<String>(
@@ -581,13 +591,22 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   if (!UniversalPlatform.isWeb) {
                     menuItems.add(
                       const PopupMenuItem<String>(
+                        value: "local-delete",
+                        child: Row(
+                          children: [
+                            Icon(Icons.cleaning_services),
+                            Expanded(child: Text("Delete local file")),
+                          ],
+                        ),
+                      ),
+                    );
+                    menuItems.add(
+                      const PopupMenuItem<String>(
                         value: "download",
                         child: Row(
                           children: [
                             Icon(Icons.download),
-                            Expanded(
-                              child: Text("Download local file"),
-                            ),
+                            Expanded(child: Text("Download local file")),
                           ],
                         ),
                       ),
@@ -707,6 +726,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       retries: 8,
       updates: Updates.statusAndProgress,
       displayName: download.title,
+      metaData: download.recordingId,
     );
 
     FileDownloader().enqueue(task);

@@ -9,6 +9,7 @@ import '../model/download.dart';
 import '../model/recording_info.dart';
 import 'api_riverpod.dart';
 import 'directories_riverpod.dart';
+import 'recording_riverpod.dart';
 
 part 'downloads_riverpod.g.dart';
 
@@ -91,6 +92,25 @@ class DownloadsNotifier extends _$DownloadsNotifier {
     } finally {
       debugPrint("pull downloads for $recordingId from server in ${stopwatch.elapsed}");
     }
+  }
+
+  Future<void> cleanAll() async {
+    await _clean();
+  }
+
+  Future<void> clean(String downloadId) async {
+    await _clean(downloadId: downloadId);
+  }
+
+  Future<void> _clean({String downloadId = ""}) async {
+    for (final dp in state.requireValue) {
+      if (dp.fullPathMedia == null) continue;
+      if (downloadId != "" && dp.id != downloadId) continue;
+      final f = File(dp.fullPathMedia!);
+      if (f.existsSync()) f.deleteSync();
+    }
+    ref.invalidateSelf();
+    ref.invalidate(recordingNotifierProvider(recordingId));
   }
 
   Future<void> refreshFromServer() async {
