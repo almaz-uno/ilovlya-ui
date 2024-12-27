@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ilovlya/src/alert_dialog.dart';
 
 import '../api/api.dart';
 import '../api/api_riverpod.dart';
@@ -32,6 +33,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
     return DefaultTabController(
       length: 3,
+      initialIndex: 2,
       child: Scaffold(
         appBar: AppBar(
           bottom: const TabBar(
@@ -48,30 +50,27 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           child: TabBarView(
             children: [
               Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                        TextField(
-                          controller: tokenController,
-                          decoration: const InputDecoration(labelText: "Your token, provided by the bot"),
-                          textInputAction: TextInputAction.next,
-                          onSubmitted: (String value) {
-                            ref.read(settingsNotifierProvider.notifier).updateToken(value);
-                          },
-                        ),
-                        TextField(
-                          controller: serverUrlController,
-                          decoration: const InputDecoration(labelText: "Server URL, provided by the bot"),
-                          textInputAction: TextInputAction.next,
-                          onSubmitted: (String value) {
-                            ref.read(settingsNotifierProvider.notifier).updateServerUrl(value);
-                          },
-                        ),
-                      ] +
-                      tenantInfo(ref) +
-                      [
-                        if (sp.hasValue) Text("Data local path: ${sp.requireValue.data().path}"),
-                        if (sp.hasValue) Text("Downloaded local media path: ${sp.requireValue.media().path}"),
-                      ]),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                      TextField(
+                        controller: tokenController,
+                        decoration: const InputDecoration(labelText: "Your token, provided by the bot"),
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (String value) {
+                          ref.read(settingsNotifierProvider.notifier).updateToken(value);
+                        },
+                      ),
+                      TextField(
+                        controller: serverUrlController,
+                        decoration: const InputDecoration(labelText: "Server URL, provided by the bot"),
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (String value) {
+                          ref.read(settingsNotifierProvider.notifier).updateServerUrl(value);
+                        },
+                      ),
+                    ] +
+                    tenantInfo(ref),
+              ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -141,8 +140,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   Widget _housekeeping(BuildContext context) {
     final ref = (context as WidgetRef);
     final media = ref.watch(localMediaHousekeeperProvider);
+    final data = ref.watch(localDataNotifierProvider);
+    final sp = ref.watch(storePlacesProvider);
 
-    if (!media.hasValue) {
+    if (!media.hasValue || !data.hasValue || !sp.hasValue) {
       return const CircularProgressIndicator();
     }
 
@@ -154,6 +155,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       // crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("Local media info", style: Theme.of(context).textTheme.bodyLarge),
+        Text("Recordings: ${data.requireValue}"),
         Text("Files: $number, total size: ${fileSizeHumanReadable(size)}"),
         OutlinedButton(
           child: const Text("Clean stale downloaded media"),
@@ -177,19 +179,43 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         OutlinedButton(
           child: const Text("Clean ALL downloaded media"),
           onPressed: () async {
-            final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanAll();
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('$number files, ${fileSizeHumanReadable(size)} cleaned'),
-            ));
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return BlurryDialog("Are you sure?", "This will delete ALL downloaded media files", () async {
+                  final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanAll();
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('$number files, ${fileSizeHumanReadable(size)} cleaned'),
+                  ));
+                  Navigator.pop(context);
+                });
+              },
+            );
           },
         ),
+        OutlinedButton(
+          child: Text("Clean ALL metadata for ${data.requireValue} recordings"),
+          onPressed: () async {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return BlurryDialog("Are you sure?", "This will delete ALL metadata for ${data.requireValue} recordings,\ndownloaded media files will be retained.\nThis data can be downloaded from the server.", () async {
+                  final number = await ref.read(localDataNotifierProvider.notifier).cleanMetadata();
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('$number recordings cleaned'),
+                  ));
+                  Navigator.pop(context);
+                });
+              },
+            );
+          },
+        ),
+        if (sp.hasValue) Text("Data local path: ${sp.requireValue.data().path}"),
+        if (sp.hasValue) Text("Downloaded local media path: ${sp.requireValue.media().path}"),
         if (_cleaningStaleMedia)
           const Padding(
             padding: EdgeInsets.all(8.0),
-            child: Wrap(
-              spacing: 8.0,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
+            child: Wrap(spacing: 8.0, crossAxisAlignment: WrapCrossAlignment.center, children: [
               CircularProgressIndicator(),
               Text("cleaning stale media local files..."),
             ]),

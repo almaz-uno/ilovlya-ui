@@ -24,12 +24,12 @@ final localMediaHousekeeperProvider = AutoDisposeAsyncNotifierProvider<
 
 typedef _$LocalMediaHousekeeper
     = AutoDisposeAsyncNotifier<(int number, int size)>;
-String _$localDataNotifierHash() => r'fb1a0c0cac57c92bacb71fb194fdb6081967ef86';
+String _$localDataNotifierHash() => r'b4fc2336cc7f9e84a627619e627db4e6aa101587';
 
 /// See also [LocalDataNotifier].
 @ProviderFor(LocalDataNotifier)
-final localDataNotifierProvider = AutoDisposeNotifierProvider<LocalDataNotifier,
-    (int number, int size)>.internal(
+final localDataNotifierProvider =
+    AutoDisposeAsyncNotifierProvider<LocalDataNotifier, int>.internal(
   LocalDataNotifier.new,
   name: r'localDataNotifierProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -39,6 +39,6 @@ final localDataNotifierProvider = AutoDisposeNotifierProvider<LocalDataNotifier,
   allTransitiveDependencies: null,
 );
 
-typedef _$LocalDataNotifier = AutoDisposeNotifier<(int number, int size)>;
+typedef _$LocalDataNotifier = AutoDisposeAsyncNotifier<int>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

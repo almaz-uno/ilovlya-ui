@@ -6,7 +6,7 @@ part of 'downloads_riverpod.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$downloadsNotifierHash() => r'be2a4b205b154590dd202908c2fbbd2cffb92665';
+String _$downloadsNotifierHash() => r'7276baf467c6f52f98d4aadd304ad56958a75d82';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -158,6 +158,8 @@ class DownloadsNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin DownloadsNotifierRef
     on AutoDisposeAsyncNotifierProviderRef<List<Download>> {
   /// The parameter `recordingId` of this provider.
@@ -173,4 +175,4 @@ class _DownloadsNotifierProviderElement
   String get recordingId => (origin as DownloadsNotifierProvider).recordingId;
 }
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
