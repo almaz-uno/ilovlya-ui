@@ -25,6 +25,7 @@ Widget createThumb(WidgetRef ref, String url) {
       url,
       isAntiAlias: true,
       filterQuality: FilterQuality.high,
+      fit: BoxFit.fitWidth,
     );
   } else {
     final thumbProvider = ref.watch(thumbnailDataNotifierProvider(url));
@@ -33,6 +34,7 @@ Widget createThumb(WidgetRef ref, String url) {
     } else {
       thumbWidget = Image.file(
         thumbProvider.requireValue,
+        fit: BoxFit.fitWidth,
       );
     }
   }

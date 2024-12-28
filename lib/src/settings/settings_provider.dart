@@ -7,6 +7,15 @@ import '../model/settings.dart';
 
 part 'settings_provider.g.dart';
 
+Map<double, String > speedRates = {
+  0.5: "0.5x slow",
+  1.0: "1.0x normal",
+  1.25: "1.25x medium",
+  1.5: "1.5x fast",
+  1.75: "1.75x very fast",
+  2.0: "2.0x super fast",
+};
+
 @riverpod
 class SettingsNotifier extends _$SettingsNotifier {
   @override
@@ -27,6 +36,8 @@ class SettingsNotifier extends _$SettingsNotifier {
       showSeen: prefs.getBool("show_seen") ?? false,
       withServerFile: prefs.getBool("with_server_file") ?? false,
       withLocalFile: prefs.getBool("with_local_file") ?? false,
+      playerSpeed: prefs.getDouble("player_speed") ?? 1.0,
+      autoViewed: prefs.getBool("auto_viewed") ?? false,
     );
   }
 
@@ -51,6 +62,8 @@ class SettingsNotifier extends _$SettingsNotifier {
     prefs.setBool("show_seen", state.value?.showSeen ?? false);
     prefs.setBool("with_server_file", state.value?.withServerFile ?? false);
     prefs.setBool("with_local_file", state.value?.withLocalFile ?? false);
+    prefs.setDouble("player_speed", state.value?.playerSpeed ?? 1.0);
+    prefs.setBool("auto_viewed", state.value?.autoViewed ?? false);
   }
 
   void updateTheme(ThemeMode theme) {
@@ -102,4 +115,15 @@ class SettingsNotifier extends _$SettingsNotifier {
     state = AsyncData(state.requireValue.copyWith(withLocalFile: !state.requireValue.withLocalFile));
     save();
   }
+
+  void updatePlayerSpeed(double playerSpeed) {
+    state = AsyncData(state.requireValue.copyWith(playerSpeed: playerSpeed));
+    save();
+  }
+
+  void updateAutoViewed(bool? autoViewed) {
+    state = AsyncData(state.requireValue.copyWith(autoViewed: autoViewed));
+    save();
+  }
+
 }
