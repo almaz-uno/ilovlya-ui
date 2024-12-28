@@ -72,6 +72,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     _player.stream.duration.listen((event) {
       _seek(Duration(seconds: widget.recording.position));
       _player.play();
+      _player.setRate(ref.read(settingsNotifierProvider.select((s) => s.value?.playerSpeed)) ?? 1.0);
       setState(() {});
     });
 
@@ -365,71 +366,83 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
             _seek(duration);
           },
         ),
-        Stack(children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextButton(
+              onLongPress: () {
+                _rewind(-const Duration(minutes: 5));
+              },
+              onPressed: () {
+                _rewind(-const Duration(minutes: 1));
+              },
+              child: const Icon(Icons.fast_rewind),
+            ),
+            TextButton(
+              onLongPress: () {
+                _rewind(-const Duration(seconds: 30));
+              },
+              onPressed: () {
+                _rewind(-const Duration(seconds: 15));
+              },
+              child: const Icon(Icons.fast_rewind),
+            ),
+            if (_player.state.playing)
               TextButton(
-                onLongPress: () {
-                  _rewind(-const Duration(minutes: 5));
-                },
                 onPressed: () {
-                  _rewind(-const Duration(minutes: 1));
-                },
-                child: const Icon(Icons.fast_rewind),
-              ),
-              TextButton(
-                onLongPress: () {
-                  _rewind(-const Duration(seconds: 30));
-                },
-                onPressed: () {
-                  _rewind(-const Duration(seconds: 15));
-                },
-                child: const Icon(Icons.fast_rewind),
-              ),
-              if (_player.state.playing)
-                TextButton(
-                  onPressed: () {
-                    _player.pause();
-                  },
-                  child: const Icon(
-                    Icons.pause,
-                  ),
-                ),
-              if (!_player.state.playing)
-                TextButton(
-                  onPressed: () {
-                    _player.play();
-                  },
-                  child: const Icon(
-                    Icons.play_arrow,
-                  ),
-                ),
-              TextButton(
-                onLongPress: () {
-                  _rewind(const Duration(seconds: 30));
-                },
-                onPressed: () {
-                  _rewind(const Duration(seconds: 15));
+                  _player.pause();
                 },
                 child: const Icon(
-                  Icons.fast_forward,
+                  Icons.pause,
                 ),
               ),
+            if (!_player.state.playing)
               TextButton(
-                onLongPress: () {
-                  _rewind(const Duration(minutes: 5));
-                },
                 onPressed: () {
-                  _rewind(const Duration(minutes: 1));
+                  _player.play();
                 },
                 child: const Icon(
-                  Icons.fast_forward,
+                  Icons.play_arrow,
                 ),
               ),
+            TextButton(
+              onLongPress: () {
+                _rewind(const Duration(seconds: 30));
+              },
+              onPressed: () {
+                _rewind(const Duration(seconds: 15));
+              },
+              child: const Icon(
+                Icons.fast_forward,
+              ),
+            ),
+            TextButton(
+              onLongPress: () {
+                _rewind(const Duration(minutes: 5));
+              },
+              onPressed: () {
+                _rewind(const Duration(minutes: 1));
+              },
+              child: const Icon(
+                Icons.fast_forward,
+              ),
+            ),
+          ],
+        ),
+        IntrinsicWidth(
+          child: DropdownButton<double>(
+            icon: const Icon(Icons.speed),
+            value: ref.watch(settingsNotifierProvider.select((s) => s.value?.playerSpeed)),
+            onChanged: (value) {
+              ref.read(settingsNotifierProvider.notifier).updatePlayerSpeed(value ?? 1.0);
+              _player.setRate(value ?? 1.0);
+            },
+            items: [
+              for (final e in speedRates.entries) DropdownMenuItem(value: e.key, child: Text(e.value)),
             ],
           ),
-        ]),
+        )
       ],
     );
   }

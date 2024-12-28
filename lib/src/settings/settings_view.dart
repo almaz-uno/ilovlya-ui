@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ilovlya/src/alert_dialog.dart';
 
+import '../alert_dialog.dart';
 import '../api/api.dart';
 import '../api/api_riverpod.dart';
 import '../api/directories_riverpod.dart';
@@ -73,37 +73,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  DropdownButton<ThemeMode>(
-                    value: settings.requireValue.theme,
-                    alignment: AlignmentDirectional.topStart,
-                    onChanged: (ThemeMode? theme) {
-                      ref.read(settingsNotifierProvider.notifier).updateTheme(theme ?? ThemeMode.system);
-                    },
-                    items: const [
-                      DropdownMenuItem(
-                        value: ThemeMode.system,
-                        child: Text('System Theme'),
-                      ),
-                      DropdownMenuItem(
-                        value: ThemeMode.light,
-                        child: Text('Light Theme'),
-                      ),
-                      DropdownMenuItem(
-                        value: ThemeMode.dark,
-                        child: Text('Dark Theme'),
-                      )
-                    ],
-                  ),
-                  CheckboxListTile(
-                    title: const Text("Show additional technical info. For advanced users only!"),
-                    value: settings.value?.debugMode,
-                    onChanged: (bool? debugMode) {
-                      ref.read(settingsNotifierProvider.notifier).updateDebugMode(debugMode);
-                    },
-                    controlAffinity: ListTileControlAffinity.leading,
-                  ),
-                ],
+                children: _commonSettings(),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,6 +86,51 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         ),
       ),
     );
+  }
+
+  List<Widget> _commonSettings() {
+    return [
+      DropdownButtonFormField<ThemeMode>(
+        decoration: const InputDecoration(labelText: "Application color theme"),
+        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.theme)),
+        alignment: AlignmentDirectional.topStart,
+        onChanged: (ThemeMode? theme) {
+          ref.read(settingsNotifierProvider.notifier).updateTheme(theme ?? ThemeMode.system);
+        },
+        items: const [
+          DropdownMenuItem(
+            value: ThemeMode.system,
+            child: Text('System Theme'),
+          ),
+          DropdownMenuItem(
+            value: ThemeMode.light,
+            child: Text('Light Theme'),
+          ),
+          DropdownMenuItem(
+            value: ThemeMode.dark,
+            child: Text('Dark Theme'),
+          )
+        ],
+      ),
+      DropdownButtonFormField<double>(
+        decoration: const InputDecoration(labelText: "Player speed rate"),
+        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.playerSpeed)),
+        onChanged: (value) {
+          ref.read(settingsNotifierProvider.notifier).updatePlayerSpeed(value ?? 1.0);
+        },
+        items: [
+          for (final e in speedRates.entries) DropdownMenuItem(value: e.key, child: Text(e.value)),
+        ],
+      ),
+      CheckboxListTile(
+        title: const Text("Show additional technical info. For advanced users only!"),
+        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.debugMode)),
+        onChanged: (bool? debugMode) {
+          ref.read(settingsNotifierProvider.notifier).updateDebugMode(debugMode);
+        },
+        controlAffinity: ListTileControlAffinity.leading,
+      ),
+    ];
   }
 
   List<Widget> tenantInfo(WidgetRef ref) {
@@ -199,7 +214,9 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
             showDialog(
               context: context,
               builder: (BuildContext context) {
-                return BlurryDialog("Are you sure?", "This will delete ALL metadata for ${data.requireValue} recordings,\ndownloaded media files will be retained.\nThis data can be downloaded from the server.", () async {
+                return BlurryDialog(
+                    "Are you sure?", "This will delete ALL metadata for ${data.requireValue} recordings,\ndownloaded media files will be retained.\nThis data can be downloaded from the server.",
+                    () async {
                   final number = await ref.read(localDataNotifierProvider.notifier).cleanMetadata();
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text('$number recordings cleaned'),
