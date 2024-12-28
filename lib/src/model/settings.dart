@@ -13,6 +13,7 @@ class Settings {
   final bool withServerFile;
   final bool withLocalFile;
   final double playerSpeed;
+  final bool autoViewed;
 
   Settings({
     this.theme = ThemeMode.system,
@@ -26,6 +27,7 @@ class Settings {
     this.withServerFile = false,
     this.withLocalFile = false,
     this.playerSpeed = 1.0,
+    this.autoViewed = false,
   });
 
   Settings copyWith({
@@ -40,6 +42,7 @@ class Settings {
     bool? withServerFile,
     bool? withLocalFile,
     double? playerSpeed,
+    bool? autoViewed,
   }) =>
       Settings(
         theme: theme ?? this.theme,
@@ -52,5 +55,6 @@ class Settings {
         showSeen: showSeen ?? this.showSeen,
         withServerFile: withServerFile ?? this.withServerFile,
         playerSpeed: playerSpeed ?? this.playerSpeed,
+        autoViewed: autoViewed ?? this.autoViewed,
       );
 }

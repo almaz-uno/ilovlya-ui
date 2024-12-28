@@ -123,6 +123,14 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         ],
       ),
       CheckboxListTile(
+        title: const Text("Auto mark recording as viewed when fully played"),
+        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)),
+        onChanged: (bool? autoViewed) {
+          ref.read(settingsNotifierProvider.notifier).updateAutoViewed(autoViewed);
+        },
+        controlAffinity: ListTileControlAffinity.leading,
+      ),
+      CheckboxListTile(
         title: const Text("Show additional technical info. For advanced users only!"),
         value: ref.watch(settingsNotifierProvider.select((s) => s.value?.debugMode)),
         onChanged: (bool? debugMode) {

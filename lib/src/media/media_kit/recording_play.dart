@@ -17,6 +17,7 @@ import '../../model/recording_info.dart';
 import '../../settings/settings_provider.dart';
 import '../format.dart';
 import '../media_details.dart';
+import '../media_list.dart';
 import 'audio_handler.dart';
 
 String _formatDuration(Duration duration) {
@@ -155,8 +156,9 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     _player.seek(position);
   }
 
-  void _sendPosition(String recordingId, Duration position, bool finished) {
-    ref.read(putPositionProvider(recordingId, position, finished));
+  void _sendPosition(String recordingId, Duration position, bool autoFinished) {
+    if (ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)) == false) autoFinished = false;
+    ref.read(putPositionProvider(recordingId, position, autoFinished));
   }
 
   @override
@@ -279,6 +281,11 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                                 style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
                                 key: ValueKey(_rewinding),
                               ),
+                            ),
+                            if (!widget.download.hasVideo) SizedBox(
+                              width: playerW,
+                              height: playerH,
+                              child: createThumb(ref, widget.recording.thumbnailUrl),
                             ),
                           ],
                         ),

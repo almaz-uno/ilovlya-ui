@@ -37,6 +37,7 @@ class SettingsNotifier extends _$SettingsNotifier {
       withServerFile: prefs.getBool("with_server_file") ?? false,
       withLocalFile: prefs.getBool("with_local_file") ?? false,
       playerSpeed: prefs.getDouble("player_speed") ?? 1.0,
+      autoViewed: prefs.getBool("auto_viewed") ?? false,
     );
   }
 
@@ -62,6 +63,7 @@ class SettingsNotifier extends _$SettingsNotifier {
     prefs.setBool("with_server_file", state.value?.withServerFile ?? false);
     prefs.setBool("with_local_file", state.value?.withLocalFile ?? false);
     prefs.setDouble("player_speed", state.value?.playerSpeed ?? 1.0);
+    prefs.setBool("auto_viewed", state.value?.autoViewed ?? false);
   }
 
   void updateTheme(ThemeMode theme) {
@@ -118,4 +120,10 @@ class SettingsNotifier extends _$SettingsNotifier {
     state = AsyncData(state.requireValue.copyWith(playerSpeed: playerSpeed));
     save();
   }
+
+  void updateAutoViewed(bool? autoViewed) {
+    state = AsyncData(state.requireValue.copyWith(autoViewed: autoViewed));
+    save();
+  }
+
 }
