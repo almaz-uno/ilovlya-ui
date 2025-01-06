@@ -45,7 +45,7 @@ class RecordingViewMediaKitHandler extends ConsumerStatefulWidget {
   ConsumerState<RecordingViewMediaKitHandler> createState() => _RecordingViewMediaKitHandlerState();
 }
 
-const _positionSendPeriod = Duration(seconds: 1);
+const _positionSendPeriod = Duration(minutes: 1);
 
 class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMediaKitHandler> {
   // String get url => widget.download.url;
