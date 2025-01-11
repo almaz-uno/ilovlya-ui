@@ -9,8 +9,8 @@ import 'src/media/media_kit/audio_handler.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final session = await AudioSession.instance;
-  await session.configure(const AudioSessionConfiguration.speech());
+  //final session = await AudioSession.instance;
+  //await session.configure(const AudioSessionConfiguration.speech());
 
   // media_kit
   MediaKit.ensureInitialized();
