@@ -77,21 +77,21 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       setState(() {});
     });
 
-    //_player.stream.buffering.listen((event) {
-    //  setState(() {});
-    //});
+    _player.stream.buffering.listen((event) {
+      setState(() {});
+    });
 
-    //_player.stream.buffer.listen((event) {
-    //  setState(() {});
-    //});
+    _player.stream.buffer.listen((event) {
+      setState(() {});
+    });
 
-    //_player.stream.playing.listen((event) {
-    //  setState(() {});
-    //});
+    _player.stream.playing.listen((event) {
+      setState(() {});
+    });
 
-    //_player.stream.videoParams.listen((event) {
-    //  setState(() {});
-    //});
+    _player.stream.videoParams.listen((event) {
+      setState(() {});
+    });
 
     _player.stream.volume.listen((double volume) {
       setState(() {});
