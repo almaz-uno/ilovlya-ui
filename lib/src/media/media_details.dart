@@ -185,6 +185,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     recording.title,
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
+                  Text("${recording.id}"),
                   Text("${recording.uploader} • ${recording.extractor}"),
                   Text("Created at: ${formatDateLong(recording.createdAt)} (${since(recording.createdAt, false)} ago)"),
                   Text("Updated at: ${formatDateLong(recording.updatedAt)} (${since(recording.updatedAt, false)} ago)"),
