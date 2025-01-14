@@ -77,21 +77,21 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       setState(() {});
     });
 
-    _player.stream.buffering.listen((event) {
-      setState(() {});
-    });
+    //_player.stream.buffering.listen((event) {
+    //  setState(() {});
+    //});
 
-    _player.stream.buffer.listen((event) {
-      setState(() {});
-    });
+    //_player.stream.buffer.listen((event) {
+    //  setState(() {});
+    //});
 
-    _player.stream.playing.listen((event) {
-      setState(() {});
-    });
+    //_player.stream.playing.listen((event) {
+    //  setState(() {});
+    //});
 
-    _player.stream.videoParams.listen((event) {
-      setState(() {});
-    });
+    //_player.stream.videoParams.listen((event) {
+    //  setState(() {});
+    //});
 
     _player.stream.volume.listen((double volume) {
       setState(() {});
@@ -107,9 +107,9 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       setState(() {});
     });
 
-    _player.stream.position.listen((Duration position) {
-      setState(() {});
-    });
+    //_player.stream.position.listen((Duration position) {
+    //  setState(() {});
+    //});
 
     _positionSendSubs = Stream.periodic(_positionSendPeriod).listen((event) {
       if (_player.state.playing && !_player.state.buffering && _player.state.position != Duration.zero) {
