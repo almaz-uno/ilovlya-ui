@@ -46,7 +46,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   String? title;
   StreamSubscription? _updatePullSubs;
 
-  static const _updatePullPeriod = Duration(minutes: 3);
+  static const _updatePullPeriod = Duration(seconds: 3);
 
   @override
   void initState() {
