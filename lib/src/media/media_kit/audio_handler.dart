@@ -16,6 +16,8 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   final _player = Player(
       configuration: const PlayerConfiguration(
     bufferSize: 128 * 1024 * 1024,
+    logLevel: MPVLogLevel.info,
+    osc: false,
   ));
 
   static void init() async {
@@ -32,11 +34,9 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
         androidNotificationOngoing: true,
       ),
     );
-
   }
 
   void playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl) {
-
     var url = download.fullPathMedia ?? download.url;
 
     player.open(Media(url));

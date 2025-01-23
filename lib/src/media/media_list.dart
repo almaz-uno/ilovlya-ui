@@ -4,19 +4,20 @@ import 'dart:io';
 import 'package:animated_search_bar/animated_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ilovlya/src/api/local_download_task_riverpod.dart';
-import 'package:ilovlya/src/api/thumbnail_riverpod.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import '../api/api_riverpod.dart';
 import '../api/exceptions.dart';
+import '../api/local_download_task_riverpod.dart';
 import '../api/media_list_riverpod.dart';
+import '../api/thumbnail_riverpod.dart';
 import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
 import 'format.dart';
 import 'media_add.dart';
 import 'media_details.dart';
+import 'media_kit/audio_handler.dart';
 
 Widget createThumb(WidgetRef ref, String url) {
   late Widget thumbWidget;
@@ -63,6 +64,10 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
+      if (MKPlayerHandler.player.state.playing) {
+        debugPrint("skip pull list while playing");
+        return;
+      }
       ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
       ref.invalidate(getTenantProvider);
     });

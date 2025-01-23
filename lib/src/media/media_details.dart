@@ -22,6 +22,7 @@ import '../model/recording_info.dart';
 import '../settings/settings_view.dart';
 import 'download_details.dart';
 import 'format.dart';
+import 'media_kit/audio_handler.dart';
 import 'media_kit/recording_play.dart';
 import 'media_list.dart';
 
@@ -55,6 +56,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     _pullRefresh();
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
+      if (MKPlayerHandler.player.state.playing) {
+        debugPrint("skip pull details while playing");
+        return;
+      }
       _pullRefresh();
     });
   }
@@ -182,9 +187,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    recording.title,
+                    "${recording.id}: ${recording.title}",
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
+                  // Text("Record id: ${recording.id}"),
                   Text("${recording.uploader} • ${recording.extractor}"),
                   Text("Created at: ${formatDateLong(recording.createdAt)} (${since(recording.createdAt, false)} ago)"),
                   Text("Updated at: ${formatDateLong(recording.updatedAt)} (${since(recording.updatedAt, false)} ago)"),
