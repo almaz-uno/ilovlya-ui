@@ -94,19 +94,28 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   }
 
   @override
-  Future<void> play() => _player.play();
+  Future<void> play() async {
+    _player.play();
+    super.play();
+  }
 
   @override
-  Future<void> pause() => _player.pause();
+  Future<void> pause() async {
+    _player.pause();
+    super.pause();
+  }
 
   @override
-  Future<void> seek(Duration position) => _player.seek(position);
+  Future<void> seek(Duration position) async {
+    _player.seek(position);
+    super.seek(position);
+  }
 
   @override
   Future<void> stop() async {
-    final session = await AudioSession.instance;
-    await session.setActive(false);
-    super.stop();
+    // final session = await AudioSession.instance;
+    // await session.setActive(false);
     _player.stop();
+    super.stop();
   }
 }
