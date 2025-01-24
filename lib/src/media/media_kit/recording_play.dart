@@ -71,34 +71,40 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     }
 
     _player.stream.duration.listen((event) {
+      if (!mounted) return;
       _seek(Duration(seconds: widget.recording.position));
       _player.play();
       _player.setRate(ref.read(settingsNotifierProvider.select((s) => s.value?.playerSpeed)) ?? 1.0);
-      setState(() {});
     });
 
     _player.stream.buffering.listen((event) {
+      if (!mounted) return;
       setState(() {});
     });
 
     _player.stream.buffer.listen((event) {
+      if (!mounted) return;
       setState(() {});
     });
 
     _player.stream.playing.listen((event) {
+      if (!mounted) return;
       setState(() {});
     });
 
     _player.stream.videoParams.listen((event) {
+      if (!mounted) return;
       setState(() {});
     });
 
     _player.stream.volume.listen((double volume) {
+      if (!mounted) return;
       setState(() {});
       ref.read(settingsNotifierProvider.notifier).updateVolume(volume);
     });
 
     _player.stream.completed.listen((event) {
+      if (!mounted) return;
       _sendPosition(
         widget.recording.id,
         _player.state.position,
@@ -108,10 +114,12 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     });
 
     _player.stream.position.listen((Duration position) {
+      if (!mounted) return;
       setState(() {});
     });
 
     _positionSendSubs = Stream.periodic(_positionSendPeriod).listen((event) {
+      if (!mounted) return;
       if (_player.state.playing && !_player.state.buffering && _player.state.position != Duration.zero) {
         _sendPosition(
           widget.recording.id,
@@ -126,6 +134,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   void dispose() {
     MKPlayerHandler.player.stop();
     _positionSendSubs?.cancel();
+
     super.dispose();
   }
 
@@ -282,11 +291,12 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                                 key: ValueKey(_rewinding),
                               ),
                             ),
-                            if (!widget.download.hasVideo) SizedBox(
-                              width: playerW,
-                              height: playerH,
-                              child: createThumb(ref, widget.recording.thumbnailUrl),
-                            ),
+                            if (!widget.download.hasVideo)
+                              SizedBox(
+                                width: playerW,
+                                height: playerH,
+                                child: createThumb(ref, widget.recording.thumbnailUrl),
+                              ),
                           ],
                         ),
                       ),

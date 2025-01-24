@@ -54,6 +54,7 @@ class Settings {
         showHidden: showHidden ?? this.showHidden,
         showSeen: showSeen ?? this.showSeen,
         withServerFile: withServerFile ?? this.withServerFile,
+        withLocalFile: withLocalFile ?? this.withLocalFile,
         playerSpeed: playerSpeed ?? this.playerSpeed,
         autoViewed: autoViewed ?? this.autoViewed,
       );

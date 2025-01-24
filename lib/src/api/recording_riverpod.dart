@@ -108,8 +108,6 @@ class RecordingNotifier extends _$RecordingNotifier {
       recording.updatedAt = DateTime.now();
       //save back
       recordingFile.writeAsStringSync(jsonEncode(recording.toJson()));
-      ref.invalidateSelf();
-      ref.invalidate(mediaListNotifierProvider);
     } catch (e, s) {
       debugPrintStack(stackTrace: s, label: e.toString());
       rethrow;
