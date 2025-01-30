@@ -127,6 +127,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
           _player.state.position == _player.state.duration,
         );
       }
+      setState(() {});
     });
   }
 
