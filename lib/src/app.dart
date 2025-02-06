@@ -26,7 +26,7 @@ class MyApp extends ConsumerWidget {
     final settings = ref.watch(settingsNotifierProvider);
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Theme.of(context).colorScheme.background,
+      statusBarColor: Theme.of(context).colorScheme.surface,
     ));
 
     var pageTransitionsTheme = const PageTransitionsTheme();
