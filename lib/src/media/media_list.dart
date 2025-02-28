@@ -33,7 +33,7 @@ Widget createThumb(WidgetRef ref, String url) {
     if (!thumbProvider.hasValue) {
       thumbWidget = const CircularProgressIndicator();
     } else {
-      thumbWidget = Image.file(
+      thumbWidget = Image.memory(
         thumbProvider.requireValue,
         fit: BoxFit.fitWidth,
       );

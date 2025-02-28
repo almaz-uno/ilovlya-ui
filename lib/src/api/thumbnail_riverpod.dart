@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -14,20 +15,18 @@ part 'thumbnail_riverpod.g.dart';
 @riverpod
 class ThumbnailDataNotifier extends _$ThumbnailDataNotifier {
   @override
-  Future<File> build(String thumbnailUrl) async {
+  Future<Uint8List> build(String thumbnailUrl) async {
     return _getThumbnailFile();
   }
 
-  Future<File> _getThumbnailFile() async {
-    final sp = await ref.watch(storePlacesProvider.future);
+  Future<Uint8List> _getThumbnailFile() async {
 
     final uri = Uri.parse(thumbnailUrl);
-    final thumbnailFile = uri.pathSegments[uri.pathSegments.length - 2];
-    final fullpath = File(p.join(sp.thumbnails().path, thumbnailFile));
+    final fullpath = await _fullPath();
     if (!fullpath.existsSync()) {
       await _downloadThumbnail(uri, fullpath);
     }
-    return Future.value(fullpath);
+    return fullpath.readAsBytes();
   }
 
   Future<void> _downloadThumbnail(Uri url, File target) async {
@@ -36,5 +35,30 @@ class ThumbnailDataNotifier extends _$ThumbnailDataNotifier {
       throw HttpStatusError.by("Unable to download thumbnail $url", res);
     }
     target.writeAsBytesSync(res.bodyBytes);
+  }
+
+  Future<void> updateThumbnailImg(Uint8List? thumbnailImg) async {
+    if (thumbnailImg == null) {
+      return;
+    }
+    final fullpath = await _fullPath();
+    fullpath.writeAsBytesSync(thumbnailImg, flush: true);
+
+    ref.invalidateSelf();
+  }
+
+  Future<File> _fullPath() async {
+    final sp = await ref.watch(storePlacesProvider.future);
+    final uri = Uri.parse(thumbnailUrl);
+    final thumbnailFile = uri.pathSegments[uri.pathSegments.length - 2];
+    return File(p.join(sp.thumbnails().path, thumbnailFile));
+  }
+
+  Future<Uri> getThumbnailUri() async {
+    final fullpath = await _fullPath();
+    if (fullpath.existsSync()) {
+      return fullpath.uri;
+    }
+    return Uri.parse(thumbnailUrl);
   }
 }
