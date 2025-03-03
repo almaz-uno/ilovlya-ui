@@ -62,7 +62,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   }
 
   void _init() async {
-    final thumbnailUrl = UniversalPlatform.isWeb ? Uri.parse(widget.recording.thumbnailUrl) : (await ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).future)).uri;
+    final thumbnailUrl = UniversalPlatform.isWeb ? Uri.parse(widget.recording.thumbnailUrl) : (await ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).notifier).getThumbnailUri());
 
     MKPlayerHandler.handler.playRecording(widget.recording, widget.download, thumbnailUrl);
 
@@ -127,15 +127,30 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
           _player.state.position == _player.state.duration,
         );
       }
+      final updateThumbnails = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.updateThumbnails));
+      if (!UniversalPlatform.isWeb && updateThumbnails) {
+        MKPlayerHandler.player.screenshot(format: "image/png").then((imgData) {
+          ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).notifier).updateThumbnailImg(imgData);
+        });
+      }
       setState(() {});
     });
   }
 
   @override
-  void dispose() {
+  void deactivate() async {
     MKPlayerHandler.player.stop();
     _positionSendSubs?.cancel();
+    super.deactivate();
+  }
 
+  @override
+  void activate() {
+    super.activate();
+  }
+
+  @override
+  void dispose() {
     super.dispose();
   }
 

@@ -7,7 +7,7 @@ import '../model/settings.dart';
 
 part 'settings_provider.g.dart';
 
-Map<double, String > speedRates = {
+Map<double, String> speedRates = {
   0.5: "0.5x slow",
   1.0: "1.0x normal",
   1.25: "1.25x medium",
@@ -38,6 +38,7 @@ class SettingsNotifier extends _$SettingsNotifier {
       withLocalFile: prefs.getBool("with_local_file") ?? false,
       playerSpeed: prefs.getDouble("player_speed") ?? 1.0,
       autoViewed: prefs.getBool("auto_viewed") ?? false,
+      updateThumbnails: prefs.getBool("update_thumbnails") ?? false,
     );
   }
 
@@ -64,6 +65,7 @@ class SettingsNotifier extends _$SettingsNotifier {
     prefs.setBool("with_local_file", state.value?.withLocalFile ?? false);
     prefs.setDouble("player_speed", state.value?.playerSpeed ?? 1.0);
     prefs.setBool("auto_viewed", state.value?.autoViewed ?? false);
+    prefs.setBool("update_thumbnails", state.value?.updateThumbnails ?? false);
   }
 
   void updateTheme(ThemeMode theme) {
@@ -126,4 +128,8 @@ class SettingsNotifier extends _$SettingsNotifier {
     save();
   }
 
+  void updateUpdateThumbnails(bool? updateThumbnails) {
+    state = AsyncData(state.requireValue.copyWith(updateThumbnails: updateThumbnails));
+    save();
+  }
 }

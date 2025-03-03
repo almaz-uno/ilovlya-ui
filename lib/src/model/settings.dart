@@ -14,6 +14,7 @@ class Settings {
   final bool withLocalFile;
   final double playerSpeed;
   final bool autoViewed;
+  final bool updateThumbnails;
 
   Settings({
     this.theme = ThemeMode.system,
@@ -28,6 +29,7 @@ class Settings {
     this.withLocalFile = false,
     this.playerSpeed = 1.0,
     this.autoViewed = false,
+    this.updateThumbnails = false,
   });
 
   Settings copyWith({
@@ -43,6 +45,7 @@ class Settings {
     bool? withLocalFile,
     double? playerSpeed,
     bool? autoViewed,
+    bool? updateThumbnails,
   }) =>
       Settings(
         theme: theme ?? this.theme,
@@ -57,5 +60,6 @@ class Settings {
         withLocalFile: withLocalFile ?? this.withLocalFile,
         playerSpeed: playerSpeed ?? this.playerSpeed,
         autoViewed: autoViewed ?? this.autoViewed,
+        updateThumbnails: updateThumbnails ?? this.updateThumbnails,
       );
 }

@@ -131,6 +131,14 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         controlAffinity: ListTileControlAffinity.leading,
       ),
       CheckboxListTile(
+        title: const Text("Update thumbnail according to video viewing progress"),
+        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.updateThumbnails)),
+        onChanged: (bool? updateThumbnails) {
+          ref.read(settingsNotifierProvider.notifier).updateUpdateThumbnails(updateThumbnails);
+        },
+        controlAffinity: ListTileControlAffinity.leading,
+      ),
+      CheckboxListTile(
         title: const Text("Show additional technical info. For advanced users only!"),
         value: ref.watch(settingsNotifierProvider.select((s) => s.value?.debugMode)),
         onChanged: (bool? debugMode) {
