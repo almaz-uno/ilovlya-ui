@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ilovlya/src/api/media_list_riverpod.dart';
+import 'package:ilovlya/src/api/recording_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:universal_platform/universal_platform.dart';
@@ -210,6 +212,9 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
             ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).notifier).updateThumbnailImg(imgData);
           });
         }
+
+        ref.invalidate(recordingNotifierProvider(widget.recording.id));
+        ref.invalidate(mediaListNotifierProvider);
       },
       child: Scaffold(
         // appBar: AppBar(
