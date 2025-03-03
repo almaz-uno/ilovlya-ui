@@ -127,12 +127,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
           _player.state.position == _player.state.duration,
         );
       }
-      final updateThumbnails = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.updateThumbnails));
-      if (!UniversalPlatform.isWeb && updateThumbnails) {
-        MKPlayerHandler.player.screenshot(format: "image/png").then((imgData) {
-          ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).notifier).updateThumbnailImg(imgData);
-        });
-      }
       setState(() {});
     });
   }
@@ -207,175 +201,186 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     final settings = ref.watch(settingsNotifierProvider);
     // final rewindTextStyle = Theme.of(context).textTheme.titleSmall;
     final techInfoStyle = GoogleFonts.ptMono();
-    return Scaffold(
-      // appBar: AppBar(
-      //   centerTitle: true,
-      //   // toolbarHeight: titleSmall?.height,
-      //   scrolledUnderElevation: null,
-      //   elevation: null,
-      //   title: Text(
-      //     "${widget.recording.title} • ${formatDuration(_player.state.duration)}",
-      //     // textScaler: TextScaler.linear(0.5),
-      //     style: titleSmall,
-      //   ),
-      //   // actions: [
-      //   //   IconButton(
-      //   //     onPressed: () {},
-      //   //     icon: const Icon(Icons.open_in_full),
-      //   //   )
-      //   // ],
-      // ),
-      body: SafeArea(
-        child: Shortcuts(
-          shortcuts: const <ShortcutActivator, Intent>{
-            SingleActivator(LogicalKeyboardKey.backspace): BackIntent(),
-            SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
-            SingleActivator(LogicalKeyboardKey.space): PlayPauseIntent(),
-            SingleActivator(
-              LogicalKeyboardKey.arrowLeft,
-              control: true,
-              shift: true,
-            ): ChangePositionIntent(Duration(seconds: -300)),
-            SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: true): ChangePositionIntent(Duration(seconds: -60)),
-            SingleActivator(LogicalKeyboardKey.arrowLeft, control: true, shift: false): ChangePositionIntent(Duration(seconds: -30)),
-            SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: false): ChangePositionIntent(Duration(seconds: -10)),
-            SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: true): ChangePositionIntent(Duration(seconds: 300)),
-            SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: true): ChangePositionIntent(Duration(seconds: 60)),
-            SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: false): ChangePositionIntent(Duration(seconds: 30)),
-            SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: false): ChangePositionIntent(Duration(seconds: 10)),
-            SingleActivator(LogicalKeyboardKey.arrowDown, control: false, shift: false): ChangeVolumeIntent(-5),
-            SingleActivator(LogicalKeyboardKey.arrowUp, control: false, shift: false): ChangeVolumeIntent(5),
-          },
-          child: Actions(
-            actions: <Type, Action<Intent>>{
-              BackIntent: CallbackAction<BackIntent>(
-                onInvoke: (BackIntent intent) {
-                  Navigator.of(context).pop(true);
-                  return null;
-                },
-              ),
-              PlayPauseIntent: CallbackAction<PlayPauseIntent>(onInvoke: (PlayPauseIntent intent) {
-                _player.playOrPause();
-                return null;
-              }),
-              ChangePositionIntent: CallbackAction<ChangePositionIntent>(onInvoke: (ChangePositionIntent intent) {
-                _rewind(intent.duration);
-                return null;
-              }),
-              ChangeVolumeIntent: CallbackAction<ChangeVolumeIntent>(onInvoke: (ChangeVolumeIntent intent) {
-                var nv = (_player.state.volume).toInt() + intent.change;
-                if (nv < 0) {
-                  nv = 0;
-                }
-                if (nv > 100) {
-                  nv = 100;
-                }
-
-                _player.setVolume(nv.toDouble());
-                return null;
-              }),
+    return PopScope(
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
+        // debugPrint("PopScope onPopInvokedWithResult: $didPop, $result");
+        final updateThumbnails = ref.read(settingsNotifierProvider.select((value) => value.requireValue.updateThumbnails));
+        if (!UniversalPlatform.isWeb && updateThumbnails) {
+          MKPlayerHandler.player.screenshot(format: "image/png").then((imgData) {
+            ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).notifier).updateThumbnailImg(imgData);
+          });
+        }
+      },
+      child: Scaffold(
+        // appBar: AppBar(
+        //   centerTitle: true,
+        //   // toolbarHeight: titleSmall?.height,
+        //   scrolledUnderElevation: null,
+        //   elevation: null,
+        //   title: Text(
+        //     "${widget.recording.title} • ${formatDuration(_player.state.duration)}",
+        //     // textScaler: TextScaler.linear(0.5),
+        //     style: titleSmall,
+        //   ),
+        //   // actions: [
+        //   //   IconButton(
+        //   //     onPressed: () {},
+        //   //     icon: const Icon(Icons.open_in_full),
+        //   //   )
+        //   // ],
+        // ),
+        body: SafeArea(
+          child: Shortcuts(
+            shortcuts: const <ShortcutActivator, Intent>{
+              SingleActivator(LogicalKeyboardKey.backspace): BackIntent(),
+              SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
+              SingleActivator(LogicalKeyboardKey.space): PlayPauseIntent(),
+              SingleActivator(
+                LogicalKeyboardKey.arrowLeft,
+                control: true,
+                shift: true,
+              ): ChangePositionIntent(Duration(seconds: -300)),
+              SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: true): ChangePositionIntent(Duration(seconds: -60)),
+              SingleActivator(LogicalKeyboardKey.arrowLeft, control: true, shift: false): ChangePositionIntent(Duration(seconds: -30)),
+              SingleActivator(LogicalKeyboardKey.arrowLeft, control: false, shift: false): ChangePositionIntent(Duration(seconds: -10)),
+              SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: true): ChangePositionIntent(Duration(seconds: 300)),
+              SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: true): ChangePositionIntent(Duration(seconds: 60)),
+              SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: false): ChangePositionIntent(Duration(seconds: 30)),
+              SingleActivator(LogicalKeyboardKey.arrowRight, control: false, shift: false): ChangePositionIntent(Duration(seconds: 10)),
+              SingleActivator(LogicalKeyboardKey.arrowDown, control: false, shift: false): ChangeVolumeIntent(-5),
+              SingleActivator(LogicalKeyboardKey.arrowUp, control: false, shift: false): ChangeVolumeIntent(5),
             },
-            child: Focus(
-              autofocus: true,
-              child: SingleChildScrollView(
-                child: Column(
-                  children: <Widget>[
-                    Row(
-                      children: [
-                        const BackButton(),
-                        Expanded(child: Text("${widget.recording.title} • ${formatDuration(_player.state.duration)}")),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                      child: SizedBox(
-                        width: playerW,
-                        height: playerH,
-                        child: Stack(
-                          alignment: Alignment.topCenter,
-                          children: <Widget>[
-                            Video(
-                              controller: _controller,
-                              pauseUponEnteringBackgroundMode: false,
-                              resumeUponEnteringForegroundMode: true,
-                            ),
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 500),
-                              child: Text(
-                                _rewinding != Duration.zero ? _formatDuration(_rewinding) : "",
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
-                                key: ValueKey(_rewinding),
-                              ),
-                            ),
-                            if (!widget.download.hasVideo)
-                              SizedBox(
-                                width: playerW,
-                                height: playerH,
-                                child: createThumb(ref, widget.recording.thumbnailUrl),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                      child: _buildControls(context),
-                    ),
-                    Container(
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.all(8),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Created at: ${formatDateLong(widget.recording.createdAt)} (${since(widget.recording.createdAt, false)} ago)"),
-                            if (_player.state.playlist.medias.isNotEmpty)
-                              Row(
-                                children: [
-                                  Text("Playing from: ${_player.state.playlist.medias[0].uri}"),
-                                  IconButton(
-                                    onPressed: () {
-                                      copyToClipboard(context, _player.state.playlist.medias[0].uri);
-                                    },
-                                    icon: const Icon(Icons.copy),
-                                  )
-                                ],
-                              ),
-                            Text("Size: ${fileSizeHumanReadable(widget.download.size)}"),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Visibility(
-                      visible: settings.value?.debugMode ?? false,
-                      child: Container(
-                        alignment: Alignment.topLeft,
-                        padding: const EdgeInsets.all(8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("With audio handler!", style: techInfoStyle),
-                            if (widget.recording.seenAt != null) Text("seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)", style: techInfoStyle),
-                            Text("created at: ${widget.download.createdAt}", style: techInfoStyle),
-                            Text("updated at: ${widget.download.updatedAt}", style: techInfoStyle),
-                            Text("duration: ${formatDuration(_player.state.duration)}", style: techInfoStyle),
-                            Text("position: ${formatDuration(_player.state.position)}", style: techInfoStyle),
-                            Text("buffered: ${formatDuration(_player.state.buffer)}", style: techInfoStyle),
-                            Text("buffering: ${_player.state.buffering ? '>>' : '__'}", style: techInfoStyle),
-                            Text("volume: ${_player.state.volume}", style: techInfoStyle),
-                            Text("audio bitrate: ${_player.state.audioBitrate}", style: techInfoStyle),
-                            Text("audio device: ${_player.state.audioDevice}", style: techInfoStyle),
-                            Text("size: ${_player.state.width}x${_player.state.height}", style: techInfoStyle),
+            child: Actions(
+              actions: <Type, Action<Intent>>{
+                BackIntent: CallbackAction<BackIntent>(
+                  onInvoke: (BackIntent intent) {
+                    Navigator.of(context).pop(true);
+                    return null;
+                  },
+                ),
+                PlayPauseIntent: CallbackAction<PlayPauseIntent>(onInvoke: (PlayPauseIntent intent) {
+                  _player.playOrPause();
+                  return null;
+                }),
+                ChangePositionIntent: CallbackAction<ChangePositionIntent>(onInvoke: (ChangePositionIntent intent) {
+                  _rewind(intent.duration);
+                  return null;
+                }),
+                ChangeVolumeIntent: CallbackAction<ChangeVolumeIntent>(onInvoke: (ChangeVolumeIntent intent) {
+                  var nv = (_player.state.volume).toInt() + intent.change;
+                  if (nv < 0) {
+                    nv = 0;
+                  }
+                  if (nv > 100) {
+                    nv = 100;
+                  }
 
-                            Text("video params: ${_player.state.videoParams}", style: techInfoStyle),
-                            Text("audio params: ${_player.state.audioParams}", style: techInfoStyle),
-                            // Text("${_controller.value}"),
-                          ],
+                  _player.setVolume(nv.toDouble());
+                  return null;
+                }),
+              },
+              child: Focus(
+                autofocus: true,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: <Widget>[
+                      Row(
+                        children: [
+                          const BackButton(),
+                          Expanded(child: Text("${widget.recording.title} • ${formatDuration(_player.state.duration)}")),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                        child: SizedBox(
+                          width: playerW,
+                          height: playerH,
+                          child: Stack(
+                            alignment: Alignment.topCenter,
+                            children: <Widget>[
+                              Video(
+                                controller: _controller,
+                                pauseUponEnteringBackgroundMode: false,
+                                resumeUponEnteringForegroundMode: true,
+                              ),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 500),
+                                child: Text(
+                                  _rewinding != Duration.zero ? _formatDuration(_rewinding) : "",
+                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+                                  key: ValueKey(_rewinding),
+                                ),
+                              ),
+                              if (!widget.download.hasVideo)
+                                SizedBox(
+                                  width: playerW,
+                                  height: playerH,
+                                  child: createThumb(ref, widget.recording.thumbnailUrl),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                        child: _buildControls(context),
+                      ),
+                      Container(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.all(8),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Created at: ${formatDateLong(widget.recording.createdAt)} (${since(widget.recording.createdAt, false)} ago)"),
+                              if (_player.state.playlist.medias.isNotEmpty)
+                                Row(
+                                  children: [
+                                    Text("Playing from: ${_player.state.playlist.medias[0].uri}"),
+                                    IconButton(
+                                      onPressed: () {
+                                        copyToClipboard(context, _player.state.playlist.medias[0].uri);
+                                      },
+                                      icon: const Icon(Icons.copy),
+                                    )
+                                  ],
+                                ),
+                              Text("Size: ${fileSizeHumanReadable(widget.download.size)}"),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Visibility(
+                        visible: settings.value?.debugMode ?? false,
+                        child: Container(
+                          alignment: Alignment.topLeft,
+                          padding: const EdgeInsets.all(8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("With audio handler!", style: techInfoStyle),
+                              if (widget.recording.seenAt != null) Text("seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)", style: techInfoStyle),
+                              Text("created at: ${widget.download.createdAt}", style: techInfoStyle),
+                              Text("updated at: ${widget.download.updatedAt}", style: techInfoStyle),
+                              Text("duration: ${formatDuration(_player.state.duration)}", style: techInfoStyle),
+                              Text("position: ${formatDuration(_player.state.position)}", style: techInfoStyle),
+                              Text("buffered: ${formatDuration(_player.state.buffer)}", style: techInfoStyle),
+                              Text("buffering: ${_player.state.buffering ? '>>' : '__'}", style: techInfoStyle),
+                              Text("volume: ${_player.state.volume}", style: techInfoStyle),
+                              Text("audio bitrate: ${_player.state.audioBitrate}", style: techInfoStyle),
+                              Text("audio device: ${_player.state.audioDevice}", style: techInfoStyle),
+                              Text("size: ${_player.state.width}x${_player.state.height}", style: techInfoStyle),
+
+                              Text("video params: ${_player.state.videoParams}", style: techInfoStyle),
+                              Text("audio params: ${_player.state.audioParams}", style: techInfoStyle),
+                              // Text("${_controller.value}"),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
