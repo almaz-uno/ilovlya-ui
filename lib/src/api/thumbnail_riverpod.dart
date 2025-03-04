@@ -42,7 +42,7 @@ class ThumbnailDataNotifier extends _$ThumbnailDataNotifier {
       return;
     }
     final fullpath = await _fullPath();
-    fullpath.writeAsBytes(thumbnailImg, flush: true);
+    fullpath.writeAsBytesSync(thumbnailImg, flush: true);
 
     ref.invalidateSelf();
   }
