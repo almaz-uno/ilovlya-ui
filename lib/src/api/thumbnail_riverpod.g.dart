@@ -7,7 +7,7 @@ part of 'thumbnail_riverpod.dart';
 // **************************************************************************
 
 String _$thumbnailDataNotifierHash() =>
-    r'2394bd1c690e1b23a2427cddc5e6ace16f138475';
+    r'f036ffc19c37386d2355039ba55b067460c9c5d5';
 
 /// Copied from Dart SDK
 class _SystemHash {

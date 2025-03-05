@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ilovlya/src/api/api.dart';
+
+import '../api/api.dart';
 
 class Settings {
   final ThemeMode theme;
@@ -15,6 +16,8 @@ class Settings {
   final double playerSpeed;
   final bool autoViewed;
   final bool updateThumbnails;
+  final String dataStorageDirectory;
+  final String mediaStorageDirectory;
 
   Settings({
     this.theme = ThemeMode.system,
@@ -30,6 +33,8 @@ class Settings {
     this.playerSpeed = 1.0,
     this.autoViewed = false,
     this.updateThumbnails = false,
+    this.dataStorageDirectory = "",
+    this.mediaStorageDirectory = "",
   });
 
   Settings copyWith({
@@ -46,6 +51,8 @@ class Settings {
     double? playerSpeed,
     bool? autoViewed,
     bool? updateThumbnails,
+    String? dataStorageDirectory,
+    String? mediaStorageDirectory,
   }) =>
       Settings(
         theme: theme ?? this.theme,
@@ -61,5 +68,7 @@ class Settings {
         playerSpeed: playerSpeed ?? this.playerSpeed,
         autoViewed: autoViewed ?? this.autoViewed,
         updateThumbnails: updateThumbnails ?? this.updateThumbnails,
+        dataStorageDirectory: dataStorageDirectory?? this.dataStorageDirectory,
+        mediaStorageDirectory: mediaStorageDirectory ?? this.mediaStorageDirectory,
       );
 }
