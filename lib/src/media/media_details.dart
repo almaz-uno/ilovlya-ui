@@ -444,7 +444,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           TextButton.icon(
-            onPressed: () {_startPreparation(context, "ba");},
+            onPressed: () {
+              _startPreparation(context, "ba");
+            },
             icon: const Icon(Icons.audiotrack_rounded),
             label: const Text("Best audio (ba)"),
           ),

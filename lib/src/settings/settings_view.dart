@@ -184,9 +184,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final mediaDirs = ref.watch(mediaDirsProvider);
     final current = ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory));
 
-    debugPrint("${mediaDirs.value}"); //FIXME: delete me
-    debugPrint("${current}"); //FIXME: delete me
-
     return [
       Text("Local media info", style: Theme.of(context).textTheme.bodyLarge),
       Text("Recordings: ${data.requireValue}"),

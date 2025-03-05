@@ -71,7 +71,7 @@ Future<List<String>> mediaDirs(Ref ref) async {
         dirs.add(d.path);
       }
     }
-  } catch (e, s) {
+  } catch (e) {
     // debugPrintStack(stackTrace: s, label: e.toString());
   }
 
