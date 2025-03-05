@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:external_path/external_path.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/material.dart';
@@ -64,15 +65,17 @@ Future<String> _mediaDir(String srcDir) async {
 Future<List<String>> mediaDirs(Ref ref) async {
   final dirs = <String>[await _mediaDir("")];
 
-  try {
-    final esDirs = await getExternalStorageDirectories(type: StorageDirectory.movies);
-    if (esDirs != null) {
-      for (final d in esDirs) {
-        dirs.add(d.path);
+  if (UniversalPlatform.isAndroid) {
+    try {
+      final esDirs = await ExternalPath.getExternalStorageDirectories();
+      if (esDirs != null) {
+        for (final d in esDirs) {
+          dirs.add(p.join(d, ExternalPath.DIRECTORY_MOVIES, appName));
+        }
       }
+    } catch (e) {
+      // debugPrintStack(stackTrace: s, label: e.toString());
     }
-  } catch (e) {
-    // debugPrintStack(stackTrace: s, label: e.toString());
   }
 
   return dirs;
@@ -205,6 +208,7 @@ class SettingsNotifier extends _$SettingsNotifier {
   }
 
   void updateMediaStorageDirectory(String? mediaStorageDirectory) {
+    if (mediaStorageDirectory != null) Directory(mediaStorageDirectory).createSync(recursive: true);
     state = AsyncData(state.requireValue.copyWith(mediaStorageDirectory: mediaStorageDirectory));
     save();
   }

@@ -6,7 +6,7 @@ part of 'settings_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$mediaDirsHash() => r'2da7cdbc52239f2edb731277f5313df0c876bde6';
+String _$mediaDirsHash() => r'2e6c10ef7f8a785583c1f997bb727e2faf85c678';
 
 /// See also [mediaDirs].
 @ProviderFor(mediaDirs)

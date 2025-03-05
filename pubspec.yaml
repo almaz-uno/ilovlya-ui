@@ -38,6 +38,7 @@ dependencies:
   universal_platform: ^1.0.0+1
   url_launcher: ^6.1.12
   audio_session: ^0.1.21
+  external_path: ^2.2.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
