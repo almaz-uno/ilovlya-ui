@@ -67,10 +67,10 @@ Future<List<String>> mediaDirs(Ref ref) async {
 
   if (UniversalPlatform.isAndroid) {
     try {
-      final esDirs = await ExternalPath.getExternalStorageDirectories();
+      final esDirs = await getExternalStorageDirectories();
       if (esDirs != null) {
         for (final d in esDirs) {
-          dirs.add(p.join(d, ExternalPath.DIRECTORY_MOVIES, appName));
+          dirs.add(p.join(d.path, "media"));
         }
       }
     } catch (e) {
