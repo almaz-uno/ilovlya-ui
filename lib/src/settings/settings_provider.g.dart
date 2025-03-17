@@ -6,7 +6,23 @@ part of 'settings_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$settingsNotifierHash() => r'09af1380071e108e36fc80148bd299064ffaad09';
+String _$mediaDirsHash() => r'2e6c10ef7f8a785583c1f997bb727e2faf85c678';
+
+/// See also [mediaDirs].
+@ProviderFor(mediaDirs)
+final mediaDirsProvider = AutoDisposeFutureProvider<List<String>>.internal(
+  mediaDirs,
+  name: r'mediaDirsProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$mediaDirsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef MediaDirsRef = AutoDisposeFutureProviderRef<List<String>>;
+String _$settingsNotifierHash() => r'd3aae5c71667e3ec213b3c71c028694531dd6915';
 
 /// See also [SettingsNotifier].
 @ProviderFor(SettingsNotifier)

@@ -1,6 +1,13 @@
+import 'dart:io';
+
+import 'package:external_path/external_path.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 import '../api/api.dart';
 import '../model/settings.dart';
@@ -15,6 +22,64 @@ Map<double, String> speedRates = {
   1.75: "1.75x very fast",
   2.0: "2.0x super fast",
 };
+
+Future<String> _dataDir(String srcDir) async {
+  if (srcDir == "") {
+    final documents = await getApplicationDocumentsDirectory();
+    if (UniversalPlatform.isDesktop) {
+      srcDir = p.join(documents.path, appName, "data");
+    } else {
+      srcDir = p.join(documents.path, "data");
+    }
+  }
+
+  try {
+    Directory(srcDir).createSync(recursive: true);
+  } catch (e, s) {
+    debugPrintStack(stackTrace: s, label: e.toString());
+    return _dataDir("");
+  }
+
+  return srcDir;
+}
+
+Future<String> _mediaDir(String srcDir) async {
+  if (srcDir == "") {
+    final documents = await getApplicationDocumentsDirectory();
+    if (UniversalPlatform.isDesktop) {
+      srcDir = p.join(documents.path, appName, "media");
+    } else {
+      srcDir = p.join(documents.path, "media");
+    }
+  }
+  try {
+    Directory(srcDir).createSync(recursive: true);
+  } catch (e, s) {
+    debugPrintStack(stackTrace: s, label: e.toString());
+    return _mediaDir("");
+  }
+  return srcDir;
+}
+
+@riverpod
+Future<List<String>> mediaDirs(Ref ref) async {
+  final dirs = <String>[await _mediaDir("")];
+
+  if (UniversalPlatform.isAndroid) {
+    try {
+      final esDirs = await getExternalStorageDirectories();
+      if (esDirs != null) {
+        for (final d in esDirs) {
+          dirs.add(p.join(d.path, "media"));
+        }
+      }
+    } catch (e) {
+      // debugPrintStack(stackTrace: s, label: e.toString());
+    }
+  }
+
+  return dirs;
+}
 
 @riverpod
 class SettingsNotifier extends _$SettingsNotifier {
@@ -39,6 +104,8 @@ class SettingsNotifier extends _$SettingsNotifier {
       playerSpeed: prefs.getDouble("player_speed") ?? 1.0,
       autoViewed: prefs.getBool("auto_viewed") ?? false,
       updateThumbnails: prefs.getBool("update_thumbnails") ?? false,
+      dataStorageDirectory: await _dataDir(prefs.getString("data_storage_directory") ?? ""),
+      mediaStorageDirectory: await _mediaDir(prefs.getString("media_storage_directory") ?? ""),
     );
   }
 
@@ -66,6 +133,8 @@ class SettingsNotifier extends _$SettingsNotifier {
     prefs.setDouble("player_speed", state.value?.playerSpeed ?? 1.0);
     prefs.setBool("auto_viewed", state.value?.autoViewed ?? false);
     prefs.setBool("update_thumbnails", state.value?.updateThumbnails ?? false);
+    prefs.setString("data_storage_directory", state.value?.dataStorageDirectory ?? "");
+    prefs.setString("media_storage_directory", state.value?.mediaStorageDirectory ?? "");
   }
 
   void updateTheme(ThemeMode theme) {
@@ -130,6 +199,17 @@ class SettingsNotifier extends _$SettingsNotifier {
 
   void updateUpdateThumbnails(bool? updateThumbnails) {
     state = AsyncData(state.requireValue.copyWith(updateThumbnails: updateThumbnails));
+    save();
+  }
+
+  void updateDataStorageDirectory(String? dataStorageDirectory) {
+    state = AsyncData(state.requireValue.copyWith(dataStorageDirectory: dataStorageDirectory));
+    save();
+  }
+
+  void updateMediaStorageDirectory(String? mediaStorageDirectory) {
+    if (mediaStorageDirectory != null) Directory(mediaStorageDirectory).createSync(recursive: true);
+    state = AsyncData(state.requireValue.copyWith(mediaStorageDirectory: mediaStorageDirectory));
     save();
   }
 }

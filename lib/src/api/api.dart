@@ -1,3 +1,5 @@
+const appName = "ilovlya";
+
 const serverBaseURL = String.fromEnvironment("SERVER_BASE_URL",
     defaultValue: "https://ilovlya.space");
 // const serverBaseURL = String.fromEnvironment("SERVER_BASE_URL",

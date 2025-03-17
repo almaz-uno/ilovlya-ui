@@ -51,6 +51,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 8.0,
                 children: <Widget>[
                       TextField(
                         controller: tokenController,
@@ -73,13 +74,13 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 8.0,
                 children: _commonSettings(),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _housekeeping(context),
-                ],
+                spacing: 8.0,
+                children: _housekeeping(context),
               ),
             ],
           ),
@@ -168,92 +169,100 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     return w;
   }
 
-  Widget _housekeeping(BuildContext context) {
+  List<Widget> _housekeeping(BuildContext context) {
     final ref = (context as WidgetRef);
     final media = ref.watch(localMediaHousekeeperProvider);
     final data = ref.watch(localDataNotifierProvider);
     final sp = ref.watch(storePlacesProvider);
 
     if (!media.hasValue || !data.hasValue || !sp.hasValue) {
-      return const CircularProgressIndicator();
+      return [const CircularProgressIndicator()];
     }
 
     final (number, size) = media.requireValue;
 
-    return Wrap(
-      spacing: 8.0,
-      direction: Axis.vertical,
-      // crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("Local media info", style: Theme.of(context).textTheme.bodyLarge),
-        Text("Recordings: ${data.requireValue}"),
-        Text("Files: $number, total size: ${fileSizeHumanReadable(size)}"),
-        OutlinedButton(
-          child: const Text("Clean stale downloaded media"),
-          onPressed: () async {
-            if (_cleaningStaleMedia) return;
-            try {
-              setState(() {
-                _cleaningStaleMedia = true;
+    final mediaDirs = ref.watch(mediaDirsProvider);
+    final current = ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory));
+
+    return [
+      Text("Local media info", style: Theme.of(context).textTheme.bodyLarge),
+      Text("Recordings: ${data.requireValue}"),
+      Text("Files: $number, total size: ${fileSizeHumanReadable(size)}"),
+      OutlinedButton(
+        child: const Text("Clean stale downloaded media"),
+        onPressed: () async {
+          if (_cleaningStaleMedia) return;
+          try {
+            setState(() {
+              _cleaningStaleMedia = true;
+            });
+            final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanStale();
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('$number files, ${fileSizeHumanReadable(size)} cleaned'),
+            ));
+          } finally {
+            setState(() {
+              _cleaningStaleMedia = false;
+            });
+          }
+        },
+      ),
+      OutlinedButton(
+        child: const Text("Clean ALL downloaded media"),
+        onPressed: () async {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return BlurryDialog("Are you sure?", "This will delete ALL downloaded media files", () async {
+                final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanAll();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('$number files, ${fileSizeHumanReadable(size)} cleaned'),
+                ));
+                Navigator.pop(context);
               });
-              final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanStale();
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('$number files, ${fileSizeHumanReadable(size)} cleaned'),
-              ));
-            } finally {
-              setState(() {
-                _cleaningStaleMedia = false;
+            },
+          );
+        },
+      ),
+      OutlinedButton(
+        child: Text("Clean ALL metadata for ${data.requireValue} recordings"),
+        onPressed: () async {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return BlurryDialog(
+                  "Are you sure?", "This will delete ALL metadata for ${data.requireValue} recordings,\ndownloaded media files will be retained.\nThis data can be downloaded from the server.",
+                  () async {
+                final number = await ref.read(localDataNotifierProvider.notifier).cleanMetadata();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('$number recordings cleaned'),
+                ));
+                Navigator.pop(context);
               });
-            }
+            },
+          );
+        },
+      ),
+      if (mediaDirs.hasValue)
+        DropdownButtonFormField<String>(
+          decoration: const InputDecoration(labelText: "Media directory"),
+          value: ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory)),
+          alignment: AlignmentDirectional.topStart,
+          onChanged: (String? directory) {
+            ref.read(settingsNotifierProvider.notifier).updateMediaStorageDirectory(directory ?? "");
           },
+          items: [for (final d in mediaDirs.requireValue) DropdownMenuItem(value: d, child: Text(d))],
         ),
-        OutlinedButton(
-          child: const Text("Clean ALL downloaded media"),
-          onPressed: () async {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return BlurryDialog("Are you sure?", "This will delete ALL downloaded media files", () async {
-                  final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanAll();
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('$number files, ${fileSizeHumanReadable(size)} cleaned'),
-                  ));
-                  Navigator.pop(context);
-                });
-              },
-            );
-          },
+      if (sp.hasValue) Text("Data local path: ${sp.requireValue.data().path}"),
+      if (sp.hasValue) Text("Downloaded local media path: ${sp.requireValue.media().path}"),
+      if (_cleaningStaleMedia)
+        const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Wrap(spacing: 8.0, crossAxisAlignment: WrapCrossAlignment.center, children: [
+            CircularProgressIndicator(),
+            Text("cleaning stale media local files..."),
+          ]),
         ),
-        OutlinedButton(
-          child: Text("Clean ALL metadata for ${data.requireValue} recordings"),
-          onPressed: () async {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return BlurryDialog(
-                    "Are you sure?", "This will delete ALL metadata for ${data.requireValue} recordings,\ndownloaded media files will be retained.\nThis data can be downloaded from the server.",
-                    () async {
-                  final number = await ref.read(localDataNotifierProvider.notifier).cleanMetadata();
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('$number recordings cleaned'),
-                  ));
-                  Navigator.pop(context);
-                });
-              },
-            );
-          },
-        ),
-        if (sp.hasValue) Text("Data local path: ${sp.requireValue.data().path}"),
-        if (sp.hasValue) Text("Downloaded local media path: ${sp.requireValue.media().path}"),
-        if (_cleaningStaleMedia)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Wrap(spacing: 8.0, crossAxisAlignment: WrapCrossAlignment.center, children: [
-              CircularProgressIndicator(),
-              Text("cleaning stale media local files..."),
-            ]),
-          ),
-      ],
-    );
+    ];
   }
 }
