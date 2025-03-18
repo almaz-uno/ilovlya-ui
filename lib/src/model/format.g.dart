@@ -13,6 +13,7 @@ Format _$FormatFromJson(Map<String, dynamic> json) => Format(
       fps: (json['fps'] as num?)?.toInt() ?? 0,
       hasAudio: json['has_audio'] as bool? ?? false,
       hasVideo: json['has_video'] as bool? ?? false,
+      url: json['url'] as String? ?? "",
     );
 
 Map<String, dynamic> _$FormatToJson(Format instance) => <String, dynamic>{
@@ -22,4 +23,5 @@ Map<String, dynamic> _$FormatToJson(Format instance) => <String, dynamic>{
       'fps': instance.fps,
       'has_audio': instance.hasAudio,
       'has_video': instance.hasVideo,
+      'url': instance.url,
     };
