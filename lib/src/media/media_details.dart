@@ -27,6 +27,7 @@ import 'media_kit/recording_play.dart';
 import 'media_list.dart';
 
 const _downloadFormatIcon = Icon(Icons.start);
+const _copyURLIcon = Icon(Icons.copy);
 
 class MediaDetailsView extends ConsumerStatefulWidget {
   const MediaDetailsView({
@@ -205,7 +206,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.copy),
+                        icon: _copyURLIcon,
                         tooltip: 'Copy video URL to the clipboard',
                         onPressed: () {
                           copyToClipboard(context, recording.webpageUrl);
@@ -420,6 +421,15 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               child: Text(f.id),
             ),
           ),
+          DataCell(
+            IconButton(
+              onPressed: () {
+                copyToClipboard(context, f.url);
+              },
+              tooltip: "Copy URL this fragment into clipboard",
+              icon: _copyURLIcon,
+            ),
+          ),
           DataCell(Text(f.ext)),
           DataCell(Text(f.resolution)),
           DataCell(Visibility(visible: f.fps != 0, child: Text("${f.fps}"))),
@@ -461,6 +471,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               columns: const <DataColumn>[
                 DataColumn(label: Expanded(child: Text("", style: headerStyle))),
                 DataColumn(label: Expanded(child: Text("id", style: headerStyle))),
+                DataColumn(label: Expanded(child: Text("URL", style: headerStyle))),
                 DataColumn(label: Expanded(child: Text("ext", style: headerStyle))),
                 DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
                 DataColumn(label: Expanded(child: Text("fps", style: headerStyle))),
@@ -559,7 +570,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       value: "copy",
                       child: Row(
                         children: [
-                          Icon(Icons.copy_rounded),
+                          _copyURLIcon,
                           Expanded(child: Text("Copy file link to clipboard")),
                         ],
                       ),

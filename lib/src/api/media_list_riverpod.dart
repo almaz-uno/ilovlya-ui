@@ -49,7 +49,7 @@ class MediaListNotifier extends _$MediaListNotifier {
           for (final me in mediaEntities) {
             if (me is! File) continue;
             recording.hasLocalFile = recording.hasLocalFile || p.basename(me.path) == df;
-            break;
+            if (recording.hasLocalFile) break;
           }
         }
         resultList.add(recording);
