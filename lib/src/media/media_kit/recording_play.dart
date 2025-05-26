@@ -18,6 +18,7 @@ import '../../model/download.dart';
 import '../../model/recording_info.dart';
 import '../../settings/settings_provider.dart';
 import '../format.dart';
+import '../intents.dart';
 import '../media_details.dart';
 import '../media_list.dart';
 import 'audio_handler.dart';
@@ -434,7 +435,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
             if (_player.state.playing)
               TextButton(
                 onPressed: () {
-                  _player.pause();
+                  _player.playOrPause();
                 },
                 child: const Icon(
                   Icons.pause,
@@ -443,7 +444,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
             if (!_player.state.playing)
               TextButton(
                 onPressed: () {
-                  _player.play();
+                  _player.playOrPause();
                 },
                 child: const Icon(
                   Icons.play_arrow,
@@ -491,24 +492,3 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   }
 }
 
-class PlayPauseIntent extends Intent {
-  const PlayPauseIntent();
-}
-
-class BackIntent extends Intent {
-  const BackIntent();
-}
-
-class ChangePositionIntent extends Intent {
-  const ChangePositionIntent(
-    this.duration,
-  );
-  final Duration duration;
-}
-
-class ChangeVolumeIntent extends Intent {
-  const ChangeVolumeIntent(
-    this.change,
-  );
-  final int change;
-}
