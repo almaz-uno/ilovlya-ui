@@ -94,13 +94,13 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> play() async {
-    _player.play();
+    _player.playOrPause();
     super.play();
   }
 
   @override
   Future<void> pause() async {
-    _player.pause();
+    _player.playOrPause();
     super.pause();
   }
 

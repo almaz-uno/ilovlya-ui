@@ -22,6 +22,7 @@ import '../model/recording_info.dart';
 import '../settings/settings_view.dart';
 import 'download_details.dart';
 import 'format.dart';
+import 'intents.dart';
 import 'media_kit/audio_handler.dart';
 import 'media_kit/recording_play.dart';
 import 'media_list.dart';
@@ -109,51 +110,70 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     //     _shouldPlay = false;
     //   }
     // }
-    return Scaffold(
-      appBar: AppBar(
-        title: recording.hasValue ? Text(recording.requireValue.title) : const Text('Loading info...'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.clear),
-            tooltip: 'Clean all downloaded content on the server',
-            onPressed: () {
-              if (recording.hasValue) {
-                ref.read(deleteRecordingDownloadsContentProvider(recording.requireValue.id));
-                _pullRefresh();
-              }
-            },
+    return Shortcuts(
+      shortcuts: const <ShortcutActivator, Intent>{
+        SingleActivator(LogicalKeyboardKey.backspace): BackIntent(),
+        SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
+      },
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+                BackIntent: CallbackAction<BackIntent>(
+                  onInvoke: (BackIntent intent) {
+                    Navigator.of(context).pop(true);
+                    return null;
+                  },
+                ),
+        },
+        child: Focus(
+          autofocus: true,
+          child: Scaffold(
+            appBar: AppBar(
+              title: recording.hasValue ? Text(recording.requireValue.title) : const Text('Loading info...'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.clear),
+                  tooltip: 'Clean all downloaded content on the server',
+                  onPressed: () {
+                    if (recording.hasValue) {
+                      ref.read(deleteRecordingDownloadsContentProvider(recording.requireValue.id));
+                      _pullRefresh();
+                    }
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.cleaning_services),
+                  tooltip: 'Clean all downloaded media from the device',
+                  onPressed: () {
+                    ref.read(downloadsNotifierProvider(widget.id).notifier).cleanAll();
+                    _pullRefresh();
+                  },
+                ),
+                _addSeenButton(recording),
+                _addHiddenButton(recording),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  tooltip: 'Refresh record (reread from the server)',
+                  onPressed: _pullRefresh,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  tooltip: 'Settings',
+                  onPressed: () {
+                    Navigator.restorablePushNamed(context, SettingsView.routeName);
+                  },
+                ),
+              ],
+            ),
+            body: Stack(
+              children: [
+                // Visibility(visible: recording.isLoading, child: const LinearProgressIndicator()),
+                SingleChildScrollView(
+                  child: _buildRecording(recording),
+                ),
+              ],
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.cleaning_services),
-            tooltip: 'Clean all downloaded media from the device',
-            onPressed: () {
-              ref.read(downloadsNotifierProvider(widget.id).notifier).cleanAll();
-              _pullRefresh();
-            },
-          ),
-          _addSeenButton(recording),
-          _addHiddenButton(recording),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh record (reread from the server)',
-            onPressed: _pullRefresh,
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: 'Settings',
-            onPressed: () {
-              Navigator.restorablePushNamed(context, SettingsView.routeName);
-            },
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          // Visibility(visible: recording.isLoading, child: const LinearProgressIndicator()),
-          SingleChildScrollView(
-            child: _buildRecording(recording),
-          ),
-        ],
+        ),
       ),
     );
   }

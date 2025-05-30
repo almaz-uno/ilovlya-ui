@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Ilovlya media center
+GenericName=Image Editor
+Comment=Your favorite media player
+Exec=ilovlya
+Icon=uno.almaz.ilovlya
+Terminal=false
+Type=Application
+Categories=AudioVideo
+Keywords=media;player;
+StartupNotify=true
