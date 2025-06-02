@@ -688,7 +688,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           );
         },
         onLongPress: () {
-          Process.start("flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", d.fullPathMedia!]);
+          Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", d.fullPathMedia!]);
         },
         tooltip: "Local file is downloaded. Click to play.",
         icon: const Icon(Icons.download_done),
