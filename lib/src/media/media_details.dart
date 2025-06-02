@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:background_downloader/background_downloader.dart';
 import 'package:duration/duration.dart';
@@ -29,6 +30,8 @@ import 'media_list.dart';
 
 const _downloadFormatIcon = Icon(Icons.start);
 const _copyURLIcon = Icon(Icons.copy);
+// const _ffPlayer = "/app/bin/ffplay";
+const _mpvPlayer = "/app/bin/mpv";
 
 class MediaDetailsView extends ConsumerStatefulWidget {
   const MediaDetailsView({
@@ -117,12 +120,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
-                BackIntent: CallbackAction<BackIntent>(
-                  onInvoke: (BackIntent intent) {
-                    Navigator.of(context).pop(true);
-                    return null;
-                  },
-                ),
+          BackIntent: CallbackAction<BackIntent>(
+            onInvoke: (BackIntent intent) {
+              Navigator.of(context).pop(true);
+              return null;
+            },
+          ),
         },
         child: Focus(
           autofocus: true,
@@ -556,6 +559,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
                 );
               },
+              onLongPress: () {
+                Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", d.url]);
+              },
               tooltip: "Open with MediaKit with handler",
               icon: const Icon(Icons.flag_circle_outlined),
             ),
@@ -680,6 +686,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           Navigator.of(context).push(
             MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
           );
+        },
+        onLongPress: () {
+          Process.start("flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", d.fullPathMedia!]);
         },
         tooltip: "Local file is downloaded. Click to play.",
         icon: const Icon(Icons.download_done),
