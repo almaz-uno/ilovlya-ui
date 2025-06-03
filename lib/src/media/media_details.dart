@@ -446,13 +446,15 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             ),
           ),
           DataCell(
-            IconButton(
-              onPressed: () {
-                copyToClipboard(context, f.url);
-              },
-              tooltip: "Copy URL this fragment into clipboard",
-              icon: _copyURLIcon,
-            ),
+            f.url != ""
+                ? IconButton(
+                    onPressed: () {
+                      copyToClipboard(context, f.url);
+                    },
+                    tooltip: "Copy URL this fragment into clipboard",
+                    icon: _copyURLIcon,
+                  )
+                : const SizedBox.shrink(),
           ),
           DataCell(Text(f.ext)),
           DataCell(Text(f.resolution)),
@@ -811,4 +813,3 @@ Future<void> copyToClipboard(BuildContext context, String textData) async {
     ));
   });
 }
-
