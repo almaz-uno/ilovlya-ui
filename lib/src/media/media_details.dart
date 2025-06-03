@@ -30,6 +30,7 @@ import 'media_list.dart';
 
 const _downloadFormatIcon = Icon(Icons.start);
 const _copyURLIcon = Icon(Icons.copy);
+const _copyCURLIcon = Icon(Icons.terminal);
 // const _ffPlayer = "/app/bin/ffplay";
 const _mpvPlayer = "/app/bin/mpv";
 
@@ -572,6 +573,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   switch (choice) {
                     case "copy":
                       copyToClipboard(context, d.url);
+                    case "copy-curl":
+                      copyToClipboard(context, "curl '${d.url}' -o '${d.filename}'");
                     case "default":
                       launchUrlString(d.url);
                     case "server-delete":
@@ -598,6 +601,17 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                         children: [
                           _copyURLIcon,
                           Expanded(child: Text("Copy file link to clipboard")),
+                        ],
+                      ),
+                    ),
+                  );
+                  menuItems.add(
+                    const PopupMenuItem<String>(
+                      value: "copy-curl",
+                      child: Row(
+                        children: [
+                          _copyCURLIcon,
+                          Expanded(child: Text("Copy curl command to clipboard")),
                         ],
                       ),
                     ),
@@ -797,3 +811,4 @@ Future<void> copyToClipboard(BuildContext context, String textData) async {
     ));
   });
 }
+
