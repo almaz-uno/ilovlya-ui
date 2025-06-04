@@ -23,6 +23,10 @@ Map<double, String> speedRates = {
 };
 
 Future<String> _dataDir(String srcDir) async {
+  if (UniversalPlatform.isWeb) {
+    return "<unavailable>";
+  }
+
   if (srcDir == "") {
     final documents = await getApplicationDocumentsDirectory();
     if (UniversalPlatform.isDesktop) {
@@ -43,6 +47,10 @@ Future<String> _dataDir(String srcDir) async {
 }
 
 Future<String> _mediaDir(String srcDir) async {
+  if (UniversalPlatform.isWeb) {
+    return "<unavailable>";
+  }
+
   if (srcDir == "") {
     final documents = await getApplicationDocumentsDirectory();
     if (UniversalPlatform.isDesktop) {
