@@ -241,12 +241,12 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
             child: const Icon(Icons.content_paste_go_rounded),
           ),
           FloatingActionButton.small(
-            heroTag: "up",
+            // heroTag: "up",
             onPressed: _scrollUp,
             child: const Icon(Icons.arrow_upward),
           ),
           FloatingActionButton.small(
-            heroTag: "down",
+            // heroTag: "down",
             onPressed: _scrollDown,
             child: const Icon(Icons.arrow_downward),
           ),
