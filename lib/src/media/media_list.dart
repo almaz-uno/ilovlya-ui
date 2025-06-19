@@ -104,7 +104,9 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     String usageInfo = "";
     if (tenant.hasValue) {
       final t = tenant.requireValue;
-      usageInfo = "quote: ${t.quotaStr()} usage: ${t.usageStr()} (${t.files}) free: ${t.freeStr()} ";
+      final storeStr = t.storeUsage>0?" 🏠${t.localUsageStr()}/☁️${t.storeUsageStr()} ":"";
+
+      usageInfo = "quote: ${t.quotaStr()} usage: ${t.usageStr()} (${t.files}) free: ${t.freeStr()}$storeStr";
     }
 
     return Scaffold(
