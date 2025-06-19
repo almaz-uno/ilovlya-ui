@@ -15,6 +15,7 @@ class Tenant {
   String lastName;
   int diskQuota;
   int diskUsage;
+  int storeUsage;
   int files;
   DateTime? blockedAt;
 
@@ -28,6 +29,7 @@ class Tenant {
     this.lastName = "",
     this.diskQuota = 0,
     this.diskUsage = 0,
+    this.storeUsage = 0,
     this.files = 0,
     this.blockedAt,
   });
@@ -38,6 +40,14 @@ class Tenant {
 
   String usageStr() {
     return fileSizeHumanReadable(diskUsage);
+  }
+
+  String storeUsageStr() {
+    return fileSizeHumanReadable(storeUsage);
+  }
+
+  String localUsageStr() {
+    return fileSizeHumanReadable(diskUsage - storeUsage);
   }
 
   String freeStr() {
