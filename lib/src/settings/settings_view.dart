@@ -165,6 +165,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       w.add(Text("Used: ${t.usageStr()}"));
       w.add(Text("Free: ${t.freeStr()}"));
       w.add(Text("Files: ${t.files}"));
+      w.add(Text("Local: ${t.localUsageStr()}"));
+      w.add(Text("Storage: ${t.storeUsageStr()}"));
     }
     return w;
   }
