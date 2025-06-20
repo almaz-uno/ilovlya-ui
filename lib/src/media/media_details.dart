@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import '../alert_dialog.dart';
 import '../api/api.dart';
 import '../api/api_riverpod.dart';
 import '../api/downloads_riverpod.dart';
@@ -28,14 +29,15 @@ import 'media_kit/audio_handler.dart';
 import 'media_kit/recording_play.dart';
 import 'media_list.dart';
 
+const _cleanServerMediaIcon = Icon(Icons.clear);
+const _cleanDownloadedMediaIcon = Icon(Icons.cleaning_services);
 const _downloadFormatIcon = Icon(Icons.start);
 const _copyURLIcon = Icon(Icons.copy);
 const _copyCURLIcon = Icon(Icons.terminal);
 const _hFlipIcon = Icon(Icons.flip_sharp);
 const _playMpvIcon = Icon(Icons.play_circle);
-const _playMpvHFlipIcon = Icon(Icons.flip_sharp);
 // const _ffPlayer = "/app/bin/ffplay";
-const _ffmpeg = "/app/bin/ffmpeg";
+//const _ffmpeg = "/app/bin/ffmpeg";
 const _mpvPlayer = "/app/bin/mpv";
 
 class MediaDetailsView extends ConsumerStatefulWidget {
@@ -122,12 +124,52 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       shortcuts: const <ShortcutActivator, Intent>{
         SingleActivator(LogicalKeyboardKey.backspace): BackIntent(),
         SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
+        SingleActivator(LogicalKeyboardKey.keyR): RefreshIntent(),
+        SingleActivator(LogicalKeyboardKey.f5): RefreshIntent(),
+        SingleActivator(LogicalKeyboardKey.keyV): ToggleSeenIntent(),
+        SingleActivator(LogicalKeyboardKey.keyH): ToggleHiddenIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
           BackIntent: CallbackAction<BackIntent>(
             onInvoke: (BackIntent intent) {
               Navigator.of(context).pop(true);
+              return null;
+            },
+          ),
+          RefreshIntent: CallbackAction<RefreshIntent>(
+            onInvoke: (RefreshIntent intent) {
+              _pullRefresh();
+              return null;
+            },
+          ),
+          ToggleSeenIntent: CallbackAction<ToggleSeenIntent>(
+            onInvoke: (ToggleSeenIntent intent) async {
+              if (recording.hasValue) {
+                final r = recording.requireValue;
+                if (r.seenAt == null) {
+                  await ref.read(setSeenProvider(r.id).future);
+                  _pullRefresh();
+                } else {
+                  await ref.read(unsetSeenProvider(r.id).future);
+                  _pullRefresh();
+                }
+              }
+              return null;
+            },
+          ),
+          ToggleHiddenIntent: CallbackAction<ToggleHiddenIntent>(
+            onInvoke: (ToggleHiddenIntent intent) async {
+              if (recording.hasValue) {
+                final r = recording.requireValue;
+                if (r.hiddenAt == null) {
+                  await ref.read(setHiddenProvider(r.id).future);
+                  _pullRefresh();
+                } else {
+                  await ref.read(unsetHiddenProvider(r.id).future);
+                  _pullRefresh();
+                }
+              }
               return null;
             },
           ),
@@ -139,21 +181,25 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               title: recording.hasValue ? Text(recording.requireValue.title) : const Text('Loading info...'),
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.clear),
+                  icon: _cleanServerMediaIcon,
                   tooltip: 'Clean all downloaded content on the server',
                   onPressed: () {
                     if (recording.hasValue) {
-                      ref.read(deleteRecordingDownloadsContentProvider(recording.requireValue.id));
-                      _pullRefresh();
+                      confirmDialog(context, "Are you sure?", "Delete all files on the server?", () {
+                        ref.read(deleteRecordingDownloadsContentProvider(recording.requireValue.id));
+                        _pullRefresh();
+                      });
                     }
                   },
                 ),
                 IconButton(
-                  icon: const Icon(Icons.cleaning_services),
+                  icon: _cleanDownloadedMediaIcon,
                   tooltip: 'Clean all downloaded media from the device',
                   onPressed: () {
-                    ref.read(downloadsNotifierProvider(widget.id).notifier).cleanAll();
-                    _pullRefresh();
+                    confirmDialog(context, "Are you sure?", "Delete all local files on the device?", () {
+                      ref.read(downloadsNotifierProvider(widget.id).notifier).cleanAll();
+                      _pullRefresh();
+                    });
                   },
                 ),
                 _addSeenButton(recording),
@@ -588,10 +634,14 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     case "default":
                       launchUrlString(d.url);
                     case "server-delete":
-                      ref.read(deleteDownloadContentProvider(d.id));
-                      _pullRefresh();
+                      confirmDialog(context, "Are you sure?", "Delete server media file?", () {
+                        ref.read(deleteDownloadContentProvider(d.id));
+                        _pullRefresh();
+                      });
                     case "local-delete":
-                      ref.read(downloadsNotifierProvider(recording.id).notifier).clean(d.id);
+                      confirmDialog(context, "Are you sure?", "Delete local downloaded media file?", () {
+                        ref.read(downloadsNotifierProvider(recording.id).notifier).clean(d.id);
+                      });
                     case "share-url":
                       await Share.shareUri(Uri.parse(d.url));
                     case "download":
@@ -665,7 +715,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       value: "server-delete",
                       child: Row(
                         children: [
-                          Icon(Icons.clear),
+                          _cleanServerMediaIcon,
                           Expanded(
                             child: Text("Delete file on the server and free server usage quota"),
                           ),
@@ -677,30 +727,30 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   if (!UniversalPlatform.isWeb) {
                     menuItems.add(
                       const PopupMenuItem<String>(
-                        value: "share-url",
-                        child: Row(
-                          children: [
-                            Icon(Icons.ios_share),
-                            Expanded(
-                              child: Text("Share the download URL in..."),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-                  if (!UniversalPlatform.isWeb) {
-                    menuItems.add(
-                      const PopupMenuItem<String>(
                         value: "local-delete",
                         child: Row(
                           children: [
-                            Icon(Icons.cleaning_services),
+                            _cleanDownloadedMediaIcon,
                             Expanded(child: Text("Delete local file")),
                           ],
                         ),
                       ),
                     );
+                    if (UniversalPlatform.isMobile) {
+                      menuItems.add(
+                        const PopupMenuItem<String>(
+                          value: "share-url",
+                          child: Row(
+                            children: [
+                              Icon(Icons.ios_share),
+                              Expanded(
+                                child: Text("Share the download URL in..."),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
                     menuItems.add(
                       const PopupMenuItem<String>(
                         value: "download",

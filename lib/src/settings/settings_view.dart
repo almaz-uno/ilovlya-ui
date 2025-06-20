@@ -212,37 +212,27 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       OutlinedButton(
         child: const Text("Clean ALL downloaded media"),
         onPressed: () async {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return BlurryDialog("Are you sure?", "This will delete ALL downloaded media files", () async {
-                final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanAll();
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('$number files, ${fileSizeHumanReadable(size)} cleaned'),
-                ));
-                Navigator.pop(context);
-              });
-            },
-          );
+          confirmDialog(context, "Are you sure?", "This will delete ALL downloaded media files", () async {
+            final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanAll();
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('$number files, ${fileSizeHumanReadable(size)} cleaned'),
+            ));
+            Navigator.pop(context);
+          });
         },
       ),
       OutlinedButton(
         child: Text("Clean ALL metadata for ${data.requireValue} recordings"),
         onPressed: () async {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return BlurryDialog(
-                  "Are you sure?", "This will delete ALL metadata for ${data.requireValue} recordings,\ndownloaded media files will be retained.\nThis data can be downloaded from the server.",
-                  () async {
-                final number = await ref.read(localDataNotifierProvider.notifier).cleanMetadata();
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('$number recordings cleaned'),
-                ));
-                Navigator.pop(context);
-              });
-            },
-          );
+          confirmDialog(
+              context, "Are you sure?", "This will delete ALL metadata for ${data.requireValue} recordings,\ndownloaded media files will be retained.\nThis data can be downloaded from the server.",
+              () async {
+            final number = await ref.read(localDataNotifierProvider.notifier).cleanMetadata();
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('$number recordings cleaned'),
+            ));
+            Navigator.pop(context);
+          });
         },
       ),
       if (mediaDirs.hasValue)

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:animated_search_bar/animated_search_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:universal_platform/universal_platform.dart';
 
@@ -15,6 +16,7 @@ import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
 import 'format.dart';
+import 'intents.dart';
 import 'media_add.dart';
 import 'media_details.dart';
 import 'media_kit/audio_handler.dart';
@@ -104,169 +106,209 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     String usageInfo = "";
     if (tenant.hasValue) {
       final t = tenant.requireValue;
-      final storeStr = t.storeUsage>0?" 🏠${t.localUsageStr()}/☁️${t.storeUsageStr()} ":"";
+      final storeStr = t.storeUsage > 0 ? " 🏠${t.localUsageStr()}/☁️${t.storeUsageStr()} " : "";
 
       usageInfo = "quote: ${t.quotaStr()} usage: ${t.usageStr()} (${t.files}) free: ${t.freeStr()}$storeStr";
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: AnimatedSearchBar(
-          label: "Search...",
-          controller: _searchController,
-          labelAlignment: Alignment.centerLeft,
-          onChanged: (String value) {
-            ref.read(searchPhraseNotifierProvider.notifier).setPhrase(value);
-          },
-        ),
-        actions: [
-          IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Refresh list',
-              onPressed: () {
-                ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
-              }),
-          PopupMenuButton(
-              tooltip: 'More options',
-              icon: const Icon(Icons.more_vert),
-              onSelected: (String choice) {
-                switch (choice) {
-                  case "seen":
-                    ref.read(settingsNotifierProvider.notifier).toggleShowSeen();
-                  case "hidden":
-                    ref.read(settingsNotifierProvider.notifier).toggleShowHidden();
-                  case "sort_by_created_at":
-                    ref.read(settingsNotifierProvider.notifier).updateSortBy("created_at");
-                  case "sort_by_updated_at":
-                    ref.read(settingsNotifierProvider.notifier).updateSortBy("updated_at");
-                  case "with_server_file":
-                    ref.read(settingsNotifierProvider.notifier).toggleWithServerFile();
-                  case "with_local_file":
-                    ref.read(settingsNotifierProvider.notifier).toggleWithLocalFile();
-                }
-                //setState(() {});
-              },
-              itemBuilder: (BuildContext context) {
-                var menuItems = <PopupMenuItem<String>>[];
-                menuItems.add(
-                  PopupMenuItem<String>(
-                    value: "seen",
-                    child: Row(
-                      children: [
-                        Icon(settings.requireValue.showSeen ? Icons.check : null, color: primary),
-                        Text("show seen", style: TextStyle(color: primary)),
-                      ],
-                    ),
-                  ),
-                );
-                menuItems.add(
-                  PopupMenuItem<String>(
-                    value: "hidden",
-                    child: Row(
-                      children: [
-                        Icon(settings.requireValue.showHidden ? Icons.check : null, color: primary),
-                        Text("show hidden", style: TextStyle(color: primary)),
-                      ],
-                    ),
-                  ),
-                );
-                menuItems.add(
-                  PopupMenuItem<String>(
-                    value: "sort_by_created_at",
-                    child: Row(
-                      children: [
-                        Icon(settings.requireValue.sortBy == "created_at" ? Icons.check : null, color: primary),
-                        Text("sort by created", style: TextStyle(color: primary)),
-                      ],
-                    ),
-                  ),
-                );
-                menuItems.add(
-                  PopupMenuItem<String>(
-                    value: "sort_by_updated_at",
-                    child: Row(
-                      children: [
-                        Icon(settings.requireValue.sortBy == "updated_at" ? Icons.check : null, color: primary),
-                        Text("sort by updated", style: TextStyle(color: primary)),
-                      ],
-                    ),
-                  ),
-                );
-                menuItems.add(
-                  PopupMenuItem<String>(
-                    value: "with_server_file",
-                    child: Row(
-                      children: [
-                        Icon(settings.requireValue.withServerFile ? Icons.flag_circle_outlined : null, color: primary),
-                        Text("show only with server file", style: TextStyle(color: primary)),
-                      ],
-                    ),
-                  ),
-                );
-                menuItems.add(
-                  PopupMenuItem<String>(
-                    value: "with_local_file",
-                    child: Row(
-                      children: [
-                        Icon(settings.requireValue.withLocalFile ? Icons.download_done : null, color: primary),
-                        Text("show only with local file", style: TextStyle(color: primary)),
-                      ],
-                    ),
-                  ),
-                );
-                return menuItems;
-              }),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: 'Settings',
-            onPressed: () {
-              Navigator.restorablePushNamed(context, SettingsView.routeName);
+    return Shortcuts(
+      shortcuts: const <ShortcutActivator, Intent>{
+        SingleActivator(LogicalKeyboardKey.keyR): RefreshIntent(),
+        SingleActivator(LogicalKeyboardKey.f5): RefreshIntent(),
+        SingleActivator(LogicalKeyboardKey.home): NavigateHomeIntent(),
+        SingleActivator(LogicalKeyboardKey.end): NavigateEndIntent(),
+      },
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          RefreshIntent: CallbackAction<RefreshIntent>(
+            onInvoke: (intent) {
+              ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+              return null;
             },
           ),
-        ],
-      ),
-      floatingActionButton: Wrap(
-        spacing: 8.0,
-        children: [
-          FloatingActionButton.small(
-            tooltip: 'Add an arbitrary media',
-            onPressed: () {
-              Navigator.restorablePushNamed(context, MediaAddView.routeName(false));
+          NavigateHomeIntent: CallbackAction<NavigateHomeIntent>(
+            onInvoke: (intent) {
+              _scrollController.animateTo(
+                _scrollController.position.minScrollExtent,
+                duration: const Duration(seconds: 2),
+                curve: Curves.fastOutSlowIn,
+              );
+              return null;
             },
-            child: const Icon(Icons.add),
           ),
-          FloatingActionButton.small(
-            tooltip: 'Add from clipboard',
-            onPressed: () {
-              Navigator.restorablePushNamed(context, MediaAddView.routeName(true));
+          NavigateEndIntent: CallbackAction<NavigateEndIntent>(
+            onInvoke: (intent) {
+              _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent,
+                duration: const Duration(seconds: 2),
+                curve: Curves.fastOutSlowIn,
+              );
+              return null;
             },
-            child: const Icon(Icons.content_paste_go_rounded),
           ),
-          FloatingActionButton.small(
-            // heroTag: "up",
-            onPressed: _scrollUp,
-            child: const Icon(Icons.arrow_upward),
+        },
+        child: Focus(
+          child: Scaffold(
+            appBar: AppBar(
+              title: AnimatedSearchBar(
+                label: "Search...",
+                controller: _searchController,
+                labelAlignment: Alignment.centerLeft,
+                onChanged: (String value) {
+                  ref.read(searchPhraseNotifierProvider.notifier).setPhrase(value);
+                },
+              ),
+              actions: [
+                IconButton(
+                    icon: const Icon(Icons.refresh),
+                    tooltip: 'Refresh list',
+                    onPressed: () {
+                      ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+                    }),
+                PopupMenuButton(
+                    tooltip: 'More options',
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (String choice) {
+                      switch (choice) {
+                        case "seen":
+                          ref.read(settingsNotifierProvider.notifier).toggleShowSeen();
+                        case "hidden":
+                          ref.read(settingsNotifierProvider.notifier).toggleShowHidden();
+                        case "sort_by_created_at":
+                          ref.read(settingsNotifierProvider.notifier).updateSortBy("created_at");
+                        case "sort_by_updated_at":
+                          ref.read(settingsNotifierProvider.notifier).updateSortBy("updated_at");
+                        case "with_server_file":
+                          ref.read(settingsNotifierProvider.notifier).toggleWithServerFile();
+                        case "with_local_file":
+                          ref.read(settingsNotifierProvider.notifier).toggleWithLocalFile();
+                      }
+                      //setState(() {});
+                    },
+                    itemBuilder: (BuildContext context) {
+                      var menuItems = <PopupMenuItem<String>>[];
+                      menuItems.add(
+                        PopupMenuItem<String>(
+                          value: "seen",
+                          child: Row(
+                            children: [
+                              Icon(settings.requireValue.showSeen ? Icons.check : null, color: primary),
+                              Text("show seen", style: TextStyle(color: primary)),
+                            ],
+                          ),
+                        ),
+                      );
+                      menuItems.add(
+                        PopupMenuItem<String>(
+                          value: "hidden",
+                          child: Row(
+                            children: [
+                              Icon(settings.requireValue.showHidden ? Icons.check : null, color: primary),
+                              Text("show hidden", style: TextStyle(color: primary)),
+                            ],
+                          ),
+                        ),
+                      );
+                      menuItems.add(
+                        PopupMenuItem<String>(
+                          value: "sort_by_created_at",
+                          child: Row(
+                            children: [
+                              Icon(settings.requireValue.sortBy == "created_at" ? Icons.check : null, color: primary),
+                              Text("sort by created", style: TextStyle(color: primary)),
+                            ],
+                          ),
+                        ),
+                      );
+                      menuItems.add(
+                        PopupMenuItem<String>(
+                          value: "sort_by_updated_at",
+                          child: Row(
+                            children: [
+                              Icon(settings.requireValue.sortBy == "updated_at" ? Icons.check : null, color: primary),
+                              Text("sort by updated", style: TextStyle(color: primary)),
+                            ],
+                          ),
+                        ),
+                      );
+                      menuItems.add(
+                        PopupMenuItem<String>(
+                          value: "with_server_file",
+                          child: Row(
+                            children: [
+                              Icon(settings.requireValue.withServerFile ? Icons.flag_circle_outlined : null, color: primary),
+                              Text("show only with server file", style: TextStyle(color: primary)),
+                            ],
+                          ),
+                        ),
+                      );
+                      menuItems.add(
+                        PopupMenuItem<String>(
+                          value: "with_local_file",
+                          child: Row(
+                            children: [
+                              Icon(settings.requireValue.withLocalFile ? Icons.download_done : null, color: primary),
+                              Text("show only with local file", style: TextStyle(color: primary)),
+                            ],
+                          ),
+                        ),
+                      );
+                      return menuItems;
+                    }),
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  tooltip: 'Settings',
+                  onPressed: () {
+                    Navigator.restorablePushNamed(context, SettingsView.routeName);
+                  },
+                ),
+              ],
+            ),
+            floatingActionButton: Wrap(
+              spacing: 8.0,
+              children: [
+                FloatingActionButton.small(
+                  tooltip: 'Add an arbitrary media',
+                  onPressed: () {
+                    Navigator.restorablePushNamed(context, MediaAddView.routeName(false));
+                  },
+                  child: const Icon(Icons.add),
+                ),
+                FloatingActionButton.small(
+                  tooltip: 'Add from clipboard',
+                  onPressed: () {
+                    Navigator.restorablePushNamed(context, MediaAddView.routeName(true));
+                  },
+                  child: const Icon(Icons.content_paste_go_rounded),
+                ),
+                FloatingActionButton.small(
+                  // heroTag: "up",
+                  onPressed: _scrollUp,
+                  child: const Icon(Icons.arrow_upward),
+                ),
+                FloatingActionButton.small(
+                  // heroTag: "down",
+                  onPressed: _scrollDown,
+                  child: const Icon(Icons.arrow_downward),
+                ),
+              ],
+            ),
+            bottomNavigationBar: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(usageInfo),
+              ],
+            ),
+            body: RefreshIndicator(
+              onRefresh: () => ref.read(mediaListNotifierProvider.notifier).refreshFromServer(),
+              child: Stack(
+                children: [
+                  Visibility(visible: mediaList.isLoading, child: const LinearProgressIndicator()),
+                  _buildRecordingsList(context, mediaList),
+                ],
+              ),
+            ),
           ),
-          FloatingActionButton.small(
-            // heroTag: "down",
-            onPressed: _scrollDown,
-            child: const Icon(Icons.arrow_downward),
-          ),
-        ],
-      ),
-      bottomNavigationBar: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(usageInfo),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.read(mediaListNotifierProvider.notifier).refreshFromServer(),
-        child: Stack(
-          children: [
-            Visibility(visible: mediaList.isLoading, child: const LinearProgressIndicator()),
-            _buildRecordingsList(context, mediaList),
-          ],
         ),
       ),
     );

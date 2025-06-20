@@ -33,3 +33,12 @@ class BlurryDialog extends StatelessWidget {
       ));
   }
 }
+
+void confirmDialog(BuildContext context, String title, String message, void Function() commitCallback) async {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return BlurryDialog(title, message, commitCallback);
+    },
+  );
+}
