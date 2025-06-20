@@ -31,7 +31,11 @@ import 'media_list.dart';
 const _downloadFormatIcon = Icon(Icons.start);
 const _copyURLIcon = Icon(Icons.copy);
 const _copyCURLIcon = Icon(Icons.terminal);
+const _hFlipIcon = Icon(Icons.flip_sharp);
+const _playMpvIcon = Icon(Icons.play_circle);
+const _playMpvHFlipIcon = Icon(Icons.flip_sharp);
 // const _ffPlayer = "/app/bin/ffplay";
+const _ffmpeg = "/app/bin/ffmpeg";
 const _mpvPlayer = "/app/bin/mpv";
 
 class MediaDetailsView extends ConsumerStatefulWidget {
@@ -577,6 +581,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       copyToClipboard(context, d.url);
                     case "copy-curl":
                       copyToClipboard(context, "curl '${d.url}' -o '${d.filename}'");
+                    case "mpv-play":
+                      Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", d.fullPathMedia ?? d.url]);
+                    case "mpv-play-horizontal-flip":
+                      Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", d.fullPathMedia ?? d.url]);
                     case "default":
                       launchUrlString(d.url);
                     case "server-delete":
@@ -614,6 +622,29 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                         children: [
                           _copyCURLIcon,
                           Expanded(child: Text("Copy curl command to clipboard")),
+                        ],
+                      ),
+                    ),
+                  );
+                  menuItems.add(
+                    const PopupMenuItem<String>(
+                      value: "mpv-play",
+                      child: Row(
+                        children: [
+                          _playMpvIcon,
+                          Expanded(child: Text("Play with embedded mpv player")),
+                        ],
+                      ),
+                    ),
+                  );
+                  menuItems.add(
+                    const PopupMenuItem<String>(
+                      value: "mpv-play-horizontal-flip",
+                      child: Row(
+                        children: [
+                          _playMpvIcon,
+                          _hFlipIcon,
+                          Expanded(child: Text("Play with embedded mpv player with horizontal flip")),
                         ],
                       ),
                     ),
