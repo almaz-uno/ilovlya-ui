@@ -21,6 +21,7 @@ import '../api/recording_riverpod.dart';
 import '../model/download.dart';
 import '../model/local_download.dart';
 import '../model/recording_info.dart';
+import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
 import 'download_details.dart';
 import 'format.dart';
@@ -28,6 +29,7 @@ import 'intents.dart';
 import 'media_kit/audio_handler.dart';
 import 'media_kit/recording_play.dart';
 import 'media_list.dart';
+import 'mpv.dart';
 
 const _cleanServerMediaIcon = Icon(Icons.clear);
 const _cleanDownloadedMediaIcon = Icon(Icons.cleaning_services);
@@ -39,6 +41,8 @@ const _playMpvIcon = Icon(Icons.play_circle);
 // const _ffPlayer = "/app/bin/ffplay";
 //const _ffmpeg = "/app/bin/ffmpeg";
 const _mpvPlayer = "/app/bin/mpv";
+
+const _mpvSocketPath = '/tmp/mpvsocket';
 
 class MediaDetailsView extends ConsumerStatefulWidget {
   const MediaDetailsView({
@@ -82,6 +86,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     super.deactivate();
   }
 
+  void _sendPosition(String recordingId, Duration position, bool autoFinished) {
+    if (ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)) == false) autoFinished = false;
+    ref.read(putPositionProvider(recordingId, position, autoFinished));
+  }
+
   (Download? local, Download? ready, Download? stale) _findAppropriateDownloads(List<Download> downloads) {
     Download? local;
     Download? ready;
@@ -105,6 +114,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Future<void> _pullRefresh() async {
+    getMpvPlaybackPosition(_mpvSocketPath, (double? pos) {
+      debugPrint("Current position: $pos");
+      if (pos != null) _sendPosition(widget.id, Duration(seconds: pos.toInt()), false);
+    });
     await ref.read(recordingNotifierProvider(widget.id).notifier).refreshFromServer();
     await ref.read(downloadsNotifierProvider(widget.id).notifier).refreshFromServer();
   }
@@ -613,7 +626,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 );
               },
               onLongPress: () {
-                Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", d.url]);
+                Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.url]);
               },
               tooltip: "Open with MediaKit with handler",
               icon: const Icon(Icons.flag_circle_outlined),
@@ -628,9 +641,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     case "copy-curl":
                       copyToClipboard(context, "curl '${d.url}' -o '${d.filename}'");
                     case "mpv-play":
-                      Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", d.fullPathMedia ?? d.url]);
+                      Process.start("/usr/bin/flatpak-spawn",
+                          <String>[_mpvPlayer, "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url]);
                     case "mpv-play-horizontal-flip":
-                      Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", d.fullPathMedia ?? d.url]);
+                      Process.start("/usr/bin/flatpak-spawn",
+                          <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url]);
                     case "default":
                       launchUrlString(d.url);
                     case "server-delete":
@@ -785,7 +800,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           );
         },
         onLongPress: () {
-          Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", d.fullPathMedia!]);
+          Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!]);
         },
         tooltip: "Local file is downloaded. Click to play.",
         icon: const Icon(Icons.download_done),
