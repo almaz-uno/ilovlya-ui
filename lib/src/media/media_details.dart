@@ -202,6 +202,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       confirmDialog(context, "Are you sure?", "Delete all files on the server?", () {
                         ref.read(deleteRecordingDownloadsContentProvider(recording.requireValue.id));
                         _pullRefresh();
+                        Navigator.pop(context);
                       });
                     }
                   },
@@ -212,7 +213,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   onPressed: () {
                     confirmDialog(context, "Are you sure?", "Delete all local files on the device?", () {
                       ref.read(downloadsNotifierProvider(widget.id).notifier).cleanAll();
-                      _pullRefresh();
+                      Navigator.pop(context);
                     });
                   },
                 ),
@@ -660,10 +661,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       confirmDialog(context, "Are you sure?", "Delete server media file?", () {
                         ref.read(deleteDownloadContentProvider(d.id));
                         _pullRefresh();
+                        Navigator.pop(context);
                       });
                     case "local-delete":
                       confirmDialog(context, "Are you sure?", "Delete local downloaded media file?", () {
                         ref.read(downloadsNotifierProvider(recording.id).notifier).clean(d.id);
+                        Navigator.pop(context);
                       });
                     case "share-url":
                       await Share.shareUri(Uri.parse(d.url));
