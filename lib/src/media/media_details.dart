@@ -626,8 +626,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
                 );
               },
-              onLongPress: () {
-                Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.url]);
+              onLongPress: () async {
+                final p =
+                    await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.url]);
+                await stdout.addStream(p.stdout);
+                await stderr.addStream(p.stderr);
               },
               tooltip: "Open with MediaKit with handler",
               icon: const Icon(Icons.flag_circle_outlined),
@@ -642,11 +645,15 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     case "copy-curl":
                       copyToClipboard(context, "curl '${d.url}' -o '${d.filename}'");
                     case "mpv-play":
-                      Process.start("/usr/bin/flatpak-spawn",
+                      final p = await Process.start("/usr/bin/flatpak-spawn",
                           <String>[_mpvPlayer, "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url]);
+                      await stdout.addStream(p.stdout);
+                      await stderr.addStream(p.stderr);
                     case "mpv-play-horizontal-flip":
-                      Process.start("/usr/bin/flatpak-spawn",
+                      final p = await Process.start("/usr/bin/flatpak-spawn",
                           <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url]);
+                      await stdout.addStream(p.stdout);
+                      await stderr.addStream(p.stderr);
                     case "default":
                       launchUrlString(d.url);
                     case "server-delete":
@@ -800,8 +807,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
           );
         },
-        onLongPress: () {
-          Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!]);
+        onLongPress: () async {
+          final p = await Process.start(
+              "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!]);
+          await stdout.addStream(p.stdout);
+          await stderr.addStream(p.stderr);
         },
         tooltip: "Local file is downloaded. Click to play.",
         icon: const Icon(Icons.download_done),
