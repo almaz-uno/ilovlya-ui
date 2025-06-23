@@ -42,8 +42,6 @@ const _playMpvIcon = Icon(Icons.play_circle);
 //const _ffmpeg = "/app/bin/ffmpeg";
 const _mpvPlayer = "/app/bin/mpv";
 
-const _mpvSocketPath = '/tmp/mpvsocket';
-
 class MediaDetailsView extends ConsumerStatefulWidget {
   const MediaDetailsView({
     super.key,
@@ -62,12 +60,15 @@ class MediaDetailsView extends ConsumerStatefulWidget {
 class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   String? title;
   StreamSubscription? _updatePullSubs;
+  late String _mpvSocketPath;
 
   static const _updatePullPeriod = Duration(seconds: 3);
 
   @override
   void initState() {
     super.initState();
+
+    _mpvSocketPath = "/tmp/${widget.id}";
 
     _pullRefresh();
 
