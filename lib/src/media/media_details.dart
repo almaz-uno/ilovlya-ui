@@ -59,6 +59,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   String? title;
   StreamSubscription? _updatePullSubs;
   late String _mpvSocketPath;
+  bool settingSeen = false;
+  bool settingHidden = false;
 
   static const _updatePullPeriod = Duration(seconds: 3);
 
@@ -68,7 +70,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
     _mpvSocketPath = "/tmp/${widget.id}";
 
-    _pullRefresh();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _pullRefresh();
+    });
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
       if (MKPlayerHandler.player.state.playing) {
@@ -83,6 +87,42 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   void deactivate() {
     _updatePullSubs?.cancel();
     super.deactivate();
+  }
+
+  void _toggleSeen(RecordingInfo recording) async {
+    try {
+      setState(() {
+        settingSeen = true;
+      });
+      if (recording.seenAt == null) {
+        await ref.read(setSeenProvider(recording.id).future);
+      } else {
+        await ref.read(unsetSeenProvider(recording.id).future);
+      }
+      await _pullRefresh();
+    } finally {
+      setState(() {
+        settingSeen = false;
+      });
+    }
+  }
+
+  void _toggleHidden(RecordingInfo recording) async {
+    try {
+      setState(() {
+        settingHidden = true;
+      });
+      if (recording.hiddenAt == null) {
+        await ref.read(setHiddenProvider(recording.id).future);
+      } else {
+        await ref.read(unsetHiddenProvider(recording.id).future);
+      }
+      await _pullRefresh();
+    } finally {
+      setState(() {
+        settingHidden = false;
+      });
+    }
   }
 
   void _sendPosition(String recordingId, Duration position, bool autoFinished) {
@@ -158,14 +198,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           ToggleSeenIntent: CallbackAction<ToggleSeenIntent>(
             onInvoke: (ToggleSeenIntent intent) async {
               if (recording.hasValue) {
-                final r = recording.requireValue;
-                if (r.seenAt == null) {
-                  await ref.read(setSeenProvider(r.id).future);
-                  _pullRefresh();
-                } else {
-                  await ref.read(unsetSeenProvider(r.id).future);
-                  _pullRefresh();
-                }
+                _toggleSeen(recording.requireValue);
               }
               return null;
             },
@@ -173,14 +206,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           ToggleHiddenIntent: CallbackAction<ToggleHiddenIntent>(
             onInvoke: (ToggleHiddenIntent intent) async {
               if (recording.hasValue) {
-                final r = recording.requireValue;
-                if (r.hiddenAt == null) {
-                  await ref.read(setHiddenProvider(r.id).future);
-                  _pullRefresh();
-                } else {
-                  await ref.read(unsetHiddenProvider(r.id).future);
-                  _pullRefresh();
-                }
+                _toggleHidden(recording.requireValue);
               }
               return null;
             },
@@ -661,6 +687,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       return const SizedBox();
     }
 
+    if (settingSeen) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final r = recording.requireValue;
 
     if (r.seenAt == null) {
@@ -668,8 +698,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         icon: const Icon(Icons.check_box_outline_blank_rounded),
         tooltip: 'Mark this recording as seen',
         onPressed: () async {
-          await ref.read(setSeenProvider(r.id).future);
-          _pullRefresh();
+          _toggleSeen(r);
         },
       );
     } else {
@@ -677,8 +706,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         icon: const Icon(Icons.check_box_outlined),
         tooltip: 'Mark this recording as unseen',
         onPressed: () async {
-          await ref.read(unsetSeenProvider(r.id).future);
-          _pullRefresh();
+          _toggleSeen(r);
         },
       );
     }
@@ -689,6 +717,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       return const Icon(null);
     }
 
+    if (settingHidden) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final r = recording.requireValue;
 
     if (r.hiddenAt == null) {
@@ -696,8 +728,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         icon: const Icon(Icons.visibility_outlined),
         tooltip: 'Hide this recording (archive it)',
         onPressed: () async {
-          await ref.read(setHiddenProvider(r.id).future);
-          _pullRefresh();
+          _toggleHidden(r);
         },
       );
     } else {
@@ -705,8 +736,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         icon: const Icon(Icons.visibility_off_outlined),
         tooltip: 'Show this recording (unarchive it)',
         onPressed: () async {
-          await ref.read(unsetHiddenProvider(r.id).future);
-          _pullRefresh();
+          _toggleHidden(r);
         },
       );
     }
