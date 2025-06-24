@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:background_downloader/background_downloader.dart';
@@ -23,8 +22,9 @@ import '../model/local_download.dart';
 import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
-import 'download_details.dart';
+import 'downloads_table.dart';
 import 'format.dart';
+import 'formats_table.dart';
 import 'intents.dart';
 import 'media_kit/audio_handler.dart';
 import 'media_kit/recording_play.dart';
@@ -33,8 +33,6 @@ import 'mpv.dart';
 
 const _cleanServerMediaIcon = Icon(Icons.clear);
 const _cleanDownloadedMediaIcon = Icon(Icons.cleaning_services);
-const _downloadFormatIcon = Icon(Icons.start);
-const _copyURLIcon = Icon(Icons.copy);
 const _copyCURLIcon = Icon(Icons.terminal);
 const _hFlipIcon = Icon(Icons.flip_sharp);
 const _playMpvIcon = Icon(Icons.play_circle);
@@ -264,84 +262,98 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        InkWell(
-          onTap: () async {
-            await launchUrlString(recording.webpageUrl);
-          },
-          onLongPress: () async {},
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "${recording.id}: ${recording.title}",
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  // Text("Record id: ${recording.id}"),
-                  Text("${recording.uploader} • ${recording.extractor}"),
-                  Text("Created at: ${formatDateLong(recording.createdAt)} (${since(recording.createdAt, false)} ago)"),
-                  Text("Updated at: ${formatDateLong(recording.updatedAt)} (${since(recording.updatedAt, false)} ago)"),
-                  Row(
-                    children: [
-                      Text(
-                        recording.webpageUrl,
-                        style: const TextStyle(
-                          overflow: TextOverflow.fade,
-                          decoration: TextDecoration.underline,
-                          color: Colors.blue,
-                        ),
-                      ),
-                      IconButton(
-                        icon: _copyURLIcon,
-                        tooltip: 'Copy video URL to the clipboard',
-                        onPressed: () {
-                          copyToClipboard(context, recording.webpageUrl);
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+        _buildHeader(context, recording),
+        _buildPreview(context, recording, downloads),
+        if (downloads.hasValue) ...[
+          _localDownloadsTable(context, recording, downloads.requireValue),
+          Center(
+            child: DownloadsTable(
+              recording: recording,
+              downloads: downloads.requireValue,
+              recordView: _recordView,
+              startPreparation: _startPreparation,
+              buildActions: _buildActions,
+              buildLocalActions: _buildLocalActions,
             ),
           ),
-        ),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: InkWell(
-              onTap: () {
-                var (local, ready, stale) = downloads.hasValue ? _findAppropriateDownloads(downloads.requireValue) : (null, null, null);
-                if (local != null) {
-                  _recordView(context, recording, local);
-                } else if (ready != null) {
-                  _recordView(context, recording, ready);
-                } else if (stale != null) {
-                  _startPreparation(context, stale.formatId);
-                }
-              },
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.5,
-                    child: createThumb(ref, recording.thumbnailUrl),
-                  ),
-                  LinearProgressIndicator(
-                    backgroundColor: const Color.fromARGB(127, 158, 158, 158),
-                    value: recording.duration == 0 ? null : recording.position / recording.duration,
-                  ),
-                  Text("${formatDuration(Duration(seconds: recording.position))} / ${formatDuration(Duration(seconds: recording.duration))}"),
-                ],
-              ),
+        ] else
+          const Text("Downloads info is loading..."),
+        if (recording.formats != null && recording.formats!.isNotEmpty)
+          Center(
+            child: FormatsTable(
+              recording: recording,
+              startPreparation: _startPreparation,
             ),
-          ),
-        ),
-        Center(child: downloads.hasValue ? _localDownloadsTable(context, recording, downloads.requireValue) : const SizedBox.shrink()),
-        Center(child: downloads.hasValue ? _downloadsTable(context, recording, downloads.requireValue) : const Text("Downloads info is loading...")),
-        Center(child: recording.formats == null || recording.formats!.isEmpty ? const Text("No formats for the record") : _formatsTable(context, recording)),
+          )
+        else
+          const Text("No formats for the record"),
       ],
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, RecordingInfo recording) {
+    return Center(
+      child: InkWell(
+        onTap: () async => await launchUrlString(recording.webpageUrl),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("${recording.id}: ${recording.title}", style: Theme.of(context).textTheme.bodyLarge),
+                Text("${recording.uploader} • ${recording.extractor}"),
+                Text("Created at: ${formatDateLong(recording.createdAt)} (${since(recording.createdAt, false)} ago)"),
+                Text("Updated at: ${formatDateLong(recording.updatedAt)} (${since(recording.updatedAt, false)} ago)"),
+                Row(
+                  children: [
+                    Text(recording.webpageUrl, style: const TextStyle(overflow: TextOverflow.fade, decoration: TextDecoration.underline, color: Colors.blue)),
+                    IconButton(
+                      icon: copyURLIcon,
+                      tooltip: 'Copy video URL to the clipboard',
+                      onPressed: () => copyToClipboard(context, recording.webpageUrl),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPreview(BuildContext context, RecordingInfo recording, AsyncValue<List<Download>> downloads) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: InkWell(
+          onTap: () {
+            var (local, ready, stale) = downloads.hasValue ? _findAppropriateDownloads(downloads.requireValue) : (null, null, null);
+            if (local != null) {
+              _recordView(context, recording, local);
+            } else if (ready != null) {
+              _recordView(context, recording, ready);
+            } else if (stale != null) {
+              _startPreparation(context, stale.formatId);
+            }
+          },
+          child: Column(
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: createThumb(ref, recording.thumbnailUrl),
+              ),
+              LinearProgressIndicator(
+                backgroundColor: const Color.fromARGB(127, 158, 158, 158),
+                value: recording.duration == 0 ? null : recording.position / recording.duration,
+              ),
+              Text("${formatDuration(Duration(seconds: recording.position))} / ${formatDuration(Duration(seconds: recording.duration))}"),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -376,203 +388,6 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       padding: const EdgeInsets.all(8.0),
       child: Column(
         children: [for (final dt in downloadTasks.values) ldline(dt)],
-      ),
-    );
-  }
-
-  Widget _downloadsTable(BuildContext context, RecordingInfo recording, List<Download> downloads) {
-    const splitter = LineSplitter();
-
-    var rows = List<DataRow>.generate(downloads.length, (i) {
-      final d = downloads[i];
-      final ll = splitter.convert(d.progress);
-      final pr = ll.isEmpty ? '' : ll[ll.length - 1];
-      final hr = fileSizeHumanReadable(d.size);
-      var opacity = 0.25;
-      switch (d.status) {
-        case "stale":
-          opacity = 0.5;
-        case "new":
-        case "in_progress":
-          opacity = 0.75;
-        case "ready":
-          opacity = 1.0;
-      }
-
-      return DataRow(cells: [
-        DataCell(
-          onTap: () {
-            if (d.status == "ready") {
-              _recordView(context, recording, d);
-            } else if (d.status == "stale") {
-              _startPreparation(context, d.formatId);
-            }
-          },
-          Opacity(
-            opacity: opacity,
-            child: Tooltip(
-              message: "${d.filename} tap to play in embedding player",
-              child: Text(d.formatId),
-            ),
-          ),
-        ),
-        DataCell(Row(
-          children: [
-            _buildActions(context, recording, d),
-            _buildLocalActions(context, recording, d),
-          ],
-        )),
-        DataCell(Opacity(opacity: opacity, child: Text(d.resolution))),
-        DataCell(Opacity(opacity: opacity, child: Text(d.fps != null ? "${d.fps}" : ""))),
-        DataCell(Opacity(
-          opacity: opacity,
-          child: Row(
-            children: [
-              Visibility(visible: d.hasAudio, child: const Icon(Icons.audiotrack_rounded)),
-              Visibility(visible: d.hasVideo, child: const Icon(Icons.videocam_rounded)),
-            ],
-          ),
-        )),
-        DataCell(Opacity(opacity: opacity, child: Text(d.size == 0 ? '' : hr))),
-        DataCell(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (BuildContext context) => DownloadDetailsView(downloadId: d.id)),
-            );
-          },
-          Opacity(opacity: opacity, child: Text(pr)),
-        ),
-      ]);
-    });
-
-    const headerStyle = TextStyle(
-      fontStyle: FontStyle.italic,
-      fontWeight: FontWeight.bold,
-    );
-
-    return downloads.isEmpty
-        ? const Text(
-            "No downloads for recording",
-            style: TextStyle(fontStyle: FontStyle.italic),
-          )
-        : Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Files for this recording",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  DataTable(
-                    columnSpacing: 12,
-                    columns: const [
-                      DataColumn(label: Expanded(child: Text("format", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("fps", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("size", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                    ],
-                    rows: rows,
-                  ),
-                ],
-              ),
-            ),
-          );
-  }
-
-  Widget _formatsTable(BuildContext context, RecordingInfo recording) {
-    List<DataRow> rows = [];
-
-    for (int i = 0; i < recording.formats!.length; i++) {
-      var f = recording.formats![i];
-      rows.add(DataRow(
-        cells: <DataCell>[
-          DataCell(
-            IconButton(
-              onPressed: () {
-                _startPreparation(context, "${f.id}+ba");
-              },
-              tooltip: "Download this format and the best audio on the server (prepare for viewing)",
-              icon: _downloadFormatIcon,
-            ),
-          ),
-          DataCell(
-            onTap: () {
-              _startPreparation(context, f.id);
-            },
-            Tooltip(
-              message: "Download exact this format (prepare this format for viewing)",
-              child: Text(f.id),
-            ),
-          ),
-          DataCell(
-            f.url != ""
-                ? IconButton(
-                    onPressed: () {
-                      copyToClipboard(context, f.url);
-                    },
-                    tooltip: "Copy URL this fragment into clipboard",
-                    icon: _copyURLIcon,
-                  )
-                : const SizedBox.shrink(),
-          ),
-          DataCell(Text(f.ext)),
-          DataCell(Text(f.resolution)),
-          DataCell(Visibility(visible: f.fps != 0, child: Text("${f.fps}"))),
-          DataCell(Visibility(visible: f.hasAudio, child: const Icon(Icons.audiotrack_rounded))),
-          DataCell(Visibility(visible: f.hasVideo, child: const Icon(Icons.videocam_rounded))),
-        ],
-      ));
-    }
-
-    const headerStyle = TextStyle(
-      fontStyle: FontStyle.italic,
-      fontWeight: FontWeight.bold,
-    );
-
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Common available formats:",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          TextButton.icon(
-            onPressed: () {
-              _startPreparation(context, "ba");
-            },
-            icon: const Icon(Icons.audiotrack_rounded),
-            label: const Text("Best audio (ba)"),
-          ),
-          const Text(
-            "Available formats:",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              columnSpacing: 12,
-              columns: const <DataColumn>[
-                DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("id", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("URL", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("ext", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("fps", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-              ],
-              rows: rows,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -613,7 +428,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             _startPreparation(context, d.formatId);
           },
           tooltip: "Download this format again on the server (prepare for viewing)",
-          icon: _downloadFormatIcon,
+          icon: downloadFormatIcon,
         );
       case "new":
       case "in_progress":
@@ -685,7 +500,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       value: "copy",
                       child: Row(
                         children: [
-                          _copyURLIcon,
+                          copyURLIcon,
                           Expanded(child: Text("Copy file link to clipboard")),
                         ],
                       ),
