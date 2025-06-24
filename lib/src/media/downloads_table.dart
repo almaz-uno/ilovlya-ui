@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../model/download.dart';
 import '../model/recording_info.dart';
 import 'download_details.dart';
 import 'format.dart';
 
-class DownloadsTable extends StatelessWidget {
+class DownloadsTable extends ConsumerWidget {
   final RecordingInfo recording;
   final List<Download> downloads;
   final void Function(BuildContext, RecordingInfo, Download) recordView;
@@ -24,7 +25,7 @@ class DownloadsTable extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     const splitter = LineSplitter();
 
     var rows = List<DataRow>.generate(downloads.length, (i) {
