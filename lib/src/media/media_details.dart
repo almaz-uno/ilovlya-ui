@@ -469,10 +469,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 );
               },
               onLongPress: () async {
-                final p =
-                    await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.url]);
-                await stdout.addStream(p.stdout);
-                await stderr.addStream(p.stderr);
+                if (UniversalPlatform.isLinux) {
+                  await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.url],
+                      mode: ProcessStartMode.detached);
+                }
               },
               tooltip: "Open with MediaKit with handler",
               icon: const Icon(Icons.flag_circle_outlined),
@@ -487,15 +487,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     case "copy-curl":
                       copyToClipboard(context, "curl '${d.url}' -o '${d.filename}'");
                     case "mpv-play":
-                      final p = await Process.start("/usr/bin/flatpak-spawn",
-                          <String>[_mpvPlayer, "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url]);
-                      await stdout.addStream(p.stdout);
-                      await stderr.addStream(p.stderr);
+                      await Process.start(
+                          "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
+                          mode: ProcessStartMode.detached);
                     case "mpv-play-horizontal-flip":
-                      final p = await Process.start("/usr/bin/flatpak-spawn",
-                          <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url]);
-                      await stdout.addStream(p.stdout);
-                      await stderr.addStream(p.stderr);
+                      await Process.start("/usr/bin/flatpak-spawn",
+                          <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
+                          mode: ProcessStartMode.detached);
                     case "default":
                       launchUrlString(d.url);
                     case "server-delete":
@@ -543,29 +541,32 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       ),
                     ),
                   );
-                  menuItems.add(
-                    const PopupMenuItem<String>(
-                      value: "mpv-play",
-                      child: Row(
-                        children: [
-                          _playMpvIcon,
-                          Expanded(child: Text("Play with embedded mpv player")),
-                        ],
+                  if (UniversalPlatform.isLinux) {
+                    menuItems.add(
+                      const PopupMenuItem<String>(
+                        value: "mpv-play",
+                        child: Row(
+                          children: [
+                            _playMpvIcon,
+                            Expanded(child: Text("Play with embedded mpv player")),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                  menuItems.add(
-                    const PopupMenuItem<String>(
-                      value: "mpv-play-horizontal-flip",
-                      child: Row(
-                        children: [
-                          _playMpvIcon,
-                          _hFlipIcon,
-                          Expanded(child: Text("Play with embedded mpv player with horizontal flip")),
-                        ],
+                    );
+
+                    menuItems.add(
+                      const PopupMenuItem<String>(
+                        value: "mpv-play-horizontal-flip",
+                        child: Row(
+                          children: [
+                            _playMpvIcon,
+                            _hFlipIcon,
+                            Expanded(child: Text("Play with embedded mpv player with horizontal flip")),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  }
                   menuItems.add(
                     const PopupMenuItem<String>(
                       value: "default",
@@ -652,10 +653,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           );
         },
         onLongPress: () async {
-          final p = await Process.start(
-              "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!]);
-          await stdout.addStream(p.stdout);
-          await stderr.addStream(p.stderr);
+          if (UniversalPlatform.isLinux) {
+            await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!],
+                mode: ProcessStartMode.detached);
+          }
         },
         tooltip: "Local file is downloaded. Click to play.",
         icon: const Icon(Icons.download_done),
