@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:duration/duration.dart';
@@ -6,13 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ilovlya/src/api/media_list_riverpod.dart';
-import 'package:ilovlya/src/api/recording_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import '../../api/api_riverpod.dart';
+import '../../api/media_list_riverpod.dart';
+import '../../api/recording_riverpod.dart';
 import '../../api/thumbnail_riverpod.dart';
 import '../../model/download.dart';
 import '../../model/recording_info.dart';
@@ -311,6 +312,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                                 controller: _controller,
                                 pauseUponEnteringBackgroundMode: false,
                                 resumeUponEnteringForegroundMode: true,
+                                onEnterFullscreen: _onEnterFullscreen,
                               ),
                               AnimatedSwitcher(
                                 duration: const Duration(milliseconds: 500),
@@ -401,6 +403,31 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
         ),
       ),
     );
+  }
+
+  Future<void> _onEnterFullscreen() async {
+    try {
+      if (Platform.isAndroid || Platform.isIOS) {
+        await Future.wait(
+          [
+            SystemChrome.setEnabledSystemUIMode(
+              SystemUiMode.immersiveSticky,
+              overlays: [],
+            ),
+            SystemChrome.setPreferredOrientations(
+              [],
+            ),
+          ],
+        );
+      } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+        await const MethodChannel('com.alexmercerind/media_kit_video').invokeMethod(
+          'Utils.EnterNativeFullscreen',
+        );
+      }
+    } catch (exception, stacktrace) {
+      debugPrint(exception.toString());
+      debugPrint(stacktrace.toString());
+    }
   }
 }
 
