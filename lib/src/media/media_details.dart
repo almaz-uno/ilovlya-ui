@@ -59,6 +59,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   String? title;
   StreamSubscription? _updatePullSubs;
   late String _mpvSocketPath;
+  bool settingSeen = false;
+  bool settingHidden = false;
 
   static const _updatePullPeriod = Duration(seconds: 3);
 
@@ -68,7 +70,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
     _mpvSocketPath = "/tmp/${widget.id}";
 
-    _pullRefresh();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _pullRefresh();
+    });
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
       if (MKPlayerHandler.player.state.playing) {
@@ -83,6 +87,42 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   void deactivate() {
     _updatePullSubs?.cancel();
     super.deactivate();
+  }
+
+  void _toggleSeen(RecordingInfo recording) async {
+    try {
+      setState(() {
+        settingSeen = true;
+      });
+      if (recording.seenAt == null) {
+        await ref.read(setSeenProvider(recording.id).future);
+      } else {
+        await ref.read(unsetSeenProvider(recording.id).future);
+      }
+      await _pullRefresh();
+    } finally {
+      setState(() {
+        settingSeen = false;
+      });
+    }
+  }
+
+  void _toggleHidden(RecordingInfo recording) async {
+    try {
+      setState(() {
+        settingHidden = true;
+      });
+      if (recording.hiddenAt == null) {
+        await ref.read(setHiddenProvider(recording.id).future);
+      } else {
+        await ref.read(unsetHiddenProvider(recording.id).future);
+      }
+      await _pullRefresh();
+    } finally {
+      setState(() {
+        settingHidden = false;
+      });
+    }
   }
 
   void _sendPosition(String recordingId, Duration position, bool autoFinished) {
@@ -158,14 +198,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           ToggleSeenIntent: CallbackAction<ToggleSeenIntent>(
             onInvoke: (ToggleSeenIntent intent) async {
               if (recording.hasValue) {
-                final r = recording.requireValue;
-                if (r.seenAt == null) {
-                  await ref.read(setSeenProvider(r.id).future);
-                  _pullRefresh();
-                } else {
-                  await ref.read(unsetSeenProvider(r.id).future);
-                  _pullRefresh();
-                }
+                _toggleSeen(recording.requireValue);
               }
               return null;
             },
@@ -173,14 +206,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           ToggleHiddenIntent: CallbackAction<ToggleHiddenIntent>(
             onInvoke: (ToggleHiddenIntent intent) async {
               if (recording.hasValue) {
-                final r = recording.requireValue;
-                if (r.hiddenAt == null) {
-                  await ref.read(setHiddenProvider(r.id).future);
-                  _pullRefresh();
-                } else {
-                  await ref.read(unsetHiddenProvider(r.id).future);
-                  _pullRefresh();
-                }
+                _toggleHidden(recording.requireValue);
               }
               return null;
             },
@@ -443,10 +469,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 );
               },
               onLongPress: () async {
-                final p =
-                    await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.url]);
-                await stdout.addStream(p.stdout);
-                await stderr.addStream(p.stderr);
+                if (UniversalPlatform.isLinux) {
+                  await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.url],
+                      mode: ProcessStartMode.detached);
+                }
               },
               tooltip: "Open with MediaKit with handler",
               icon: const Icon(Icons.flag_circle_outlined),
@@ -461,15 +487,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     case "copy-curl":
                       copyToClipboard(context, "curl '${d.url}' -o '${d.filename}'");
                     case "mpv-play":
-                      final p = await Process.start("/usr/bin/flatpak-spawn",
-                          <String>[_mpvPlayer, "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url]);
-                      await stdout.addStream(p.stdout);
-                      await stderr.addStream(p.stderr);
+                      await Process.start(
+                          "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
+                          mode: ProcessStartMode.detached);
                     case "mpv-play-horizontal-flip":
-                      final p = await Process.start("/usr/bin/flatpak-spawn",
-                          <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url]);
-                      await stdout.addStream(p.stdout);
-                      await stderr.addStream(p.stderr);
+                      await Process.start("/usr/bin/flatpak-spawn",
+                          <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
+                          mode: ProcessStartMode.detached);
                     case "default":
                       launchUrlString(d.url);
                     case "server-delete":
@@ -517,29 +541,32 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       ),
                     ),
                   );
-                  menuItems.add(
-                    const PopupMenuItem<String>(
-                      value: "mpv-play",
-                      child: Row(
-                        children: [
-                          _playMpvIcon,
-                          Expanded(child: Text("Play with embedded mpv player")),
-                        ],
+                  if (UniversalPlatform.isLinux) {
+                    menuItems.add(
+                      const PopupMenuItem<String>(
+                        value: "mpv-play",
+                        child: Row(
+                          children: [
+                            _playMpvIcon,
+                            Expanded(child: Text("Play with embedded mpv player")),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                  menuItems.add(
-                    const PopupMenuItem<String>(
-                      value: "mpv-play-horizontal-flip",
-                      child: Row(
-                        children: [
-                          _playMpvIcon,
-                          _hFlipIcon,
-                          Expanded(child: Text("Play with embedded mpv player with horizontal flip")),
-                        ],
+                    );
+
+                    menuItems.add(
+                      const PopupMenuItem<String>(
+                        value: "mpv-play-horizontal-flip",
+                        child: Row(
+                          children: [
+                            _playMpvIcon,
+                            _hFlipIcon,
+                            Expanded(child: Text("Play with embedded mpv player with horizontal flip")),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  }
                   menuItems.add(
                     const PopupMenuItem<String>(
                       value: "default",
@@ -626,10 +653,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           );
         },
         onLongPress: () async {
-          final p = await Process.start(
-              "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!]);
-          await stdout.addStream(p.stdout);
-          await stderr.addStream(p.stderr);
+          if (UniversalPlatform.isLinux) {
+            await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!],
+                mode: ProcessStartMode.detached);
+          }
         },
         tooltip: "Local file is downloaded. Click to play.",
         icon: const Icon(Icons.download_done),
@@ -661,6 +688,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       return const SizedBox();
     }
 
+    if (settingSeen) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final r = recording.requireValue;
 
     if (r.seenAt == null) {
@@ -668,8 +699,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         icon: const Icon(Icons.check_box_outline_blank_rounded),
         tooltip: 'Mark this recording as seen',
         onPressed: () async {
-          await ref.read(setSeenProvider(r.id).future);
-          _pullRefresh();
+          _toggleSeen(r);
         },
       );
     } else {
@@ -677,8 +707,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         icon: const Icon(Icons.check_box_outlined),
         tooltip: 'Mark this recording as unseen',
         onPressed: () async {
-          await ref.read(unsetSeenProvider(r.id).future);
-          _pullRefresh();
+          _toggleSeen(r);
         },
       );
     }
@@ -689,6 +718,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       return const Icon(null);
     }
 
+    if (settingHidden) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final r = recording.requireValue;
 
     if (r.hiddenAt == null) {
@@ -696,8 +729,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         icon: const Icon(Icons.visibility_outlined),
         tooltip: 'Hide this recording (archive it)',
         onPressed: () async {
-          await ref.read(setHiddenProvider(r.id).future);
-          _pullRefresh();
+          _toggleHidden(r);
         },
       );
     } else {
@@ -705,8 +737,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         icon: const Icon(Icons.visibility_off_outlined),
         tooltip: 'Show this recording (unarchive it)',
         onPressed: () async {
-          await ref.read(unsetHiddenProvider(r.id).future);
-          _pullRefresh();
+          _toggleHidden(r);
         },
       );
     }

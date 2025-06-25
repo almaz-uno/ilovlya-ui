@@ -60,8 +60,11 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
   @override
   void initState() {
-    _init();
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _init();
+    });
   }
 
   void _init() async {
@@ -329,7 +332,12 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                       ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                        child: _buildControls(context),
+                        child: PlayerControls(
+                          player: _player,
+                          onSeek: (duration) => _seek(duration),
+                          onRewind: (interval) => _rewind(interval),
+                          ref: ref,
+                        ),
                       ),
                       Container(
                         alignment: Alignment.centerLeft,
@@ -395,20 +403,34 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       ),
     );
   }
+}
 
-  Widget _buildControls(BuildContext context) {
+class PlayerControls extends StatelessWidget {
+  final Player player;
+  final void Function(Duration) onSeek;
+  final void Function(Duration) onRewind;
+  final WidgetRef ref;
+
+  const PlayerControls({
+    super.key,
+    required this.player,
+    required this.onSeek,
+    required this.onRewind,
+    required this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
         ProgressBar(
           progressBarColor: Theme.of(context).colorScheme.primary,
           timeLabelLocation: TimeLabelLocation.sides,
-          progress: _player.state.position,
-          total: _player.state.duration,
+          progress: player.state.position,
+          total: player.state.duration,
           timeLabelType: TimeLabelType.remainingTime,
-          buffered: _player.state.buffer,
-          onSeek: (duration) {
-            _seek(duration);
-          },
+          buffered: player.state.buffer,
+          onSeek: onSeek,
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -416,61 +438,53 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
           children: [
             TextButton(
               onLongPress: () {
-                _rewind(-const Duration(minutes: 5));
+                onRewind(-const Duration(minutes: 5));
               },
               onPressed: () {
-                _rewind(-const Duration(minutes: 1));
+                onRewind(-const Duration(minutes: 1));
               },
               child: const Icon(Icons.fast_rewind),
             ),
             TextButton(
               onLongPress: () {
-                _rewind(-const Duration(seconds: 30));
+                onRewind(-const Duration(seconds: 30));
               },
               onPressed: () {
-                _rewind(-const Duration(seconds: 15));
+                onRewind(-const Duration(seconds: 15));
               },
               child: const Icon(Icons.fast_rewind),
             ),
-            if (_player.state.playing)
+            if (player.state.playing)
               TextButton(
                 onPressed: () {
-                  _player.playOrPause();
+                  player.playOrPause();
                 },
-                child: const Icon(
-                  Icons.pause,
-                ),
+                child: const Icon(Icons.pause),
               ),
-            if (!_player.state.playing)
+            if (!player.state.playing)
               TextButton(
                 onPressed: () {
-                  _player.playOrPause();
+                  player.playOrPause();
                 },
-                child: const Icon(
-                  Icons.play_arrow,
-                ),
+                child: const Icon(Icons.play_arrow),
               ),
             TextButton(
               onLongPress: () {
-                _rewind(const Duration(seconds: 30));
+                onRewind(const Duration(seconds: 30));
               },
               onPressed: () {
-                _rewind(const Duration(seconds: 15));
+                onRewind(const Duration(seconds: 15));
               },
-              child: const Icon(
-                Icons.fast_forward,
-              ),
+              child: const Icon(Icons.fast_forward),
             ),
             TextButton(
               onLongPress: () {
-                _rewind(const Duration(minutes: 5));
+                onRewind(const Duration(minutes: 5));
               },
               onPressed: () {
-                _rewind(const Duration(minutes: 1));
+                onRewind(const Duration(minutes: 1));
               },
-              child: const Icon(
-                Icons.fast_forward,
-              ),
+              child: const Icon(Icons.fast_forward),
             ),
           ],
         ),
@@ -480,7 +494,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
             value: ref.watch(settingsNotifierProvider.select((s) => s.value?.playerSpeed)),
             onChanged: (value) {
               ref.read(settingsNotifierProvider.notifier).updatePlayerSpeed(value ?? 1.0);
-              _player.setRate(value ?? 1.0);
+              player.setRate(value ?? 1.0);
             },
             items: [
               for (final e in speedRates.entries) DropdownMenuItem(value: e.key, child: Text(e.value)),
@@ -491,4 +505,3 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     );
   }
 }
-
