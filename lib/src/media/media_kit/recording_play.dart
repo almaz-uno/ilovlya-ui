@@ -60,8 +60,11 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
   @override
   void initState() {
-    _init();
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _init();
+    });
   }
 
   void _init() async {
