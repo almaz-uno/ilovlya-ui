@@ -385,7 +385,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                               Text("audio bitrate: ${_player.state.audioBitrate}", style: techInfoStyle),
                               Text("audio device: ${_player.state.audioDevice}", style: techInfoStyle),
                               Text("size: ${_player.state.width}x${_player.state.height}", style: techInfoStyle),
-
                               Text("video params: ${_player.state.videoParams}", style: techInfoStyle),
                               Text("audio params: ${_player.state.audioParams}", style: techInfoStyle),
                               // Text("${_controller.value}"),
