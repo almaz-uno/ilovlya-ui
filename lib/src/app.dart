@@ -29,19 +29,15 @@ class MyApp extends ConsumerWidget {
       statusBarColor: Theme.of(context).colorScheme.surface,
     ));
 
-    var pageTransitionsTheme = const PageTransitionsTheme();
-
-    if (UniversalPlatform.isLinux || UniversalPlatform.isWindows) {
-      pageTransitionsTheme = const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.windows: OpenUpwardsPageTransitionsBuilder(),
-          TargetPlatform.linux: OpenUpwardsPageTransitionsBuilder(),
-          TargetPlatform.macOS: OpenUpwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS: OpenUpwardsPageTransitionsBuilder(),
-          TargetPlatform.android: OpenUpwardsPageTransitionsBuilder(),
-        },
-      );
-    }
+    final pageTransitionsTheme = const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+        TargetPlatform.linux: OpenUpwardsPageTransitionsBuilder(),
+        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.android: ZoomPageTransitionsBuilder(),
+      },
+    );
 
     return MaterialApp(
       scrollBehavior: const MaterialScrollBehavior().copyWith(
