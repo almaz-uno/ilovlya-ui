@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
-import 'package:universal_platform/universal_platform.dart';
 
 import 'api/api.dart';
 import 'media/media_add.dart';

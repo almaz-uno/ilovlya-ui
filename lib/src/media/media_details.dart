@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:background_downloader/background_downloader.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:wheel_chooser/wheel_chooser.dart';
 
 import '../alert_dialog.dart';
 import '../api/api.dart';
@@ -212,6 +214,120 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   /// Get current position with local override for immediate UI updates
   Duration _getCurrentPosition(RecordingInfo recording) {
     return _currentPosition ?? Duration(seconds: recording.position);
+  }
+
+  /// Shows manual seek dialog with hour, minute, second inputs
+  void _showManualSeekDialog(BuildContext context, RecordingInfo recording) {
+    final currentPos = _getCurrentPosition(recording);
+    final maxDuration = Duration(seconds: recording.duration);
+
+    int hours = currentPos.inHours;
+    int minutes = currentPos.inMinutes.remainder(60);
+    int seconds = currentPos.inSeconds.remainder(60);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+              child: AlertDialog(
+                title: const Text('Seek to Position'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Duration: ${_formatTimePosition(maxDuration)}'),
+                    const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Hours
+                      Column(
+                        children: [
+                          const Text('Hours'),
+                          SizedBox(
+                            height: 120,
+                            width: 80,
+                            child: WheelChooser.integer(
+                              onValueChanged: (value) => setDialogState(() => hours = value),
+                              initValue: hours,
+                              minValue: 0,
+                              maxValue: 23,
+                              step: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Minutes
+                      Column(
+                        children: [
+                          const Text('Minutes'),
+                          SizedBox(
+                            height: 120,
+                            width: 80,
+                            child: WheelChooser.integer(
+                              onValueChanged: (value) => setDialogState(() => minutes = value),
+                              initValue: minutes,
+                              minValue: 0,
+                              maxValue: 59,
+                              step: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Seconds
+                      Column(
+                        children: [
+                          const Text('Seconds'),
+                          SizedBox(
+                            height: 120,
+                            width: 80,
+                            child: WheelChooser.integer(
+                              onValueChanged: (value) => setDialogState(() => seconds = value),
+                              initValue: seconds,
+                              minValue: 0,
+                              maxValue: 59,
+                              step: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Selected position: ${_formatTimePosition(Duration(hours: hours, minutes: minutes, seconds: seconds))}',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final targetPosition = Duration(hours: hours, minutes: minutes, seconds: seconds);
+                    if (targetPosition <= maxDuration) {
+                      _seek(targetPosition);
+                      Navigator.of(context).pop();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Position exceeds video duration')),
+                      );
+                    }
+                  },
+                  child: const Text('Seek'),
+                ),
+              ],
+            ),
+            );
+          },
+        );
+      },
+    );
   }
 
   (Download? local, Download? ready, Download? stale) _findAppropriateDownloads(List<Download> downloads) {
@@ -468,15 +584,18 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       left: 0,
                       right: 0,
                       child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            _formatTimePosition(_getCurrentPosition(recording)),
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+                        child: GestureDetector(
+                          onTap: () => _showManualSeekDialog(context, recording),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              _formatTimePosition(_getCurrentPosition(recording)),
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+                            ),
                           ),
                         ),
                       ),
