@@ -203,8 +203,6 @@ Future<void> unsetSeen(Ref ref, String recordingId) async {
 @riverpod
 Future<void> putPosition(Ref ref, String recordingId, Duration position, bool finished) async {
 
-  ref.read(recordingNotifierProvider(recordingId).notifier).putPosition(position, finished);
-
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   final path = '/api/recordings/$recordingId/position';
 

@@ -184,6 +184,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
   void _sendPosition(String recordingId, Duration position, bool autoFinished) {
     if (ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)) == false) autoFinished = false;
+    ref.read(recordingNotifierProvider(recordingId).notifier).putPosition(position, autoFinished);
     ref.read(putPositionProvider(recordingId, position, autoFinished));
   }
 
