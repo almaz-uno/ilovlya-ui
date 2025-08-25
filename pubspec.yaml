@@ -39,6 +39,7 @@ dependencies:
   url_launcher: ^6.1.12
   audio_session: ^0.1.21
   external_path: ^2.2.0
+  wheel_chooser: ^1.1.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

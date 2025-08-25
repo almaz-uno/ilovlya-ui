@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:background_downloader/background_downloader.dart';
 import 'package:duration/duration.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:wheel_chooser/wheel_chooser.dart';
 
 import '../alert_dialog.dart';
 import '../api/api.dart';
@@ -30,6 +33,27 @@ import 'media_kit/audio_handler.dart';
 import 'media_kit/recording_play.dart';
 import 'media_list.dart';
 import 'mpv.dart';
+
+String _formatDuration(Duration duration) {
+  var positive = true;
+  if (duration.isNegative) {
+    positive = false;
+    duration = -duration;
+  }
+  return (positive ? "" : "⏴⏴ ") + prettyDuration(duration, abbreviated: true) + (positive ? " ⏵⏵" : "");
+}
+
+String _formatTimePosition(Duration duration) {
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
+  final seconds = duration.inSeconds.remainder(60);
+
+  if (hours > 0) {
+    return '$hours:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  } else {
+    return '${minutes.toString()}:${seconds.toString().padLeft(2, '0')}';
+  }
+}
 
 const _cleanServerMediaIcon = Icon(Icons.clear);
 const _cleanDownloadedMediaIcon = Icon(Icons.cleaning_services);
@@ -61,6 +85,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   late String _mpvSocketPath;
   bool settingSeen = false;
   bool settingHidden = false;
+  Duration _rewinding = Duration.zero;
+  Timer? _rewindTimer;
+  Duration? _currentPosition; // Local position override
 
   static const _updatePullPeriod = Duration(seconds: 3);
 
@@ -86,6 +113,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   @override
   void deactivate() {
     _updatePullSubs?.cancel();
+    _rewindTimer?.cancel();
     super.deactivate();
   }
 
@@ -130,6 +158,178 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     ref.read(putPositionProvider(recordingId, position, autoFinished));
   }
 
+  /// Sets playback position in mpv player and updates server
+  void _seekToPosition(Duration position) {
+    ref.read(recordingNotifierProvider(widget.id).notifier).putPosition(position, false);
+    scheduleMicrotask(() {
+      ref.read(putPositionProvider(widget.id, position, false));
+    });
+    setMpvPlaybackPosition(_mpvSocketPath, position.inSeconds.toDouble(), () {
+      _sendPosition(widget.id, position, false);
+    });
+  }
+
+  void _seek(Duration position) {
+    if (position.isNegative) {
+      position = Duration.zero;
+    }
+    final recording = ref.read(recordingNotifierProvider(widget.id)).value;
+    if (recording != null && position > Duration(seconds: recording.duration)) {
+      position = Duration(seconds: recording.duration);
+    }
+
+    // Immediately update local position for UI
+    setState(() {
+      _currentPosition = position;
+    });
+
+    _seekToPosition(position);
+  }
+
+  void _rewind(Duration interval) {
+    final recording = ref.read(recordingNotifierProvider(widget.id)).value;
+    if (recording == null) return;
+
+    final currentPosition = _getCurrentPosition(recording);
+    final newPosition = currentPosition + interval;
+
+    _seek(newPosition);
+
+    if (_rewindTimer != null) {
+      _rewinding += interval;
+      _rewindTimer?.cancel();
+    } else {
+      _rewinding = interval;
+    }
+
+    _rewindTimer = Timer(const Duration(seconds: 3), () {
+      setState(() {
+        _rewinding = Duration.zero;
+      });
+    });
+
+    setState(() {});
+  }
+
+  /// Get current position with local override for immediate UI updates
+  Duration _getCurrentPosition(RecordingInfo recording) {
+    return _currentPosition ?? Duration(seconds: recording.position);
+  }
+
+  /// Shows manual seek dialog with hour, minute, second inputs
+  void _showManualSeekDialog(BuildContext context, RecordingInfo recording) {
+    final currentPos = _getCurrentPosition(recording);
+    final maxDuration = Duration(seconds: recording.duration);
+
+    int hours = currentPos.inHours;
+    int minutes = currentPos.inMinutes.remainder(60);
+    int seconds = currentPos.inSeconds.remainder(60);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+              child: AlertDialog(
+                title: const Text('Seek to Position'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Duration: ${_formatTimePosition(maxDuration)}'),
+                    const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Hours
+                      Column(
+                        children: [
+                          const Text('Hours'),
+                          SizedBox(
+                            height: 120,
+                            width: 80,
+                            child: WheelChooser.integer(
+                              onValueChanged: (value) => setDialogState(() => hours = value),
+                              initValue: hours,
+                              minValue: 0,
+                              maxValue: 23,
+                              step: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Minutes
+                      Column(
+                        children: [
+                          const Text('Minutes'),
+                          SizedBox(
+                            height: 120,
+                            width: 80,
+                            child: WheelChooser.integer(
+                              onValueChanged: (value) => setDialogState(() => minutes = value),
+                              initValue: minutes,
+                              minValue: 0,
+                              maxValue: 59,
+                              step: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Seconds
+                      Column(
+                        children: [
+                          const Text('Seconds'),
+                          SizedBox(
+                            height: 120,
+                            width: 80,
+                            child: WheelChooser.integer(
+                              onValueChanged: (value) => setDialogState(() => seconds = value),
+                              initValue: seconds,
+                              minValue: 0,
+                              maxValue: 59,
+                              step: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Selected position: ${_formatTimePosition(Duration(hours: hours, minutes: minutes, seconds: seconds))}',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final targetPosition = Duration(hours: hours, minutes: minutes, seconds: seconds);
+                    if (targetPosition <= maxDuration) {
+                      _seek(targetPosition);
+                      Navigator.of(context).pop();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Position exceeds video duration')),
+                      );
+                    }
+                  },
+                  child: const Text('Seek'),
+                ),
+              ],
+            ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   (Download? local, Download? ready, Download? stale) _findAppropriateDownloads(List<Download> downloads) {
     Download? local;
     Download? ready;
@@ -159,6 +359,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     });
     await ref.read(recordingNotifierProvider(widget.id).notifier).refreshFromServer();
     await ref.read(downloadsNotifierProvider(widget.id).notifier).refreshFromServer();
+
+    // Reset local position after server refresh
+    setState(() {
+      _currentPosition = null;
+    });
   }
 
   @override
@@ -369,13 +574,112 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             children: [
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.5,
-                child: createThumb(ref, recording.thumbnailUrl),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    createThumb(ref, recording.thumbnailUrl),
+                    // Current position display (top center)
+                    Positioned(
+                      top: 16,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: GestureDetector(
+                          onTap: () => _showManualSeekDialog(context, recording),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              _formatTimePosition(_getCurrentPosition(recording)),
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Rewind indicator overlay (center)
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 500),
+                      child: Text(
+                        _rewinding != Duration.zero ? _formatDuration(_rewinding) : "",
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+                        key: ValueKey(_rewinding),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              LinearProgressIndicator(
-                backgroundColor: const Color.fromARGB(127, 158, 158, 158),
-                value: recording.duration == 0 ? null : recording.position / recording.duration,
+              // Progress bar similar to recording_play.dart
+              ProgressBar(
+                progressBarColor: Theme.of(context).colorScheme.primary,
+                timeLabelLocation: TimeLabelLocation.sides,
+                progress: _getCurrentPosition(recording),
+                total: Duration(seconds: recording.duration),
+                timeLabelType: TimeLabelType.remainingTime,
+                onSeek: (position) {
+                  _seek(position);
+                },
               ),
-              Text("${formatDuration(Duration(seconds: recording.position))} / ${formatDuration(Duration(seconds: recording.duration))}"),
+              // Control buttons similar to recording_play.dart
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                    onLongPress: () {
+                      _rewind(-const Duration(minutes: 5));
+                    },
+                    onPressed: () {
+                      _rewind(-const Duration(minutes: 1));
+                    },
+                    child: const Icon(Icons.fast_rewind),
+                  ),
+                  TextButton(
+                    onLongPress: () {
+                      _rewind(-const Duration(seconds: 30));
+                    },
+                    onPressed: () {
+                      _rewind(-const Duration(seconds: 15));
+                    },
+                    child: const Icon(Icons.fast_rewind),
+                  ),
+                  // Play button - use existing tap logic
+                  TextButton(
+                    onPressed: () {
+                      var (local, ready, stale) = downloads.hasValue ? _findAppropriateDownloads(downloads.requireValue) : (null, null, null);
+                      if (local != null) {
+                        _recordView(context, recording, local);
+                      } else if (ready != null) {
+                        _recordView(context, recording, ready);
+                      } else if (stale != null) {
+                        _startPreparation(context, stale.formatId);
+                      }
+                    },
+                    child: const Icon(Icons.play_arrow),
+                  ),
+                  TextButton(
+                    onLongPress: () {
+                      _rewind(const Duration(seconds: 30));
+                    },
+                    onPressed: () {
+                      _rewind(const Duration(seconds: 15));
+                    },
+                    child: const Icon(Icons.fast_forward),
+                  ),
+                  TextButton(
+                    onLongPress: () {
+                      _rewind(const Duration(minutes: 5));
+                    },
+                    onPressed: () {
+                      _rewind(const Duration(minutes: 1));
+                    },
+                    child: const Icon(Icons.fast_forward),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
