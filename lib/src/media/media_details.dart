@@ -573,7 +573,6 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           child: Column(
             children: [
               SizedBox(
-                height: MediaQuery.of(context).size.height * 0.5,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
