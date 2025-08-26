@@ -25,6 +25,7 @@ import '../model/local_download.dart';
 import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
+import '../theme/media_player_theme.dart';
 import 'downloads_table.dart';
 import 'format.dart';
 import 'formats_table.dart';
@@ -573,7 +574,6 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           child: Column(
             children: [
               SizedBox(
-                height: MediaQuery.of(context).size.height * 0.5,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
@@ -614,7 +614,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               ),
               // Progress bar similar to recording_play.dart
               ProgressBar(
-                progressBarColor: Theme.of(context).colorScheme.primary,
+                progressBarColor: MediaPlayerTheme.getProgressBarColor(context),
                 timeLabelLocation: TimeLabelLocation.sides,
                 progress: _getCurrentPosition(recording),
                 total: Duration(seconds: recording.duration),

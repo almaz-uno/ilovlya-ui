@@ -18,6 +18,7 @@ import '../../api/thumbnail_riverpod.dart';
 import '../../model/download.dart';
 import '../../model/recording_info.dart';
 import '../../settings/settings_provider.dart';
+import '../../theme/media_player_theme.dart';
 import '../format.dart';
 import '../intents.dart';
 import '../media_details.dart';
@@ -451,7 +452,7 @@ class PlayerControls extends StatelessWidget {
     return Column(
       children: [
         ProgressBar(
-          progressBarColor: Theme.of(context).colorScheme.primary,
+          progressBarColor: MediaPlayerTheme.getProgressBarColor(context),
           timeLabelLocation: TimeLabelLocation.sides,
           progress: player.state.position,
           total: player.state.duration,

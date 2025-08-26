@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:ilovlya/src/localization/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -13,6 +12,7 @@ import 'media/media_add.dart';
 import 'media/media_details.dart';
 import 'media/media_list.dart';
 import 'settings/settings_view.dart';
+import 'theme/warm_theme.dart';
 
 /// The Widget that configures your application.
 class MyApp extends ConsumerWidget {
@@ -27,16 +27,6 @@ class MyApp extends ConsumerWidget {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Theme.of(context).colorScheme.surface,
     ));
-
-    final pageTransitionsTheme = const PageTransitionsTheme(
-      builders: {
-        TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
-        TargetPlatform.linux: OpenUpwardsPageTransitionsBuilder(),
-        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.android: ZoomPageTransitionsBuilder(),
-      },
-    );
 
     return MaterialApp(
       scrollBehavior: const MaterialScrollBehavior().copyWith(
@@ -76,14 +66,8 @@ class MyApp extends ConsumerWidget {
         return "${AppLocalizations.of(context)!.appTitle} • ${Uri.base.host}";
       },
 
-      theme: ThemeData.light().copyWith(
-        textTheme: GoogleFonts.ptSansCaptionTextTheme(ThemeData.light().textTheme),
-        pageTransitionsTheme: pageTransitionsTheme,
-      ),
-      darkTheme: ThemeData.dark().copyWith(
-        textTheme: GoogleFonts.ptSansTextTheme(ThemeData.dark().textTheme),
-        pageTransitionsTheme: pageTransitionsTheme,
-      ),
+      theme: WarmTheme.lightTheme,
+      darkTheme: WarmTheme.darkTheme,
 
       themeMode: settings.value?.theme,
 
