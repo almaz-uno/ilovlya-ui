@@ -53,6 +53,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 8.0,
                 children: <Widget>[
+                      const SizedBox(height:0),
                       TextField(
                         controller: tokenController,
                         decoration: const InputDecoration(labelText: "Your token, provided by the bot"),
@@ -75,12 +76,18 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 8.0,
-                children: _commonSettings(),
+                children: [
+                  const SizedBox(height: 0),
+                  ..._commonSettings(),
+                ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 8.0,
-                children: _housekeeping(context),
+                children: [
+                  const SizedBox(height: 0),
+                  ..._housekeeping(context),
+                ],
               ),
             ],
           ),
@@ -184,7 +191,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final (number, size) = media.requireValue;
 
     final mediaDirs = ref.watch(mediaDirsProvider);
-    final current = ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory));
 
     return [
       Text("Local media info", style: Theme.of(context).textTheme.bodyLarge),

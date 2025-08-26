@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:ilovlya/src/localization/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
@@ -13,6 +12,7 @@ import 'media/media_add.dart';
 import 'media/media_details.dart';
 import 'media/media_list.dart';
 import 'settings/settings_view.dart';
+import 'theme/warm_theme.dart';
 
 /// The Widget that configures your application.
 class MyApp extends ConsumerWidget {
@@ -66,12 +66,8 @@ class MyApp extends ConsumerWidget {
         return "${AppLocalizations.of(context)!.appTitle} • ${Uri.base.host}";
       },
 
-      theme: ThemeData.light().copyWith(
-        textTheme: GoogleFonts.ptSansCaptionTextTheme(ThemeData.light().textTheme),
-      ),
-      darkTheme: ThemeData.dark().copyWith(
-        textTheme: GoogleFonts.ptSansTextTheme(ThemeData.dark().textTheme),
-      ),
+      theme: WarmTheme.lightTheme,
+      darkTheme: WarmTheme.darkTheme,
 
       themeMode: settings.value?.theme,
 
