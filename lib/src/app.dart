@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:ilovlya/src/localization/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
@@ -27,16 +27,6 @@ class MyApp extends ConsumerWidget {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Theme.of(context).colorScheme.surface,
     ));
-
-    final pageTransitionsTheme = const PageTransitionsTheme(
-      builders: {
-        TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
-        TargetPlatform.linux: OpenUpwardsPageTransitionsBuilder(),
-        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.android: ZoomPageTransitionsBuilder(),
-      },
-    );
 
     return MaterialApp(
       scrollBehavior: const MaterialScrollBehavior().copyWith(
@@ -78,11 +68,9 @@ class MyApp extends ConsumerWidget {
 
       theme: ThemeData.light().copyWith(
         textTheme: GoogleFonts.ptSansCaptionTextTheme(ThemeData.light().textTheme),
-        pageTransitionsTheme: pageTransitionsTheme,
       ),
       darkTheme: ThemeData.dark().copyWith(
         textTheme: GoogleFonts.ptSansTextTheme(ThemeData.dark().textTheme),
-        pageTransitionsTheme: pageTransitionsTheme,
       ),
 
       themeMode: settings.value?.theme,
