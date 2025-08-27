@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../localization/app_localizations.dart';
 import '../model/recording_info.dart';
 import 'media_details.dart';
 
@@ -29,7 +30,7 @@ class FormatsTable extends StatelessWidget {
               onPressed: () {
                 startPreparation(context, "${f.id}+ba");
               },
-              tooltip: "Download this format and the best audio on the server (prepare for viewing)",
+              tooltip: AppLocalizations.of(context)!.downloadThisFormatOnServer,
               icon: downloadFormatIcon,
             ),
           ),
@@ -38,7 +39,7 @@ class FormatsTable extends StatelessWidget {
               startPreparation(context, f.id);
             },
             Tooltip(
-              message: "Download exact this format (prepare this format for viewing)",
+              message: AppLocalizations.of(context)!.downloadExactFormat,
               child: Text(f.id),
             ),
           ),
@@ -48,7 +49,7 @@ class FormatsTable extends StatelessWidget {
                     onPressed: () {
                       copyToClipboard(context, f.url);
                     },
-                    tooltip: "Copy URL this fragment into clipboard",
+                    tooltip: AppLocalizations.of(context)!.copyUrlFragmentToClipboard,
                     icon: copyURLIcon,
                   )
                 : const SizedBox.shrink(),
@@ -72,34 +73,34 @@ class FormatsTable extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Common available formats:",
-            style: TextStyle(fontWeight: FontWeight.bold),
+          Text(
+            AppLocalizations.of(context)!.commonAvailableFormats,
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           TextButton.icon(
             onPressed: () {
               startPreparation(context, "ba");
             },
             icon: const Icon(Icons.audiotrack_rounded),
-            label: const Text("Best audio (ba)"),
+            label: Text(AppLocalizations.of(context)!.bestAudio),
           ),
-          const Text(
-            "Available formats:",
-            style: TextStyle(fontWeight: FontWeight.bold),
+          Text(
+            AppLocalizations.of(context)!.availableFormats,
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: DataTable(
               columnSpacing: 12,
-              columns: const <DataColumn>[
-                DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("id", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("URL", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("ext", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("fps", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+              columns: <DataColumn>[
+                const DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                DataColumn(label: Expanded(child: Text(AppLocalizations.of(context)!.id, style: headerStyle))),
+                DataColumn(label: Expanded(child: Text(AppLocalizations.of(context)!.url, style: headerStyle))),
+                DataColumn(label: Expanded(child: Text(AppLocalizations.of(context)!.ext, style: headerStyle))),
+                DataColumn(label: Expanded(child: Text(AppLocalizations.of(context)!.resolution, style: headerStyle))),
+                DataColumn(label: Expanded(child: Text(AppLocalizations.of(context)!.fps, style: headerStyle))),
+                const DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                const DataColumn(label: Expanded(child: Text("", style: headerStyle))),
               ],
               rows: rows,
             ),

@@ -12,6 +12,7 @@ import '../api/exceptions.dart';
 import '../api/local_download_task_riverpod.dart';
 import '../api/media_list_riverpod.dart';
 import '../api/thumbnail_riverpod.dart';
+import '../localization/app_localizations.dart';
 import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
@@ -108,7 +109,13 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
       final t = tenant.requireValue;
       final storeStr = t.storeUsage > 0 ? " 🏠${t.localUsageStr()}/☁️${t.storeUsageStr()} " : "";
 
-      usageInfo = "quote: ${t.quotaStr()} usage: ${t.usageStr()} (${t.files}) free: ${t.freeStr()}$storeStr";
+      usageInfo = AppLocalizations.of(context)!.quotaUsageInfo(
+        t.quotaStr(),
+        t.usageStr(),
+        t.files.toString(),
+        t.freeStr(),
+        storeStr,
+      );
     }
 
     return Shortcuts(
@@ -153,7 +160,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
             child: Scaffold(
               appBar: AppBar(
                 title: AnimatedSearchBar(
-                  label: "Search...",
+                  label: AppLocalizations.of(context)!.search,
                   controller: _searchController,
                   labelAlignment: Alignment.centerLeft,
                   onChanged: (String value) {
@@ -163,12 +170,12 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                 actions: [
                   IconButton(
                       icon: const Icon(Icons.refresh),
-                      tooltip: 'Refresh list',
+                      tooltip: AppLocalizations.of(context)!.refreshList,
                       onPressed: () {
                         ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
                       }),
                   PopupMenuButton(
-                      tooltip: 'More options',
+                      tooltip: AppLocalizations.of(context)!.moreOptions,
                       icon: const Icon(Icons.more_vert),
                       onSelected: (String choice) {
                         switch (choice) {
@@ -195,7 +202,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.showSeen ? Icons.check : null, color: primary),
-                                Text("show seen", style: TextStyle(color: primary)),
+                                Text(AppLocalizations.of(context)!.showSeen, style: TextStyle(color: primary)),
                               ],
                             ),
                           ),
@@ -206,7 +213,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.showHidden ? Icons.check : null, color: primary),
-                                Text("show hidden", style: TextStyle(color: primary)),
+                                Text(AppLocalizations.of(context)!.showHidden, style: TextStyle(color: primary)),
                               ],
                             ),
                           ),
@@ -217,7 +224,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.sortBy == "created_at" ? Icons.check : null, color: primary),
-                                Text("sort by created", style: TextStyle(color: primary)),
+                                Text(AppLocalizations.of(context)!.sortByCreated, style: TextStyle(color: primary)),
                               ],
                             ),
                           ),
@@ -228,7 +235,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.sortBy == "updated_at" ? Icons.check : null, color: primary),
-                                Text("sort by updated", style: TextStyle(color: primary)),
+                                Text(AppLocalizations.of(context)!.sortByUpdated, style: TextStyle(color: primary)),
                               ],
                             ),
                           ),
@@ -239,7 +246,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.withServerFile ? Icons.flag_circle_outlined : null, color: primary),
-                                Text("show only with server file", style: TextStyle(color: primary)),
+                                Text(AppLocalizations.of(context)!.showOnlyWithServerFile, style: TextStyle(color: primary)),
                               ],
                             ),
                           ),
@@ -250,7 +257,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.withLocalFile ? Icons.download_done : null, color: primary),
-                                Text("show only with local file", style: TextStyle(color: primary)),
+                                Text(AppLocalizations.of(context)!.showOnlyWithLocalFile, style: TextStyle(color: primary)),
                               ],
                             ),
                           ),
@@ -259,7 +266,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                       }),
                   IconButton(
                     icon: const Icon(Icons.settings),
-                    tooltip: 'Settings',
+                    tooltip: AppLocalizations.of(context)!.settings,
                     onPressed: () {
                       Navigator.restorablePushNamed(context, SettingsView.routeName);
                     },
@@ -270,26 +277,30 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                 spacing: 8.0,
                 children: [
                   FloatingActionButton.small(
-                    tooltip: 'Add an arbitrary media',
+                    heroTag: "add_media",
+                    tooltip: AppLocalizations.of(context)!.addArbitraryMedia,
                     onPressed: () {
                       Navigator.restorablePushNamed(context, MediaAddView.routeName(false));
                     },
                     child: const Icon(Icons.add),
                   ),
                   FloatingActionButton.small(
-                    tooltip: 'Add from clipboard',
+                    heroTag: "add_from_clipboard",
+                    tooltip: AppLocalizations.of(context)!.addFromClipboard,
                     onPressed: () {
                       Navigator.restorablePushNamed(context, MediaAddView.routeName(true));
                     },
                     child: const Icon(Icons.content_paste_go_rounded),
                   ),
                   FloatingActionButton.small(
-                    // heroTag: "up",
+                    heroTag: "scroll_up",
+                    tooltip: AppLocalizations.of(context)!.scrollUp,
                     onPressed: _scrollUp,
                     child: const Icon(Icons.arrow_upward),
                   ),
                   FloatingActionButton.small(
-                    // heroTag: "down",
+                    heroTag: "scroll_down",
+                    tooltip: AppLocalizations.of(context)!.scrollDown,
                     onPressed: _scrollDown,
                     child: const Icon(Icons.arrow_downward),
                   ),
@@ -322,17 +333,17 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
 
     if (mediaList.hasError) {
       if (mediaList.error is HttpStatusError && (mediaList.error as HttpStatusError).statusCode == HttpStatus.unauthorized) {
-        return ErrorWidget("Unauthorized: please check and specify token and server URL in settings");
+        return ErrorWidget(AppLocalizations.of(context)!.unauthorizedCheckTokenAndServer);
       }
-      return ErrorWidget("${mediaList.error}: please check and specify token and server URL in settings");
+      return ErrorWidget("${mediaList.error}: ${AppLocalizations.of(context)!.errorCheckTokenAndServer}");
     }
 
     if (!mediaList.hasValue) {
-      return const Center(child: Text('Loading in progress...'));
+      return Center(child: Text(AppLocalizations.of(context)!.loadingInProgress));
     }
 
     if (mediaList.requireValue.isEmpty) {
-      return const Center(child: Text("No recordings. Check you filter settings or API token value."));
+    return Center(child: Text(AppLocalizations.of(context)!.noRecordingsCheckFilterOrToken));
     }
 
     return ListView.builder(
@@ -384,7 +395,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                   "${item.title} ∙ ${formatDuration(dur)}$viewedSrt",
                   // style: textStyle,
                 ),
-                subtitle: Text("${item.uploader} ∙ ${item.extractor} • ${formatDate(dt)} (${since(dt, true)})"),
+                subtitle: Text("${item.uploader} ∙ ${item.extractor} • ${formatDate(dt)} (${since(dt, true, Localizations.localeOf(context).languageCode)})"),
                 trailing: right.isEmpty ? null : Wrap(children: right),
                 onTap: () {
                   Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);

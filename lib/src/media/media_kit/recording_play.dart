@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
-import 'package:duration/duration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +14,7 @@ import '../../api/api_riverpod.dart';
 import '../../api/media_list_riverpod.dart';
 import '../../api/recording_riverpod.dart';
 import '../../api/thumbnail_riverpod.dart';
+import '../../localization/app_localizations.dart';
 import '../../model/download.dart';
 import '../../model/recording_info.dart';
 import '../../settings/settings_provider.dart';
@@ -31,7 +31,7 @@ String _formatDuration(Duration duration) {
     positive = false;
     duration = -duration;
   }
-  return (positive ? "" : "⏴⏴ ") + prettyDuration(duration, abbreviated: true) + (positive ? " ⏵⏵" : "");
+  return (positive ? "" : "⏴⏴ ") + formatDuration(duration) + (positive ? " ⏵⏵" : "");
 }
 
 class RecordingViewMediaKitHandler extends ConsumerStatefulWidget {
@@ -351,11 +351,11 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("Created at: ${formatDateLong(widget.recording.createdAt)} (${since(widget.recording.createdAt, false)} ago)"),
+                              Text(AppLocalizations.of(context)!.createdAtWithDate(formatDateLong(widget.recording.createdAt), since(widget.recording.createdAt, false, Localizations.localeOf(context).languageCode))),
                               if (_player.state.playlist.medias.isNotEmpty)
                                 Row(
                                   children: [
-                                    Text("Playing from: ${_player.state.playlist.medias[0].uri}"),
+                                    Text("${AppLocalizations.of(context)!.playingFrom}: ${_player.state.playlist.medias[0].uri}"),
                                     IconButton(
                                       onPressed: () {
                                         copyToClipboard(context, _player.state.playlist.medias[0].uri);
@@ -364,7 +364,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                                     )
                                   ],
                                 ),
-                              Text("Size: ${fileSizeHumanReadable(widget.download.size)}"),
+                              Text("${AppLocalizations.of(context)!.sizeLabel}: ${fileSizeHumanReadable(widget.download.size)}"),
                             ],
                           ),
                         ),
@@ -377,20 +377,20 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("With audio handler!", style: techInfoStyle),
-                              if (widget.recording.seenAt != null) Text("seen at: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)", style: techInfoStyle),
-                              Text("created at: ${widget.download.createdAt}", style: techInfoStyle),
-                              Text("updated at: ${widget.download.updatedAt}", style: techInfoStyle),
-                              Text("duration: ${formatDuration(_player.state.duration)}", style: techInfoStyle),
-                              Text("position: ${formatDuration(_player.state.position)}", style: techInfoStyle),
-                              Text("buffered: ${formatDuration(_player.state.buffer)}", style: techInfoStyle),
-                              Text("buffering: ${_player.state.buffering ? '>>' : '__'}", style: techInfoStyle),
-                              Text("volume: ${_player.state.volume}", style: techInfoStyle),
-                              Text("audio bitrate: ${_player.state.audioBitrate}", style: techInfoStyle),
-                              Text("audio device: ${_player.state.audioDevice}", style: techInfoStyle),
-                              Text("size: ${_player.state.width}x${_player.state.height}", style: techInfoStyle),
-                              Text("video params: ${_player.state.videoParams}", style: techInfoStyle),
-                              Text("audio params: ${_player.state.audioParams}", style: techInfoStyle),
+                              Text(AppLocalizations.of(context)!.withAudioHandler, style: techInfoStyle),
+                              if (widget.recording.seenAt != null) Text("${AppLocalizations.of(context)!.seenAt}: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)", style: techInfoStyle),
+                              Text("${AppLocalizations.of(context)!.debugCreatedAt}: ${widget.download.createdAt}", style: techInfoStyle),
+                              Text("${AppLocalizations.of(context)!.debugUpdatedAt}: ${widget.download.updatedAt}", style: techInfoStyle),
+                              Text("${AppLocalizations.of(context)!.debugDuration}: ${formatDuration(_player.state.duration)}", style: techInfoStyle),
+                              Text("${AppLocalizations.of(context)!.debugPosition}: ${formatDuration(_player.state.position)}", style: techInfoStyle),
+                              Text("${AppLocalizations.of(context)!.debugBuffered}: ${formatDuration(_player.state.buffer)}", style: techInfoStyle),
+                              Text("${AppLocalizations.of(context)!.debugBuffering}: ${_player.state.buffering ? '>>' : '__'}", style: techInfoStyle),
+                              Text("${AppLocalizations.of(context)!.debugVolume}: ${_player.state.volume}", style: techInfoStyle),
+                              Text("${AppLocalizations.of(context)!.debugAudioBitrate}: ${_player.state.audioBitrate}", style: techInfoStyle),
+                              Text("${AppLocalizations.of(context)!.debugAudioDevice}: ${_player.state.audioDevice}", style: techInfoStyle),
+                              Text("${AppLocalizations.of(context)!.debugSize}: ${_player.state.width}x${_player.state.height}", style: techInfoStyle),
+                              Text("${AppLocalizations.of(context)!.debugVideoParams}: ${_player.state.videoParams}", style: techInfoStyle),
+                              Text("${AppLocalizations.of(context)!.debugAudioParams}: ${_player.state.audioParams}", style: techInfoStyle),
                               // Text("${_controller.value}"),
                             ],
                           ),
@@ -525,7 +525,8 @@ class PlayerControls extends StatelessWidget {
               player.setRate(value ?? 1.0);
             },
             items: [
-              for (final e in speedRates.entries) DropdownMenuItem(value: e.key, child: Text(e.value)),
+              for (final e in getSpeedRates(AppLocalizations.of(context)!).entries)
+                DropdownMenuItem(value: e.key, child: Text(e.value)),
             ],
           ),
         )

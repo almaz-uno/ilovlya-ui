@@ -14,6 +14,23 @@ import 'media/media_list.dart';
 import 'settings/settings_view.dart';
 import 'theme/warm_theme.dart';
 
+/// Parse locale string to Locale object
+/// Returns null for empty string (system locale)
+Locale? _parseLocale(String? localeString) {
+  if (localeString == null || localeString.isEmpty) {
+    return null; // Use system locale
+  }
+
+  final parts = localeString.split('_');
+  if (parts.length == 2) {
+    return Locale(parts[0], parts[1]);
+  } else if (parts.length == 1) {
+    return Locale(parts[0]);
+  }
+
+  return null; // Fallback to system locale for invalid format
+}
+
 /// The Widget that configures your application.
 class MyApp extends ConsumerWidget {
   const MyApp({
@@ -55,7 +72,11 @@ class MyApp extends ConsumerWidget {
       ],
       supportedLocales: const [
         Locale('en', ''), // English, no country code
+        Locale('ru', ''), // Russian, no country code
       ],
+
+      // Use locale from settings, fallback to system locale
+      locale: _parseLocale(settings.value?.locale),
 
       // Use AppLocalizations to configure the correct application title
       // depending on the user's locale.

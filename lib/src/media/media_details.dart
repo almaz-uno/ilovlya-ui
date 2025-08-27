@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:background_downloader/background_downloader.dart';
-import 'package:duration/duration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
+
+import '../localization/app_localizations.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:wheel_chooser/wheel_chooser.dart';
@@ -41,7 +41,7 @@ String _formatDuration(Duration duration) {
     positive = false;
     duration = -duration;
   }
-  return (positive ? "" : "⏴⏴ ") + prettyDuration(duration, abbreviated: true) + (positive ? " ⏵⏵" : "");
+  return (positive ? "" : "⏴⏴ ") + formatDuration(duration) + (positive ? " ⏵⏵" : "");
 }
 
 String _formatTimePosition(Duration duration) {
@@ -231,14 +231,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-              child: AlertDialog(
-                title: const Text('Seek to Position'),
+            return AlertDialog(
+              title: Text(AppLocalizations.of(context)!.seekToPosition),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Duration: ${_formatTimePosition(maxDuration)}'),
+                    Text('${AppLocalizations.of(context)!.duration}: ${_formatTimePosition(maxDuration)}'),
                     const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -246,7 +244,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       // Hours
                       Column(
                         children: [
-                          const Text('Hours'),
+                          Text(AppLocalizations.of(context)!.hours),
                           SizedBox(
                             height: 120,
                             width: 80,
@@ -263,7 +261,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       // Minutes
                       Column(
                         children: [
-                          const Text('Minutes'),
+                          Text(AppLocalizations.of(context)!.minutes),
                           SizedBox(
                             height: 120,
                             width: 80,
@@ -280,7 +278,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       // Seconds
                       Column(
                         children: [
-                          const Text('Seconds'),
+                          Text(AppLocalizations.of(context)!.seconds),
                           SizedBox(
                             height: 120,
                             width: 80,
@@ -298,7 +296,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Selected position: ${_formatTimePosition(Duration(hours: hours, minutes: minutes, seconds: seconds))}',
+                    AppLocalizations.of(context)!.selectedPosition(_formatTimePosition(Duration(hours: hours, minutes: minutes, seconds: seconds))),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
@@ -306,7 +304,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+                  child: Text(AppLocalizations.of(context)!.cancel),
                 ),
                 TextButton(
                   onPressed: () {
@@ -316,14 +314,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       Navigator.of(context).pop();
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Position exceeds video duration')),
+                        SnackBar(content: Text(AppLocalizations.of(context)!.positionExceedsVideoDuration)),
                       );
                     }
                   },
-                  child: const Text('Seek'),
+                  child: Text(AppLocalizations.of(context)!.seek),
                 ),
               ],
-            ),
             );
           },
         );
@@ -422,14 +419,14 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           autofocus: true,
           child: Scaffold(
             appBar: AppBar(
-              title: recording.hasValue ? Text(recording.requireValue.title) : const Text('Loading info...'),
+              title: recording.hasValue ? Text(recording.requireValue.title) : Text(AppLocalizations.of(context)!.loadingInfo),
               actions: [
                 IconButton(
                   icon: _cleanServerMediaIcon,
-                  tooltip: 'Clean all downloaded content on the server',
+                  tooltip: AppLocalizations.of(context)!.cleanAllDownloadedContentOnServer,
                   onPressed: () {
                     if (recording.hasValue) {
-                      confirmDialog(context, "Are you sure?", "Delete all files on the server?", () {
+                      confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllFilesOnServer, () {
                         ref.read(deleteRecordingDownloadsContentProvider(recording.requireValue.id));
                         _pullRefresh();
                         Navigator.pop(context);
@@ -439,9 +436,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 ),
                 IconButton(
                   icon: _cleanDownloadedMediaIcon,
-                  tooltip: 'Clean all downloaded media from the device',
+                  tooltip: AppLocalizations.of(context)!.cleanAllDownloadedMediaFromDevice,
                   onPressed: () {
-                    confirmDialog(context, "Are you sure?", "Delete all local files on the device?", () {
+                    confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllLocalFilesOnDevice, () {
                       ref.read(downloadsNotifierProvider(widget.id).notifier).cleanAll();
                       Navigator.pop(context);
                     });
@@ -451,12 +448,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 _addHiddenButton(recording),
                 IconButton(
                   icon: const Icon(Icons.refresh),
-                  tooltip: 'Refresh record (reread from the server)',
+                  tooltip: AppLocalizations.of(context)!.refreshRecord,
                   onPressed: _pullRefresh,
                 ),
                 IconButton(
                   icon: const Icon(Icons.settings),
-                  tooltip: 'Settings',
+                  tooltip: AppLocalizations.of(context)!.settings,
                   onPressed: () {
                     Navigator.restorablePushNamed(context, SettingsView.routeName);
                   },
@@ -479,7 +476,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
   Widget _buildRecording(AsyncValue<RecordingInfo> recording) {
     if (!recording.hasValue) {
-      return const Center(child: Text('loading...'));
+      return Center(child: Text(AppLocalizations.of(context)!.loading));
     }
 
     if (recording.hasError) {
@@ -509,7 +506,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             ),
           ),
         ] else
-          const Text("Downloads info is loading..."),
+          Text(AppLocalizations.of(context)!.downloadsInfoIsLoading),
         if (recording.formats != null && recording.formats!.isNotEmpty)
           Center(
             child: FormatsTable(
@@ -518,7 +515,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             ),
           )
         else
-          const Text("No formats for the record"),
+          Text(AppLocalizations.of(context)!.noFormatsForRecord),
       ],
     );
   }
@@ -536,14 +533,14 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               children: [
                 Text("${recording.id}: ${recording.title}", style: Theme.of(context).textTheme.bodyLarge),
                 Text("${recording.uploader} • ${recording.extractor}"),
-                Text("Created at: ${formatDateLong(recording.createdAt)} (${since(recording.createdAt, false)} ago)"),
-                Text("Updated at: ${formatDateLong(recording.updatedAt)} (${since(recording.updatedAt, false)} ago)"),
+                Text(AppLocalizations.of(context)!.createdAtWithDate(formatDateLong(recording.createdAt), since(recording.createdAt, false, Localizations.localeOf(context).languageCode))),
+                Text(AppLocalizations.of(context)!.updatedAtWithDate(formatDateLong(recording.updatedAt), since(recording.updatedAt, false, Localizations.localeOf(context).languageCode))),
                 Row(
                   children: [
                     Text(recording.webpageUrl, style: const TextStyle(overflow: TextOverflow.fade, decoration: TextDecoration.underline, color: Colors.blue)),
                     IconButton(
                       icon: copyURLIcon,
-                      tooltip: 'Copy video URL to the clipboard',
+                      tooltip: AppLocalizations.of(context)!.copyVideoUrlToClipboard,
                       onPressed: () => copyToClipboard(context, recording.webpageUrl),
                     ),
                   ],
@@ -691,12 +688,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     var st = dt.status?.toString() ?? "";
     const p = "TaskStatus.";
     st = st.startsWith(p) ? st.replaceFirst(p, "") : st;
-    var eta = dt.timeRemaining == null ? "" : prettyDuration(dt.timeRemaining!, abbreviated: true);
+    var eta = dt.timeRemaining == null ? "" : formatDuration(dt.timeRemaining!);
     var est = dt.networkSpeed == null || dt.networkSpeed! < 0 ? "" : " ≈ ${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta";
 
     return Column(
       children: [
-        Text("Local downloading $st: ${dt.filename} $est"),
+        Text("${AppLocalizations.of(context)!.localDownloading} $st: ${dt.filename} $est"),
         if (dt.status?.isFinalState != true) LinearProgressIndicator(value: dt.progress),
       ],
     );
@@ -725,7 +722,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   Future<void> _startPreparation(BuildContext context, String format) async {
     ref.read(newDownloadProvider(widget.id, format).future).then((d) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Preparation for ${d.formatId} is starting'),
+        content: Text(AppLocalizations.of(context)!.preparationStarting(d.formatId)),
       ));
     }).catchError((err) {
       showDialog(
@@ -757,7 +754,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           onPressed: () {
             _startPreparation(context, d.formatId);
           },
-          tooltip: "Download this format again on the server (prepare for viewing)",
+          tooltip: AppLocalizations.of(context)!.downloadServerFormat,
           icon: downloadFormatIcon,
         );
       case "new":
@@ -778,11 +775,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       mode: ProcessStartMode.detached);
                 }
               },
-              tooltip: "Open with MediaKit with handler",
+              tooltip: AppLocalizations.of(context)!.openMediaKit,
               icon: const Icon(Icons.flag_circle_outlined),
             ),
             PopupMenuButton(
-                tooltip: 'Do with it...',
+                tooltip: AppLocalizations.of(context)!.doWithIt,
                 icon: const Icon(Icons.more_vert),
                 onSelected: (String choice) async {
                   switch (choice) {
@@ -801,13 +798,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     case "default":
                       launchUrlString(d.url);
                     case "server-delete":
-                      confirmDialog(context, "Are you sure?", "Delete server media file?", () {
+                      confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteServerMediaFile, () {
                         ref.read(deleteDownloadContentProvider(d.id));
                         _pullRefresh();
                         Navigator.pop(context);
                       });
                     case "local-delete":
-                      confirmDialog(context, "Are you sure?", "Delete local downloaded media file?", () {
+                      confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteLocalDownloadedMediaFile, () {
                         ref.read(downloadsNotifierProvider(recording.id).notifier).clean(d.id);
                         Navigator.pop(context);
                       });
@@ -824,72 +821,72 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 itemBuilder: (BuildContext context) {
                   var menuItems = <PopupMenuItem<String>>[];
                   menuItems.add(
-                    const PopupMenuItem<String>(
+                    PopupMenuItem<String>(
                       value: "copy",
                       child: Row(
                         children: [
                           copyURLIcon,
-                          Expanded(child: Text("Copy file link to clipboard")),
+                          Expanded(child: Text(AppLocalizations.of(context)!.copyFileLinkToClipboard)),
                         ],
                       ),
                     ),
                   );
                   menuItems.add(
-                    const PopupMenuItem<String>(
+                    PopupMenuItem<String>(
                       value: "copy-curl",
                       child: Row(
                         children: [
                           _copyCURLIcon,
-                          Expanded(child: Text("Copy curl command to clipboard")),
+                          Expanded(child: Text(AppLocalizations.of(context)!.copyCurlCommandToClipboard)),
                         ],
                       ),
                     ),
                   );
                   if (UniversalPlatform.isLinux) {
                     menuItems.add(
-                      const PopupMenuItem<String>(
+                      PopupMenuItem<String>(
                         value: "mpv-play",
                         child: Row(
                           children: [
                             _playMpvIcon,
-                            Expanded(child: Text("Play with embedded mpv player")),
+                            Expanded(child: Text(AppLocalizations.of(context)!.playWithEmbeddedMpvPlayer)),
                           ],
                         ),
                       ),
                     );
 
                     menuItems.add(
-                      const PopupMenuItem<String>(
+                      PopupMenuItem<String>(
                         value: "mpv-play-horizontal-flip",
                         child: Row(
                           children: [
                             _playMpvIcon,
                             _hFlipIcon,
-                            Expanded(child: Text("Play with embedded mpv player with horizontal flip")),
+                            Expanded(child: Text(AppLocalizations.of(context)!.playWithEmbeddedMpvPlayerHorizontalFlip)),
                           ],
                         ),
                       ),
                     );
                   }
                   menuItems.add(
-                    const PopupMenuItem<String>(
+                    PopupMenuItem<String>(
                       value: "default",
                       child: Row(
                         children: [
                           Icon(Icons.open_in_browser),
-                          Expanded(child: Text("Open in default application")),
+                          Expanded(child: Text(AppLocalizations.of(context)!.openInDefaultApplication)),
                         ],
                       ),
                     ),
                   );
                   menuItems.add(
-                    const PopupMenuItem<String>(
+                    PopupMenuItem<String>(
                       value: "server-delete",
                       child: Row(
                         children: [
                           _cleanServerMediaIcon,
                           Expanded(
-                            child: Text("Delete file on the server and free server usage quota"),
+                            child: Text(AppLocalizations.of(context)!.deleteFileOnServerAndFreeQuota),
                           ),
                         ],
                       ),
@@ -898,25 +895,25 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
                   if (!UniversalPlatform.isWeb) {
                     menuItems.add(
-                      const PopupMenuItem<String>(
+                      PopupMenuItem<String>(
                         value: "local-delete",
                         child: Row(
                           children: [
                             _cleanDownloadedMediaIcon,
-                            Expanded(child: Text("Delete local file")),
+                            Expanded(child: Text(AppLocalizations.of(context)!.deleteLocalFile)),
                           ],
                         ),
                       ),
                     );
                     if (UniversalPlatform.isMobile) {
                       menuItems.add(
-                        const PopupMenuItem<String>(
+                        PopupMenuItem<String>(
                           value: "share-url",
                           child: Row(
                             children: [
                               Icon(Icons.ios_share),
                               Expanded(
-                                child: Text("Share the download URL in..."),
+                                child: Text(AppLocalizations.of(context)!.shareDownloadUrlIn),
                               ),
                             ],
                           ),
@@ -924,12 +921,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       );
                     }
                     menuItems.add(
-                      const PopupMenuItem<String>(
+                      PopupMenuItem<String>(
                         value: "download",
                         child: Row(
                           children: [
                             Icon(Icons.download),
-                            Expanded(child: Text("Download local file")),
+                            Expanded(child: Text(AppLocalizations.of(context)!.downloadLocalFile)),
                           ],
                         ),
                       ),
@@ -940,7 +937,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           ],
         );
       default:
-        return ErrorWidget("Unexpected download status ${d.status}");
+        return ErrorWidget(AppLocalizations.of(context)!.unexpectedDownloadStatus(d.status));
     }
   }
 
@@ -962,7 +959,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 mode: ProcessStartMode.detached);
           }
         },
-        tooltip: "Local file is downloaded. Click to play.",
+        tooltip: AppLocalizations.of(context)!.localFileDownloaded,
         icon: const Icon(Icons.download_done),
       );
     }
@@ -980,10 +977,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             downloadFile(context, d);
           },
           icon: const Icon(Icons.download),
-          tooltip: "Download media to local storage",
+          tooltip: AppLocalizations.of(context)!.downloadToLocalStorage,
         );
       default:
-        return ErrorWidget("Unexpected download status ${d.status}");
+        return ErrorWidget(AppLocalizations.of(context)!.unexpectedDownloadStatus(d.status));
     }
   }
 
@@ -1001,7 +998,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     if (r.seenAt == null) {
       return IconButton(
         icon: const Icon(Icons.check_box_outline_blank_rounded),
-        tooltip: 'Mark this recording as seen',
+        tooltip: AppLocalizations.of(context)!.markAsSeen,
         onPressed: () async {
           _toggleSeen(r);
         },
@@ -1009,7 +1006,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     } else {
       return IconButton(
         icon: const Icon(Icons.check_box_outlined),
-        tooltip: 'Mark this recording as unseen',
+        tooltip: AppLocalizations.of(context)!.markAsUnseen,
         onPressed: () async {
           _toggleSeen(r);
         },
@@ -1031,7 +1028,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     if (r.hiddenAt == null) {
       return IconButton(
         icon: const Icon(Icons.visibility_outlined),
-        tooltip: 'Hide this recording (archive it)',
+        tooltip: AppLocalizations.of(context)!.hideRecording,
         onPressed: () async {
           _toggleHidden(r);
         },
@@ -1039,7 +1036,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     } else {
       return IconButton(
         icon: const Icon(Icons.visibility_off_outlined),
-        tooltip: 'Show this recording (unarchive it)',
+        tooltip: AppLocalizations.of(context)!.showRecording,
         onPressed: () async {
           _toggleHidden(r);
         },
@@ -1069,7 +1066,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 Future<void> copyToClipboard(BuildContext context, String textData) async {
   await Clipboard.setData(ClipboardData(text: textData)).then((value) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('$textData copied to clipboard'),
+      content: Text(AppLocalizations.of(context)!.copiedToClipboard(textData)),
     ));
   });
 }
