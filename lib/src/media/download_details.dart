@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_riverpod.dart';
+import '../localization/app_localizations.dart';
 import '../model/download.dart';
 
 class DownloadDetailsView extends ConsumerStatefulWidget {
@@ -42,7 +43,7 @@ class _DownloadDetailsViewState extends ConsumerState<DownloadDetailsView> {
   Widget build(BuildContext context) {
     final download = ref.watch(getDownloadProvider(widget.downloadId));
     return Scaffold(
-      appBar: AppBar(title: download.hasValue ? Text("${download.requireValue.title} preparing...") : const Text("Acquiring info...")),
+      appBar: AppBar(title: download.hasValue ? Text("${download.requireValue.title} ${AppLocalizations.of(context)!.preparingEllipsis}") : Text(AppLocalizations.of(context)!.acquiringInfo)),
       body: _buildOutput(download),
     );
   }
@@ -53,7 +54,7 @@ class _DownloadDetailsViewState extends ConsumerState<DownloadDetailsView> {
     }
 
     if (!download.hasValue) {
-      return const Text("waiting data from the server...");
+      return Text(AppLocalizations.of(context)!.waitingDataFromServer);
     }
 
     return SingleChildScrollView(

@@ -10,17 +10,20 @@ import 'package:universal_platform/universal_platform.dart';
 
 import '../api/api.dart';
 import '../model/settings.dart';
+import '../localization/app_localizations.dart';
 
 part 'settings_provider.g.dart';
 
-Map<double, String> speedRates = {
-  0.5: "0.5x slow",
-  1.0: "1.0x normal",
-  1.25: "1.25x medium",
-  1.5: "1.5x fast",
-  1.75: "1.75x very fast",
-  2.0: "2.0x super fast",
-};
+Map<double, String> getSpeedRates(AppLocalizations l10n) {
+  return {
+    0.5: "0.5x ${l10n.speedSlow}",
+    1.0: "1.0x ${l10n.speedNormal}",
+    1.25: "1.25x ${l10n.speedMedium}",
+    1.5: "1.5x ${l10n.speedFast}",
+    1.75: "1.75x ${l10n.speedVeryFast}",
+    2.0: "2.0x ${l10n.speedSuperFast}",
+  };
+}
 
 Future<String> _dataDir(String srcDir) async {
   if (UniversalPlatform.isWeb) {
@@ -93,6 +96,7 @@ class SettingsNotifier extends _$SettingsNotifier {
   @override
   Future<Settings> build() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+
     return Settings(
       theme: switch (prefs.getString("theme")) {
         "light" => ThemeMode.light,
@@ -113,6 +117,7 @@ class SettingsNotifier extends _$SettingsNotifier {
       updateThumbnails: prefs.getBool("update_thumbnails") ?? false,
       dataStorageDirectory: await _dataDir(prefs.getString("data_storage_directory") ?? ""),
       mediaStorageDirectory: await _mediaDir(prefs.getString("media_storage_directory") ?? ""),
+      locale: prefs.getString("locale") ?? "",
     );
   }
 
@@ -142,6 +147,7 @@ class SettingsNotifier extends _$SettingsNotifier {
     prefs.setBool("update_thumbnails", state.value?.updateThumbnails ?? false);
     prefs.setString("data_storage_directory", state.value?.dataStorageDirectory ?? "");
     prefs.setString("media_storage_directory", state.value?.mediaStorageDirectory ?? "");
+    prefs.setString("locale", state.value?.locale ?? "");
   }
 
   void updateTheme(ThemeMode theme) {
@@ -217,6 +223,11 @@ class SettingsNotifier extends _$SettingsNotifier {
   void updateMediaStorageDirectory(String? mediaStorageDirectory) {
     if (mediaStorageDirectory != null) Directory(mediaStorageDirectory).createSync(recursive: true);
     state = AsyncData(state.requireValue.copyWith(mediaStorageDirectory: mediaStorageDirectory));
+    save();
+  }
+
+  void updateLocale(String locale) {
+    state = AsyncData(state.requireValue.copyWith(locale: locale));
     save();
   }
 }

@@ -18,6 +18,7 @@ class Settings {
   final bool updateThumbnails;
   final String dataStorageDirectory;
   final String mediaStorageDirectory;
+  final String locale; // empty string means system locale
 
   Settings({
     this.theme = ThemeMode.system,
@@ -35,6 +36,7 @@ class Settings {
     this.updateThumbnails = false,
     this.dataStorageDirectory = "",
     this.mediaStorageDirectory = "",
+    this.locale = "",
   });
 
   Settings copyWith({
@@ -53,6 +55,7 @@ class Settings {
     bool? updateThumbnails,
     String? dataStorageDirectory,
     String? mediaStorageDirectory,
+    String? locale,
   }) =>
       Settings(
         theme: theme ?? this.theme,
@@ -70,5 +73,6 @@ class Settings {
         updateThumbnails: updateThumbnails ?? this.updateThumbnails,
         dataStorageDirectory: dataStorageDirectory?? this.dataStorageDirectory,
         mediaStorageDirectory: mediaStorageDirectory ?? this.mediaStorageDirectory,
+        locale: locale ?? this.locale,
       );
 }

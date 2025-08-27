@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'localization/app_localizations.dart';
 
 class BlurryDialog extends StatelessWidget {
 
@@ -18,13 +19,13 @@ class BlurryDialog extends StatelessWidget {
       content: Text(content),
       actions: <Widget>[
         TextButton(
-          child: const Text("Continue"),
+          child: Text(AppLocalizations.of(context)!.continueButton),
            onPressed: () {
             _commitCallback();
           },
         ),
         TextButton(
-          child: const Text("Cancel"),
+          child: Text(AppLocalizations.of(context)!.cancel),
           onPressed: () {
             Navigator.of(context).pop();
           },

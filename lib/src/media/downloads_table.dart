@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../localization/app_localizations.dart';
 import '../model/download.dart';
 import '../model/recording_info.dart';
 import 'download_details.dart';
@@ -56,7 +57,7 @@ class DownloadsTable extends ConsumerWidget {
           Opacity(
             opacity: opacity,
             child: Tooltip(
-              message: "${d.filename} tap to play in embedding player",
+              message: AppLocalizations.of(context)!.tapToPlayInEmbeddingPlayer(d.filename),
               child: Text(d.formatId),
             ),
           ),
@@ -96,9 +97,9 @@ class DownloadsTable extends ConsumerWidget {
     );
 
     return downloads.isEmpty
-        ? const Text(
-            "No downloads for recording",
-            style: TextStyle(fontStyle: FontStyle.italic),
+        ? Text(
+            AppLocalizations.of(context)!.noDownloadsForRecording,
+            style: const TextStyle(fontStyle: FontStyle.italic),
           )
         : Padding(
             padding: const EdgeInsets.all(8.0),
@@ -107,20 +108,20 @@ class DownloadsTable extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Files for this recording",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    AppLocalizations.of(context)!.filesForThisRecording,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   DataTable(
                     columnSpacing: 12,
-                    columns: const [
-                      DataColumn(label: Expanded(child: Text("format", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("resolution", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("fps", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("size", style: headerStyle))),
-                      DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                    columns: [
+                      DataColumn(label: Expanded(child: Text(AppLocalizations.of(context)!.formatHeader, style: headerStyle))),
+                      const DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text(AppLocalizations.of(context)!.resolutionHeader, style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text(AppLocalizations.of(context)!.fpsHeader, style: headerStyle))),
+                      const DataColumn(label: Expanded(child: Text("", style: headerStyle))),
+                      DataColumn(label: Expanded(child: Text(AppLocalizations.of(context)!.sizeHeader, style: headerStyle))),
+                      const DataColumn(label: Expanded(child: Text("", style: headerStyle))),
                     ],
                     rows: rows,
                   ),
