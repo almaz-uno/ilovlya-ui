@@ -101,7 +101,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     return [
       DropdownButtonFormField<ThemeMode>(
         decoration: InputDecoration(labelText: AppLocalizations.of(context)!.applicationColorTheme),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.theme)),
+        initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.theme)),
         alignment: AlignmentDirectional.topStart,
         onChanged: (ThemeMode? theme) {
           ref.read(settingsNotifierProvider.notifier).updateTheme(theme ?? ThemeMode.system);
@@ -123,7 +123,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       ),
       DropdownButtonFormField<String>(
         decoration: InputDecoration(labelText: AppLocalizations.of(context)!.language),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.locale)),
+        initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.locale)),
         alignment: AlignmentDirectional.topStart,
         onChanged: (String? locale) {
           ref.read(settingsNotifierProvider.notifier).updateLocale(locale ?? "");
@@ -145,7 +145,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       ),
       DropdownButtonFormField<double>(
         decoration: InputDecoration(labelText: AppLocalizations.of(context)!.playerSpeedRate),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.playerSpeed)),
+        initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.playerSpeed)),
         onChanged: (value) {
           ref.read(settingsNotifierProvider.notifier).updatePlayerSpeed(value ?? 1.0);
         },
@@ -268,7 +268,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       if (mediaDirs.hasValue)
         DropdownButtonFormField<String>(
           decoration: InputDecoration(labelText: AppLocalizations.of(context)!.mediaDirectory),
-          value: ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory)),
+          initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory)),
           alignment: AlignmentDirectional.topStart,
           onChanged: (String? directory) {
             ref.read(settingsNotifierProvider.notifier).updateMediaStorageDirectory(directory ?? "");

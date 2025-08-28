@@ -1,3 +1,143 @@
-# Ilovlya UI
+= Ilovlya UI
+:toc:
+:toc-placement: preamble
+:icons: font
 
-UI for Ilovlya media center. Ilovlya media center. View, listen and enjoy your favorite video from popular platforms.
+Cross-platform mobile application for viewing and managing media content. Ilovlya UI provides a convenient interface for playing audio and video recordings, managing playlists, and controlling playback settings.
+
+View, listen, and enjoy your favorite content from popular platforms through a unified, user-friendly interface.
+
+== Project Description
+
+Ilovlya UI is a Flutter-based mobile application designed to work with the Ilovlya media server. The application provides an intuitive interface for:
+
+.Core Features
+* Audio and video content playback
+* Playlist and media library management
+* Playback settings configuration
+* Support for various media formats
+* Cloud service synchronization
+
+== Technical Specifications
+
+.Technology Stack
+* *Framework*: Flutter (Dart)
+* *State Management*: Riverpod
+* *Media Playback*: media_kit
+* *UI Framework*: Material Design 3
+* *Supported Platforms*: Android, iOS, Windows, macOS, Linux
+
+.Architecture
+* Modular architecture with separation of concerns
+* Reactive state management through Riverpod providers
+* Localization support (English/Russian)
+* Adaptive design for various screen sizes
+
+== Installation and Setup
+
+.Requirements
+* Flutter SDK >= 3.0.0
+* Dart SDK >= 3.0.0
+* Android SDK (for Android builds)
+* Xcode (for iOS builds)
+
+.Install Dependencies
+[source,bash]
+----
+flutter pub get
+----
+
+.Run in Development Mode
+[source,bash]
+----
+flutter run
+----
+
+.Production Builds
+[source,bash]
+----
+# Android
+flutter build apk --release
+
+# iOS
+flutter build ios --release
+
+# Desktop
+flutter build linux --release
+flutter build windows --release
+flutter build macos --release
+----
+
+== Project Structure
+
+[source]
+----
+lib/
+├── src/
+│   ├── api/           # API integration and Riverpod providers
+│   ├── media/         # Media players and playback components
+│   ├── model/         # Data models
+│   ├── settings/      # Application settings
+│   └── widgets/       # Reusable widgets
+├── l10n/              # Localization files
+└── main.dart          # Application entry point
+----
+
+== Implementation Features
+
+.Media Playback
+* Bluetooth headset and system media button support
+* Proper functionality at various playback speeds
+* Automatic playback position saving
+* Skip functions (15s, 30s, 1min, 5min)
+
+.User Interface
+* Material Design 3 compliance
+* Dark and light theme support
+* Accessibility support
+* Responsive layout for tablets and phones
+
+.Performance
+* Lazy loading for large media lists
+* Image and metadata caching
+* Optimization for resource-constrained devices
+
+== Localization
+
+The application supports multiple languages:
+
+* English (primary)
+* Russian
+
+Localization files are located in the `l10n/` folder and are automatically generated during build.
+
+== Contributing
+
+We welcome contributions to the project! Please familiarize yourself with:
+
+* Project code style (Dart code style guide)
+* Architectural principles using Riverpod
+* Testing requirements
+
+.Types of Contributions
+* Bug fixes
+* New feature additions
+* Documentation improvements
+* Performance optimizations
+* Translations to new languages
+
+== License
+
+This project is distributed under the MIT License. See the LICENSE file for details.
+
+== Changelog
+
+See link:CHANGELOG.asciidoc[CHANGELOG] for a detailed history of changes, new features, and version information.
+
+== Contact
+
+For questions and suggestions, please use:
+
+* GitHub repository Issues
+* Discussions in the Discussions section
+* Developer contacts in the project documentation
