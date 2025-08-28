@@ -7,7 +7,7 @@ project(runner LANGUAGES CXX)
 set(BINARY_NAME "ilovlya")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
-set(APPLICATION_ID "com.example.ilovlya")
+set(APPLICATION_ID "uno.almaz.ilovlya")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
@@ -40,7 +40,7 @@ endif()
 # default. In most cases, you should add new options to specific targets instead
 # of modifying this function.
 function(APPLY_STANDARD_SETTINGS TARGET)
-  target_compile_features(${TARGET} PUBLIC cxx_std_14)
+  target_compile_features(${TARGET} PUBLIC cxx_std_17)
   target_compile_options(${TARGET} PRIVATE -Wall -Werror)
   target_compile_options(${TARGET} PRIVATE "$<$<NOT:$<CONFIG:Debug>>:-O3>")
   target_compile_definitions(${TARGET} PRIVATE "$<$<NOT:$<CONFIG:Debug>>:NDEBUG>")

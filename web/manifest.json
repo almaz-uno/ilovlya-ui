@@ -3,8 +3,8 @@
     "short_name": "Ilovlya",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
     "description": "Ilovlya media center. Look and hear!",
     "orientation": "any",
     "prefer_related_applications": false,
@@ -12,11 +12,6 @@
         {
             "src": "icons/Icon-192.png",
             "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "icons/Icon-196.png",
-            "sizes": "196x196",
             "type": "image/png"
         },
         {

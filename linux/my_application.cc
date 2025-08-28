@@ -5,6 +5,10 @@
 #include <gdk/gdkx.h>
 #endif
 
+#include <filesystem>
+using namespace std;
+using namespace std::filesystem;
+
 #include "flutter/generated_plugin_registrant.h"
 
 struct _MyApplication {
@@ -19,6 +23,12 @@ static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
+
+    // set custom icon for the application window
+    const string iconFilename = "assets/images/icons/uno.almaz.ilovlya-256.png";
+    path execDir = canonical(read_symlink("/proc/self/exe")).parent_path();
+    path iconPath = execDir / "data/flutter_assets" / iconFilename;
+    gtk_window_set_icon_from_file(GTK_WINDOW(window), iconPath.c_str(), NULL);
 
   // Use a header bar when running in GNOME as this is the common style used
   // by applications and is the setup most users will be using (e.g. Ubuntu

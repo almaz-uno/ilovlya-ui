@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ilovlya/src/api/api.dart';
+
+import '../api/api.dart';
 
 class Settings {
   final ThemeMode theme;
@@ -12,6 +13,12 @@ class Settings {
   final bool showSeen;
   final bool withServerFile;
   final bool withLocalFile;
+  final double playerSpeed;
+  final bool autoViewed;
+  final bool updateThumbnails;
+  final String dataStorageDirectory;
+  final String mediaStorageDirectory;
+  final String locale; // empty string means system locale
 
   Settings({
     this.theme = ThemeMode.system,
@@ -24,6 +31,12 @@ class Settings {
     this.showSeen = false,
     this.withServerFile = false,
     this.withLocalFile = false,
+    this.playerSpeed = 1.0,
+    this.autoViewed = false,
+    this.updateThumbnails = false,
+    this.dataStorageDirectory = "",
+    this.mediaStorageDirectory = "",
+    this.locale = "",
   });
 
   Settings copyWith({
@@ -37,6 +50,12 @@ class Settings {
     bool? showSeen,
     bool? withServerFile,
     bool? withLocalFile,
+    double? playerSpeed,
+    bool? autoViewed,
+    bool? updateThumbnails,
+    String? dataStorageDirectory,
+    String? mediaStorageDirectory,
+    String? locale,
   }) =>
       Settings(
         theme: theme ?? this.theme,
@@ -49,5 +68,11 @@ class Settings {
         showSeen: showSeen ?? this.showSeen,
         withServerFile: withServerFile ?? this.withServerFile,
         withLocalFile: withLocalFile ?? this.withLocalFile,
+        playerSpeed: playerSpeed ?? this.playerSpeed,
+        autoViewed: autoViewed ?? this.autoViewed,
+        updateThumbnails: updateThumbnails ?? this.updateThumbnails,
+        dataStorageDirectory: dataStorageDirectory?? this.dataStorageDirectory,
+        mediaStorageDirectory: mediaStorageDirectory ?? this.mediaStorageDirectory,
+        locale: locale ?? this.locale,
       );
 }

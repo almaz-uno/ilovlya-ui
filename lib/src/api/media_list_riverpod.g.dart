@@ -6,7 +6,7 @@ part of 'media_list_riverpod.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$mediaListNotifierHash() => r'a386ba93708a6bf3084995414226d79eea81fa50';
+String _$mediaListNotifierHash() => r'f2d556755a577b247c212cd04b6f4267e8f9bc92';
 
 /// See also [MediaListNotifier].
 @ProviderFor(MediaListNotifier)
@@ -40,4 +40,4 @@ final searchPhraseNotifierProvider =
 
 typedef _$SearchPhraseNotifier = AutoDisposeNotifier<String>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

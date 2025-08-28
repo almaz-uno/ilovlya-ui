@@ -10,6 +10,7 @@ class Format {
   int fps;
   bool hasAudio;
   bool hasVideo;
+  String url;
 
   Format({
     this.id = "",
@@ -18,6 +19,7 @@ class Format {
     this.fps = 0,
     this.hasAudio = false,
     this.hasVideo = false,
+    this.url = "",
   });
 
   factory Format.fromJson(Map<String, dynamic> json) => _$FormatFromJson(json);

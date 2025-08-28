@@ -1,5 +1,5 @@
-import 'package:duration/duration.dart';
 import 'package:intl/intl.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 var metrics = <String, int>{
   "Kb": 1024,
@@ -44,21 +44,15 @@ String formatDateLong(DateTime? dt) {
   return _formatDateLong.format(dt.toLocal());
 }
 
-String since(DateTime? dt, bool short) {
+String since(DateTime? dt, bool short, [String? locale]) {
   if (dt == null) {
     return "";
   }
-  final dura = DateTime.now().difference(dt);
 
-  var tersity = DurationTersity.hour;
-
-  if (dura < const Duration(days: 1)) {
-    tersity = DurationTersity.minute;
+  // Set locale if provided, otherwise use default (English)
+  if (locale != null) {
+    timeago.setLocaleMessages(locale, locale == 'ru' ? timeago.RuMessages() : timeago.EnMessages());
   }
 
-  if (dura < const Duration(minutes: 10)) {
-    tersity = DurationTersity.second;
-  }
-
-  return short ? prettyDuration(dura, tersity: tersity, abbreviated: true, delimiter: ' ', spacer: '') : prettyDuration(dura, tersity: tersity, abbreviated: false);
+  return timeago.format(dt, locale: locale);
 }

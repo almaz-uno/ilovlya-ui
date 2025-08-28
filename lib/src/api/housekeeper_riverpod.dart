@@ -7,10 +7,12 @@ import 'package:universal_platform/universal_platform.dart';
 
 import '../model/recording_info.dart';
 import 'directories_riverpod.dart';
+import 'media_list_riverpod.dart';
 import 'recording_riverpod.dart';
 
 part 'housekeeper_riverpod.g.dart';
 
+// Drives the housekeeping of local downloaded media files.
 @riverpod
 class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
   @override
@@ -67,19 +69,42 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
     ref.invalidateSelf();
     return Future.value((number, size));
   }
+
 }
 
+// Drives local data housekeeping
+// Returns number of local recordings
 @riverpod
 class LocalDataNotifier extends _$LocalDataNotifier {
   @override
-  (int number, int size) build() {
-    if (!UniversalPlatform.isWeb) {
-      return (0, 0);
+  Future<int> build() {
+    if (UniversalPlatform.isWeb) {
+      return Future.value(0);
     }
     return _evaluate();
   }
 
-  (int number, int size) _evaluate() {
-    return (0, 0);
+  Future<int> _evaluate() async {
+    final sp = await ref.watch(storePlacesProvider.future);
+    int number = 0;
+
+    for (final entity in sp.recordings().listSync(recursive: false)) {
+      if (entity is! File) continue;
+      number++;
+    }
+
+    return number;
+  }
+
+  Future<int> cleanMetadata() async {
+    final sp = await ref.watch(storePlacesProvider.future);
+    final number = state.value!;
+    sp.data().deleteSync(recursive: true);
+    sp.recordings().createSync(recursive: true);
+    sp.thumbnails().createSync(recursive: true);
+    sp.downloads().createSync(recursive: true);
+    ref.invalidateSelf();
+    ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+    return Future.value(number);
   }
 }

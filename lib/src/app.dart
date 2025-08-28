@@ -2,18 +2,34 @@ import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:ilovlya/src/localization/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
-import 'package:universal_platform/universal_platform.dart';
 
 import 'api/api.dart';
 import 'media/media_add.dart';
 import 'media/media_details.dart';
 import 'media/media_list.dart';
 import 'settings/settings_view.dart';
+import 'theme/warm_theme.dart';
+
+/// Parse locale string to Locale object
+/// Returns null for empty string (system locale)
+Locale? _parseLocale(String? localeString) {
+  if (localeString == null || localeString.isEmpty) {
+    return null; // Use system locale
+  }
+
+  final parts = localeString.split('_');
+  if (parts.length == 2) {
+    return Locale(parts[0], parts[1]);
+  } else if (parts.length == 1) {
+    return Locale(parts[0]);
+  }
+
+  return null; // Fallback to system locale for invalid format
+}
 
 /// The Widget that configures your application.
 class MyApp extends ConsumerWidget {
@@ -26,22 +42,8 @@ class MyApp extends ConsumerWidget {
     final settings = ref.watch(settingsNotifierProvider);
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Theme.of(context).colorScheme.background,
+      statusBarColor: Theme.of(context).colorScheme.surface,
     ));
-
-    var pageTransitionsTheme = const PageTransitionsTheme();
-
-    if (UniversalPlatform.isLinux || UniversalPlatform.isWindows) {
-      pageTransitionsTheme = const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.windows: OpenUpwardsPageTransitionsBuilder(),
-          TargetPlatform.linux: OpenUpwardsPageTransitionsBuilder(),
-          TargetPlatform.macOS: OpenUpwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS: OpenUpwardsPageTransitionsBuilder(),
-          TargetPlatform.android: OpenUpwardsPageTransitionsBuilder(),
-        },
-      );
-    }
 
     return MaterialApp(
       scrollBehavior: const MaterialScrollBehavior().copyWith(
@@ -70,7 +72,11 @@ class MyApp extends ConsumerWidget {
       ],
       supportedLocales: const [
         Locale('en', ''), // English, no country code
+        Locale('ru', ''), // Russian, no country code
       ],
+
+      // Use locale from settings, fallback to system locale
+      locale: _parseLocale(settings.value?.locale),
 
       // Use AppLocalizations to configure the correct application title
       // depending on the user's locale.
@@ -81,14 +87,8 @@ class MyApp extends ConsumerWidget {
         return "${AppLocalizations.of(context)!.appTitle} • ${Uri.base.host}";
       },
 
-      theme: ThemeData.light().copyWith(
-        textTheme: GoogleFonts.ptSansCaptionTextTheme(ThemeData.light().textTheme),
-        pageTransitionsTheme: pageTransitionsTheme,
-      ),
-      darkTheme: ThemeData.dark().copyWith(
-        textTheme: GoogleFonts.ptSansTextTheme(ThemeData.dark().textTheme),
-        pageTransitionsTheme: pageTransitionsTheme,
-      ),
+      theme: WarmTheme.lightTheme,
+      darkTheme: WarmTheme.darkTheme,
 
       themeMode: settings.value?.theme,
 

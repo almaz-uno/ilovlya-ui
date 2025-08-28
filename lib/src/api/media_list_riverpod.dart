@@ -32,19 +32,24 @@ class MediaListNotifier extends _$MediaListNotifier {
     try {
       final sp = await ref.watch(storePlacesProvider.future);
       final recordingsDir = sp.recordings();
+      final mediaDir = sp.media();
 
       final resultList = <RecordingInfo>[];
 
       final list = recordingsDir.listSync();
+
+      final mediaEntities = mediaDir.listSync();
+
       for (final entity in list) {
         if (entity is! File) continue;
 
         final recording = RecordingInfo.fromJson(jsonDecode(entity.readAsStringSync()));
 
         for (final df in recording.files) {
-          if (File(p.join(sp.media().path, df)).existsSync()) {
-            recording.hasLocalFile = true;
-            break;
+          for (final me in mediaEntities) {
+            if (me is! File) continue;
+            recording.hasLocalFile = recording.hasLocalFile || p.basename(me.path) == df;
+            if (recording.hasLocalFile) break;
           }
         }
         resultList.add(recording);
@@ -118,7 +123,6 @@ class MediaListNotifier extends _$MediaListNotifier {
       getter: (r) => "${r.title} ${r.uploader} ${r.extractor} ${r.webpageUrl}",
       cutoff: 50,
     ).map((e) => e.choice).toList();
-
   }
 
   Future<List<RecordingInfo>> _fromWeb() async {

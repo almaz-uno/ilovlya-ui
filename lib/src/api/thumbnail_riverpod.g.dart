@@ -7,7 +7,7 @@ part of 'thumbnail_riverpod.dart';
 // **************************************************************************
 
 String _$thumbnailDataNotifierHash() =>
-    r'aca9c1e36c4c62ab60a261bfd098111012cece82';
+    r'f036ffc19c37386d2355039ba55b067460c9c5d5';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -31,10 +31,10 @@ class _SystemHash {
 }
 
 abstract class _$ThumbnailDataNotifier
-    extends BuildlessAutoDisposeAsyncNotifier<File> {
+    extends BuildlessAutoDisposeAsyncNotifier<Uint8List> {
   late final String thumbnailUrl;
 
-  FutureOr<File> build(
+  FutureOr<Uint8List> build(
     String thumbnailUrl,
   );
 }
@@ -44,7 +44,7 @@ abstract class _$ThumbnailDataNotifier
 const thumbnailDataNotifierProvider = ThumbnailDataNotifierFamily();
 
 /// See also [ThumbnailDataNotifier].
-class ThumbnailDataNotifierFamily extends Family<AsyncValue<File>> {
+class ThumbnailDataNotifierFamily extends Family<AsyncValue<Uint8List>> {
   /// See also [ThumbnailDataNotifier].
   const ThumbnailDataNotifierFamily();
 
@@ -83,7 +83,8 @@ class ThumbnailDataNotifierFamily extends Family<AsyncValue<File>> {
 
 /// See also [ThumbnailDataNotifier].
 class ThumbnailDataNotifierProvider
-    extends AutoDisposeAsyncNotifierProviderImpl<ThumbnailDataNotifier, File> {
+    extends AutoDisposeAsyncNotifierProviderImpl<ThumbnailDataNotifier,
+        Uint8List> {
   /// See also [ThumbnailDataNotifier].
   ThumbnailDataNotifierProvider(
     String thumbnailUrl,
@@ -114,7 +115,7 @@ class ThumbnailDataNotifierProvider
   final String thumbnailUrl;
 
   @override
-  FutureOr<File> runNotifierBuild(
+  FutureOr<Uint8List> runNotifierBuild(
     covariant ThumbnailDataNotifier notifier,
   ) {
     return notifier.build(
@@ -139,7 +140,7 @@ class ThumbnailDataNotifierProvider
   }
 
   @override
-  AutoDisposeAsyncNotifierProviderElement<ThumbnailDataNotifier, File>
+  AutoDisposeAsyncNotifierProviderElement<ThumbnailDataNotifier, Uint8List>
       createElement() {
     return _ThumbnailDataNotifierProviderElement(this);
   }
@@ -159,14 +160,17 @@ class ThumbnailDataNotifierProvider
   }
 }
 
-mixin ThumbnailDataNotifierRef on AutoDisposeAsyncNotifierProviderRef<File> {
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin ThumbnailDataNotifierRef
+    on AutoDisposeAsyncNotifierProviderRef<Uint8List> {
   /// The parameter `thumbnailUrl` of this provider.
   String get thumbnailUrl;
 }
 
 class _ThumbnailDataNotifierProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<ThumbnailDataNotifier, File>
-    with ThumbnailDataNotifierRef {
+    extends AutoDisposeAsyncNotifierProviderElement<ThumbnailDataNotifier,
+        Uint8List> with ThumbnailDataNotifierRef {
   _ThumbnailDataNotifierProviderElement(super.provider);
 
   @override
@@ -174,4 +178,4 @@ class _ThumbnailDataNotifierProviderElement
       (origin as ThumbnailDataNotifierProvider).thumbnailUrl;
 }
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

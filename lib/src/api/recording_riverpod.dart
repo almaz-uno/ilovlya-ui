@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:ilovlya/src/api/media_list_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
@@ -10,6 +9,7 @@ import 'package:universal_platform/universal_platform.dart';
 import '../model/recording_info.dart';
 import 'api_riverpod.dart';
 import 'directories_riverpod.dart';
+import 'media_list_riverpod.dart';
 
 part 'recording_riverpod.g.dart';
 
@@ -107,9 +107,7 @@ class RecordingNotifier extends _$RecordingNotifier {
       }
       recording.updatedAt = DateTime.now();
       //save back
-      recordingFile.writeAsStringSync(jsonEncode(recording.toJson()));
-      ref.invalidateSelf();
-      ref.invalidate(mediaListNotifierProvider);
+      recordingFile.writeAsString(jsonEncode(recording.toJson()));
     } catch (e, s) {
       debugPrintStack(stackTrace: s, label: e.toString());
       rethrow;

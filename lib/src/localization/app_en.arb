@@ -1,6 +1,1589 @@
 {
-  "appTitle": "ilovlya",
+  "appTitle": "Ilovlya",
   "@appTitle": {
     "description": "The title of the application"
+  },
+
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+
+  "addNewMedia": "Add new media",
+  "@addNewMedia": {
+    "description": "Title for adding new media"
+  },
+
+  "search": "Search...",
+  "@search": {
+    "description": "Search field placeholder"
+  },
+
+  "appVersion": "Version: v{version}",
+  "@appVersion": {
+    "description": "Application version display",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+
+  "language": "Language",
+  "@language": {
+    "description": "Language setting label"
+  },
+
+  "systemLanguage": "System language",
+  "@systemLanguage": {
+    "description": "System language option"
+  },
+
+  "english": "English",
+  "@english": {
+    "description": "English language option"
+  },
+
+  "russian": "Русский",
+  "@russian": {
+    "description": "Russian language option"
+  },
+
+  "refreshList": "Refresh list",
+  "@refreshList": {
+    "description": "Tooltip for refresh list button"
+  },
+
+  "moreOptions": "More options",
+  "@moreOptions": {
+    "description": "Tooltip for more options menu"
+  },
+
+  "showSeen": "show seen",
+  "@showSeen": {
+    "description": "Option to show seen recordings"
+  },
+
+  "showHidden": "show hidden",
+  "@showHidden": {
+    "description": "Option to show hidden recordings"
+  },
+
+  "sortByCreated": "sort by created",
+  "@sortByCreated": {
+    "description": "Option to sort by creation date"
+  },
+
+  "sortByUpdated": "sort by updated",
+  "@sortByUpdated": {
+    "description": "Option to sort by update date"
+  },
+
+  "showOnlyWithServerFile": "show only with server file",
+  "@showOnlyWithServerFile": {
+    "description": "Option to show only recordings with server file"
+  },
+
+  "showOnlyWithLocalFile": "show only with local file",
+  "@showOnlyWithLocalFile": {
+    "description": "Option to show only recordings with local file"
+  },
+
+  "pasteFromClipboard": "Paste from clipboard",
+  "@pasteFromClipboard": {
+    "description": "Tooltip for paste from clipboard button"
+  },
+
+  "enterMediaUrl": "Enter media URL",
+  "@enterMediaUrl": {
+    "description": "Hint text for media URL input field"
+  },
+
+  "lookupMediaInfo": "Lookup media info",
+  "@lookupMediaInfo": {
+    "description": "Tooltip for lookup media info button"
+  },
+
+  "toViewInfoPressLookup": "To view info press lookup button above",
+  "@toViewInfoPressLookup": {
+    "description": "Message about how to view media info"
+  },
+
+  "successfullyAdded": "successfully added",
+  "@successfullyAdded": {
+    "description": "Message about successful media addition"
+  },
+
+  "addingUrl": "Adding url",
+  "@addingUrl": {
+    "description": "Message about URL adding process"
+  },
+
+  "noRecordingsInUrl": "There is no recordings in the url",
+  "@noRecordingsInUrl": {
+    "description": "Message about no recordings in URL"
+  },
+
+  "mediaInfoAcquiring": "Media info acquiring in progress...",
+  "@mediaInfoAcquiring": {
+    "description": "Message about media info acquiring process"
+  },
+
+  "systemTheme": "System Theme",
+  "@systemTheme": {
+    "description": "System theme option"
+  },
+
+  "lightTheme": "Light Theme",
+  "@lightTheme": {
+    "description": "Light theme option"
+  },
+
+  "darkTheme": "Dark Theme",
+  "@darkTheme": {
+    "description": "Dark theme option"
+  },
+
+  "autoMarkViewedWhenPlayed": "Auto mark recording as viewed when fully played",
+  "@autoMarkViewedWhenPlayed": {
+    "description": "Setting for auto marking recordings as viewed"
+  },
+
+  "updateThumbnailProgress": "Update thumbnail according to video viewing progress",
+  "@updateThumbnailProgress": {
+    "description": "Setting for updating thumbnail by viewing progress"
+  },
+
+  "showTechnicalInfo": "Show additional technical info. For advanced users only!",
+  "@showTechnicalInfo": {
+    "description": "Setting for showing technical info"
+  },
+
+  "quota": "Quota",
+  "@quota": {
+    "description": "Quota information"
+  },
+
+  "used": "Used",
+  "@used": {
+    "description": "Used space information"
+  },
+
+  "free": "Free",
+  "@free": {
+    "description": "Free space information"
+  },
+
+  "files": "Files",
+  "@files": {
+    "description": "Files information"
+  },
+
+  "local": "Local",
+  "@local": {
+    "description": "Local storage information"
+  },
+
+  "storage": "Storage",
+  "@storage": {
+    "description": "Storage information"
+  },
+
+  "localMediaInfo": "Local media info",
+  "@localMediaInfo": {
+    "description": "Local media section title"
+  },
+
+  "recordings": "Recordings",
+  "@recordings": {
+    "description": "Recordings count"
+  },
+
+  "totalSize": "total size",
+  "@totalSize": {
+    "description": "Total files size"
+  },
+
+  "cleanStaleMedia": "Clean stale downloaded media",
+  "@cleanStaleMedia": {
+    "description": "Button for cleaning stale media"
+  },
+
+  "cleanAllMedia": "Clean ALL downloaded media",
+  "@cleanAllMedia": {
+    "description": "Button for cleaning all media"
+  },
+
+  "cleanAllMetadata": "Clean ALL metadata for recordings",
+  "@cleanAllMetadata": {
+    "description": "Button for cleaning all metadata"
+  },
+
+  "cleaned": "cleaned",
+  "@cleaned": {
+    "description": "Cleaning completion message"
+  },
+
+  "recordingsCleaned": "recordings cleaned",
+  "@recordingsCleaned": {
+    "description": "Recordings cleaning completion message"
+  },
+
+  "dataLocalPath": "Data local path",
+  "@dataLocalPath": {
+    "description": "Data local path information"
+  },
+
+  "downloadedLocalMediaPath": "Downloaded local media path",
+  "@downloadedLocalMediaPath": {
+    "description": "Downloaded media path information"
+  },
+
+  "cleaningStaleFiles": "cleaning stale media local files...",
+  "@cleaningStaleFiles": {
+    "description": "Stale files cleaning process"
+  },
+
+  "loading": "loading...",
+  "@loading": {
+    "description": "Loading message"
+  },
+
+  "loadingInfo": "Loading info...",
+  "@loadingInfo": {
+    "description": "Loading info message"
+  },
+
+  "downloadsInfoLoading": "Downloads info is loading...",
+  "@downloadsInfoLoading": {
+    "description": "Downloads info loading message"
+  },
+
+  "noFormatsForRecord": "No formats for the record",
+  "@noFormatsForRecord": {
+    "description": "No formats available message"
+  },
+
+  "createdAt": "Created at",
+  "@createdAt": {
+    "description": "Creation date"
+  },
+
+  "noRecordingsCheckFilterOrToken": "No recordings. Check you filter settings or API token value.",
+  "@noRecordingsCheckFilterOrToken": {
+    "description": "Message when no recordings found"
+  },
+
+  "unauthorizedCheckTokenAndServer": "Unauthorized: please check and specify token and server URL in settings",
+  "@unauthorizedCheckTokenAndServer": {
+    "description": "Unauthorized error message"
+  },
+
+  "errorCheckTokenAndServer": "please check and specify token and server URL in settings",
+  "@errorCheckTokenAndServer": {
+    "description": "General error message for token/server issues"
+  },
+
+  "loadingInProgress": "Loading in progress...",
+  "@loadingInProgress": {
+    "description": "Loading indicator message"
+  },
+
+  "addArbitraryMedia": "Add an arbitrary media",
+  "@addArbitraryMedia": {
+    "description": "Tooltip for add media button"
+  },
+
+  "addFromClipboard": "Add from clipboard",
+  "@addFromClipboard": {
+    "description": "Tooltip for add from clipboard button"
+  },
+
+  "quotaUsageInfo": "quote: {quota} usage: {usage} ({files}) free: {free}{store}",
+  "@quotaUsageInfo": {
+    "description": "Quota and usage information",
+    "placeholders": {
+      "quota": {
+        "type": "String"
+      },
+      "usage": {
+        "type": "String"
+      },
+      "files": {
+        "type": "String"
+      },
+      "free": {
+        "type": "String"
+      },
+      "store": {
+        "type": "String"
+      }
+    }
+  },
+
+  "waitingDataFromServer": "waiting data from the server...",
+  "@waitingDataFromServer": {
+    "description": "Waiting for server data message"
+  },
+
+  "noRecordingsInUrl": "There is no recordings in the url",
+  "@noRecordingsInUrl": {
+    "description": "No recordings found in URL message"
+  },
+
+  "mediaInfoAcquiring": "Media info acquiring in progress...",
+  "@mediaInfoAcquiring": {
+    "description": "Media info acquisition progress message"
+  },
+
+  "withAudioHandler": "With audio handler!",
+  "@withAudioHandler": {
+    "description": "Audio handler indicator"
+  },
+
+    "seenAt": "Seen at",
+  "@seenAt": {
+    "description": "Label for seen timestamp"
+  },
+  "duration": "Duration",
+  "@duration": {
+    "description": "Label for duration"
+  },
+  "hours": "Hours",
+  "@hours": {
+    "description": "Label for hours in time picker"
+  },
+  "minutes": "Minutes",
+  "@minutes": {
+    "description": "Label for minutes in time picker"
+  },
+  "seconds": "Seconds",
+  "@seconds": {
+    "description": "Label for seconds in time picker"
+  },
+  "createdAt": "Created at",
+  "@createdAt": {
+    "description": "Label for creation timestamp"
+  },
+  "updatedAt": "Updated at",
+  "@updatedAt": {
+    "description": "Label for update timestamp"
+  },
+  "ago": "ago",
+  "@ago": {
+    "description": "Suffix for time elapsed"
+  },
+  "localDownloading": "Local downloading",
+  "@localDownloading": {
+    "description": "Status text for local download in progress"
+  },
+  "copyFileLinkToClipboard": "Copy file link to clipboard",
+  "@copyFileLinkToClipboard": {
+    "description": "Button text to copy file link"
+  },
+  "copyCurlCommandToClipboard": "Copy curl command to clipboard",
+  "@copyCurlCommandToClipboard": {
+    "description": "Button text to copy curl command"
+  },
+  "playWithEmbeddedMpvPlayer": "Play with embedded mpv player",
+  "@playWithEmbeddedMpvPlayer": {
+    "description": "Button text to play with embedded player"
+  },
+  "playWithEmbeddedMpvPlayerHorizontalFlip": "Play with embedded mpv player with horizontal flip",
+  "@playWithEmbeddedMpvPlayerHorizontalFlip": {
+    "description": "Button text to play with embedded player with horizontal flip"
+  },
+  "openInDefaultApplication": "Open in default application",
+  "@openInDefaultApplication": {
+    "description": "Button text to open in default application"
+  },
+  "deleteFileOnServerAndFreeQuota": "Delete file on the server and free server usage quota",
+  "@deleteFileOnServerAndFreeQuota": {
+    "description": "Button text to delete file on server"
+  },
+  "deleteLocalFile": "Delete local file",
+  "@deleteLocalFile": {
+    "description": "Button text to delete local file"
+  },
+    "shareDownloadUrlIn": "Share the download URL in...",
+  "@shareDownloadUrlIn": {
+    "description": "Button text to share download URL"
+  },
+  "downloadLocalFile": "Download local file",
+  "@downloadLocalFile": {
+    "description": "Button text to download local file"
+  },
+  "preparationStarting": "Preparation for {formatId} is starting",
+  "@preparationStarting": {
+    "description": "Message when preparation starts",
+    "placeholders": {
+      "formatId": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadServerFormat": "Download this format again on the server (prepare for viewing)",
+  "@downloadServerFormat": {
+    "description": "Tooltip for downloading format on server"
+  },
+  "openMediaKit": "Open with MediaKit with handler",
+  "@openMediaKit": {
+    "description": "Tooltip for opening with MediaKit"
+  },
+  "doWithIt": "Do with it...",
+  "@doWithIt": {
+    "description": "Tooltip for menu actions"
+  },
+  "areYouSure": "Are you sure?",
+  "@areYouSure": {
+    "description": "Confirmation dialog title"
+  },
+  "deleteServerMediaFile": "Delete server media file?",
+  "@deleteServerMediaFile": {
+    "description": "Confirmation dialog for deleting server file"
+  },
+  "deleteLocalDownloadedMediaFile": "Delete local downloaded media file?",
+  "@deleteLocalDownloadedMediaFile": {
+    "description": "Confirmation dialog for deleting local file"
+  },
+  "unexpectedDownloadStatus": "Unexpected download status {status}",
+  "@unexpectedDownloadStatus": {
+    "description": "Error message for unexpected download status",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "localFileDownloaded": "Local file is downloaded. Click to play.",
+  "@localFileDownloaded": {
+    "description": "Tooltip for downloaded file"
+  },
+  "downloadToLocalStorage": "Download media to local storage",
+  "@downloadToLocalStorage": {
+    "description": "Tooltip for downloading to local storage"
+  },
+  "markAsSeen": "Mark this recording as seen",
+  "@markAsSeen": {
+    "description": "Tooltip for marking as seen"
+  },
+  "markAsUnseen": "Mark this recording as unseen",
+  "@markAsUnseen": {
+    "description": "Tooltip for marking as unseen"
+  },
+  "hideRecording": "Hide this recording (archive it)",
+  "@hideRecording": {
+    "description": "Tooltip for hiding recording"
+  },
+  "showRecording": "Show this recording (unarchive it)",
+  "@showRecording": {
+    "description": "Tooltip for showing recording"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings button tooltip"
+  },
+  "scrollUp": "Scroll to top",
+  "@scrollUp": {
+    "description": "Scroll up button tooltip"
+  },
+  "scrollDown": "Scroll to bottom",
+  "@scrollDown": {
+    "description": "Scroll down button tooltip"
+  },
+
+  "debugCreatedAt": "created at",
+  "@debugCreatedAt": {
+    "description": "Debug: Creation timestamp"
+  },
+
+  "debugUpdatedAt": "updated at",
+  "@debugUpdatedAt": {
+    "description": "Debug: Update timestamp"
+  },
+
+  "debugDuration": "duration",
+  "@debugDuration": {
+    "description": "Debug: Media duration"
+  },
+
+  "debugPosition": "position",
+  "@debugPosition": {
+    "description": "Debug: Current position"
+  },
+
+  "debugBuffered": "buffered",
+  "@debugBuffered": {
+    "description": "Debug: Buffered amount"
+  },
+
+  "debugBuffering": "buffering",
+  "@debugBuffering": {
+    "description": "Debug: Buffering status"
+  },
+
+  "debugVolume": "volume",
+  "@debugVolume": {
+    "description": "Debug: Volume level"
+  },
+
+  "debugAudioBitrate": "audio bitrate",
+  "@debugAudioBitrate": {
+    "description": "Debug: Audio bitrate"
+  },
+
+  "debugAudioDevice": "audio device",
+  "@debugAudioDevice": {
+    "description": "Debug: Audio device"
+  },
+
+  "debugSize": "size",
+  "@debugSize": {
+    "description": "Debug: Video dimensions"
+  },
+
+  "debugVideoParams": "video params",
+  "@debugVideoParams": {
+    "description": "Debug: Video parameters"
+  },
+
+  "debugAudioParams": "audio params",
+  "@debugAudioParams": {
+    "description": "Debug: Audio parameters"
+  },
+
+  "playingFrom": "Playing from",
+  "@playingFrom": {
+    "description": "Source URL indicator"
+  },
+
+  "sizeLabel": "Size",
+  "@sizeLabel": {
+    "description": "File size label"
+  },
+
+  "updatedAt": "Updated at",
+  "@updatedAt": {
+    "description": "Update date"
+  },
+
+  "ago": "ago",
+  "@ago": {
+    "description": "Time suffix 'ago'"
+  },
+
+  "copyVideoUrl": "Copy video URL to the clipboard",
+  "@copyVideoUrl": {
+    "description": "Tooltip for copying video URL"
+  },
+
+  "cleanServerContent": "Clean all downloaded content on the server",
+  "@cleanServerContent": {
+    "description": "Tooltip for cleaning server content"
+  },
+
+  "cleanDeviceMedia": "Clean all downloaded media from the device",
+  "@cleanDeviceMedia": {
+    "description": "Tooltip for cleaning device media"
+  },
+
+  "refreshRecord": "Refresh record (reread from the server)",
+  "@refreshRecord": {
+    "description": "Tooltip for refreshing record"
+  },
+
+  "downloadServerFormat": "Download this format again on the server (prepare for viewing)",
+  "@downloadServerFormat": {
+    "description": "Tooltip for downloading server format"
+  },
+
+  "openMediaKit": "Open with MediaKit with handler",
+  "@openMediaKit": {
+    "description": "Tooltip for opening with MediaKit"
+  },
+
+  "doWithIt": "Do with it...",
+  "@doWithIt": {
+    "description": "Tooltip for actions menu"
+  },
+
+  "copyFileLink": "Copy file link to clipboard",
+  "@copyFileLink": {
+    "description": "Action to copy file link"
+  },
+
+  "copyCurlCommand": "Copy curl command to clipboard",
+  "@copyCurlCommand": {
+    "description": "Action to copy curl command"
+  },
+
+  "playEmbeddedMpv": "Play with embedded mpv player",
+  "@playEmbeddedMpv": {
+    "description": "Action to play with mpv"
+  },
+
+  "playEmbeddedMpvFlipped": "Play with embedded mpv player with horizontal flip",
+  "@playEmbeddedMpvFlipped": {
+    "description": "Action to play with mpv flipped"
+  },
+
+  "openDefaultApp": "Open in default application",
+  "@openDefaultApp": {
+    "description": "Action to open in default app"
+  },
+
+  "deleteServerFile": "Delete file on the server and free server usage quota",
+  "@deleteServerFile": {
+    "description": "Action to delete server file"
+  },
+
+  "deleteLocalFile": "Delete local file",
+  "@deleteLocalFile": {
+    "description": "Action to delete local file"
+  },
+
+  "shareDownloadUrl": "Share the download URL in...",
+  "@shareDownloadUrl": {
+    "description": "Action to share download URL"
+  },
+
+  "downloadLocalFile": "Download local file",
+  "@downloadLocalFile": {
+    "description": "Action to download local file"
+  },
+
+  "localFileDownloaded": "Local file is downloaded. Click to play.",
+  "@localFileDownloaded": {
+    "description": "Tooltip for playing downloaded file"
+  },
+
+  "downloadToLocalStorage": "Download media to local storage",
+  "@downloadToLocalStorage": {
+    "description": "Tooltip for downloading to local storage"
+  },
+
+  "markAsSeen": "Mark this recording as seen",
+  "@markAsSeen": {
+    "description": "Tooltip for marking as seen"
+  },
+
+  "markAsUnseen": "Mark this recording as unseen",
+  "@markAsUnseen": {
+    "description": "Tooltip for marking as unseen"
+  },
+
+  "hideRecording": "Hide this recording (archive it)",
+  "@hideRecording": {
+    "description": "Tooltip for hiding recording"
+  },
+
+  "showRecording": "Show this recording (unarchive it)",
+  "@showRecording": {
+    "description": "Tooltip for showing recording"
+  },
+
+  "copiedToClipboard": "copied to clipboard",
+  "@copiedToClipboard": {
+    "description": "Message about copying to clipboard"
+  },
+
+  "preparationStarting": "Preparation for starting",
+  "@preparationStarting": {
+    "description": "Message about preparation starting"
+  },
+
+  "localDownloading": "Local downloading",
+  "@localDownloading": {
+    "description": "Message about local downloading"
+  },
+
+  "preparing": "preparing...",
+  "@preparing": {
+    "description": "Preparing message"
+  },
+
+  "acquiringInfo": "Acquiring info...",
+  "@acquiringInfo": {
+    "description": "Acquiring info message"
+  },
+
+  "waitingDataFromServer": "waiting data from the server...",
+  "@waitingDataFromServer": {
+    "description": "Message about waiting data from server"
+  },
+
+  "seekToPosition": "Seek to Position",
+  "@seekToPosition": {
+    "description": "Seek dialog title"
+  },
+
+  "duration": "Duration",
+  "@duration": {
+    "description": "Video duration"
+  },
+
+  "hours": "Hours",
+  "@hours": {
+    "description": "Hours in seek dialog"
+  },
+
+  "minutes": "Minutes",
+  "@minutes": {
+    "description": "Minutes in seek dialog"
+  },
+
+  "seconds": "Seconds",
+  "@seconds": {
+    "description": "Seconds in seek dialog"
+  },
+
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button"
+  },
+
+  "seek": "Seek",
+  "@seek": {
+    "description": "Seek position button"
+  },
+
+  "positionExceedsDuration": "Position exceeds video duration",
+  "@positionExceedsDuration": {
+    "description": "Error message for position exceeding duration"
+  },
+
+  "withAudioHandler": "With audio handler!",
+  "@withAudioHandler": {
+    "description": "Technical info about audio handler"
+  },
+
+  "seenAt": "seen at",
+  "@seenAt": {
+    "description": "Seen time"
+  },
+
+  "duration_": "duration",
+  "@duration_": {
+    "description": "Technical info about duration"
+  },
+
+  "position": "position",
+  "@position": {
+    "description": "Technical info about position"
+  },
+
+  "buffered": "buffered",
+  "@buffered": {
+    "description": "Technical info about buffering"
+  },
+
+  "buffering": "buffering",
+  "@buffering": {
+    "description": "Technical info about buffering process"
+  },
+
+  "volume": "volume",
+  "@volume": {
+    "description": "Technical info about volume"
+  },
+
+  "audioBitrate": "audio bitrate",
+  "@audioBitrate": {
+    "description": "Technical info about audio bitrate"
+  },
+
+  "audioDevice": "audio device",
+  "@audioDevice": {
+    "description": "Technical info about audio device"
+  },
+
+  "size": "size",
+  "@size": {
+    "description": "File or video size"
+  },
+
+  "videoParams": "video params",
+  "@videoParams": {
+    "description": "Technical info about video parameters"
+  },
+
+  "audioParams": "audio params",
+  "@audioParams": {
+    "description": "Technical info about audio parameters"
+  },
+
+  "playingFrom": "Playing from",
+  "@playingFrom": {
+    "description": "Playback source"
+  },
+
+  "blockedAt": "Blocked at",
+  "@blockedAt": {
+    "description": "User block time"
+  },
+
+  "unauthorized": "Unauthorized: please check and specify token and server URL in settings",
+  "@unauthorized": {
+    "description": "Unauthorized error message"
+  },
+
+  "noRecordings": "No recordings. Check you filter settings or API token value.",
+  "@noRecordings": {
+    "description": "No recordings message"
+  },
+
+  "userProfile": "User profile",
+  "@userProfile": {
+    "description": "User profile tab title"
+  },
+
+  "housekeeping": "Housekeeping",
+  "@housekeeping": {
+    "description": "Housekeeping tab title"
+  },
+
+  "yourTokenProvidedByBot": "Your token, provided by the bot",
+  "@yourTokenProvidedByBot": {
+    "description": "Token input field label"
+  },
+
+  "serverUrlProvidedByBot": "Server URL, provided by the bot",
+  "@serverUrlProvidedByBot": {
+    "description": "Server URL input field label"
+  },
+
+  "applicationColorTheme": "Application color theme",
+  "@applicationColorTheme": {
+    "description": "Theme selection dropdown label"
+  },
+
+  "playerSpeedRate": "Player speed rate",
+  "@playerSpeedRate": {
+    "description": "Player speed selection dropdown label"
+  },
+
+  "mediaDirectory": "Media directory",
+  "@mediaDirectory": {
+    "description": "Media directory selection dropdown label"
+  },
+
+  "areYouSure": "Are you sure?",
+  "@areYouSure": {
+    "description": "Confirmation dialog title"
+  },
+
+  "deleteAllDownloadedMediaFiles": "This will delete ALL downloaded media files",
+  "@deleteAllDownloadedMediaFiles": {
+    "description": "Confirmation message for deleting all media files"
+  },
+
+  "deleteAllMetadataMessage": "This will delete ALL metadata for {count} recordings,\ndownloaded media files will be retained.\nThis data can be downloaded from the server.",
+  "@deleteAllMetadataMessage": {
+    "description": "Confirmation message for deleting all metadata",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "deleteAllFilesOnServer": "Delete all files on the server?",
+  "@deleteAllFilesOnServer": {
+    "description": "Confirmation message for deleting all server files"
+  },
+
+  "deleteAllLocalFilesOnDevice": "Delete all local files on the device?",
+  "@deleteAllLocalFilesOnDevice": {
+    "description": "Confirmation message for deleting all local files"
+  },
+
+  "deleteServerMediaFile": "Delete server media file?",
+  "@deleteServerMediaFile": {
+    "description": "Confirmation message for deleting server media file"
+  },
+
+  "deleteLocalDownloadedMediaFile": "Delete local downloaded media file?",
+  "@deleteLocalDownloadedMediaFile": {
+    "description": "Confirmation message for deleting local media file"
+  },
+
+  "continueButton": "Continue",
+  "@continueButton": {
+    "description": "Continue button in dialogs"
+  },
+
+  "downloadThisFormatOnServer": "Download this format and the best audio on the server (prepare for viewing)",
+  "@downloadThisFormatOnServer": {
+    "description": "Tooltip for downloading format on server"
+  },
+
+  "copyUrlFragmentToClipboard": "Copy URL this fragment into clipboard",
+  "@copyUrlFragmentToClipboard": {
+    "description": "Tooltip for copying URL fragment"
+  },
+
+  "bestAudio": "Best audio (ba)",
+  "@bestAudio": {
+    "description": "Best audio format option"
+  },
+
+  "commonAvailableFormats": "Common available formats:",
+  "@commonAvailableFormats": {
+    "description": "Header for common available formats section"
+  },
+
+    "availableFormats": "Available formats:",
+  "@availableFormats": {
+    "description": "Header for the available formats section"
+  },
+  "downloadExactFormat": "Download exact this format (prepare this format for viewing)",
+  "@downloadExactFormat": {
+    "description": "Tooltip for downloading exact format"
+  },
+  "seekToPosition": "Seek to Position",
+  "@seekToPosition": {
+    "description": "Title for seek dialog"
+  },
+  "selectedPosition": "Selected position: {position}",
+  "@selectedPosition": {
+    "description": "Shows selected time position",
+    "placeholders": {
+      "position": {
+        "type": "String"
+      }
+    }
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+  "seek": "Seek",
+  "@seek": {
+    "description": "Seek button text"
+  },
+  "positionExceedsVideoDuration": "Position exceeds video duration",
+  "@positionExceedsVideoDuration": {
+    "description": "Error message when seek position is too long"
+  },
+  "loadingInfo": "Loading info...",
+  "@loadingInfo": {
+    "description": "Loading text for media info"
+  },
+  "cleanAllDownloadedContentOnServer": "Clean all downloaded content on the server",
+  "@cleanAllDownloadedContentOnServer": {
+    "description": "Tooltip for cleaning server content"
+  },
+  "areYouSure": "Are you sure?",
+  "@areYouSure": {
+    "description": "Confirmation dialog title"
+  },
+  "deleteAllFilesOnServer": "Delete all files on the server?",
+  "@deleteAllFilesOnServer": {
+    "description": "Confirmation dialog text for server cleanup"
+  },
+  "cleanAllDownloadedMediaFromDevice": "Clean all downloaded media from the device",
+  "@cleanAllDownloadedMediaFromDevice": {
+    "description": "Tooltip for cleaning device content"
+  },
+  "deleteAllLocalFilesOnDevice": "Delete all local files on the device?",
+  "@deleteAllLocalFilesOnDevice": {
+    "description": "Confirmation dialog text for device cleanup"
+  },
+  "refreshRecord": "Refresh record (reread from the server)",
+  "@refreshRecord": {
+    "description": "Tooltip for refresh button"
+  },
+  "loading": "loading...",
+  "@loading": {
+    "description": "Loading text"
+  },
+  "downloadsInfoIsLoading": "Downloads info is loading...",
+  "@downloadsInfoIsLoading": {
+    "description": "Loading text for downloads"
+  },
+  "noFormatsForRecord": "No formats for the record",
+  "@noFormatsForRecord": {
+    "description": "Text when no formats available"
+  },
+  "createdAt": "Created at: {date} ({time} ago)",
+  "@createdAt": {
+    "description": "Created date text",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "updatedAt": "Updated at: {date} ({time} ago)",
+  "@updatedAt": {
+    "description": "Updated date text",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "copyVideoUrlToClipboard": "Copy video URL to the clipboard",
+  "@copyVideoUrlToClipboard": {
+    "description": "Tooltip for copying video URL"
+  },
+  "localDownloading": "Local downloading {status}: {filename} {estimate}",
+  "@localDownloading": {
+    "description": "Local download status text",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      },
+      "filename": {
+        "type": "String"
+      },
+      "estimate": {
+        "type": "String"
+      }
+    }
+  },
+  "preparationStarting": "Preparation for {formatId} is starting",
+  "@preparationStarting": {
+    "description": "Snackbar text when preparation starts",
+    "placeholders": {
+      "formatId": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadThisFormatAgainOnServer": "Download this format again on the server (prepare for viewing)",
+  "@downloadThisFormatAgainOnServer": {
+    "description": "Tooltip for re-downloading format"
+  },
+  "openWithMediaKitHandler": "Open with MediaKit with handler",
+  "@openWithMediaKitHandler": {
+    "description": "Tooltip for opening with MediaKit"
+  },
+  "deleteServerMediaFile": "Delete server media file?",
+  "@deleteServerMediaFile": {
+    "description": "Confirmation dialog for deleting server file"
+  },
+  "deleteLocalDownloadedMediaFile": "Delete local downloaded media file?",
+  "@deleteLocalDownloadedMediaFile": {
+    "description": "Confirmation dialog for deleting local file"
+  },
+  "copyFileLinkToClipboard": "Copy file link to clipboard",
+  "@copyFileLinkToClipboard": {
+    "description": "Menu item text"
+  },
+  "copyCurlCommandToClipboard": "Copy curl command to clipboard",
+  "@copyCurlCommandToClipboard": {
+    "description": "Menu item text"
+  },
+  "playWithEmbeddedMpvPlayer": "Play with embedded mpv player",
+  "@playWithEmbeddedMpvPlayer": {
+    "description": "Menu item text"
+  },
+  "playWithEmbeddedMpvPlayerWithHorizontalFlip": "Play with embedded mpv player with horizontal flip",
+  "@playWithEmbeddedMpvPlayerWithHorizontalFlip": {
+    "description": "Menu item text"
+  },
+  "openInDefaultApplication": "Open in default application",
+  "@openInDefaultApplication": {
+    "description": "Menu item text"
+  },
+  "deleteFileOnServerAndFreeQuota": "Delete file on the server and free server usage quota",
+  "@deleteFileOnServerAndFreeQuota": {
+    "description": "Menu item text"
+  },
+  "deleteLocalFile": "Delete local file",
+  "@deleteLocalFile": {
+    "description": "Menu item text"
+  },
+  "shareDownloadUrl": "Share the download URL in...",
+  "@shareDownloadUrl": {
+    "description": "Menu item text"
+  },
+  "downloadLocalFile": "Download local file",
+  "@downloadLocalFile": {
+    "description": "Menu item text"
+  },
+  "unexpectedDownloadStatus": "Unexpected download status {status}",
+  "@unexpectedDownloadStatus": {
+    "description": "Error message for unexpected status",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "localFileDownloadedClickToPlay": "Local file is downloaded. Click to play.",
+  "@localFileDownloadedClickToPlay": {
+    "description": "Tooltip for downloaded file"
+  },
+  "downloadMediaToLocalStorage": "Download media to local storage",
+  "@downloadMediaToLocalStorage": {
+    "description": "Tooltip for download button"
+  },
+  "markRecordingAsSeen": "Mark this recording as seen",
+  "@markRecordingAsSeen": {
+    "description": "Tooltip for mark as seen"
+  },
+  "markRecordingAsUnseen": "Mark this recording as unseen",
+  "@markRecordingAsUnseen": {
+    "description": "Tooltip for mark as unseen"
+  },
+  "hideRecording": "Hide this recording (archive it)",
+  "@hideRecording": {
+    "description": "Tooltip for hide recording"
+  },
+  "showRecording": "Show this recording (unarchive it)",
+  "@showRecording": {
+    "description": "Tooltip for show recording"
+  },
+  "copiedToClipboard": "{text} copied to clipboard",
+  "@copiedToClipboard": {
+    "description": "Snackbar text when copied to clipboard",
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "blockedAt": "Blocked at {date}",
+  "@blockedAt": {
+    "description": "User blocked date",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "quota": "Quota: {quota}",
+  "@quota": {
+    "description": "User quota information",
+    "placeholders": {
+      "quota": {
+        "type": "String"
+      }
+    }
+  },
+  "used": "Used: {used}",
+  "@used": {
+    "description": "Used storage information",
+    "placeholders": {
+      "used": {
+        "type": "String"
+      }
+    }
+  },
+  "free": "Free: {free}",
+  "@free": {
+    "description": "Free storage information",
+    "placeholders": {
+      "free": {
+        "type": "String"
+      }
+    }
+  },
+  "files": "Files: {files}",
+  "@files": {
+    "description": "Number of files",
+    "placeholders": {
+      "files": {
+        "type": "String"
+      }
+    }
+  },
+  "local": "Local: {local}",
+  "@local": {
+    "description": "Local storage information",
+    "placeholders": {
+      "local": {
+        "type": "String"
+      }
+    }
+  },
+  "storage": "Storage: {storage}",
+  "@storage": {
+    "description": "Storage information",
+    "placeholders": {
+      "storage": {
+        "type": "String"
+      }
+    }
+  },
+  "localMediaInfo": "Local media info",
+  "@localMediaInfo": {
+    "description": "Header for local media information"
+  },
+  "recordings": "Recordings: {count}",
+  "@recordings": {
+    "description": "Number of recordings",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "filesWithSize": "Files: {number}, total size: {size}",
+  "@filesWithSize": {
+    "description": "Files count and total size",
+    "placeholders": {
+      "number": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "cleanStaleDownloadedMedia": "Clean stale downloaded media",
+  "@cleanStaleDownloadedMedia": {
+    "description": "Button text for cleaning stale media"
+  },
+  "filesCleanedMessage": "{number} files, {size} cleaned",
+  "@filesCleanedMessage": {
+    "description": "Message when files are cleaned",
+    "placeholders": {
+      "number": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "cleanAllDownloadedMedia": "Clean ALL downloaded media",
+  "@cleanAllDownloadedMedia": {
+    "description": "Button text for cleaning all media"
+  },
+  "cleanAllMetadataForRecordings": "Clean ALL metadata for {count} recordings",
+  "@cleanAllMetadataForRecordings": {
+    "description": "Button text for cleaning metadata",
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "dataLocalPath": "Data local path: {path}",
+  "@dataLocalPath": {
+    "description": "Local data path information",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadedLocalMediaPath": "Downloaded local media path: {path}",
+  "@downloadedLocalMediaPath": {
+    "description": "Local media path information",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "cleaningStaleMediaLocalFiles": "cleaning stale media local files...",
+  "@cleaningStaleMediaLocalFiles": {
+    "description": "Progress message when cleaning stale files"
+  },
+  "tapToPlayInEmbeddingPlayer": "{filename} tap to play in embedding player",
+  "@tapToPlayInEmbeddingPlayer": {
+    "description": "Tooltip message for playing media",
+    "placeholders": {
+      "filename": {
+        "type": "String"
+      }
+    }
+  },
+  "noDownloadsForRecording": "No downloads for recording",
+  "@noDownloadsForRecording": {
+    "description": "Message when there are no downloads"
+  },
+  "filesForThisRecording": "Files for this recording",
+  "@filesForThisRecording": {
+    "description": "Header for downloads table"
+  },
+  "formatHeader": "format",
+  "@formatHeader": {
+    "description": "Table header for format column"
+  },
+  "resolutionHeader": "resolution",
+  "@resolutionHeader": {
+    "description": "Table header for resolution column"
+  },
+  "fpsHeader": "fps",
+  "@fpsHeader": {
+    "description": "Table header for fps column"
+  },
+  "sizeHeader": "size",
+  "@sizeHeader": {
+    "description": "Table header for size column"
+  },
+
+  "id": "id",
+  "@id": {
+    "description": "ID column header"
+  },
+
+  "url": "URL",
+  "@url": {
+    "description": "URL column header"
+  },
+
+  "ext": "ext",
+  "@ext": {
+    "description": "Extension column header"
+  },
+
+  "resolution": "resolution",
+  "@resolution": {
+    "description": "Resolution column header"
+  },
+
+  "fps": "fps",
+  "@fps": {
+    "description": "FPS column header"
+  },
+
+  "format": "format",
+  "@format": {
+    "description": "Format column header"
+  },
+
+  "preparingEllipsis": "preparing...",
+  "@preparingEllipsis": {
+    "description": "Preparing message with ellipsis"
+  },
+
+  "acquiringInfo": "Acquiring info...",
+  "@acquiringInfo": {
+    "description": "Acquiring info message"
+  },
+
+  "successfullyAddedMessage": "{title} successfully added",
+  "@successfullyAddedMessage": {
+    "description": "Successfully added message",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+
+  "addingUrlWithVariable": "Adding url {url}...",
+  "@addingUrlWithVariable": {
+    "description": "Adding URL message",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+
+  "createdAtWithDate": "Created at: {date} ({timeAgo})",
+  "@createdAtWithDate": {
+    "description": "Created at with date and time ago",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "timeAgo": {
+        "type": "String"
+      }
+    }
+  },
+
+  "updatedAtWithDate": "Updated at: {date} ({timeAgo})",
+  "@updatedAtWithDate": {
+    "description": "Updated at with date and time ago",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "timeAgo": {
+        "type": "String"
+      }
+    }
+  },
+
+  "localDownloading": "Local downloading",
+  "@localDownloading": {
+    "description": "Local downloading status"
+  },
+
+  "localDownloadingStatus": "Local downloading {status}: {filename} {estimate}",
+  "@localDownloadingStatus": {
+    "description": "Local downloading status with details",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      },
+      "filename": {
+        "type": "String"
+      },
+      "estimate": {
+        "type": "String"
+      }
+    }
+  },
+
+  "filesCleanedMessage": "{count} files, {size} cleaned",
+  "@filesCleanedMessage": {
+    "description": "Files cleaned message",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+
+  "recordingsCleanedMessage": "{count} recordings cleaned",
+  "@recordingsCleanedMessage": {
+    "description": "Recordings cleaned message",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "copiedToClipboardMessage": "{text} copied to clipboard",
+  "@copiedToClipboardMessage": {
+    "description": "Copied to clipboard message",
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+
+  "quotaLabel": "Quota: {quota}",
+  "@quotaLabel": {
+    "description": "Quota label with value",
+    "placeholders": {
+      "quota": {
+        "type": "String"
+      }
+    }
+  },
+
+  "usedLabel": "Used: {used}",
+  "@usedLabel": {
+    "description": "Used label with value",
+    "placeholders": {
+      "used": {
+        "type": "String"
+      }
+    }
+  },
+
+  "freeLabel": "Free: {free}",
+  "@freeLabel": {
+    "description": "Free label with value",
+    "placeholders": {
+      "free": {
+        "type": "String"
+      }
+    }
+  },
+
+  "filesLabel": "Files: {files}",
+  "@filesLabel": {
+    "description": "Files label with count",
+    "placeholders": {
+      "files": {
+        "type": "int"
+      }
+    }
+  },
+
+  "localLabel": "Local: {local}",
+  "@localLabel": {
+    "description": "Local label with value",
+    "placeholders": {
+      "local": {
+        "type": "String"
+      }
+    }
+  },
+
+  "storageLabel": "Storage: {storage}",
+  "@storageLabel": {
+    "description": "Storage label with value",
+    "placeholders": {
+      "storage": {
+        "type": "String"
+      }
+    }
+  },
+
+  "recordingsLabel": "Recordings: {recordings}",
+  "@recordingsLabel": {
+    "description": "Recordings label with count",
+    "placeholders": {
+      "recordings": {
+        "type": "int"
+      }
+    }
+  },
+
+  "filesTotalSizeLabel": "Files: {count}, total size: {size}",
+  "@filesTotalSizeLabel": {
+    "description": "Files count and total size label",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+
+  "blockedAtLabel": "Blocked at {date}",
+  "@blockedAtLabel": {
+    "description": "Blocked at label with date",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+
+  "speedSlow": "slow",
+  "@speedSlow": {
+    "description": "Slow playback speed label"
+  },
+
+  "speedNormal": "normal",
+  "@speedNormal": {
+    "description": "Normal playback speed label"
+  },
+
+  "speedMedium": "medium",
+  "@speedMedium": {
+    "description": "Medium playback speed label"
+  },
+
+  "speedFast": "fast",
+  "@speedFast": {
+    "description": "Fast playback speed label"
+  },
+
+  "speedVeryFast": "very fast",
+  "@speedVeryFast": {
+    "description": "Very fast playback speed label"
+  },
+
+  "speedSuperFast": "super fast",
+  "@speedSuperFast": {
+    "description": "Super fast playback speed label"
   }
 }

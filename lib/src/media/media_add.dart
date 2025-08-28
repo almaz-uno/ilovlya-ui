@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api.dart';
 import '../api/api_riverpod.dart';
 import '../api/media_list_riverpod.dart';
+import '../localization/app_localizations.dart';
 import '../model/url_info.dart';
 import 'format.dart';
 
@@ -73,11 +74,11 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add new media'),
+        title: Text(AppLocalizations.of(context)!.addNewMedia),
         actions: [
           IconButton(
             icon: const Icon(Icons.paste),
-            tooltip: 'Paste from clipboard',
+            tooltip: AppLocalizations.of(context)!.pasteFromClipboard,
             onPressed: fromClipboard,
           ),
         ],
@@ -89,18 +90,18 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
               controller: _urlController,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
-                hintText: 'Enter media URL',
+                hintText: AppLocalizations.of(context)!.enterMediaUrl,
                 prefixIcon: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     IconButton(
                       onPressed: fromClipboard,
                       icon: const Icon(Icons.paste),
-                      tooltip: 'Paste from clipboard',
+                      tooltip: AppLocalizations.of(context)!.pasteFromClipboard,
                     ),
                     IconButton(
                       icon: const Icon(Icons.youtube_searched_for),
-                      tooltip: 'Lookup media info',
+                      tooltip: AppLocalizations.of(context)!.lookupMediaInfo,
                       onPressed: () {
                         setState(() {
                           _futurePropositions = _getURLInfo(_urlController.text);
@@ -115,7 +116,7 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
                 ),
               ),
             ),
-            (_futurePropositions == null) ? const Text('To view info press lookup button above') : buildPropositionList(),
+            (_futurePropositions == null) ? Text(AppLocalizations.of(context)!.toViewInfoPressLookup) : buildPropositionList(),
             Visibility(
                 visible: _isLoading || _isAdding,
                 child: const Padding(
@@ -138,7 +139,7 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
     ref.read(addRecordingProvider(url).future).then((value) {
       ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('${value.title} successfully added'),
+        content: Text(AppLocalizations.of(context)!.successfullyAddedMessage(value.title)),
       ));
     }).catchError((err) {
       showDialog(
@@ -168,14 +169,14 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
             _addMedia(context, u, true);
             return Column(
               children: [
-                Text("Adding url $u..."),
+                Text(AppLocalizations.of(context)!.addingUrlWithVariable(u)),
                 const CircularProgressIndicator(),
               ],
             );
           }
 
           return snapshot.data!.infos == null
-              ? const Text("There is no recordings in the url")
+              ? Text(AppLocalizations.of(context)!.noRecordingsInUrl)
               : ListView.builder(
                   scrollDirection: Axis.vertical,
                   shrinkWrap: true,
@@ -207,9 +208,9 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
           return ErrorWidget(snapshot.error!);
         }
 
-        return const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text('Media info acquiring in progress...'),
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(AppLocalizations.of(context)!.mediaInfoAcquiring),
         );
       },
     );

@@ -1,0 +1,1266 @@
+{
+  "appTitle": "Иловля",
+  "@appTitle": {
+    "description": "Название приложения"
+  },
+
+  "settings": "Настройки",
+  "@settings": {
+    "description": "Заголовок экрана настроек"
+  },
+
+  "addNewMedia": "Добавить новое медиа",
+  "@addNewMedia": {
+    "description": "Заголовок для добавления нового медиа"
+  },
+
+  "search": "Поиск...",
+  "@search": {
+    "description": "Подсказка для поля поиска"
+  },
+
+  "appVersion": "Версия: v{version}",
+  "@appVersion": {
+    "description": "Отображение версии приложения",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+
+  "language": "Язык",
+  "@language": {
+    "description": "Настройка языка"
+  },
+
+  "systemLanguage": "Системный язык",
+  "@systemLanguage": {
+    "description": "Опция системного языка"
+  },
+
+  "english": "English",
+  "@english": {
+    "description": "Опция английского языка"
+  },
+
+  "copiedToClipboard": "{text} скопирован в буфер обмена",
+  "blockedAt": "Заблокирован {date}",
+  "quota": "Квота: {quota}",
+  "used": "Использовано: {used}",
+  "free": "Свободно: {free}",
+  "files": "Файлов: {files}",
+  "local": "Локально: {local}",
+  "storage": "Хранилище: {storage}",
+  "localMediaInfo": "Информация о локальных медиа",
+  "recordings": "Записей: {count}",
+  "filesWithSize": "Файлов: {number}, общий размер: {size}",
+  "cleanStaleDownloadedMedia": "Очистить старые загруженные медиа",
+  "filesCleanedMessage": "{number} файлов, {size} очищено",
+  "cleanAllDownloadedMedia": "Очистить ВСЕ загруженные медиа",
+  "cleanAllMetadataForRecordings": "Очистить ВСЕ метаданные для {count} записей",
+  "dataLocalPath": "Локальный путь данных: {path}",
+  "downloadedLocalMediaPath": "Локальный путь загруженных медиа: {path}",
+  "cleaningStaleMediaLocalFiles": "очистка старых локальных медиафайлов...",
+  "tapToPlayInEmbeddingPlayer": "{filename} нажмите для воспроизведения во встроенном плеере",
+  "noDownloadsForRecording": "Нет загрузок для записи",
+  "filesForThisRecording": "Файлы для этой записи",
+  "formatHeader": "формат",
+  "resolutionHeader": "разрешение",
+  "fpsHeader": "кадр/с",
+  "sizeHeader": "размер",
+
+  "russian": "Русский",
+  "@russian": {
+    "description": "Опция русского языка"
+  },
+
+  "refreshList": "Обновить список",
+  "@refreshList": {
+    "description": "Подсказка для кнопки обновления списка"
+  },
+
+  "moreOptions": "Больше опций",
+  "@moreOptions": {
+    "description": "Подсказка для меню дополнительных опций"
+  },
+
+  "showSeen": "показать просмотренные",
+  "@showSeen": {
+    "description": "Опция показа просмотренных записей"
+  },
+
+  "showHidden": "показать скрытые",
+  "@showHidden": {
+    "description": "Опция показа скрытых записей"
+  },
+
+  "sortByCreated": "сортировать по созданию",
+  "@sortByCreated": {
+    "description": "Опция сортировки по дате создания"
+  },
+
+  "sortByUpdated": "сортировать по обновлению",
+  "@sortByUpdated": {
+    "description": "Опция сортировки по дате обновления"
+  },
+
+  "showOnlyWithServerFile": "показать только с серверным файлом",
+  "@showOnlyWithServerFile": {
+    "description": "Опция показа только записей с серверным файлом"
+  },
+
+  "showOnlyWithLocalFile": "показать только с локальным файлом",
+  "@showOnlyWithLocalFile": {
+    "description": "Опция показа только записей с локальным файлом"
+  },
+
+  "pasteFromClipboard": "Вставить из буфера",
+  "@pasteFromClipboard": {
+    "description": "Подсказка для кнопки вставки из буфера"
+  },
+
+  "enterMediaUrl": "Введите URL медиа",
+  "@enterMediaUrl": {
+    "description": "Подсказка для поля ввода URL медиа"
+  },
+
+  "lookupMediaInfo": "Поиск информации о медиа",
+  "@lookupMediaInfo": {
+    "description": "Подсказка для кнопки поиска информации о медиа"
+  },
+
+  "toViewInfoPressLookup": "Для просмотра информации нажмите кнопку поиска выше",
+  "@toViewInfoPressLookup": {
+    "description": "Сообщение о том, как посмотреть информацию о медиа"
+  },
+
+  "successfullyAdded": "успешно добавлено",
+  "@successfullyAdded": {
+    "description": "Сообщение об успешном добавлении медиа"
+  },
+
+  "addingUrl": "Добавление URL",
+  "@addingUrl": {
+    "description": "Сообщение о процессе добавления URL"
+  },
+
+  "noRecordingsInUrl": "В URL нет записей",
+  "@noRecordingsInUrl": {
+    "description": "Сообщение об отсутствии записей в URL"
+  },
+
+  "mediaInfoAcquiring": "Получение информации о медиа...",
+  "@mediaInfoAcquiring": {
+    "description": "Сообщение о процессе получения информации о медиа"
+  },
+
+  "systemTheme": "Системная тема",
+  "@systemTheme": {
+    "description": "Опция системной темы"
+  },
+
+  "lightTheme": "Светлая тема",
+  "@lightTheme": {
+    "description": "Опция светлой темы"
+  },
+
+  "darkTheme": "Тёмная тема",
+  "@darkTheme": {
+    "description": "Опция тёмной темы"
+  },
+
+  "autoMarkViewedWhenPlayed": "Автоматически отмечать запись как просмотренную при полном воспроизведении",
+  "@autoMarkViewedWhenPlayed": {
+    "description": "Настройка автоматического отмечания записей как просмотренных"
+  },
+
+  "updateThumbnailProgress": "Обновлять миниатюру в соответствии с прогрессом просмотра видео",
+  "@updateThumbnailProgress": {
+    "description": "Настройка обновления миниатюры по прогрессу просмотра"
+  },
+
+  "showTechnicalInfo": "Показывать дополнительную техническую информацию. Только для продвинутых пользователей!",
+  "@showTechnicalInfo": {
+    "description": "Настройка показа технической информации"
+  },
+
+  "quota": "Квота",
+  "@quota": {
+    "description": "Информация о квоте"
+  },
+
+  "used": "Использовано",
+  "@used": {
+    "description": "Информация об использованном пространстве"
+  },
+
+  "free": "Свободно",
+  "@free": {
+    "description": "Информация о свободном пространстве"
+  },
+
+  "files": "Файлы",
+  "@files": {
+    "description": "Информация о файлах"
+  },
+
+  "local": "Локально",
+  "@local": {
+    "description": "Информация о локальном хранилище"
+  },
+
+  "storage": "Хранилище",
+  "@storage": {
+    "description": "Информация о хранилище"
+  },
+
+  "localMediaInfo": "Информация о локальных медиа",
+  "@localMediaInfo": {
+    "description": "Заголовок секции локальных медиа"
+  },
+
+  "recordings": "Записи",
+  "@recordings": {
+    "description": "Количество записей"
+  },
+
+  "totalSize": "общий размер",
+  "@totalSize": {
+    "description": "Общий размер файлов"
+  },
+
+  "cleanStaleMedia": "Очистить устаревшие загруженные медиа",
+  "@cleanStaleMedia": {
+    "description": "Кнопка очистки устаревших медиа"
+  },
+
+  "cleanAllMedia": "Очистить ВСЕ загруженные медиа",
+  "@cleanAllMedia": {
+    "description": "Кнопка очистки всех медиа"
+  },
+
+  "cleanAllMetadata": "Очистить ВСЕ метаданные для записей",
+  "@cleanAllMetadata": {
+    "description": "Кнопка очистки всех метаданных"
+  },
+
+  "cleaned": "очищено",
+  "@cleaned": {
+    "description": "Сообщение об очистке"
+  },
+
+  "recordingsCleaned": "записей очищено",
+  "@recordingsCleaned": {
+    "description": "Сообщение об очистке записей"
+  },
+
+  "dataLocalPath": "Локальный путь данных",
+  "@dataLocalPath": {
+    "description": "Информация о локальном пути данных"
+  },
+
+  "downloadedLocalMediaPath": "Путь загруженных локальных медиа",
+  "@downloadedLocalMediaPath": {
+    "description": "Информация о пути загруженных медиа"
+  },
+
+  "cleaningStaleFiles": "очистка устаревших локальных медиафайлов...",
+  "@cleaningStaleFiles": {
+    "description": "Процесс очистки устаревших файлов"
+  },
+
+  "loading": "загрузка...",
+  "@loading": {
+    "description": "Сообщение о загрузке"
+  },
+
+  "loadingInfo": "Загрузка информации...",
+  "@loadingInfo": {
+    "description": "Сообщение о загрузке информации"
+  },
+
+  "downloadsInfoLoading": "Информация о загрузках загружается...",
+  "@downloadsInfoLoading": {
+    "description": "Сообщение о загрузке информации о загрузках"
+  },
+
+  "noFormatsForRecord": "Нет форматов для записи",
+  "@noFormatsForRecord": {
+    "description": "Сообщение об отсутствии форматов"
+  },
+
+  "createdAt": "Создано",
+  "@createdAt": {
+    "description": "Дата создания"
+  },
+
+  "updatedAt": "Обновлено",
+  "@updatedAt": {
+    "description": "Дата обновления"
+  },
+
+  "ago": "назад",
+  "@ago": {
+    "description": "Суффикс для времени 'назад'"
+  },
+
+  "copyVideoUrl": "Копировать URL видео в буфер",
+  "@copyVideoUrl": {
+    "description": "Подсказка для копирования URL видео"
+  },
+
+  "cleanServerContent": "Очистить весь загруженный контент на сервере",
+  "@cleanServerContent": {
+    "description": "Подсказка для очистки контента на сервере"
+  },
+
+  "cleanDeviceMedia": "Очистить все загруженные медиа с устройства",
+  "@cleanDeviceMedia": {
+    "description": "Подсказка для очистки медиа с устройства"
+  },
+
+  "refreshRecord": "Обновить запись (перечитать с сервера)",
+  "@refreshRecord": {
+    "description": "Подсказка для обновления записи"
+  },
+
+  "downloadServerFormat": "Загрузить этот формат снова на сервер (подготовить для просмотра)",
+  "@downloadServerFormat": {
+    "description": "Подсказка для загрузки формата на сервер"
+  },
+
+  "openMediaKit": "Открыть с MediaKit с обработчиком",
+  "@openMediaKit": {
+    "description": "Подсказка для открытия с MediaKit"
+  },
+
+  "doWithIt": "Что с этим делать...",
+  "@doWithIt": {
+    "description": "Подсказка для меню действий"
+  },
+
+  "copyFileLink": "Копировать ссылку на файл в буфер",
+  "@copyFileLink": {
+    "description": "Действие копирования ссылки на файл"
+  },
+
+  "copyCurlCommand": "Копировать curl команду в буфер",
+  "@copyCurlCommand": {
+    "description": "Действие копирования curl команды"
+  },
+
+  "playEmbeddedMpv": "Воспроизвести во встроенном mpv плеере",
+  "@playEmbeddedMpv": {
+    "description": "Действие воспроизведения в mpv"
+  },
+
+  "playEmbeddedMpvFlipped": "Воспроизвести во встроенном mpv плеере с горизонтальным отражением",
+  "@playEmbeddedMpvFlipped": {
+    "description": "Действие воспроизведения в mpv с отражением"
+  },
+
+  "openDefaultApp": "Открыть в приложении по умолчанию",
+  "@openDefaultApp": {
+    "description": "Действие открытия в приложении по умолчанию"
+  },
+
+  "deleteServerFile": "Удалить файл на сервере и освободить серверную квоту",
+  "@deleteServerFile": {
+    "description": "Действие удаления файла на сервере"
+  },
+
+  "deleteLocalFile": "Удалить локальный файл",
+  "@deleteLocalFile": {
+    "description": "Действие удаления локального файла"
+  },
+
+  "shareDownloadUrl": "Поделиться URL загрузки в...",
+  "@shareDownloadUrl": {
+    "description": "Действие поделиться URL"
+  },
+
+  "downloadLocalFile": "Загрузить локальный файл",
+  "@downloadLocalFile": {
+    "description": "Действие загрузки локального файла"
+  },
+
+  "localFileDownloaded": "Локальный файл загружен. Нажмите для воспроизведения.",
+  "@localFileDownloaded": {
+    "description": "Подсказка для воспроизведения загруженного файла"
+  },
+
+  "downloadToLocalStorage": "Загрузить медиа в локальное хранилище",
+  "@downloadToLocalStorage": {
+    "description": "Подсказка для загрузки в локальное хранилище"
+  },
+
+  "markAsSeen": "Отметить эту запись как просмотренную",
+  "@markAsSeen": {
+    "description": "Подсказка для отметки как просмотренную"
+  },
+
+  "markAsUnseen": "Отметить эту запись как непросмотренную",
+  "@markAsUnseen": {
+    "description": "Подсказка для отметки как непросмотренную"
+  },
+
+  "hideRecording": "Скрыть эту запись (архивировать)",
+  "@hideRecording": {
+    "description": "Подсказка для скрытия записи"
+  },
+
+  "showRecording": "Показать эту запись (разархивировать)",
+  "@showRecording": {
+    "description": "Подсказка для показа записи"
+  },
+
+  "copiedToClipboard": "скопировано в буфер",
+  "@copiedToClipboard": {
+    "description": "Сообщение о копировании в буфер"
+  },
+
+  "preparationStarting": "Подготовка к началу",
+  "@preparationStarting": {
+    "description": "Сообщение о начале подготовки"
+  },
+
+  "localDownloading": "Локальная загрузка",
+  "@localDownloading": {
+    "description": "Сообщение о локальной загрузке"
+  },
+
+  "preparing": "подготовка...",
+  "@preparing": {
+    "description": "Сообщение о подготовке"
+  },
+
+  "acquiringInfo": "Получение информации...",
+  "@acquiringInfo": {
+    "description": "Сообщение о получении информации"
+  },
+
+  "waitingDataFromServer": "ожидание данных с сервера...",
+  "@waitingDataFromServer": {
+    "description": "Сообщение об ожидании данных с сервера"
+  },
+
+  "seekToPosition": "Перейти к позиции",
+  "@seekToPosition": {
+    "description": "Заголовок диалога перехода к позиции"
+  },
+
+  "duration": "Длительность",
+  "@duration": {
+    "description": "Длительность видео"
+  },
+
+  "hours": "Часы",
+  "@hours": {
+    "description": "Часы в диалоге перехода"
+  },
+
+  "minutes": "Минуты",
+  "@minutes": {
+    "description": "Минуты в диалоге перехода"
+  },
+
+  "seconds": "Секунды",
+  "@seconds": {
+    "description": "Секунды в диалоге перехода"
+  },
+
+  "cancel": "Отмена",
+  "@cancel": {
+    "description": "Кнопка отмены"
+  },
+
+  "seek": "Перейти",
+  "@seek": {
+    "description": "Кнопка перехода к позиции"
+  },
+
+  "positionExceedsDuration": "Позиция превышает длительность видео",
+  "@positionExceedsDuration": {
+    "description": "Сообщение об ошибке превышения длительности"
+  },
+
+  "withAudioHandler": "С аудио обработчиком!",
+  "@withAudioHandler": {
+    "description": "Техническая информация об аудио обработчике"
+  },
+
+  "seenAt": "просмотрено в",
+  "@seenAt": {
+    "description": "Время просмотра"
+  },
+
+  "duration_": "длительность",
+  "@duration_": {
+    "description": "Техническая информация о длительности"
+  },
+
+  "position": "позиция",
+  "@position": {
+    "description": "Техническая информация о позиции"
+  },
+
+  "buffered": "буферизовано",
+  "@buffered": {
+    "description": "Техническая информация о буферизации"
+  },
+
+  "buffering": "буферизация",
+  "@buffering": {
+    "description": "Техническая информация о процессе буферизации"
+  },
+
+  "volume": "громкость",
+  "@volume": {
+    "description": "Техническая информация о громкости"
+  },
+
+  "audioBitrate": "аудио битрейт",
+  "@audioBitrate": {
+    "description": "Техническая информация об аудио битрейте"
+  },
+
+  "audioDevice": "аудио устройство",
+  "@audioDevice": {
+    "description": "Техническая информация об аудио устройстве"
+  },
+
+  "size": "размер",
+  "@size": {
+    "description": "Размер файла или видео"
+  },
+
+  "videoParams": "параметры видео",
+  "@videoParams": {
+    "description": "Техническая информация о параметрах видео"
+  },
+
+  "audioParams": "параметры аудио",
+  "@audioParams": {
+    "description": "Техническая информация о параметрах аудио"
+  },
+
+  "playingFrom": "Воспроизведение из",
+  "@playingFrom": {
+    "description": "Источник воспроизведения"
+  },
+
+  "blockedAt": "Заблокирован в",
+  "@blockedAt": {
+    "description": "Время блокировки пользователя"
+  },
+
+  "unauthorized": "Не авторизован: проверьте и укажите токен и URL сервера в настройках",
+  "@unauthorized": {
+    "description": "Сообщение об ошибке авторизации"
+  },
+
+  "noRecordings": "Нет записей. Проверьте настройки фильтра или значение API токена.",
+  "@noRecordings": {
+    "description": "Сообщение об отсутствии записей"
+  },
+
+  "userProfile": "Профиль пользователя",
+  "@userProfile": {
+    "description": "User profile tab title"
+  },
+
+  "housekeeping": "Управление файлами",
+  "@housekeeping": {
+    "description": "Housekeeping tab title"
+  },
+
+  "yourTokenProvidedByBot": "Ваш токен, предоставленный ботом",
+  "@yourTokenProvidedByBot": {
+    "description": "Token input field label"
+  },
+
+  "serverUrlProvidedByBot": "URL сервера, предоставленный ботом",
+  "@serverUrlProvidedByBot": {
+    "description": "Server URL input field label"
+  },
+
+  "applicationColorTheme": "Цветовая тема приложения",
+  "@applicationColorTheme": {
+    "description": "Theme selection dropdown label"
+  },
+
+  "playerSpeedRate": "Скорость воспроизведения",
+  "@playerSpeedRate": {
+    "description": "Player speed selection dropdown label"
+  },
+
+  "mediaDirectory": "Директория медиафайлов",
+  "@mediaDirectory": {
+    "description": "Media directory selection dropdown label"
+  },
+
+  "areYouSure": "Вы уверены?",
+  "@areYouSure": {
+    "description": "Confirmation dialog title"
+  },
+
+  "deleteAllDownloadedMediaFiles": "Это удалит ВСЕ загруженные медиафайлы",
+  "@deleteAllDownloadedMediaFiles": {
+    "description": "Confirmation message for deleting all media files"
+  },
+
+  "deleteAllMetadataMessage": "Это удалит ВСЕ метаданные для {count} записей,\nзагруженные медиафайлы будут сохранены.\nЭти данные можно загрузить с сервера.",
+  "@deleteAllMetadataMessage": {
+    "description": "Confirmation message for deleting all metadata",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "deleteAllFilesOnServer": "Удалить все файлы на сервере?",
+  "@deleteAllFilesOnServer": {
+    "description": "Confirmation message for deleting all server files"
+  },
+
+  "deleteAllLocalFilesOnDevice": "Удалить все локальные файлы на устройстве?",
+  "@deleteAllLocalFilesOnDevice": {
+    "description": "Confirmation message for deleting all local files"
+  },
+
+  "deleteServerMediaFile": "Удалить медиафайл с сервера?",
+  "@deleteServerMediaFile": {
+    "description": "Confirmation message for deleting server media file"
+  },
+
+  "deleteLocalDownloadedMediaFile": "Удалить локальный загруженный медиафайл?",
+  "@deleteLocalDownloadedMediaFile": {
+    "description": "Confirmation message for deleting local media file"
+  },
+
+  "continueButton": "Продолжить",
+  "@continueButton": {
+    "description": "Continue button in dialogs"
+  },
+
+  "downloadThisFormatOnServer": "Загрузить этот формат и лучшее аудио на сервер (подготовить для просмотра)",
+  "@downloadThisFormatOnServer": {
+    "description": "Tooltip for downloading format on server"
+  },
+
+  "copyUrlFragmentToClipboard": "Скопировать URL этого фрагмента в буфер обмена",
+  "@copyUrlFragmentToClipboard": {
+    "description": "Tooltip for copying URL fragment"
+  },
+
+  "bestAudio": "Лучшее аудио (ba)",
+  "@bestAudio": {
+    "description": "Best audio format option"
+  },
+
+  "commonAvailableFormats": "Общие доступные форматы:",
+  "@commonAvailableFormats": {
+    "description": "Заголовок секции общих доступных форматов"
+  },
+
+  "availableFormats": "Доступные форматы:",
+  "downloadExactFormat": "Скачать именно этот формат (подготовить для просмотра)",
+  "seekToPosition": "Перейти к позиции",
+  "selectedPosition": "Выбранная позиция: {position}",
+  "cancel": "Отмена",
+  "seek": "Перейти",
+  "positionExceedsVideoDuration": "Позиция превышает длительность видео",
+  "loadingInfo": "Загрузка информации...",
+  "cleanAllDownloadedContentOnServer": "Очистить все загруженное содержимое на сервере",
+  "areYouSure": "Вы уверены?",
+  "deleteAllFilesOnServer": "Удалить все файлы на сервере?",
+  "cleanAllDownloadedMediaFromDevice": "Очистить все загруженные медиа с устройства",
+  "deleteAllLocalFilesOnDevice": "Удалить все локальные файлы с устройства?",
+  "refreshRecord": "Обновить запись (перечитать с сервера)",
+  "loading": "загрузка...",
+  "downloadsInfoIsLoading": "Информация о загрузках загружается...",
+  "noFormatsForRecord": "Нет форматов для записи",
+  "createdAt": "Создано: {date} ({time} назад)",
+  "updatedAt": "Обновлено: {date} ({time} назад)",
+  "copyVideoUrlToClipboard": "Копировать URL видео в буфер обмена",
+  "localDownloading": "Локальная загрузка {status}: {filename} {estimate}",
+  "preparationStarting": "Подготовка для {formatId} начинается",
+  "downloadThisFormatAgainOnServer": "Загрузить этот формат снова на сервере (подготовить для просмотра)",
+  "openWithMediaKitHandler": "Открыть с помощью MediaKit",
+  "deleteServerMediaFile": "Удалить медиафайл с сервера?",
+  "deleteLocalDownloadedMediaFile": "Удалить локальный загруженный медиафайл?",
+  "copyFileLinkToClipboard": "Копировать ссылку на файл в буфер обмена",
+  "copyCurlCommandToClipboard": "Копировать команду curl в буфер обмена",
+  "playWithEmbeddedMpvPlayer": "Воспроизвести с помощью встроенного mpv плеера",
+  "playWithEmbeddedMpvPlayerWithHorizontalFlip": "Воспроизвести с помощью встроенного mpv плеера с горизонтальным отражением",
+  "openInDefaultApplication": "Открыть в приложении по умолчанию",
+  "deleteFileOnServerAndFreeQuota": "Удалить файл с сервера и освободить квоту",
+  "deleteLocalFile": "Удалить локальный файл",
+  "shareDownloadUrl": "Поделиться ссылкой для загрузки в...",
+  "downloadLocalFile": "Загрузить локальный файл",
+  "unexpectedDownloadStatus": "Неожиданный статус загрузки {status}",
+  "localFileDownloadedClickToPlay": "Локальный файл загружен. Нажмите для воспроизведения.",
+  "downloadMediaToLocalStorage": "Загрузить медиа в локальное хранилище",
+  "markRecordingAsSeen": "Отметить эту запись как просмотренную",
+  "markRecordingAsUnseen": "Отметить эту запись как непросмотренную",
+  "hideRecording": "Скрыть эту запись (архивировать)",
+  "showRecording": "Показать эту запись (разархивировать)",
+  "copiedToClipboard": "{text} скопировано в буфер обмена",
+  "@availableFormats": {
+    "description": "Заголовок таблицы доступных форматов"
+  },
+
+  "id": "ID",
+  "@id": {
+    "description": "ID column header"
+  },
+
+  "url": "URL",
+  "@url": {
+    "description": "URL column header"
+  },
+
+  "ext": "расш.",
+  "@ext": {
+    "description": "Extension column header"
+  },
+
+  "resolution": "разрешение",
+  "@resolution": {
+    "description": "Resolution column header"
+  },
+
+  "fps": "кадр/с",
+  "@fps": {
+    "description": "FPS column header"
+  },
+
+  "format": "формат",
+  "@format": {
+    "description": "Format column header"
+  },
+
+  "preparingEllipsis": "подготовка...",
+  "@preparingEllipsis": {
+    "description": "Preparing message with ellipsis"
+  },
+
+  "acquiringInfo": "Получение информации...",
+  "@acquiringInfo": {
+    "description": "Acquiring info message"
+  },
+
+  "successfullyAddedMessage": "{title} успешно добавлено",
+  "@successfullyAddedMessage": {
+    "description": "Successfully added message",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+
+  "addingUrlWithVariable": "Добавление URL {url}...",
+  "@addingUrlWithVariable": {
+    "description": "Adding URL message",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+
+  "createdAtWithDate": "Создано: {date} ({timeAgo})",
+  "@createdAtWithDate": {
+    "description": "Created at with date and time ago",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "timeAgo": {
+        "type": "String"
+      }
+    }
+  },
+
+  "updatedAtWithDate": "Обновлено: {date} ({timeAgo})",
+  "@updatedAtWithDate": {
+    "description": "Updated at with date and time ago",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "timeAgo": {
+        "type": "String"
+      }
+    }
+  },
+
+  "localDownloading": "Локальная загрузка",
+  "@localDownloading": {
+    "description": "Local downloading status"
+  },
+
+  "localDownloadingStatus": "Локальная загрузка {status}: {filename} {estimate}",
+  "@localDownloadingStatus": {
+    "description": "Local downloading status with details",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      },
+      "filename": {
+        "type": "String"
+      },
+      "estimate": {
+        "type": "String"
+      }
+    }
+  },
+
+  "filesCleanedMessage": "{count} файлов, {size} очищено",
+  "@filesCleanedMessage": {
+    "description": "Files cleaned message",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+
+  "recordingsCleanedMessage": "{count} записей очищено",
+  "@recordingsCleanedMessage": {
+    "description": "Recordings cleaned message",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "copiedToClipboardMessage": "{text} скопировано в буфер обмена",
+  "@copiedToClipboardMessage": {
+    "description": "Copied to clipboard message",
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+
+  "quotaLabel": "Квота: {quota}",
+  "@quotaLabel": {
+    "description": "Quota label with value",
+    "placeholders": {
+      "quota": {
+        "type": "String"
+      }
+    }
+  },
+
+  "usedLabel": "Использовано: {used}",
+  "@usedLabel": {
+    "description": "Used label with value",
+    "placeholders": {
+      "used": {
+        "type": "String"
+      }
+    }
+  },
+
+  "freeLabel": "Свободно: {free}",
+  "@freeLabel": {
+    "description": "Free label with value",
+    "placeholders": {
+      "free": {
+        "type": "String"
+      }
+    }
+  },
+
+  "filesLabel": "Файлы: {files}",
+  "@filesLabel": {
+    "description": "Files label with count",
+    "placeholders": {
+      "files": {
+        "type": "int"
+      }
+    }
+  },
+
+  "localLabel": "Локально: {local}",
+  "@localLabel": {
+    "description": "Local label with value",
+    "placeholders": {
+      "local": {
+        "type": "String"
+      }
+    }
+  },
+
+  "storageLabel": "Хранилище: {storage}",
+  "@storageLabel": {
+    "description": "Storage label with value",
+    "placeholders": {
+      "storage": {
+        "type": "String"
+      }
+    }
+  },
+
+  "recordingsLabel": "Записи: {recordings}",
+  "@recordingsLabel": {
+    "description": "Recordings label with count",
+    "placeholders": {
+      "recordings": {
+        "type": "int"
+      }
+    }
+  },
+
+  "filesTotalSizeLabel": "Файлы: {count}, общий размер: {size}",
+  "@filesTotalSizeLabel": {
+    "description": "Files count and total size label",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+
+  "blockedAtLabel": "Заблокировано {date}",
+  "@blockedAtLabel": {
+    "description": "Blocked at label with date",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+
+  "noRecordingsCheckFilterOrToken": "Нет записей. Проверьте настройки фильтра или значение API токена.",
+  "@noRecordingsCheckFilterOrToken": {
+    "description": "Message when no recordings found"
+  },
+
+  "unauthorizedCheckTokenAndServer": "Не авторизован: проверьте и укажите токен и URL сервера в настройках",
+  "@unauthorizedCheckTokenAndServer": {
+    "description": "Unauthorized error message"
+  },
+
+  "errorCheckTokenAndServer": "проверьте и укажите токен и URL сервера в настройках",
+  "@errorCheckTokenAndServer": {
+    "description": "General error message for token/server issues"
+  },
+
+  "loadingInProgress": "Загрузка...",
+  "@loadingInProgress": {
+    "description": "Loading indicator message"
+  },
+
+  "addArbitraryMedia": "Добавить произвольное медиа",
+  "@addArbitraryMedia": {
+    "description": "Tooltip for add media button"
+  },
+
+  "addFromClipboard": "Добавить из буфера обмена",
+  "@addFromClipboard": {
+    "description": "Tooltip for add from clipboard button"
+  },
+
+  "quotaUsageInfo": "квота: {quota} использовано: {usage} ({files}) свободно: {free}{store}",
+  "@quotaUsageInfo": {
+    "description": "Quota and usage information",
+    "placeholders": {
+      "quota": {
+        "type": "String"
+      },
+      "usage": {
+        "type": "String"
+      },
+      "files": {
+        "type": "String"
+      },
+      "free": {
+        "type": "String"
+      },
+      "store": {
+        "type": "String"
+      }
+    }
+  },
+
+  "waitingDataFromServer": "ожидание данных с сервера...",
+  "@waitingDataFromServer": {
+    "description": "Waiting for server data message"
+  },
+
+  "noRecordingsInUrl": "В данном URL нет записей",
+  "@noRecordingsInUrl": {
+    "description": "No recordings found in URL message"
+  },
+
+  "mediaInfoAcquiring": "Получение информации о медиа...",
+  "@mediaInfoAcquiring": {
+    "description": "Media info acquisition progress message"
+  },
+
+  "withAudioHandler": "С аудиообработчиком!",
+  "@withAudioHandler": {
+    "description": "Audio handler indicator"
+  },
+
+  "seenAt": "просмотрено",
+  "@seenAt": {
+    "description": "Seen timestamp with relative time"
+  },
+
+  "debugCreatedAt": "создано",
+  "@debugCreatedAt": {
+    "description": "Debug: Creation timestamp"
+  },
+
+  "debugUpdatedAt": "обновлено",
+  "@debugUpdatedAt": {
+    "description": "Debug: Update timestamp"
+  },
+
+  "debugDuration": "длительность",
+  "@debugDuration": {
+    "description": "Debug: Media duration"
+  },
+
+  "debugPosition": "позиция",
+  "@debugPosition": {
+    "description": "Debug: Current position"
+  },
+
+  "debugBuffered": "буферизовано",
+  "@debugBuffered": {
+    "description": "Debug: Buffered amount"
+  },
+
+  "debugBuffering": "буферизация",
+  "@debugBuffering": {
+    "description": "Debug: Buffering status"
+  },
+
+  "debugVolume": "громкость",
+  "@debugVolume": {
+    "description": "Debug: Volume level"
+  },
+
+  "debugAudioBitrate": "битрейт аудио",
+  "@debugAudioBitrate": {
+    "description": "Debug: Audio bitrate"
+  },
+
+  "debugAudioDevice": "аудиоустройство",
+  "@debugAudioDevice": {
+    "description": "Debug: Audio device"
+  },
+
+  "debugSize": "размер",
+  "@debugSize": {
+    "description": "Debug: Video dimensions"
+  },
+
+  "debugVideoParams": "параметры видео",
+  "@debugVideoParams": {
+    "description": "Debug: Video parameters"
+  },
+
+  "debugAudioParams": "параметры аудио",
+  "@debugAudioParams": {
+    "description": "Debug: Audio parameters"
+  },
+
+  "playingFrom": "Воспроизводится из",
+  "@playingFrom": {
+    "description": "Source URL indicator"
+  },
+
+  "sizeLabel": "Размер",
+  "@sizeLabel": {
+    "description": "File size label"
+  },
+  "duration": "Длительность",
+  "@duration": {
+    "description": "Label for duration"
+  },
+  "hours": "Часы",
+  "@hours": {
+    "description": "Label for hours in time picker"
+  },
+  "minutes": "Минуты",
+  "@minutes": {
+    "description": "Label for minutes in time picker"
+  },
+  "seconds": "Секунды",
+  "@seconds": {
+    "description": "Label for seconds in time picker"
+  },
+  "createdAt": "Создано",
+  "@createdAt": {
+    "description": "Label for creation timestamp"
+  },
+  "updatedAt": "Обновлено",
+  "@updatedAt": {
+    "description": "Label for update timestamp"
+  },
+  "ago": "назад",
+  "@ago": {
+    "description": "Suffix for time elapsed"
+  },
+  "localDownloading": "Локальная загрузка",
+  "@localDownloading": {
+    "description": "Status text for local download in progress"
+  },
+  "copyFileLinkToClipboard": "Скопировать ссылку на файл в буфер обмена",
+  "@copyFileLinkToClipboard": {
+    "description": "Button text to copy file link"
+  },
+  "copyCurlCommandToClipboard": "Скопировать команду curl в буфер обмена",
+  "@copyCurlCommandToClipboard": {
+    "description": "Button text to copy curl command"
+  },
+  "playWithEmbeddedMpvPlayer": "Воспроизвести с помощью встроенного mpv плеера",
+  "@playWithEmbeddedMpvPlayer": {
+    "description": "Button text to play with embedded player"
+  },
+  "playWithEmbeddedMpvPlayerHorizontalFlip": "Воспроизвести с помощью встроенного mpv плеера с горизонтальным отражением",
+  "@playWithEmbeddedMpvPlayerHorizontalFlip": {
+    "description": "Button text to play with embedded player with horizontal flip"
+  },
+  "openInDefaultApplication": "Открыть в приложении по умолчанию",
+  "@openInDefaultApplication": {
+    "description": "Button text to open in default application"
+  },
+  "deleteFileOnServerAndFreeQuota": "Удалить файл с сервера и освободить квоту",
+  "@deleteFileOnServerAndFreeQuota": {
+    "description": "Button text to delete file on server"
+  },
+  "shareDownloadUrlIn": "Поделиться ссылкой для скачивания...",
+  "@shareDownloadUrlIn": {
+    "description": "Button text to share download URL"
+  },
+  "downloadLocalFileAction": "Скачать локальный файл",
+  "@downloadLocalFileAction": {
+    "description": "Button text to download local file (to avoid conflict with existing downloadLocalFile)"
+  },
+  "preparationStarting": "Подготовка {formatId} начинается",
+  "@preparationStarting": {
+    "description": "Message when preparation starts",
+    "placeholders": {
+      "formatId": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadServerFormat": "Загрузить этот формат снова на сервер (подготовить для просмотра)",
+  "@downloadServerFormat": {
+    "description": "Tooltip for downloading format on server"
+  },
+  "openMediaKit": "Открыть с MediaKit с обработчиком",
+  "@openMediaKit": {
+    "description": "Tooltip for opening with MediaKit"
+  },
+  "doWithIt": "Что с этим делать...",
+  "@doWithIt": {
+    "description": "Tooltip for menu actions"
+  },
+  "areYouSure": "Вы уверены?",
+  "@areYouSure": {
+    "description": "Confirmation dialog title"
+  },
+  "deleteServerMediaFile": "Удалить медиафайл на сервере?",
+  "@deleteServerMediaFile": {
+    "description": "Confirmation dialog for deleting server file"
+  },
+  "deleteLocalDownloadedMediaFile": "Удалить локальный загруженный медиафайл?",
+  "@deleteLocalDownloadedMediaFile": {
+    "description": "Confirmation dialog for deleting local file"
+  },
+  "unexpectedDownloadStatus": "Неожиданный статус загрузки {status}",
+  "@unexpectedDownloadStatus": {
+    "description": "Error message for unexpected download status",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "localFileDownloaded": "Локальный файл загружен. Нажмите для воспроизведения.",
+  "@localFileDownloaded": {
+    "description": "Tooltip for downloaded file"
+  },
+  "downloadToLocalStorage": "Загрузить медиа в локальное хранилище",
+  "@downloadToLocalStorage": {
+    "description": "Tooltip for downloading to local storage"
+  },
+  "markAsSeen": "Отметить эту запись как просмотренную",
+  "@markAsSeen": {
+    "description": "Tooltip for marking as seen"
+  },
+  "markAsUnseen": "Отметить эту запись как непросмотренную",
+  "@markAsUnseen": {
+    "description": "Tooltip for marking as unseen"
+  },
+  "hideRecording": "Скрыть эту запись (архивировать)",
+  "@hideRecording": {
+    "description": "Tooltip for hiding recording"
+  },
+  "showRecording": "Показать эту запись (разархивировать)",
+  "@showRecording": {
+    "description": "Tooltip for showing recording"
+  },
+  "settings": "Настройки",
+  "@settings": {
+    "description": "Settings button tooltip"
+  },
+  "scrollUp": "Прокрутить наверх",
+  "@scrollUp": {
+    "description": "Scroll up button tooltip"
+  },
+  "scrollDown": "Прокрутить вниз",
+  "@scrollDown": {
+    "description": "Scroll down button tooltip"
+  },
+
+  "speedSlow": "медленно",
+  "@speedSlow": {
+    "description": "Slow playback speed label"
+  },
+
+  "speedNormal": "нормально",
+  "@speedNormal": {
+    "description": "Normal playback speed label"
+  },
+
+  "speedMedium": "средне",
+  "@speedMedium": {
+    "description": "Medium playback speed label"
+  },
+
+  "speedFast": "быстро",
+  "@speedFast": {
+    "description": "Fast playback speed label"
+  },
+
+  "speedVeryFast": "очень быстро",
+  "@speedVeryFast": {
+    "description": "Very fast playback speed label"
+  },
+
+  "speedSuperFast": "супер быстро",
+  "@speedSuperFast": {
+    "description": "Super fast playback speed label"
+  }
+}
