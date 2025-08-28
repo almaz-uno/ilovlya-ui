@@ -19,6 +19,16 @@
     "description": "Search field placeholder"
   },
 
+  "appVersion": "Version: v{version}",
+  "@appVersion": {
+    "description": "Application version display",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+
   "language": "Language",
   "@language": {
     "description": "Language setting label"

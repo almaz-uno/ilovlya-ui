@@ -8,6 +8,7 @@ import '../api/directories_riverpod.dart';
 import '../api/housekeeper_riverpod.dart';
 import '../localization/app_localizations.dart';
 import '../media/format.dart';
+import 'app_version_provider.dart';
 import 'settings_provider.dart';
 
 class SettingsView extends ConsumerStatefulWidget {
@@ -30,7 +31,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
     final tokenController = TextEditingController(text: settings.requireValue.token);
     final serverUrlController = TextEditingController(text: settings.requireValue.serverUrl);
-    final sp = ref.watch(storePlacesProvider);
 
     return DefaultTabController(
       length: 3,
@@ -55,6 +55,21 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 spacing: 8.0,
                 children: <Widget>[
                       const SizedBox(height:0),
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final appVersionAsync = ref.watch(appVersionProvider);
+                          return appVersionAsync.when(
+                            data: (version) => Text(
+                              AppLocalizations.of(context)!.appVersion(version),
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            loading: () => const SizedBox.shrink(),
+                            error: (_, __) => const SizedBox.shrink(),
+                          );
+                        },
+                      ),
                       TextField(
                         controller: tokenController,
                         decoration: InputDecoration(labelText: AppLocalizations.of(context)!.yourTokenProvidedByBot),

@@ -19,6 +19,16 @@
     "description": "Подсказка для поля поиска"
   },
 
+  "appVersion": "Версия: v{version}",
+  "@appVersion": {
+    "description": "Отображение версии приложения",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+
   "language": "Язык",
   "@language": {
     "description": "Настройка языка"

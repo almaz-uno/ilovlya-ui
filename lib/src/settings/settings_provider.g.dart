@@ -22,7 +22,7 @@ final mediaDirsProvider = AutoDisposeFutureProvider<List<String>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef MediaDirsRef = AutoDisposeFutureProviderRef<List<String>>;
-String _$settingsNotifierHash() => r'c2330e7ab115934d9c257bf738de39316941f1ae';
+String _$settingsNotifierHash() => r'0cb9274029424e74ad2dcd802d0e7f0c6ff5231b';
 
 /// See also [SettingsNotifier].
 @ProviderFor(SettingsNotifier)

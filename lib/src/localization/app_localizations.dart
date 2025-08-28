@@ -122,6 +122,12 @@ abstract class AppLocalizations {
   /// **'Search...'**
   String get search;
 
+  /// Application version display
+  ///
+  /// In en, this message translates to:
+  /// **'Version: v{version}'**
+  String appVersion(String version);
+
   /// Language setting label
   ///
   /// In en, this message translates to:

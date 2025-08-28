@@ -21,6 +21,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get search => 'Поиск...';
 
   @override
+  String appVersion(String version) {
+    return 'Версия: v$version';
+  }
+
+  @override
   String get language => 'Язык';
 
   @override

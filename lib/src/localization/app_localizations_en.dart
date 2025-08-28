@@ -21,6 +21,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get search => 'Search...';
 
   @override
+  String appVersion(String version) {
+    return 'Version: v$version';
+  }
+
+  @override
   String get language => 'Language';
 
   @override
