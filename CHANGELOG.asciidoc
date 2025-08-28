@@ -1,0 +1,132 @@
+= Changelog
+:toc:
+:toc-placement: preamble
+:icons: font
+
+All notable changes to the Ilovlya UI project will be documented in this file.
+
+The format is based on https://keepachangelog.com/[Keep a Changelog], and this project adheres to https://semver.org/[Semantic Versioning].
+
+== [3.0.0 Illite] - 2025-08-28
+
+This is a major release with significant UI improvements, localization support, and enhanced media player experience.
+
+.Added
+- MIT License file
+- Comprehensive README documentation
+- Russian localization support with user-selectable language
+- Screen brightness control functionality
+- Custom warm themes for improved visual experience
+- Enhanced media player colors and styling
+- Multidex support for Android builds
+- Refreshed app icons across all platforms
+
+.Changed
+- Migrated to custom localization system
+- Updated dependencies to latest versions
+- Improved build performance with optimizations
+- Enhanced media player UI experience
+- Updated app manifest for better branding
+
+.Removed
+- Volume control plugin (replaced with screen brightness)
+- Fixed height constraints from details view
+- Unused metadata files
+
+.Fixed
+- Build performance issues
+- Media player styling inconsistencies
+- App icon uniformity across platforms
+
+== [2.0.0 Kyanite] - 2024-02-16
+
+Major architectural improvements and feature additions.
+
+.Added
+- Set position functionality while playing in media player
+- Enhanced media playback controls
+- Improved user interface components
+- Better error handling and user feedback
+
+.Changed
+- Upgraded Flutter framework to latest stable version
+- Improved application performance and stability
+- Enhanced media player experience with better controls
+
+.Fixed
+- Media playback position setting issues
+- Various UI/UX improvements
+- Performance optimizations
+
+== [1.1.0 Andalusite] - 2023-12-29
+
+Feature enhancement release with improved functionality.
+
+.Added
+- Additional media format support
+- Enhanced playlist management
+- Improved user interface elements
+- Better cross-platform compatibility
+
+.Changed
+- Updated media playback engine
+- Enhanced application responsiveness
+- Improved settings management
+
+.Fixed
+- Various bug fixes and stability improvements
+- Performance optimizations
+- UI consistency improvements
+
+== [1.0.0] - 2023-12-26
+
+Initial stable release of Ilovlya UI.
+
+.Added
+- Core media playback functionality
+- Basic playlist management
+- Cross-platform support (Android, iOS, Windows, macOS, Linux)
+- Material Design 3 user interface
+- Settings and preferences management
+- Media library browsing
+- Audio and video content support
+
+.Technical Features
+- Flutter framework implementation
+- Riverpod state management
+- media_kit integration for playback
+- Localization framework setup
+- Adaptive UI for different screen sizes
+
+== Version Format
+
+This project uses https://semver.org/[Semantic Versioning]:
+
+.Version Numbers
+- *MAJOR* version for incompatible API changes
+- *MINOR* version for backwards-compatible functionality additions
+- *PATCH* version for backwards-compatible bug fixes
+
+.Release Types
+- *[Unreleased]* - Changes in development but not yet released
+- *[X.Y.Z]* - Released versions with full feature sets
+- *[X.Y.Z-alpha/beta/rc]* - Pre-release versions for testing
+
+== Contributing
+
+When adding entries to this changelog:
+
+.Guidelines
+- Add new unreleased changes under the `[Unreleased]` section
+- Follow the format: Added, Changed, Deprecated, Removed, Fixed, Security
+- Use present tense for change descriptions
+- Include issue/PR numbers when relevant
+- Move unreleased changes to a new version section when releasing
+
+.Categories
+- *Added* for new features
+- *Changed* for changes in existing functionality
+- *Deprecated* for soon-to-be removed features
+- *Removed* for now removed features
+- *Fixed* for any bug fixes
+- *Security* for vulnerability fixes

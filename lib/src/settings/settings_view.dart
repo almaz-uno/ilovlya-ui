@@ -8,6 +8,7 @@ import '../api/directories_riverpod.dart';
 import '../api/housekeeper_riverpod.dart';
 import '../localization/app_localizations.dart';
 import '../media/format.dart';
+import 'app_version_provider.dart';
 import 'settings_provider.dart';
 
 class SettingsView extends ConsumerStatefulWidget {
@@ -30,7 +31,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
     final tokenController = TextEditingController(text: settings.requireValue.token);
     final serverUrlController = TextEditingController(text: settings.requireValue.serverUrl);
-    final sp = ref.watch(storePlacesProvider);
 
     return DefaultTabController(
       length: 3,
@@ -55,6 +55,21 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 spacing: 8.0,
                 children: <Widget>[
                       const SizedBox(height:0),
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final appVersionAsync = ref.watch(appVersionProvider);
+                          return appVersionAsync.when(
+                            data: (version) => Text(
+                              AppLocalizations.of(context)!.appVersion(version),
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            loading: () => const SizedBox.shrink(),
+                            error: (_, __) => const SizedBox.shrink(),
+                          );
+                        },
+                      ),
                       TextField(
                         controller: tokenController,
                         decoration: InputDecoration(labelText: AppLocalizations.of(context)!.yourTokenProvidedByBot),
@@ -101,7 +116,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     return [
       DropdownButtonFormField<ThemeMode>(
         decoration: InputDecoration(labelText: AppLocalizations.of(context)!.applicationColorTheme),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.theme)),
+        initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.theme)),
         alignment: AlignmentDirectional.topStart,
         onChanged: (ThemeMode? theme) {
           ref.read(settingsNotifierProvider.notifier).updateTheme(theme ?? ThemeMode.system);
@@ -123,7 +138,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       ),
       DropdownButtonFormField<String>(
         decoration: InputDecoration(labelText: AppLocalizations.of(context)!.language),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.locale)),
+        initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.locale)),
         alignment: AlignmentDirectional.topStart,
         onChanged: (String? locale) {
           ref.read(settingsNotifierProvider.notifier).updateLocale(locale ?? "");
@@ -145,7 +160,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       ),
       DropdownButtonFormField<double>(
         decoration: InputDecoration(labelText: AppLocalizations.of(context)!.playerSpeedRate),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.playerSpeed)),
+        initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.playerSpeed)),
         onChanged: (value) {
           ref.read(settingsNotifierProvider.notifier).updatePlayerSpeed(value ?? 1.0);
         },
@@ -268,7 +283,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       if (mediaDirs.hasValue)
         DropdownButtonFormField<String>(
           decoration: InputDecoration(labelText: AppLocalizations.of(context)!.mediaDirectory),
-          value: ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory)),
+          initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory)),
           alignment: AlignmentDirectional.topStart,
           onChanged: (String? directory) {
             ref.read(settingsNotifierProvider.notifier).updateMediaStorageDirectory(directory ?? "");

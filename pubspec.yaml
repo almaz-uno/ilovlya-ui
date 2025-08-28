@@ -4,7 +4,7 @@ description: Ilovlya Media Center
 # Prevent accidental publishing to pub.dev.
 publish_to: 'none'
 
-version: 2.0.0
+version: 3.0.0
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -29,6 +29,7 @@ dependencies:
   media_kit: ^1.1.11
   media_kit_libs_video: ^1.0.5
   media_kit_video: ^1.2.5
+  package_info_plus: ^8.0.2
   path: ^1.8.3
   path_provider: ^2.1.2
   riverpod_annotation: ^2.2.1
