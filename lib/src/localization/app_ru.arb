@@ -425,11 +425,6 @@
     "description": "Сообщение о начале подготовки"
   },
 
-  "localDownloading": "Локальная загрузка",
-  "@localDownloading": {
-    "description": "Сообщение о локальной загрузке"
-  },
-
   "preparing": "подготовка...",
   "@preparing": {
     "description": "Сообщение о подготовке"
@@ -685,7 +680,6 @@
   "createdAt": "Создано: {date} ({time} назад)",
   "updatedAt": "Обновлено: {date} ({time} назад)",
   "copyVideoUrlToClipboard": "Копировать URL видео в буфер обмена",
-  "localDownloading": "Локальная загрузка {status}: {filename} {estimate}",
   "preparationStarting": "Подготовка для {formatId} начинается",
   "downloadThisFormatAgainOnServer": "Загрузить этот формат снова на сервере (подготовить для просмотра)",
   "openWithMediaKitHandler": "Открыть с помощью MediaKit",
@@ -796,11 +790,6 @@
         "type": "String"
       }
     }
-  },
-
-  "localDownloading": "Локальная загрузка",
-  "@localDownloading": {
-    "description": "Local downloading status"
   },
 
   "localDownloadingStatus": "Локальная загрузка {status}: {filename} {estimate}",
@@ -1119,10 +1108,6 @@
   "@ago": {
     "description": "Suffix for time elapsed"
   },
-  "localDownloading": "Локальная загрузка",
-  "@localDownloading": {
-    "description": "Status text for local download in progress"
-  },
   "copyFileLinkToClipboard": "Скопировать ссылку на файл в буфер обмена",
   "@copyFileLinkToClipboard": {
     "description": "Button text to copy file link"
@@ -1262,5 +1247,45 @@
   "speedSuperFast": "супер быстро",
   "@speedSuperFast": {
     "description": "Super fast playback speed label"
+  },
+
+  "taskStatusEnqueued": "в очереди",
+  "@taskStatusEnqueued": {
+    "description": "TaskStatus.enqueued localization"
+  },
+
+  "taskStatusRunning": "выполняется",
+  "@taskStatusRunning": {
+    "description": "TaskStatus.running localization"
+  },
+
+  "taskStatusComplete": "завершена",
+  "@taskStatusComplete": {
+    "description": "TaskStatus.complete localization"
+  },
+
+  "taskStatusNotFound": "не найдена",
+  "@taskStatusNotFound": {
+    "description": "TaskStatus.notFound localization"
+  },
+
+  "taskStatusFailed": "завершилась с ошибкой",
+  "@taskStatusFailed": {
+    "description": "TaskStatus.failed localization"
+  },
+
+  "taskStatusCanceled": "отменена",
+  "@taskStatusCanceled": {
+    "description": "TaskStatus.canceled localization"
+  },
+
+  "taskStatusWaitingToRetry": "ожидает повтора",
+  "@taskStatusWaitingToRetry": {
+    "description": "TaskStatus.waitingToRetry localization"
+  },
+
+  "taskStatusPaused": "приостановлена",
+  "@taskStatusPaused": {
+    "description": "TaskStatus.paused localization"
   }
 }
