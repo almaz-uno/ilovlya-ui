@@ -373,10 +373,6 @@
   "@ago": {
     "description": "Suffix for time elapsed"
   },
-  "localDownloading": "Local downloading",
-  "@localDownloading": {
-    "description": "Status text for local download in progress"
-  },
   "copyFileLinkToClipboard": "Copy file link to clipboard",
   "@copyFileLinkToClipboard": {
     "description": "Button text to copy file link"
@@ -690,11 +686,6 @@
   "preparationStarting": "Preparation for starting",
   "@preparationStarting": {
     "description": "Message about preparation starting"
-  },
-
-  "localDownloading": "Local downloading",
-  "@localDownloading": {
-    "description": "Message about local downloading"
   },
 
   "preparing": "preparing...",
@@ -1032,21 +1023,6 @@
   "copyVideoUrlToClipboard": "Copy video URL to the clipboard",
   "@copyVideoUrlToClipboard": {
     "description": "Tooltip for copying video URL"
-  },
-  "localDownloading": "Local downloading {status}: {filename} {estimate}",
-  "@localDownloading": {
-    "description": "Local download status text",
-    "placeholders": {
-      "status": {
-        "type": "String"
-      },
-      "filename": {
-        "type": "String"
-      },
-      "estimate": {
-        "type": "String"
-      }
-    }
   },
   "preparationStarting": "Preparation for {formatId} is starting",
   "@preparationStarting": {
@@ -1410,11 +1386,6 @@
     }
   },
 
-  "localDownloading": "Local downloading",
-  "@localDownloading": {
-    "description": "Local downloading status"
-  },
-
   "localDownloadingStatus": "Local downloading {status}: {filename} {estimate}",
   "@localDownloadingStatus": {
     "description": "Local downloading status with details",
@@ -1585,5 +1556,45 @@
   "speedSuperFast": "super fast",
   "@speedSuperFast": {
     "description": "Super fast playback speed label"
+  },
+
+  "taskStatusEnqueued": "enqueued",
+  "@taskStatusEnqueued": {
+    "description": "TaskStatus.enqueued localization"
+  },
+
+  "taskStatusRunning": "running",
+  "@taskStatusRunning": {
+    "description": "TaskStatus.running localization"
+  },
+
+  "taskStatusComplete": "complete",
+  "@taskStatusComplete": {
+    "description": "TaskStatus.complete localization"
+  },
+
+  "taskStatusNotFound": "not found",
+  "@taskStatusNotFound": {
+    "description": "TaskStatus.notFound localization"
+  },
+
+  "taskStatusFailed": "failed",
+  "@taskStatusFailed": {
+    "description": "TaskStatus.failed localization"
+  },
+
+  "taskStatusCanceled": "canceled",
+  "@taskStatusCanceled": {
+    "description": "TaskStatus.canceled localization"
+  },
+
+  "taskStatusWaitingToRetry": "waiting to retry",
+  "@taskStatusWaitingToRetry": {
+    "description": "TaskStatus.waitingToRetry localization"
+  },
+
+  "taskStatusPaused": "paused",
+  "@taskStatusPaused": {
+    "description": "TaskStatus.paused localization"
   }
 }
