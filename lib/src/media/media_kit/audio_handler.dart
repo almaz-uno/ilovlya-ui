@@ -64,19 +64,24 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   }
 
   void updatePlaybackState() {
+    // If mediaItem is null, set state to idle (removes lock screen notification)
+    final bool hasMedia = mediaItem.value != null;
+
     _handler.playbackState.add(PlaybackState(
-      processingState: mediaItem.value == null ? AudioProcessingState.idle : AudioProcessingState.ready,
-      controls: [
+      processingState: hasMedia
+          ? AudioProcessingState.ready
+          : AudioProcessingState.idle,
+      controls: hasMedia ? [
         MediaControl.rewind,
         if (_player.state.playing) MediaControl.pause else MediaControl.play,
         MediaControl.fastForward,
-      ],
-      systemActions: const {
+      ] : [],
+      systemActions: hasMedia ? const {
         MediaAction.seek,
         MediaAction.playPause,
         MediaAction.seekForward,
         MediaAction.seekBackward,
-      },
+      } : {},
       playing: _player.state.playing,
       updatePosition: _player.state.position,
       bufferedPosition: _player.state.buffer,
@@ -90,6 +95,12 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
     _handler.mediaItem.add(null);
     //_handler.playbackState.add(_handler.playbackState.value.copyWith());
+  }
+
+  /// Clear media session (removes lock screen notification)
+  static void clearMediaSession() {
+    _handler.mediaItem.add(null);
+    _handler.updatePlaybackState();
   }
 
   @override
@@ -115,6 +126,11 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     // final session = await AudioSession.instance;
     // await session.setActive(false);
     _player.stop();
+
+    // Clear the media item to remove lock screen notification
+    _handler.mediaItem.add(null);
+    _handler.updatePlaybackState();
+
     super.stop();
   }
 }
