@@ -106,6 +106,9 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     player.stream.buffer.listen((event) {
       _handler.updatePlaybackState();
     });
+    player.stream.rate.listen((event) {
+      _handler.updatePlaybackState();
+    });
   }
 
   void updatePlaybackState() {
@@ -150,13 +153,13 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> play() async {
-    _player.playOrPause();
+    _player.play();
     super.play();
   }
 
   @override
   Future<void> pause() async {
-    _player.playOrPause();
+    _player.pause();
     super.pause();
   }
 
