@@ -142,6 +142,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   @override
   void deactivate() async {
     MKPlayerHandler.player.stop();
+    MKPlayerHandler.clearMediaSession(); // Clear lock screen notification
     _positionSendSubs?.cancel();
     super.deactivate();
   }
