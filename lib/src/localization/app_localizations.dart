@@ -513,12 +513,6 @@ abstract class AppLocalizations {
   /// **'ago'**
   String get ago;
 
-  /// Local downloading status
-  ///
-  /// In en, this message translates to:
-  /// **'Local downloading'**
-  String get localDownloading;
-
   /// Menu item text
   ///
   /// In en, this message translates to:
@@ -1377,6 +1371,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'super fast'**
   String get speedSuperFast;
+
+  /// TaskStatus.enqueued localization
+  ///
+  /// In en, this message translates to:
+  /// **'enqueued'**
+  String get taskStatusEnqueued;
+
+  /// TaskStatus.running localization
+  ///
+  /// In en, this message translates to:
+  /// **'running'**
+  String get taskStatusRunning;
+
+  /// TaskStatus.complete localization
+  ///
+  /// In en, this message translates to:
+  /// **'complete'**
+  String get taskStatusComplete;
+
+  /// TaskStatus.notFound localization
+  ///
+  /// In en, this message translates to:
+  /// **'not found'**
+  String get taskStatusNotFound;
+
+  /// TaskStatus.failed localization
+  ///
+  /// In en, this message translates to:
+  /// **'failed'**
+  String get taskStatusFailed;
+
+  /// TaskStatus.canceled localization
+  ///
+  /// In en, this message translates to:
+  /// **'canceled'**
+  String get taskStatusCanceled;
+
+  /// TaskStatus.waitingToRetry localization
+  ///
+  /// In en, this message translates to:
+  /// **'waiting to retry'**
+  String get taskStatusWaitingToRetry;
+
+  /// TaskStatus.paused localization
+  ///
+  /// In en, this message translates to:
+  /// **'paused'**
+  String get taskStatusPaused;
 }
 
 class _AppLocalizationsDelegate

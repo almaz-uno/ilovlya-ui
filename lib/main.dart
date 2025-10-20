@@ -10,7 +10,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final session = await AudioSession.instance;
-  await session.configure(const AudioSessionConfiguration.speech());
+  await session.configure(const AudioSessionConfiguration.music());
 
   // media_kit
   MediaKit.ensureInitialized();

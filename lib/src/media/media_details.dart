@@ -26,6 +26,7 @@ import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
 import '../theme/media_player_theme.dart';
+import '../utils/task_status_localization.dart';
 import 'downloads_table.dart';
 import 'format.dart';
 import 'formats_table.dart';
@@ -685,15 +686,22 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Widget ldline(LocalDownloadTask dt) {
-    var st = dt.status?.toString() ?? "";
-    const p = "TaskStatus.";
-    st = st.startsWith(p) ? st.replaceFirst(p, "") : st;
+    final l10n = AppLocalizations.of(context)!;
+
+    // Use localized status if available, otherwise fallback to cleaned enum name
+    String localizedStatus;
+    if (dt.status != null) {
+      localizedStatus = TaskStatusLocalization.getLocalizedStatusWithFallback(dt.status!, l10n);
+    } else {
+      localizedStatus = "";
+    }
+
     var eta = dt.timeRemaining == null ? "" : formatDuration(dt.timeRemaining!);
     var est = dt.networkSpeed == null || dt.networkSpeed! < 0 ? "" : " ≈ ${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta";
 
     return Column(
       children: [
-        Text("${AppLocalizations.of(context)!.localDownloading} $st: ${dt.filename} $est"),
+        Text(l10n.localDownloadingStatus(localizedStatus, dt.filename, est)),
         if (dt.status?.isFinalState != true) LinearProgressIndicator(value: dt.progress),
       ],
     );

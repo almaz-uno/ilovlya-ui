@@ -251,9 +251,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ago => 'назад';
 
   @override
-  String get localDownloading => 'Локальная загрузка';
-
-  @override
   String get copyFileLinkToClipboard =>
       'Скопировать ссылку на файл в буфер обмена';
 
@@ -760,4 +757,28 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get speedSuperFast => 'супер быстро';
+
+  @override
+  String get taskStatusEnqueued => 'в очереди';
+
+  @override
+  String get taskStatusRunning => 'выполняется';
+
+  @override
+  String get taskStatusComplete => 'завершена';
+
+  @override
+  String get taskStatusNotFound => 'не найдена';
+
+  @override
+  String get taskStatusFailed => 'завершилась с ошибкой';
+
+  @override
+  String get taskStatusCanceled => 'отменена';
+
+  @override
+  String get taskStatusWaitingToRetry => 'ожидает повтора';
+
+  @override
+  String get taskStatusPaused => 'приостановлена';
 }

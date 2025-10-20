@@ -249,9 +249,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ago => 'ago';
 
   @override
-  String get localDownloading => 'Local downloading';
-
-  @override
   String get copyFileLinkToClipboard => 'Copy file link to clipboard';
 
   @override
@@ -751,4 +748,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get speedSuperFast => 'super fast';
+
+  @override
+  String get taskStatusEnqueued => 'enqueued';
+
+  @override
+  String get taskStatusRunning => 'running';
+
+  @override
+  String get taskStatusComplete => 'complete';
+
+  @override
+  String get taskStatusNotFound => 'not found';
+
+  @override
+  String get taskStatusFailed => 'failed';
+
+  @override
+  String get taskStatusCanceled => 'canceled';
+
+  @override
+  String get taskStatusWaitingToRetry => 'waiting to retry';
+
+  @override
+  String get taskStatusPaused => 'paused';
 }
