@@ -159,44 +159,9 @@
     "description": "Setting for showing technical info"
   },
 
-  "quota": "Quota",
-  "@quota": {
-    "description": "Quota information"
-  },
-
-  "used": "Used",
-  "@used": {
-    "description": "Used space information"
-  },
-
-  "free": "Free",
-  "@free": {
-    "description": "Free space information"
-  },
-
-  "files": "Files",
-  "@files": {
-    "description": "Files information"
-  },
-
-  "local": "Local",
-  "@local": {
-    "description": "Local storage information"
-  },
-
-  "storage": "Storage",
-  "@storage": {
-    "description": "Storage information"
-  },
-
   "localMediaInfo": "Local media info",
   "@localMediaInfo": {
     "description": "Local media section title"
-  },
-
-  "recordings": "Recordings",
-  "@recordings": {
-    "description": "Recordings count"
   },
 
   "totalSize": "total size",
@@ -227,16 +192,6 @@
   "recordingsCleaned": "recordings cleaned",
   "@recordingsCleaned": {
     "description": "Recordings cleaning completion message"
-  },
-
-  "dataLocalPath": "Data local path",
-  "@dataLocalPath": {
-    "description": "Data local path information"
-  },
-
-  "downloadedLocalMediaPath": "Downloaded local media path",
-  "@downloadedLocalMediaPath": {
-    "description": "Downloaded media path information"
   },
 
   "cleaningStaleFiles": "cleaning stale media local files...",
@@ -831,6 +786,16 @@
   "housekeeping": "Housekeeping",
   "@housekeeping": {
     "description": "Housekeeping tab title"
+  },
+
+  "cacheMediaOnPlayback": "Cache media on playback",
+  "@cacheMediaOnPlayback": {
+    "description": "Cache media on playback switch label"
+  },
+
+  "cacheMediaOnPlaybackDescription": "Automatically download and cache media files when playing. Next time playback will use local file.",
+  "@cacheMediaOnPlaybackDescription": {
+    "description": "Cache media on playback switch description"
   },
 
   "yourTokenProvidedByBot": "Your token, provided by the bot",

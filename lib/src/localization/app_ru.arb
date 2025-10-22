@@ -185,44 +185,9 @@
     "description": "Настройка показа технической информации"
   },
 
-  "quota": "Квота",
-  "@quota": {
-    "description": "Информация о квоте"
-  },
-
-  "used": "Использовано",
-  "@used": {
-    "description": "Информация об использованном пространстве"
-  },
-
-  "free": "Свободно",
-  "@free": {
-    "description": "Информация о свободном пространстве"
-  },
-
-  "files": "Файлы",
-  "@files": {
-    "description": "Информация о файлах"
-  },
-
-  "local": "Локально",
-  "@local": {
-    "description": "Информация о локальном хранилище"
-  },
-
-  "storage": "Хранилище",
-  "@storage": {
-    "description": "Информация о хранилище"
-  },
-
   "localMediaInfo": "Информация о локальных медиа",
   "@localMediaInfo": {
     "description": "Заголовок секции локальных медиа"
-  },
-
-  "recordings": "Записи",
-  "@recordings": {
-    "description": "Количество записей"
   },
 
   "totalSize": "общий размер",
@@ -253,16 +218,6 @@
   "recordingsCleaned": "записей очищено",
   "@recordingsCleaned": {
     "description": "Сообщение об очистке записей"
-  },
-
-  "dataLocalPath": "Локальный путь данных",
-  "@dataLocalPath": {
-    "description": "Информация о локальном пути данных"
-  },
-
-  "downloadedLocalMediaPath": "Путь загруженных локальных медиа",
-  "@downloadedLocalMediaPath": {
-    "description": "Информация о пути загруженных медиа"
   },
 
   "cleaningStaleFiles": "очистка устаревших локальных медиафайлов...",
@@ -568,6 +523,16 @@
   "housekeeping": "Управление файлами",
   "@housekeeping": {
     "description": "Housekeeping tab title"
+  },
+
+  "cacheMediaOnPlayback": "Кэшировать медиа при воспроизведении",
+  "@cacheMediaOnPlayback": {
+    "description": "Cache media on playback switch label"
+  },
+
+  "cacheMediaOnPlaybackDescription": "Автоматически загружать и кэшировать медиафайлы при воспроизведении. При следующем воспроизведении будет использоваться локальный файл.",
+  "@cacheMediaOnPlaybackDescription": {
+    "description": "Cache media on playback switch description"
   },
 
   "yourTokenProvidedByBot": "Ваш токен, предоставленный ботом",

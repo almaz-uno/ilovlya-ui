@@ -107,42 +107,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Show additional technical info. For advanced users only!';
 
   @override
-  String quota(String quota) {
-    return 'Quota: $quota';
-  }
-
-  @override
-  String used(String used) {
-    return 'Used: $used';
-  }
-
-  @override
-  String free(String free) {
-    return 'Free: $free';
-  }
-
-  @override
-  String files(String files) {
-    return 'Files: $files';
-  }
-
-  @override
-  String local(String local) {
-    return 'Local: $local';
-  }
-
-  @override
-  String storage(String storage) {
-    return 'Storage: $storage';
-  }
-
-  @override
   String get localMediaInfo => 'Local media info';
-
-  @override
-  String recordings(String count) {
-    return 'Recordings: $count';
-  }
 
   @override
   String get totalSize => 'total size';
@@ -161,16 +126,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recordingsCleaned => 'recordings cleaned';
-
-  @override
-  String dataLocalPath(String path) {
-    return 'Data local path: $path';
-  }
-
-  @override
-  String downloadedLocalMediaPath(String path) {
-    return 'Downloaded local media path: $path';
-  }
 
   @override
   String get cleaningStaleFiles => 'cleaning stale media local files...';
@@ -276,6 +231,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get downloadLocalFile => 'Download local file';
+
+  @override
+  String get downloading => 'Downloading';
 
   @override
   String preparationStarting(String formatId) {
@@ -481,6 +439,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get housekeeping => 'Housekeeping';
 
   @override
+  String get cacheMediaOnPlayback => 'Cache media on playback';
+
+  @override
+  String get cacheMediaOnPlaybackDescription =>
+      'Automatically download and cache media files when playing. Next time playback will use local file.';
+
+  @override
   String get yourTokenProvidedByBot => 'Your token, provided by the bot';
 
   @override
@@ -582,6 +547,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get markRecordingAsUnseen => 'Mark this recording as unseen';
 
   @override
+  String quota(String quota) {
+    return 'Quota: $quota';
+  }
+
+  @override
+  String used(String used) {
+    return 'Used: $used';
+  }
+
+  @override
+  String free(String free) {
+    return 'Free: $free';
+  }
+
+  @override
+  String files(String files) {
+    return 'Files: $files';
+  }
+
+  @override
+  String local(String local) {
+    return 'Local: $local';
+  }
+
+  @override
+  String storage(String storage) {
+    return 'Storage: $storage';
+  }
+
+  @override
+  String recordings(String count) {
+    return 'Recordings: $count';
+  }
+
+  @override
   String filesWithSize(String number, String size) {
     return 'Files: $number, total size: $size';
   }
@@ -600,6 +600,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String cleanAllMetadataForRecordings(String count) {
     return 'Clean ALL metadata for $count recordings';
+  }
+
+  @override
+  String dataLocalPath(String path) {
+    return 'Data local path: $path';
+  }
+
+  @override
+  String downloadedLocalMediaPath(String path) {
+    return 'Downloaded local media path: $path';
   }
 
   @override
