@@ -233,9 +233,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get downloadLocalFile => 'Download local file';
 
   @override
-  String get downloading => 'Downloading';
-
-  @override
   String preparationStarting(String formatId) {
     return 'Preparation for $formatId is starting';
   }

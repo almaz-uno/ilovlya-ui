@@ -513,12 +513,6 @@ abstract class AppLocalizations {
   /// **'Download local file'**
   String get downloadLocalFile;
 
-  /// Downloading progress indicator label
-  ///
-  /// In en, this message translates to:
-  /// **'Downloading'**
-  String get downloading;
-
   /// Snackbar text when preparation starts
   ///
   /// In en, this message translates to:

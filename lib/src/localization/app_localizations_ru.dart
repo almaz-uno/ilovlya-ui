@@ -238,9 +238,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get downloadLocalFile => 'Загрузить локальный файл';
 
   @override
-  String get downloading => 'Загрузка';
-
-  @override
   String preparationStarting(String formatId) {
     return 'Подготовка $formatId начинается';
   }
