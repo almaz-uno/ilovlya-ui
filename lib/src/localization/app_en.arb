@@ -1561,5 +1561,9 @@
   "taskStatusPaused": "paused",
   "@taskStatusPaused": {
     "description": "TaskStatus.paused localization"
+  },
+  "cachingMedia": "Caching media. After download completes, playback will use the downloaded file.",
+  "@cachingMedia": {
+    "description": "Message shown when media is being cached during playback"
   }
 }

@@ -779,4 +779,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taskStatusPaused => 'paused';
+
+  @override
+  String get cachingMedia =>
+      'Caching media. After download completes, playback will use the downloaded file.';
 }

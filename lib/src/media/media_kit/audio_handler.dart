@@ -6,6 +6,7 @@ import 'package:universal_platform/universal_platform.dart';
 
 import '../../model/download.dart';
 import '../../model/recording_info.dart';
+import 'caching_proxy_server.dart';
 
 class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   static late final MKPlayerHandler _handler;
@@ -16,12 +17,19 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   final _player = Player(
       configuration: const PlayerConfiguration(
-    bufferSize: 128 * 1024 * 1024,
+    bufferSize: 32 * 1024 * 1024,
     logLevel: MPVLogLevel.info,
     osc: false,
   ));
 
+  CachingProxyServer? _cachingProxyServer;
+
   bool _wasPlayingBeforeInterruption = false;
+
+  /// Get stream of download progress updates from caching proxy server
+  /// Returns empty stream if proxy is not running
+  Stream<Map<String, Map<String, int>>> get cacheProgressStream =>
+      _cachingProxyServer?.progressStream ?? const Stream.empty();
 
   static void init() async {
     if (UniversalPlatform.isDesktop) {
@@ -80,8 +88,32 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     });
   }
 
-  void playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl) {
+  Future<void> playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl, {bool useCaching = false, String? mediaDirectory}) async {
     var url = download.fullPathMedia ?? download.url;
+    // at the web platform force to not use caching
+    useCaching = useCaching && !UniversalPlatform.isWeb;
+    // If caching is enabled and we have a network URL, use proxy server
+    if (useCaching && mediaDirectory != null && download.fullPathMedia == null) {
+      try {
+        // Initialize proxy server if needed
+        _cachingProxyServer ??= CachingProxyServer(mediaDirectory: mediaDirectory);
+
+        // Start server if not running
+        if (!_cachingProxyServer!.isRunning) {
+          await _cachingProxyServer!.start();
+          debugPrint('CachingProxyServer started on port ${_cachingProxyServer!.port}');
+        }
+
+        // Use proxied URL
+        url = _cachingProxyServer!.getProxiedUrl(download);
+        debugPrint('Using proxied URL for playback with caching: $url');
+      } catch (e, s) {
+        debugPrint('Failed to setup caching proxy: $e');
+        debugPrintStack(stackTrace: s);
+        // Fallback to original URL
+        url = download.fullPathMedia ?? download.url;
+      }
+    }
 
     player.open(Media(url));
 
@@ -139,6 +171,7 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   }
 
   static void dispose() {
+    _handler._cachingProxyServer?.stop();
     _handler._player.dispose();
 
     _handler.mediaItem.add(null);
@@ -149,6 +182,14 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   static void clearMediaSession() {
     _handler.mediaItem.add(null);
     _handler.updatePlaybackState();
+  }
+
+  /// Stop caching proxy server if running
+  static Future<void> stopCachingProxy() async {
+    if (_handler._cachingProxyServer != null && _handler._cachingProxyServer!.isRunning) {
+      await _handler._cachingProxyServer!.stop();
+      debugPrint('CachingProxyServer stopped manually');
+    }
   }
 
   @override

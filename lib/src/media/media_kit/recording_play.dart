@@ -57,8 +57,14 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   Player get _player => MKPlayerHandler.player;
   late final _controller = VideoController(_player, configuration: VideoControllerConfiguration(enableHardwareAcceleration: !UniversalPlatform.isLinux));
   StreamSubscription? _positionSendSubs;
+  StreamSubscription<Map<String, Map<String, int>>>? _cacheProgressSubs;
   Duration _rewinding = Duration.zero;
   Timer? _rewindTimer;
+
+  // Cache download progress (0.0 to 1.0)
+  double? _cacheProgress;
+  int? _cacheDownloaded;
+  int? _cacheTotal;
 
   @override
   void initState() {
@@ -72,7 +78,48 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   void _init() async {
     final thumbnailUrl = UniversalPlatform.isWeb ? Uri.parse(widget.recording.thumbnailUrl) : (await ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).notifier).getThumbnailUri());
 
-    MKPlayerHandler.handler.playRecording(widget.recording, widget.download, thumbnailUrl);
+    final settings = ref.read(settingsNotifierProvider).requireValue;
+    final useCaching = settings.cacheMediaOnPlayback;
+    final mediaDirectory = settings.mediaStorageDirectory;
+
+    MKPlayerHandler.handler.playRecording(
+      widget.recording,
+      widget.download,
+      thumbnailUrl,
+      useCaching: useCaching,
+      mediaDirectory: mediaDirectory,
+    );
+
+    // Subscribe to cache progress updates if caching is enabled
+    if (useCaching) {
+      _cacheProgressSubs = MKPlayerHandler.handler.cacheProgressStream.listen((progressMap) {
+        if (!mounted) return;
+
+        // Get progress for current download
+        final progress = progressMap[widget.download.id];
+        if (progress != null) {
+          final downloaded = progress['downloaded'] ?? 0;
+          final total = progress['total'] ?? 0;
+
+          setState(() {
+            _cacheDownloaded = downloaded;
+            _cacheTotal = total;
+            _cacheProgress = total > 0 ? downloaded / total : 0.0;
+
+            // Hide progress when complete
+            if (_cacheProgress! >= 1.0) {
+              Future.delayed(const Duration(seconds: 2), () {
+                if (mounted) {
+                  setState(() {
+                    _cacheProgress = null;
+                  });
+                }
+              });
+            }
+          });
+        }
+      });
+    }
 
     if (UniversalPlatform.isDesktop || UniversalPlatform.isWeb) {
       await _player.setVolume(ref.read(settingsNotifierProvider).requireValue.volume);
@@ -154,6 +201,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
   @override
   void dispose() {
+    _cacheProgressSubs?.cancel();
     super.dispose();
   }
 
@@ -344,6 +392,38 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                           ref: ref,
                         ),
                       ),
+                      // Cache download progress indicator
+                      if (_cacheProgress != null && _cacheProgress! < 1.0)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.download, size: 16),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    AppLocalizations.of(context)!.cachingMedia,
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                  const Spacer(),
+                                  if (_cacheDownloaded != null && _cacheTotal != null)
+                                    Text(
+                                      '${(_cacheProgress! * 100).toStringAsFixed(1)}% (${fileSizeHumanReadable(_cacheDownloaded!)} / ${fileSizeHumanReadable(_cacheTotal!)})',
+                                      style: Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              LinearProgressIndicator(
+                                value: _cacheProgress,
+                                minHeight: 2,
+                              ),
+                            ],
+                          ),
+                        ),
                       Container(
                         alignment: Alignment.centerLeft,
                         padding: const EdgeInsets.all(8),

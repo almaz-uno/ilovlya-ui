@@ -1431,6 +1431,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'paused'**
   String get taskStatusPaused;
+
+  /// Message shown when media is being cached during playback
+  ///
+  /// In en, this message translates to:
+  /// **'Caching media. After download completes, playback will use the downloaded file.'**
+  String get cachingMedia;
 }
 
 class _AppLocalizationsDelegate

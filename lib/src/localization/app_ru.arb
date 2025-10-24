@@ -1252,5 +1252,9 @@
   "taskStatusPaused": "приостановлена",
   "@taskStatusPaused": {
     "description": "TaskStatus.paused localization"
+  },
+  "cachingMedia": "Кэширование медиа. После загрузки проигрывание будет производиться из закачанного файла.",
+  "@cachingMedia": {
+    "description": "Message shown when media is being cached during playback"
   }
 }

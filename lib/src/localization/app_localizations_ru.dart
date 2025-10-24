@@ -788,4 +788,8 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get taskStatusPaused => 'приостановлена';
+
+  @override
+  String get cachingMedia =>
+      'Кэширование медиа. После загрузки проигрывание будет производиться из закачанного файла.';
 }
