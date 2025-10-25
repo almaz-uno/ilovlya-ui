@@ -19,7 +19,7 @@ class Settings {
   final String dataStorageDirectory;
   final String mediaStorageDirectory;
   final String locale; // empty string means system locale
-  final bool cacheMediaOnPlayback;
+  final bool downloadWhilePlaying;
 
   Settings({
     this.theme = ThemeMode.system,
@@ -38,7 +38,7 @@ class Settings {
     this.dataStorageDirectory = "",
     this.mediaStorageDirectory = "",
     this.locale = "",
-    this.cacheMediaOnPlayback = false,
+    this.downloadWhilePlaying = false,
   });
 
   Settings copyWith({
@@ -58,7 +58,7 @@ class Settings {
     String? dataStorageDirectory,
     String? mediaStorageDirectory,
     String? locale,
-    bool? cacheMediaOnPlayback,
+    bool? downloadWhilePlaying,
   }) =>
       Settings(
         theme: theme ?? this.theme,
@@ -77,6 +77,6 @@ class Settings {
         dataStorageDirectory: dataStorageDirectory?? this.dataStorageDirectory,
         mediaStorageDirectory: mediaStorageDirectory ?? this.mediaStorageDirectory,
         locale: locale ?? this.locale,
-        cacheMediaOnPlayback: cacheMediaOnPlayback ?? this.cacheMediaOnPlayback,
+        downloadWhilePlaying: downloadWhilePlaying ?? this.downloadWhilePlaying,
       );
 }

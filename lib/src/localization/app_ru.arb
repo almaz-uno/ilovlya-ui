@@ -525,14 +525,14 @@
     "description": "Housekeeping tab title"
   },
 
-  "cacheMediaOnPlayback": "Кэшировать медиа при воспроизведении",
-  "@cacheMediaOnPlayback": {
-    "description": "Cache media on playback switch label"
+  "downloadWhilePlaying": "Загружать во время проигрывания",
+  "@downloadWhilePlaying": {
+    "description": "Download while playing switch label"
   },
 
-  "cacheMediaOnPlaybackDescription": "Автоматически загружать и кэшировать медиафайлы при воспроизведении. При следующем воспроизведении будет использоваться локальный файл.",
-  "@cacheMediaOnPlaybackDescription": {
-    "description": "Cache media on playback switch description"
+  "downloadWhilePlayingDescription": "Стартовать загрузку во время проигрывания. Когда загрузка закончится, проигрывание продолжится из файла.",
+  "@downloadWhilePlayingDescription": {
+    "description": "Download while playing switch description"
   },
 
   "yourTokenProvidedByBot": "Ваш токен, предоставленный ботом",

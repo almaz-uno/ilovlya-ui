@@ -746,6 +746,21 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   void _recordView(BuildContext context, RecordingInfo recording, Download d) {
+    // Start download if downloadWhilePlaying is enabled and file not downloaded yet
+    if (!UniversalPlatform.isWeb) {
+      final settings = ref.read(settingsNotifierProvider).value;
+      if (settings != null && settings.downloadWhilePlaying && d.fullPathMedia == null) {
+        // Check if download is not already in progress
+        final downloadTasks = ref.read(localDTNotifierProvider);
+        final task = downloadTasks[d.id];
+        
+        // Start download only if task doesn't exist or is in final state
+        if (task == null || (task.status != null && task.status!.isFinalState)) {
+          downloadFile(context, d);
+        }
+      }
+    }
+    
     Navigator.of(context).push(
       MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
     );

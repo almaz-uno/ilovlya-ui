@@ -436,11 +436,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get housekeeping => 'Housekeeping';
 
   @override
-  String get cacheMediaOnPlayback => 'Cache media on playback';
+  String get downloadWhilePlaying => 'Download while playing';
 
   @override
-  String get cacheMediaOnPlaybackDescription =>
-      'Automatically download and cache media files when playing. Next time playback will use local file.';
+  String get downloadWhilePlayingDescription =>
+      'Start download during playback. When download completes, playback will continue from the file.';
 
   @override
   String get yourTokenProvidedByBot => 'Your token, provided by the bot';

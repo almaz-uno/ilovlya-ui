@@ -26,11 +26,6 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   bool _wasPlayingBeforeInterruption = false;
 
-  /// Get stream of download progress updates from caching proxy server
-  /// Returns empty stream if proxy is not running
-  Stream<Map<String, Map<String, int>>> get cacheProgressStream =>
-      _cachingProxyServer?.progressStream ?? const Stream.empty();
-
   static void init() async {
     if (UniversalPlatform.isDesktop) {
       _handler = MKPlayerHandler();

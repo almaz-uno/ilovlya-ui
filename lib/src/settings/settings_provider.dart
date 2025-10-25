@@ -118,7 +118,7 @@ class SettingsNotifier extends _$SettingsNotifier {
       dataStorageDirectory: await _dataDir(prefs.getString("data_storage_directory") ?? ""),
       mediaStorageDirectory: await _mediaDir(prefs.getString("media_storage_directory") ?? ""),
       locale: prefs.getString("locale") ?? "",
-      cacheMediaOnPlayback: prefs.getBool("cache_media_on_playback") ?? false,
+      downloadWhilePlaying: prefs.getBool("download_while_playing") ?? false,
     );
   }
 
@@ -149,7 +149,7 @@ class SettingsNotifier extends _$SettingsNotifier {
     prefs.setString("data_storage_directory", state.value?.dataStorageDirectory ?? "");
     prefs.setString("media_storage_directory", state.value?.mediaStorageDirectory ?? "");
     prefs.setString("locale", state.value?.locale ?? "");
-    prefs.setBool("cache_media_on_playback", state.value?.cacheMediaOnPlayback ?? false);
+    prefs.setBool("download_while_playing", state.value?.downloadWhilePlaying ?? false);
   }
 
   void updateTheme(ThemeMode theme) {
@@ -233,8 +233,8 @@ class SettingsNotifier extends _$SettingsNotifier {
     save();
   }
 
-  void updateCacheMediaOnPlayback(bool? cacheMediaOnPlayback) {
-    state = AsyncData(state.requireValue.copyWith(cacheMediaOnPlayback: cacheMediaOnPlayback));
+  void updateDownloadWhilePlaying(bool? downloadWhilePlaying) {
+    state = AsyncData(state.requireValue.copyWith(downloadWhilePlaying: downloadWhilePlaying));
     save();
   }
 }

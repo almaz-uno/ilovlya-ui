@@ -788,14 +788,14 @@
     "description": "Housekeeping tab title"
   },
 
-  "cacheMediaOnPlayback": "Cache media on playback",
-  "@cacheMediaOnPlayback": {
-    "description": "Cache media on playback switch label"
+  "downloadWhilePlaying": "Download while playing",
+  "@downloadWhilePlaying": {
+    "description": "Download while playing switch label"
   },
 
-  "cacheMediaOnPlaybackDescription": "Automatically download and cache media files when playing. Next time playback will use local file.",
-  "@cacheMediaOnPlaybackDescription": {
-    "description": "Cache media on playback switch description"
+  "downloadWhilePlayingDescription": "Start download during playback. When download completes, playback will continue from the file.",
+  "@downloadWhilePlayingDescription": {
+    "description": "Download while playing switch description"
   },
 
   "yourTokenProvidedByBot": "Your token, provided by the bot",

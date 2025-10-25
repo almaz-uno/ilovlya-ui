@@ -443,11 +443,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get housekeeping => 'Управление файлами';
 
   @override
-  String get cacheMediaOnPlayback => 'Кэшировать медиа при воспроизведении';
+  String get downloadWhilePlaying => 'Загружать во время проигрывания';
 
   @override
-  String get cacheMediaOnPlaybackDescription =>
-      'Автоматически загружать и кэшировать медиафайлы при воспроизведении. При следующем воспроизведении будет использоваться локальный файл.';
+  String get downloadWhilePlayingDescription =>
+      'Стартовать загрузку во время проигрывания. Когда загрузка закончится, проигрывание продолжится из файла.';
 
   @override
   String get yourTokenProvidedByBot => 'Ваш токен, предоставленный ботом';

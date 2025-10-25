@@ -891,17 +891,17 @@ abstract class AppLocalizations {
   /// **'Housekeeping'**
   String get housekeeping;
 
-  /// Cache media on playback switch label
+  /// Download while playing switch label
   ///
   /// In en, this message translates to:
-  /// **'Cache media on playback'**
-  String get cacheMediaOnPlayback;
+  /// **'Download while playing'**
+  String get downloadWhilePlaying;
 
-  /// Cache media on playback switch description
+  /// Download while playing switch description
   ///
   /// In en, this message translates to:
-  /// **'Automatically download and cache media files when playing. Next time playback will use local file.'**
-  String get cacheMediaOnPlaybackDescription;
+  /// **'Start download during playback. When download completes, playback will continue from the file.'**
+  String get downloadWhilePlayingDescription;
 
   /// Token input field label
   ///

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 import '../alert_dialog.dart';
 import '../api/api.dart';
@@ -235,15 +236,16 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       Text(AppLocalizations.of(context)!.localMediaInfo, style: Theme.of(context).textTheme.bodyLarge),
       Text(AppLocalizations.of(context)!.recordings("${data.requireValue}")),
       Text(AppLocalizations.of(context)!.filesWithSize("$number", fileSizeHumanReadable(size))),
-      SwitchListTile(
-        title: Text(AppLocalizations.of(context)!.cacheMediaOnPlayback),
-        subtitle: Text(AppLocalizations.of(context)!.cacheMediaOnPlaybackDescription),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.cacheMediaOnPlayback ?? false)),
-        onChanged: (bool? value) {
-          ref.read(settingsNotifierProvider.notifier).updateCacheMediaOnPlayback(value);
-        },
-        controlAffinity: ListTileControlAffinity.leading,
-      ),
+      if (!UniversalPlatform.isWeb)
+        SwitchListTile(
+          title: Text(AppLocalizations.of(context)!.downloadWhilePlaying),
+          subtitle: Text(AppLocalizations.of(context)!.downloadWhilePlayingDescription),
+          value: ref.watch(settingsNotifierProvider.select((s) => s.value?.downloadWhilePlaying ?? false)),
+          onChanged: (bool? value) {
+            ref.read(settingsNotifierProvider.notifier).updateDownloadWhilePlaying(value);
+          },
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
       OutlinedButton(
         child: Text(AppLocalizations.of(context)!.cleanStaleDownloadedMedia),
         onPressed: () async {
