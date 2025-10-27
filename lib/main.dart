@@ -1,4 +1,5 @@
 import 'package:audio_session/audio_session.dart';
+import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
@@ -16,6 +17,13 @@ void main() async {
   MediaKit.ensureInitialized();
 
   MKPlayerHandler.init();
+
+  // Configure FileDownloader globally
+  await FileDownloader().configure(
+    globalConfig: [
+      (Config.checkAvailableSpace, 200), // 200 MB minimum free space
+    ],
+  );
 
   runApp(const ProviderScope(child: MyApp()));
 }

@@ -359,17 +359,11 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                       // Download progress indicator
                       Consumer(
                         builder: (context, ref, child) {
-                          final task = ref.watch(
-                            localDTNotifierProvider.select((tasks) => tasks[widget.download.id])
-                          );
+                          // Find task for current download using selector
+                          final task = ref.watch(localDTNotifierProvider.select((tasks) => tasks[widget.download.id]));
 
                           // Show progress only if task exists, is not complete, and has progress
-                          if (task != null &&
-                              task.status != null &&
-                              !task.status!.isFinalState &&
-                              task.progress != null &&
-                              task.progress! < 1.0) {
-
+                          if (task != null && task.status != null) {
                             final l10n = AppLocalizations.of(context)!;
 
                             // Localize status
@@ -377,9 +371,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
                             // Format estimate (speed and ETA)
                             final eta = task.timeRemaining == null ? "" : formatDuration(task.timeRemaining!);
-                            final est = task.networkSpeed == null || task.networkSpeed! < 0
-                                ? ""
-                                : " ≈ ${task.networkSpeed!.toStringAsFixed(2)} MB/s, ETA: $eta";
+                            final est = task.networkSpeed == null || task.networkSpeed! < 0 ? "" : " ≈ ${task.networkSpeed!.toStringAsFixed(2)} MB/s, ETA: $eta";
 
                             return Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -387,15 +379,23 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    l10n.localDownloadingStatus(localizedStatus, task.filename, est),
-                                    style: Theme.of(context).textTheme.bodySmall,
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          l10n.localDownloadingStatus(localizedStatus, task.filename, est),
+                                          style: Theme.of(context).textTheme.bodySmall,
+                                        ),
+                                      ),
+                                      if (task.progress != null)
+                                        Text(
+                                          '${(task.progress! * 100).round()}%',
+                                          style: Theme.of(context).textTheme.bodySmall,
+                                        ),
+                                    ],
                                   ),
                                   const SizedBox(height: 4),
-                                  LinearProgressIndicator(
-                                    value: task.progress,
-                                    minHeight: 2,
-                                  ),
+                                  LinearProgressIndicator(value: task.progress, minHeight: 2),
                                 ],
                               ),
                             );
@@ -411,7 +411,8 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(AppLocalizations.of(context)!.createdAtWithDate(formatDateLong(widget.recording.createdAt), since(widget.recording.createdAt, false, Localizations.localeOf(context).languageCode))),
+                              Text(AppLocalizations.of(context)!
+                                  .createdAtWithDate(formatDateLong(widget.recording.createdAt), since(widget.recording.createdAt, false, Localizations.localeOf(context).languageCode))),
                               if (_player.state.playlist.medias.isNotEmpty)
                                 Row(
                                   children: [
@@ -438,7 +439,8 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(AppLocalizations.of(context)!.withAudioHandler, style: techInfoStyle),
-                              if (widget.recording.seenAt != null) Text("${AppLocalizations.of(context)!.seenAt}: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)", style: techInfoStyle),
+                              if (widget.recording.seenAt != null)
+                                Text("${AppLocalizations.of(context)!.seenAt}: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)", style: techInfoStyle),
                               Text("${AppLocalizations.of(context)!.debugCreatedAt}: ${widget.download.createdAt}", style: techInfoStyle),
                               Text("${AppLocalizations.of(context)!.debugUpdatedAt}: ${widget.download.updatedAt}", style: techInfoStyle),
                               Text("${AppLocalizations.of(context)!.debugDuration}: ${formatDuration(_player.state.duration)}", style: techInfoStyle),
@@ -584,8 +586,7 @@ class PlayerControls extends StatelessWidget {
               player.setRate(value ?? 1.0);
             },
             items: [
-              for (final e in getSpeedRates(AppLocalizations.of(context)!).entries)
-                DropdownMenuItem(value: e.key, child: Text(e.value)),
+              for (final e in getSpeedRates(AppLocalizations.of(context)!).entries) DropdownMenuItem(value: e.key, child: Text(e.value)),
             ],
           ),
         )

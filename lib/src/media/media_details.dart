@@ -236,11 +236,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Text(AppLocalizations.of(context)!.seekToPosition),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('${AppLocalizations.of(context)!.duration}: ${_formatTimePosition(maxDuration)}'),
-                    const SizedBox(height: 16),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('${AppLocalizations.of(context)!.duration}: ${_formatTimePosition(maxDuration)}'),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -702,9 +702,26 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     var est = dt.networkSpeed == null || dt.networkSpeed! < 0 ? "" : " ≈ ${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta";
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(l10n.localDownloadingStatus(localizedStatus, dt.filename, est)),
-        if (dt.status?.isFinalState != true) LinearProgressIndicator(value: dt.progress),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.localDownloadingStatus(localizedStatus, dt.filename, est),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+            if (dt.progress != null)
+              Text(
+                '${(dt.progress! * 100).round()}%',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        LinearProgressIndicator(value: dt.progress, minHeight: 2),
       ],
     );
   }
@@ -752,13 +769,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     if (!UniversalPlatform.isWeb) {
       final settings = await ref.read(settingsNotifierProvider.future);
       if (settings.downloadWhilePlaying && d.fullPathMedia == null) {
-        // Check if download is not already in progress
-        final task = ref.read(localDTNotifierProvider.select((tasks) => tasks[d.id]));
-
-        // Start download only if task doesn't exist or is in final state
-        if (task == null || (task.status != null && task.status!.isFinalState)) {
-          await downloadFile(context, d);
-        }
+        await downloadFile(context, d);
       }
     }
 
@@ -1069,40 +1080,30 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Future<void> downloadFile(BuildContext context, Download download) async {
+    // Check if download is not already in progress
+    final task = ref.read(localDTNotifierProvider.select((tasks) => tasks[download.id]));
+
+    // Start download only if task doesn't exist or is in final state
+    if (task != null && task.status != null && !task.status!.isFinalState) {
+      AppLoggers.download.d('Download already in progress for ${download.id}');
+      return;
+    }
+
     final sp = await (context as WidgetRef).watch(storePlacesProvider.future);
 
-    // Используем временное имя файла для загрузки
-    final tempFilename = '${download.id}.tmp';
-    final finalFilename = download.filename;
-
-    final task = DownloadTask(
+    final downloadTask = DownloadTask(
       taskId: download.id,
       url: download.url,
       directory: sp.media().path,
       baseDirectory: BaseDirectory.root,
-      filename: tempFilename, // Загружаем во временный файл
+      filename: download.filename,
       retries: 8,
       updates: Updates.statusAndProgress,
       displayName: download.title,
-      metaData: download.recordingId,
+      //metaData: "",
     );
 
-    // После успешной загрузки переименуем в финальное имя
-    FileDownloader().registerCallbacks(
-      taskStatusCallback: (update) {
-        if (update.task.taskId == download.id &&
-            update.status == TaskStatus.complete) {
-          final tempFile = File(p.join(sp.media().path, tempFilename));
-          final finalFile = File(p.join(sp.media().path, finalFilename));
-
-          if (tempFile.existsSync()) {
-            tempFile.renameSync(finalFile.path);
-          }
-        }
-      },
-    );
-
-    FileDownloader().enqueue(task);
+    FileDownloader().enqueue(downloadTask);
   }
 }
 

@@ -14,7 +14,7 @@ dependencies:
   app_links: ^6.0.2
   audio_service: ^0.18.18
   audio_video_progress_bar: ^2.0.2
-  background_downloader: ^9.2.2
+  background_downloader: ^9.2.6
   device_info_plus: ^11.2.0
   flutter:
     sdk: flutter
