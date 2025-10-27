@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:ilovlya/src/api/recording_riverpod.dart';
+import 'package:ilovlya/src/utils/logger_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../model/download.dart';
@@ -23,58 +24,94 @@ Map<String, String> getAuthHeader(Ref ref) {
 
 @riverpod
 Future<URLInfo> getUrlInfo(Ref ref, String url) async {
+  AppLoggers.api.d('Getting URL info: $url');
+
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/url-info';
   final encodedURL = Uri.encodeComponent(url);
   final u = Uri.parse("$serverURL$path?url=$encodedURL");
-  final res = await http.get(u, headers: getAuthHeader(ref)).timeout(requestTimeoutLong);
 
-  if (res.statusCode >= 400) {
-    throw HttpStatusError.by("Unable to get propositions for $url", res);
+  try {
+    final res = await http.get(u, headers: getAuthHeader(ref)).timeout(requestTimeoutLong);
+
+    AppLoggers.api.i('URL info response: statusCode=${res.statusCode}, bodyLength=${res.body.length}');
+
+    if (res.statusCode >= 400) {
+      throw HttpStatusError.by("Unable to get propositions for $url", res);
+    }
+
+    final urlInfo = URLInfo.fromJson(jsonDecode(utf8.decode(res.bodyBytes)));
+    AppLoggers.api.d('URL info parsed successfully');
+    return urlInfo;
+  } catch (e, st) {
+    AppLoggers.api.e('Failed to get URL info', error: e, stackTrace: st);
+    rethrow;
   }
-  return URLInfo.fromJson(jsonDecode(utf8.decode(res.bodyBytes)));
 }
 
 @riverpod
 Future<RecordingInfo> addRecording(Ref ref, String url) async {
+  AppLoggers.api.d('Adding recording: $url');
+
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/recordings';
 
-  final res = await http
-      .post(
-        Uri.parse("$serverURL$path"),
-        headers: getAuthHeader(ref)
-          ..addAll({
-            'Content-Type': 'application/json; charset=UTF-8',
+  try {
+    final res = await http
+        .post(
+          Uri.parse("$serverURL$path"),
+          headers: getAuthHeader(ref)
+            ..addAll({
+              'Content-Type': 'application/json; charset=UTF-8',
+            }),
+          body: jsonEncode(<String, String>{
+            'url': url,
           }),
-        body: jsonEncode(<String, String>{
-          'url': url,
-        }),
-      )
-      .timeout(requestTimeout);
+        )
+        .timeout(requestTimeout);
 
-  if (res.statusCode >= 400) {
-    throw HttpStatusError.by("Unable to post recording for $url", res);
+    AppLoggers.api.i('Add recording response: statusCode=${res.statusCode}');
+
+    if (res.statusCode >= 400) {
+      throw HttpStatusError.by("Unable to post recording for $url", res);
+    }
+
+    final recordingInfo = RecordingInfo.fromJson(jsonDecode(utf8.decode(res.bodyBytes)));
+    AppLoggers.api.i('Recording added successfully: id=${recordingInfo.id}');
+    return recordingInfo;
+  } catch (e, st) {
+    AppLoggers.api.e('Failed to add recording', error: e, stackTrace: st);
+    rethrow;
   }
-  return RecordingInfo.fromJson(jsonDecode(utf8.decode(res.bodyBytes)));
 }
 
 @riverpod
 Future<List<RecordingInfo>> listRecordings(Ref ref, int offset, int limit, {String sortBy = "created_at"}) async {
+  AppLoggers.api.d('Listing recordings: offset=$offset, limit=$limit, sortBy=$sortBy');
+
   final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/recordings';
 
-  final res = await http.get(Uri.parse("$serverURL$path?offset=$offset&limit=$limit&sort_by=$sortBy"), headers: getAuthHeader(ref)).timeout(requestTimeout);
+  try {
+    final res = await http.get(Uri.parse("$serverURL$path?offset=$offset&limit=$limit&sort_by=$sortBy"), headers: getAuthHeader(ref)).timeout(requestTimeout);
 
-  if (res.statusCode >= 400) {
-    throw HttpStatusError.by("Unable to get list of recordings", res);
-  }
+    AppLoggers.api.i('List recordings response: statusCode=${res.statusCode}');
 
-  final recordings = RecordingInfo.fromJsonList(jsonDecode(utf8.decode(res.bodyBytes)));
-  for (final r in recordings) {
-    r.thumbnailUrl = serverURL + r.thumbnailUrl;
+    if (res.statusCode >= 400) {
+      throw HttpStatusError.by("Unable to get list of recordings", res);
+    }
+
+    final recordings = RecordingInfo.fromJsonList(jsonDecode(utf8.decode(res.bodyBytes)));
+    for (final r in recordings) {
+      r.thumbnailUrl = serverURL + r.thumbnailUrl;
+    }
+
+    AppLoggers.api.i('Recordings loaded successfully: count=${recordings.length}');
+    return recordings;
+  } catch (e, st) {
+    AppLoggers.api.e('Failed to list recordings', error: e, stackTrace: st);
+    rethrow;
   }
-  return recordings;
 }
 
 @riverpod

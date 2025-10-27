@@ -6,6 +6,7 @@ import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 
 import '../localization/app_localizations.dart';
@@ -26,6 +27,7 @@ import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
 import '../theme/media_player_theme.dart';
+import '../utils/logger_provider.dart';
 import '../utils/task_status_localization.dart';
 import 'downloads_table.dart';
 import 'format.dart';
@@ -105,7 +107,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
       if (MKPlayerHandler.player.state.playing) {
-        debugPrint("skip pull details while playing");
+        AppLoggers.ui.d('Skip pull details while playing');
         return;
       }
       _pullRefresh();
@@ -353,7 +355,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
   Future<void> _pullRefresh() async {
     getMpvPlaybackPosition(_mpvSocketPath, (double? pos) {
-      debugPrint("Current position: $pos");
+      AppLoggers.player.d('MPV current position: $pos');
       if (pos != null) _sendPosition(widget.id, Duration(seconds: pos.toInt()), false);
     });
     await ref.read(recordingNotifierProvider(widget.id).notifier).refreshFromServer();
@@ -745,22 +747,21 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     });
   }
 
-  void _recordView(BuildContext context, RecordingInfo recording, Download d) {
+  Future<void> _recordView(BuildContext context, RecordingInfo recording, Download d) async {
     // Start download if downloadWhilePlaying is enabled and file not downloaded yet
     if (!UniversalPlatform.isWeb) {
-      final settings = ref.read(settingsNotifierProvider).value;
-      if (settings != null && settings.downloadWhilePlaying && d.fullPathMedia == null) {
+      final settings = await ref.read(settingsNotifierProvider.future);
+      if (settings.downloadWhilePlaying && d.fullPathMedia == null) {
         // Check if download is not already in progress
-        final downloadTasks = ref.read(localDTNotifierProvider);
-        final task = downloadTasks[d.id];
-        
+        final task = ref.read(localDTNotifierProvider.select((tasks) => tasks[d.id]));
+
         // Start download only if task doesn't exist or is in final state
         if (task == null || (task.status != null && task.status!.isFinalState)) {
-          downloadFile(context, d);
+          await downloadFile(context, d);
         }
       }
     }
-    
+
     Navigator.of(context).push(
       MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
     );
@@ -1070,16 +1071,35 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   Future<void> downloadFile(BuildContext context, Download download) async {
     final sp = await (context as WidgetRef).watch(storePlacesProvider.future);
 
+    // Используем временное имя файла для загрузки
+    final tempFilename = '${download.id}.tmp';
+    final finalFilename = download.filename;
+
     final task = DownloadTask(
       taskId: download.id,
       url: download.url,
       directory: sp.media().path,
       baseDirectory: BaseDirectory.root,
-      filename: download.filename,
+      filename: tempFilename, // Загружаем во временный файл
       retries: 8,
       updates: Updates.statusAndProgress,
       displayName: download.title,
       metaData: download.recordingId,
+    );
+
+    // После успешной загрузки переименуем в финальное имя
+    FileDownloader().registerCallbacks(
+      taskStatusCallback: (update) {
+        if (update.task.taskId == download.id &&
+            update.status == TaskStatus.complete) {
+          final tempFile = File(p.join(sp.media().path, tempFilename));
+          final finalFile = File(p.join(sp.media().path, finalFilename));
+
+          if (tempFile.existsSync()) {
+            tempFile.renameSync(finalFile.path);
+          }
+        }
+      },
     );
 
     FileDownloader().enqueue(task);

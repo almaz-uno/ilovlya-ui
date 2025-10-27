@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:http/http.dart' as http;
 
 import '../../model/download.dart';
+import '../../utils/logger_provider.dart';
 
 /// Local HTTP proxy server that caches media files during streaming
 ///
@@ -25,20 +25,19 @@ class CachingProxyServer {
   /// Start the proxy server on localhost
   Future<void> start() async {
     if (_server != null) {
-      debugPrint('CachingProxyServer already running on port $port');
+      AppLoggers.player.w('CachingProxyServer already running on port $port');
       return;
     }
 
     try {
       _server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-      debugPrint('CachingProxyServer started on http://127.0.0.1:$port');
+      AppLoggers.player.i('CachingProxyServer started: http://127.0.0.1:$port (port=$port)');
 
       _server!.listen(_handleRequest, onError: (error) {
-        debugPrint('CachingProxyServer error: $error');
+        AppLoggers.player.e('CachingProxyServer error', error: error);
       });
     } catch (e, s) {
-      debugPrint('Failed to start CachingProxyServer: $e');
-      debugPrintStack(stackTrace: s);
+      AppLoggers.player.e('Failed to start CachingProxyServer', error: e, stackTrace: s);
       rethrow;
     }
   }
@@ -50,7 +49,7 @@ class CachingProxyServer {
     await _server!.close(force: true);
     _server = null;
 
-    debugPrint('CachingProxyServer stopped');
+    AppLoggers.player.i('CachingProxyServer stopped');
   }
 
   /// Get proxied URL for a download
@@ -93,18 +92,17 @@ class CachingProxyServer {
 
       // If final file exists, serve from it
       if (targetFile.existsSync()) {
-        debugPrint('Serving from cached file: ${targetFile.path}');
+        AppLoggers.player.d('Serving from cached file: ${targetFile.path}');
         await _serveFromFile(request, targetFile);
         return;
       }
 
       // File doesn't exist - proxy directly to server without starting download
-      debugPrint('File not cached, proxying to server: $filename');
+      AppLoggers.player.d('File not cached, proxying to server: $filename');
       await _proxyToServer(request, originalUrl);
 
     } catch (e, s) {
-      debugPrint('Error handling request: $e');
-      debugPrintStack(stackTrace: s);
+      AppLoggers.player.e('Error handling proxy request', error: e, stackTrace: s);
 
       request.response.statusCode = HttpStatus.internalServerError;
       request.response.write('Internal server error');
@@ -145,7 +143,7 @@ class CachingProxyServer {
 
       await request.response.close();
     } catch (e) {
-      debugPrint('Error serving file: $e');
+      AppLoggers.player.e('Error serving file', error: e);
       request.response.statusCode = HttpStatus.internalServerError;
       await request.response.close();
     }
@@ -176,7 +174,7 @@ class CachingProxyServer {
       await request.response.close();
 
     } catch (e) {
-      debugPrint('Error proxying to server: $e');
+      AppLoggers.player.e('Error proxying to server', error: e);
       request.response.statusCode = HttpStatus.badGateway;
       await request.response.close();
     }

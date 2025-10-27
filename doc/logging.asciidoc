@@ -1,0 +1,195 @@
+= Логирование в Ilovlya UI
+
+== Установка
+
+Пакет `logger` уже добавлен в `pubspec.yaml`:
+
+[source,yaml]
+----
+dependencies:
+  logger: ^2.0.2+1
+----
+
+== Использование
+
+=== Предопределенные логгеры
+
+В проекте доступны следующие логгеры для разных модулей:
+
+[source,dart]
+----
+import 'package:ilovlya/src/utils/logger_provider.dart';
+
+// API вызовы
+AppLoggers.api.i('Request started');
+
+// Медиа операции
+AppLoggers.media.d('Loading media');
+
+// Плеер
+AppLoggers.player.w('Speed changed');
+
+// Настройки
+AppLoggers.settings.i('Settings saved');
+
+// Загрузки
+AppLoggers.download.d('Download progress: 50%');
+
+// UI события
+AppLoggers.ui.d('Button pressed');
+----
+
+=== Уровни логирования
+
+[cols="1,3,3"]
+|===
+|Метод |Уровень |Использование
+
+|`t()` |Trace |Детальная трассировка выполнения
+|`d()` |Debug |Отладочная информация (только в debug режиме)
+|`i()` |Info |Информационные сообщения
+|`w()` |Warning |Предупреждения
+|`e()` |Error |Ошибки
+|`f()` |Fatal |Критические ошибки
+|===
+
+=== Логирование с данными
+
+[source,dart]
+----
+// Простое сообщение
+AppLoggers.media.i('Media loaded');
+
+// С дополнительными данными
+AppLoggers.api.i('Response received', {
+  'statusCode': 200,
+  'count': 42,
+  'timestamp': DateTime.now().toIso8601String(),
+});
+
+// С ошибкой и стектрейсом
+try {
+  // some code
+} catch (e, st) {
+  AppLoggers.api.e('Failed to load', error: e, stackTrace: st);
+}
+----
+
+=== Пример в Riverpod Provider
+
+[source,dart]
+----
+import 'package:ilovlya/src/utils/logger_provider.dart';
+
+class MediaNotifier extends StateNotifier<AsyncValue<List<Media>>> {
+  MediaNotifier() : super(const AsyncValue.loading());
+
+  Future<void> loadMedia() async {
+    AppLoggers.media.d('Loading media started');
+
+    try {
+      state = const AsyncValue.loading();
+      final media = await fetchMedia();
+
+      AppLoggers.media.i('Media loaded', {'count': media.length});
+      state = AsyncValue.data(media);
+    } catch (e, st) {
+      AppLoggers.media.e('Load failed', error: e, stackTrace: st);
+      state = AsyncValue.error(e, st);
+    }
+  }
+}
+----
+
+=== Пример в медиа-плеере
+
+[source,dart]
+----
+import 'package:ilovlya/src/utils/logger_provider.dart';
+
+class PlayerHandler {
+  void play() {
+    AppLoggers.player.d('Play requested');
+    // play logic
+  }
+
+  void seek(Duration position) {
+    AppLoggers.player.d('Seek', {
+      'position': position.toString(),
+      'ms': position.inMilliseconds,
+    });
+    // seek logic
+  }
+
+  void onError(Object error, StackTrace st) {
+    AppLoggers.player.e('Playback error', error: error, stackTrace: st);
+  }
+}
+----
+
+== Конфигурация
+
+=== Debug режим
+
+В debug режиме (`flutter run`):
+
+- Используется `PrettyPrinter` с цветным выводом и эмодзи
+- Все логи от уровня `debug` и выше
+- Полные стектрейсы при ошибках
+- Временные метки
+
+=== Release режим
+
+В release режиме (`flutter build`):
+
+- Используется `SimplePrinter` без цветов
+- Только логи от уровня `warning` и выше
+- Минимальный оверхед
+
+== Создание кастомного логгера
+
+Если нужен специальный логгер с уникальным префиксом:
+
+[source,dart]
+----
+final myLogger = LoggerFactory.create('MyModule');
+myLogger.i('Custom logger message');
+----
+
+== Вывод логов
+
+=== Debug режим
+
+[source]
+----
+┌──────────────────────────────────────────────────
+│ 💡 [API] Request started
+├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+│ #0   fetchRecordings (api.dart:42)
+│ #1   RecordingsNotifier.load (recordings.dart:15)
+└──────────────────────────────────────────────────
+----
+
+=== Release режим
+
+[source]
+----
+💡 [API] Request started
+----
+
+== Рекомендации
+
+.При разработке
+- Используйте `d()` для отладочной информации
+- Добавляйте контекстные данные в логи
+- Логируйте все HTTP запросы и ответы
+
+.В production
+- Логируйте только важные события (`i()` и выше)
+- Всегда логируйте ошибки с `error` и `stackTrace`
+- Не логируйте чувствительные данные (пароли, токены)
+
+.Именование
+- Используйте краткие, но понятные сообщения
+- Добавляйте префиксы для группировки (например, "API:", "Player:")
+- Используйте предопределенные логгеры (`AppLoggers.*`)

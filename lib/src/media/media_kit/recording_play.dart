@@ -20,6 +20,7 @@ import '../../model/download.dart';
 import '../../model/recording_info.dart';
 import '../../settings/settings_provider.dart';
 import '../../theme/media_player_theme.dart';
+import '../../utils/logger_provider.dart';
 import '../../utils/task_status_localization.dart';
 import '../format.dart';
 import '../intents.dart';
@@ -225,7 +226,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     final techInfoStyle = GoogleFonts.ptMono();
     return PopScope(
       onPopInvokedWithResult: (bool didPop, Object? result) async {
-        // debugPrint("PopScope onPopInvokedWithResult: $didPop, $result");
         final updateThumbnails = ref.read(settingsNotifierProvider.select((value) => value.requireValue.updateThumbnails));
         if (!UniversalPlatform.isWeb && updateThumbnails) {
           MKPlayerHandler.player.screenshot(format: "image/png").then((imgData) {
@@ -359,8 +359,9 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                       // Download progress indicator
                       Consumer(
                         builder: (context, ref, child) {
-                          final downloadTasks = ref.watch(localDTNotifierProvider);
-                          final task = downloadTasks[widget.download.id];
+                          final task = ref.watch(
+                            localDTNotifierProvider.select((tasks) => tasks[widget.download.id])
+                          );
 
                           // Show progress only if task exists, is not complete, and has progress
                           if (task != null &&
@@ -486,8 +487,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
         );
       }
     } catch (exception, stacktrace) {
-      debugPrint(exception.toString());
-      debugPrint(stacktrace.toString());
+      AppLoggers.player.e('Failed to enter fullscreen', error: exception, stackTrace: stacktrace);
     }
   }
 }

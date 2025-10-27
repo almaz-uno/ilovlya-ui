@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
 import '../model/download.dart';
 import '../model/recording_info.dart';
+import '../utils/logger_provider.dart';
 import 'api_riverpod.dart';
 import 'directories_riverpod.dart';
 import 'recording_riverpod.dart';
@@ -48,10 +48,10 @@ class DownloadsNotifier extends _$DownloadsNotifier {
     } on PathNotFoundException catch (_) {
       return _fromWeb();
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: e.toString());
+      AppLoggers.download.e('Failed to load downloads from disk', error: e, stackTrace: s);
       rethrow;
     } finally {
-      debugPrint("load downloads for $recordingId from disk in ${stopwatch.elapsed}");
+      AppLoggers.download.d('Load downloads for $recordingId from disk: elapsed=${stopwatch.elapsed}');
     }
   }
 
@@ -60,10 +60,10 @@ class DownloadsNotifier extends _$DownloadsNotifier {
     try {
       return await ref.refresh(listDownloadsProvider(recordingId).future);
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: e.toString());
+      AppLoggers.download.e('Failed to load downloads from server', error: e, stackTrace: s);
       rethrow;
     } finally {
-      debugPrint("load downloads for $recordingId from server in ${stopwatch.elapsed}");
+      AppLoggers.download.d('Load downloads for $recordingId from server: elapsed=${stopwatch.elapsed}');
     }
   }
 
@@ -87,10 +87,10 @@ class DownloadsNotifier extends _$DownloadsNotifier {
 
       return downloads;
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: e.toString());
+      AppLoggers.download.e('Failed to pull downloads from server', error: e, stackTrace: s);
       rethrow;
     } finally {
-      debugPrint("pull downloads for $recordingId from server in ${stopwatch.elapsed}");
+      AppLoggers.download.d('Pull downloads for $recordingId from server: elapsed=${stopwatch.elapsed}');
     }
   }
 

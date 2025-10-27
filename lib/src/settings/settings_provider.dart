@@ -11,6 +11,7 @@ import 'package:universal_platform/universal_platform.dart';
 import '../api/api.dart';
 import '../model/settings.dart';
 import '../localization/app_localizations.dart';
+import '../utils/logger_provider.dart';
 
 part 'settings_provider.g.dart';
 
@@ -42,7 +43,7 @@ Future<String> _dataDir(String srcDir) async {
   try {
     Directory(srcDir).createSync(recursive: true);
   } catch (e, s) {
-    debugPrintStack(stackTrace: s, label: e.toString());
+    AppLoggers.settings.e('Failed to create data directory: $srcDir', error: e, stackTrace: s);
     return _dataDir("");
   }
 
@@ -65,7 +66,7 @@ Future<String> _mediaDir(String srcDir) async {
   try {
     Directory(srcDir).createSync(recursive: true);
   } catch (e, s) {
-    debugPrintStack(stackTrace: s, label: e.toString());
+    AppLoggers.settings.e('Failed to create media directory: $srcDir', error: e, stackTrace: s);
     return _mediaDir("");
   }
   return srcDir;
@@ -83,8 +84,8 @@ Future<List<String>> mediaDirs(Ref ref) async {
           dirs.add(p.join(d.path, "media"));
         }
       }
-    } catch (e) {
-      // debugPrintStack(stackTrace: s, label: e.toString());
+    } catch (e, s) {
+      AppLoggers.settings.e('Failed to get external storage directories', error: e, stackTrace: s);
     }
   }
 
