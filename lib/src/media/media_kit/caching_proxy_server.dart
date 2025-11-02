@@ -11,6 +11,9 @@ import '../../utils/logger_provider.dart';
 /// This server intercepts media requests and either serves cached files
 /// or proxies requests to the original server without starting downloads.
 class CachingProxyServer {
+  /// Timeout for remote server requests
+  static const Duration _remoteServerTimeout = Duration(seconds: 30);
+
   HttpServer? _server;
   final String mediaDirectory;
 
@@ -160,7 +163,14 @@ class CachingProxyServer {
         serverRequest.headers['range'] = range;
       }
 
-      final serverResponse = await client.send(serverRequest);
+      final serverResponse = await client.send(serverRequest).timeout(
+        _remoteServerTimeout,
+        onTimeout: () {
+          throw TimeoutException(
+            'Server request timeout after ${_remoteServerTimeout.inSeconds} seconds',
+          );
+        },
+      );
 
       // Copy status code and headers
       request.response.statusCode = serverResponse.statusCode;

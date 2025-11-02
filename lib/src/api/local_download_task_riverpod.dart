@@ -2,7 +2,6 @@ import 'package:background_downloader/background_downloader.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
 import '../model/local_download.dart';
-import '../utils/logger_provider.dart';
 import 'downloads_riverpod.dart';
 import 'media_list_riverpod.dart';
 
@@ -49,9 +48,5 @@ class LocalDTNotifier extends _$LocalDTNotifier {
 
     state = <String, LocalDownloadTask>{}..addAll(state);
 
-    AppLoggers.download.d('Updated state: ${state.length} tasks');
-    for (var entry in state.entries) {
-      AppLoggers.download.d('  Task ${entry.key}: status=${entry.value.status}, progress=${entry.value.progress}, filename=${entry.value.filename}');
-    }
   }
 }
