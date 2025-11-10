@@ -892,6 +892,15 @@
   "@availableFormats": {
     "description": "Header for the available formats section"
   },
+  "formatsCount": "{count, plural, =1{1 format} other{{count} formats}}",
+  "@formatsCount": {
+    "description": "Number of available formats",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "downloadExactFormat": "Download exact this format (prepare this format for viewing)",
   "@downloadExactFormat": {
     "description": "Tooltip for downloading exact format"

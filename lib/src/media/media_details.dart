@@ -6,7 +6,6 @@ import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 
 import '../localization/app_localizations.dart';
@@ -92,6 +91,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   Duration _rewinding = Duration.zero;
   Timer? _rewindTimer;
   Duration? _currentPosition; // Local position override
+  bool _formatsExpanded = false; // Tracks if formats section is expanded
 
   static const _updatePullPeriod = Duration(seconds: 3);
 
@@ -511,14 +511,44 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         ] else
           Text(AppLocalizations.of(context)!.downloadsInfoIsLoading),
         if (recording.formats != null && recording.formats!.isNotEmpty)
-          Center(
-            child: FormatsTable(
-              recording: recording,
-              startPreparation: _startPreparation,
+          Align(
+            alignment: Alignment.center,
+            child: IntrinsicWidth(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: ExpansionTile(
+                  title: Text(
+                    AppLocalizations.of(context)!.availableFormats,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  subtitle: Text(
+                    AppLocalizations.of(context)!.formatsCount(recording.formats!.length),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  initiallyExpanded: false,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      _formatsExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    if (_formatsExpanded)
+                      FormatsTable(
+                        recording: recording,
+                        startPreparation: _startPreparation,
+                      )
+                    else
+                      const SizedBox.shrink(),
+                  ],
+                ),
+              ),
             ),
           )
         else
-          Text(AppLocalizations.of(context)!.noFormatsForRecord),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(AppLocalizations.of(context)!.noFormatsForRecord),
+          ),
       ],
     );
   }

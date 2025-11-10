@@ -501,6 +501,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get availableFormats => 'Доступные форматы:';
 
   @override
+  String formatsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count форматов',
+      few: '$count формата',
+      one: '1 формат',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get downloadExactFormat =>
       'Скачать именно этот формат (подготовить для просмотра)';
 

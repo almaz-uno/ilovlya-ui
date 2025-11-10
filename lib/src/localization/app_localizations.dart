@@ -993,6 +993,12 @@ abstract class AppLocalizations {
   /// **'Available formats:'**
   String get availableFormats;
 
+  /// Number of available formats
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 format} other{{count} formats}}'**
+  String formatsCount(int count);
+
   /// Tooltip for downloading exact format
   ///
   /// In en, this message translates to:

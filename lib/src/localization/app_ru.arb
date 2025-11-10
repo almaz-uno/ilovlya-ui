@@ -670,6 +670,15 @@
   "@availableFormats": {
     "description": "Заголовок таблицы доступных форматов"
   },
+  "formatsCount": "{count, plural, =1{1 формат} few{{count} формата} other{{count} форматов}}",
+  "@formatsCount": {
+    "description": "Количество доступных форматов",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
 
   "id": "ID",
   "@id": {
