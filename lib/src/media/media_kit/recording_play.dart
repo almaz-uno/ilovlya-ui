@@ -176,19 +176,23 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     final currentPosition = _player.state.position;
     final isPlaying = _player.state.playing;
 
-    AppLoggers.player.i(
-      'Switching to local file: ${task.filename} at position ${currentPosition.inSeconds}s'
-    );
+    AppLoggers.player.i('Switching to local file: ${task.filename} at position ${currentPosition.inSeconds}s');
 
     try {
-      // 3. Open local file
+      // 3. Save position to recording (will be restored automatically on open)
+      _sendPosition(
+        widget.recording.id,
+        currentPosition,
+        false, // Not finished
+      );
+
+      widget.recording.position = currentPosition.inSeconds;
+
+      // 4. Open local file
       await _player.open(
         Media('file://$localFilePath'),
         play: false, // Don't play yet
       );
-
-      // 4. Restore position
-      await _player.seek(currentPosition);
 
       // 5. Restore playback state
       if (isPlaying) {
@@ -202,7 +206,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       }
 
       AppLoggers.player.i('Successfully switched to local file: ${task.filename}');
-
     } catch (e, s) {
       AppLoggers.player.e(
         'Failed to switch to local file',
@@ -212,9 +215,15 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
       // Revert to remote source on error
       try {
-        final thumbnailUrl = UniversalPlatform.isWeb
-          ? Uri.parse(widget.recording.thumbnailUrl)
-          : (await ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).notifier).getThumbnailUri());
+        final thumbnailUrl =
+            UniversalPlatform.isWeb ? Uri.parse(widget.recording.thumbnailUrl) : (await ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).notifier).getThumbnailUri());
+
+        // Save position to recording before reverting
+        _sendPosition(
+          widget.recording.id,
+          currentPosition,
+          false,
+        );
 
         MKPlayerHandler.handler.playRecording(
           widget.recording,
@@ -224,7 +233,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
           mediaDirectory: settings.mediaStorageDirectory,
         );
 
-        await _player.seek(currentPosition);
         if (isPlaying) {
           await _player.play();
         }
@@ -474,9 +482,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                           final task = ref.watch(localDTNotifierProvider.select((tasks) => tasks[widget.download.id]));
 
                           // Check if download completed and file exists, then switch to local
-                          if (task != null &&
-                              task.status == TaskStatus.complete &&
-                              !_hasAttemptedSwitch) {
+                          if (task != null && task.status == TaskStatus.complete && !_hasAttemptedSwitch) {
                             final settings = ref.read(settingsNotifierProvider).requireValue;
                             final localFilePath = p.join(settings.mediaStorageDirectory, task.filename);
                             final localFile = File(localFilePath);
