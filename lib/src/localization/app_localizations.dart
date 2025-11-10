@@ -1437,6 +1437,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Caching media. After download completes, playback will use the downloaded file.'**
   String get cachingMedia;
+
+  /// Success message when playback switched to local file
+  ///
+  /// In en, this message translates to:
+  /// **'Now playing from local file: {filename}'**
+  String nowPlayingFromLocalFile(String filename);
+
+  /// Error message when local file is missing
+  ///
+  /// In en, this message translates to:
+  /// **'Local file not found: {filename}'**
+  String localFileNotFound(String filename);
+
+  /// Error message when switching to local file fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to switch to local file: {error}'**
+  String failedToSwitchToLocalFile(String error);
 }
 
 class _AppLocalizationsDelegate

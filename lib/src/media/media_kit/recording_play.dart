@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
+import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:path/path.dart' as p;
 import 'package:universal_platform/universal_platform.dart';
 
 import '../../api/api_riverpod.dart';
@@ -17,6 +19,7 @@ import '../../api/recording_riverpod.dart';
 import '../../api/thumbnail_riverpod.dart';
 import '../../localization/app_localizations.dart';
 import '../../model/download.dart';
+import '../../model/local_download.dart';
 import '../../model/recording_info.dart';
 import '../../settings/settings_provider.dart';
 import '../../theme/media_player_theme.dart';
@@ -62,6 +65,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   StreamSubscription? _positionSendSubs;
   Duration _rewinding = Duration.zero;
   Timer? _rewindTimer;
+  bool _hasAttemptedSwitch = false; // Flag to prevent multiple switch attempts
 
   @override
   void initState() {
@@ -150,6 +154,113 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       }
       setState(() {});
     });
+  }
+
+  /// Switch playback from remote to local file
+  Future<void> _switchToLocalFile(LocalDownloadTask task) async {
+    if (!mounted) return;
+
+    final settings = ref.read(settingsNotifierProvider).requireValue;
+    final localFilePath = p.join(settings.mediaStorageDirectory, task.filename);
+    final localFile = File(localFilePath);
+
+    // 1. Verify file exists
+    if (!localFile.existsSync()) {
+      AppLoggers.player.e('Cannot switch to local file: file not found at $localFilePath');
+      final l10n = AppLocalizations.of(context)!;
+      _showErrorSnackBar(l10n.localFileNotFound(task.filename));
+      return;
+    }
+
+    // 2. Save current playback state
+    final currentPosition = _player.state.position;
+    final isPlaying = _player.state.playing;
+
+    AppLoggers.player.i(
+      'Switching to local file: ${task.filename} at position ${currentPosition.inSeconds}s'
+    );
+
+    try {
+      // 3. Open local file
+      await _player.open(
+        Media('file://$localFilePath'),
+        play: false, // Don't play yet
+      );
+
+      // 4. Restore position
+      await _player.seek(currentPosition);
+
+      // 5. Restore playback state
+      if (isPlaying) {
+        await _player.play();
+      }
+
+      // 6. Show success notification
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        _showSuccessSnackBar(l10n.nowPlayingFromLocalFile(task.filename));
+      }
+
+      AppLoggers.player.i('Successfully switched to local file: ${task.filename}');
+
+    } catch (e, s) {
+      AppLoggers.player.e(
+        'Failed to switch to local file',
+        error: e,
+        stackTrace: s,
+      );
+
+      // Revert to remote source on error
+      try {
+        final thumbnailUrl = UniversalPlatform.isWeb
+          ? Uri.parse(widget.recording.thumbnailUrl)
+          : (await ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).notifier).getThumbnailUri());
+
+        MKPlayerHandler.handler.playRecording(
+          widget.recording,
+          widget.download,
+          thumbnailUrl,
+          useCaching: true,
+          mediaDirectory: settings.mediaStorageDirectory,
+        );
+
+        await _player.seek(currentPosition);
+        if (isPlaying) {
+          await _player.play();
+        }
+
+        if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
+          _showErrorSnackBar(l10n.failedToSwitchToLocalFile(e.toString()));
+        }
+      } catch (revertError) {
+        AppLoggers.player.e('Failed to revert to remote source', error: revertError);
+      }
+    }
+  }
+
+  /// Show success SnackBar
+  void _showSuccessSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  /// Show error SnackBar
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 5),
+      ),
+    );
   }
 
   @override
@@ -361,6 +472,25 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                         builder: (context, ref, child) {
                           // Find task for current download using selector
                           final task = ref.watch(localDTNotifierProvider.select((tasks) => tasks[widget.download.id]));
+
+                          // Check if download completed and file exists, then switch to local
+                          if (task != null &&
+                              task.status == TaskStatus.complete &&
+                              !_hasAttemptedSwitch) {
+                            final settings = ref.read(settingsNotifierProvider).requireValue;
+                            final localFilePath = p.join(settings.mediaStorageDirectory, task.filename);
+                            final localFile = File(localFilePath);
+
+                            if (localFile.existsSync()) {
+                              // Schedule switch after this frame to avoid calling setState during build
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!_hasAttemptedSwitch && mounted) {
+                                  _hasAttemptedSwitch = true;
+                                  _switchToLocalFile(task);
+                                }
+                              });
+                            }
+                          }
 
                           // Show progress only if task exists, is not complete, and has progress
                           if (task != null && task.status != null) {

@@ -783,4 +783,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cachingMedia =>
       'Caching media. After download completes, playback will use the downloaded file.';
+
+  @override
+  String nowPlayingFromLocalFile(String filename) {
+    return 'Now playing from local file: $filename';
+  }
+
+  @override
+  String localFileNotFound(String filename) {
+    return 'Local file not found: $filename';
+  }
+
+  @override
+  String failedToSwitchToLocalFile(String error) {
+    return 'Failed to switch to local file: $error';
+  }
 }

@@ -6,7 +6,6 @@ import 'package:universal_platform/universal_platform.dart';
 import '../../model/download.dart';
 import '../../model/recording_info.dart';
 import '../../utils/logger_provider.dart';
-import 'caching_proxy_server.dart';
 
 class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   static late final MKPlayerHandler _handler;
@@ -21,8 +20,6 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     logLevel: MPVLogLevel.info,
     osc: false,
   ));
-
-  CachingProxyServer? _cachingProxyServer;
 
   bool _wasPlayingBeforeInterruption = false;
 
@@ -84,30 +81,7 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   }
 
   Future<void> playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl, {bool useCaching = false, String? mediaDirectory}) async {
-    var url = download.fullPathMedia ?? download.url;
-    // at the web platform force to not use caching
-    useCaching = useCaching && !UniversalPlatform.isWeb;
-    // If caching is enabled and we have a network URL, use proxy server
-    if (useCaching && mediaDirectory != null && download.fullPathMedia == null) {
-      try {
-        // Initialize proxy server if needed
-        _cachingProxyServer ??= CachingProxyServer(mediaDirectory: mediaDirectory);
-
-        // Start server if not running
-        if (!_cachingProxyServer!.isRunning) {
-          await _cachingProxyServer!.start();
-          AppLoggers.player.i('CachingProxyServer started on port ${_cachingProxyServer!.port}');
-        }
-
-        // Use proxied URL
-        url = _cachingProxyServer!.getProxiedUrl(download);
-        AppLoggers.player.d('Using proxied URL for playback with caching: $url');
-      } catch (e, s) {
-        AppLoggers.player.e('Failed to setup caching proxy', error: e, stackTrace: s);
-        // Fallback to original URL
-        url = download.fullPathMedia ?? download.url;
-      }
-    }
+    final url = download.fullPathMedia ?? download.url;
 
     player.open(Media(url));
 
@@ -165,7 +139,6 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   }
 
   static void dispose() {
-    _handler._cachingProxyServer?.stop();
     _handler._player.dispose();
 
     _handler.mediaItem.add(null);
@@ -176,14 +149,6 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   static void clearMediaSession() {
     _handler.mediaItem.add(null);
     _handler.updatePlaybackState();
-  }
-
-  /// Stop caching proxy server if running
-  static Future<void> stopCachingProxy() async {
-    if (_handler._cachingProxyServer != null && _handler._cachingProxyServer!.isRunning) {
-      await _handler._cachingProxyServer!.stop();
-      AppLoggers.player.i('CachingProxyServer stopped manually');
-    }
   }
 
   @override

@@ -792,4 +792,19 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get cachingMedia =>
       'Кэширование медиа. После загрузки проигрывание будет производиться из закачанного файла.';
+
+  @override
+  String nowPlayingFromLocalFile(String filename) {
+    return 'Теперь воспроизводится из локального файла: $filename';
+  }
+
+  @override
+  String localFileNotFound(String filename) {
+    return 'Локальный файл не найден: $filename';
+  }
+
+  @override
+  String failedToSwitchToLocalFile(String error) {
+    return 'Не удалось переключиться на локальный файл: $error';
+  }
 }

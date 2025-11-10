@@ -1256,5 +1256,32 @@
   "cachingMedia": "Кэширование медиа. После загрузки проигрывание будет производиться из закачанного файла.",
   "@cachingMedia": {
     "description": "Message shown when media is being cached during playback"
+  },
+  "nowPlayingFromLocalFile": "Теперь воспроизводится из локального файла: {filename}",
+  "@nowPlayingFromLocalFile": {
+    "description": "Success message when playback switched to local file",
+    "placeholders": {
+      "filename": {
+        "type": "String"
+      }
+    }
+  },
+  "localFileNotFound": "Локальный файл не найден: {filename}",
+  "@localFileNotFound": {
+    "description": "Error message when local file is missing",
+    "placeholders": {
+      "filename": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSwitchToLocalFile": "Не удалось переключиться на локальный файл: {error}",
+  "@failedToSwitchToLocalFile": {
+    "description": "Error message when switching to local file fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }

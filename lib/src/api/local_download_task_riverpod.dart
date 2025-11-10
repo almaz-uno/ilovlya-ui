@@ -36,7 +36,7 @@ class LocalDTNotifier extends _$LocalDTNotifier {
           ldt.status = update.status;
           if (update.status.isFinalState) {
             ref.invalidate(mediaListNotifierProvider);
-            ref.invalidate(downloadsNotifierProvider(update.task.metaData));
+            ref.invalidate(downloadsNotifierProvider(update.task.taskId));
           }
         case TaskProgressUpdate _:
           ldt.progress = update.progress;

@@ -1565,5 +1565,32 @@
   "cachingMedia": "Caching media. After download completes, playback will use the downloaded file.",
   "@cachingMedia": {
     "description": "Message shown when media is being cached during playback"
+  },
+  "nowPlayingFromLocalFile": "Now playing from local file: {filename}",
+  "@nowPlayingFromLocalFile": {
+    "description": "Success message when playback switched to local file",
+    "placeholders": {
+      "filename": {
+        "type": "String"
+      }
+    }
+  },
+  "localFileNotFound": "Local file not found: {filename}",
+  "@localFileNotFound": {
+    "description": "Error message when local file is missing",
+    "placeholders": {
+      "filename": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSwitchToLocalFile": "Failed to switch to local file: {error}",
+  "@failedToSwitchToLocalFile": {
+    "description": "Error message when switching to local file fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }
