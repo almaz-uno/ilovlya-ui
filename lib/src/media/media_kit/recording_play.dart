@@ -172,14 +172,23 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       return;
     }
 
-    // 2. Save current playback state
+    // 2. Check if already playing from local file
+    final currentSource = _player.state.playlist.medias.isNotEmpty ? _player.state.playlist.medias[0].uri : '';
+    final localFileUri = 'file://$localFilePath';
+
+    if (currentSource == localFileUri) {
+      AppLoggers.player.i('Already playing from local file: ${task.filename}');
+      return;
+    }
+
+    // 3. Save current playback state
     final currentPosition = _player.state.position;
     final isPlaying = _player.state.playing;
 
     AppLoggers.player.i('Switching to local file: ${task.filename} at position ${currentPosition.inSeconds}s');
 
     try {
-      // 3. Save position to recording (will be restored automatically on open)
+      // 4. Save position to recording (will be restored automatically on open)
       _sendPosition(
         widget.recording.id,
         currentPosition,
