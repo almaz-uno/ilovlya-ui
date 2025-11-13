@@ -173,8 +173,14 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     }
 
     // 2. Check if already playing from local file
-    final currentSource = _player.state.playlist.medias.isNotEmpty ? _player.state.playlist.medias[0].uri : '';
+    if (_player.state.playlist.medias.isEmpty) {
+      AppLoggers.player.w('Playlist is empty, cannot check current source');
+      return;
+    }
+
+    final currentSource = _player.state.playlist.medias[0].uri;
     final localFileUri = 'file://$localFilePath';
+    AppLoggers.player.d("Current source: $currentSource, Local file URI: $localFileUri");
 
     if (currentSource == localFileUri) {
       AppLoggers.player.i('Already playing from local file: ${task.filename}');
