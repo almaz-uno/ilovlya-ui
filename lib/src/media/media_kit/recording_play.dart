@@ -66,6 +66,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   Duration _rewinding = Duration.zero;
   Timer? _rewindTimer;
   bool _hasAttemptedSwitch = false; // Flag to prevent multiple switch attempts
+  bool _isFirstDurationEvent = true; // Flag to auto-play only on first duration event
 
   @override
   void initState() {
@@ -98,7 +99,11 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     _player.stream.duration.listen((event) {
       if (!mounted) return;
       _seek(Duration(seconds: widget.recording.position));
-      _player.play();
+      // Auto-play only on first duration event (initial load)
+      if (_isFirstDurationEvent) {
+        _player.play();
+        _isFirstDurationEvent = false;
+      }
       _player.setRate(ref.read(settingsNotifierProvider.select((s) => s.value?.playerSpeed)) ?? 1.0);
     });
 
