@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 import '../alert_dialog.dart';
 import '../api/api.dart';
@@ -169,25 +170,25 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
             DropdownMenuItem(value: e.key, child: Text(e.value)),
         ],
       ),
-      CheckboxListTile(
+      SwitchListTile(
         title: Text(AppLocalizations.of(context)!.autoMarkViewedWhenPlayed),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)),
+        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed ?? false)),
         onChanged: (bool? autoViewed) {
           ref.read(settingsNotifierProvider.notifier).updateAutoViewed(autoViewed);
         },
         controlAffinity: ListTileControlAffinity.leading,
       ),
-      CheckboxListTile(
+      SwitchListTile(
         title: Text(AppLocalizations.of(context)!.updateThumbnailProgress),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.updateThumbnails)),
+        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.updateThumbnails ?? false)),
         onChanged: (bool? updateThumbnails) {
           ref.read(settingsNotifierProvider.notifier).updateUpdateThumbnails(updateThumbnails);
         },
         controlAffinity: ListTileControlAffinity.leading,
       ),
-      CheckboxListTile(
+      SwitchListTile(
         title: Text(AppLocalizations.of(context)!.showTechnicalInfo),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.debugMode)),
+        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.debugMode ?? false)),
         onChanged: (bool? debugMode) {
           ref.read(settingsNotifierProvider.notifier).updateDebugMode(debugMode);
         },
@@ -235,6 +236,16 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       Text(AppLocalizations.of(context)!.localMediaInfo, style: Theme.of(context).textTheme.bodyLarge),
       Text(AppLocalizations.of(context)!.recordings("${data.requireValue}")),
       Text(AppLocalizations.of(context)!.filesWithSize("$number", fileSizeHumanReadable(size))),
+      if (!UniversalPlatform.isWeb)
+        SwitchListTile(
+          title: Text(AppLocalizations.of(context)!.downloadWhilePlaying),
+          subtitle: Text(AppLocalizations.of(context)!.downloadWhilePlayingDescription),
+          value: ref.watch(settingsNotifierProvider.select((s) => s.value?.downloadWhilePlaying ?? false)),
+          onChanged: (bool? value) {
+            ref.read(settingsNotifierProvider.notifier).updateDownloadWhilePlaying(value);
+          },
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
       OutlinedButton(
         child: Text(AppLocalizations.of(context)!.cleanStaleDownloadedMedia),
         onPressed: () async {

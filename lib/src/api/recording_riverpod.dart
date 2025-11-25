@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import '../model/recording_info.dart';
+import '../utils/logger_provider.dart';
 import 'api_riverpod.dart';
 import 'directories_riverpod.dart';
 import 'media_list_riverpod.dart';
@@ -39,10 +39,10 @@ class RecordingNotifier extends _$RecordingNotifier {
       }
       return recording;
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: e.toString());
+      AppLoggers.media.e('Failed to load recording from disk', error: e, stackTrace: s);
       rethrow;
     } finally {
-      debugPrint("load recording $recordingId from disk in ${stopwatch.elapsed}");
+      AppLoggers.media.d('Load recording $recordingId from disk: elapsed=${stopwatch.elapsed}');
     }
   }
 
@@ -51,10 +51,10 @@ class RecordingNotifier extends _$RecordingNotifier {
     try {
       return await ref.refresh(getRecordingProvider(recordingId).future);
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: e.toString());
+      AppLoggers.media.e('Failed to load recording from server', error: e, stackTrace: s);
       rethrow;
     } finally {
-      debugPrint("load recording $recordingId from server in ${stopwatch.elapsed}");
+      AppLoggers.media.d('Load recording $recordingId from server: elapsed=${stopwatch.elapsed}');
     }
   }
 
@@ -67,10 +67,10 @@ class RecordingNotifier extends _$RecordingNotifier {
       final recordingFile = File(p.join(sp.recordings().path, recordingId));
       recordingFile.writeAsStringSync(jsonEncode(recording.toJson()));
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: e.toString());
+      AppLoggers.media.e('Failed to pull recording from server', error: e, stackTrace: s);
       rethrow;
     } finally {
-      debugPrint("pull recording $recordingId from server in ${stopwatch.elapsed}");
+      AppLoggers.media.d('Pull recording $recordingId from server: elapsed=${stopwatch.elapsed}');
     }
   }
 
@@ -109,10 +109,10 @@ class RecordingNotifier extends _$RecordingNotifier {
       //save back
       recordingFile.writeAsString(jsonEncode(recording.toJson()));
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: e.toString());
+      AppLoggers.media.e('Failed to put position for recording', error: e, stackTrace: s);
       rethrow;
     } finally {
-      debugPrint("put position for recording $recordingId in ${stopwatch.elapsed}");
+      AppLoggers.media.d('Put position for recording $recordingId: elapsed=${stopwatch.elapsed}');
     }
   }
 }

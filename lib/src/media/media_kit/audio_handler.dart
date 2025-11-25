@@ -1,11 +1,11 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
-import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import '../../model/download.dart';
 import '../../model/recording_info.dart';
+import '../../utils/logger_provider.dart';
 
 class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   static late final MKPlayerHandler _handler;
@@ -16,7 +16,7 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   final _player = Player(
       configuration: const PlayerConfiguration(
-    bufferSize: 128 * 1024 * 1024,
+    bufferSize: 32 * 1024 * 1024,
     logLevel: MPVLogLevel.info,
     osc: false,
   ));
@@ -47,14 +47,14 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
     // Listen to audio interruptions (phone calls, alarms, etc.)
     session.interruptionEventStream.listen((event) {
-      debugPrint('Audio interruption event: ${event.type}, begin: ${event.begin}');
+      AppLoggers.player.i('Audio interruption event: type=${event.type}, begin=${event.begin}');
 
       if (event.begin) {
         // Interruption began (phone call, alarm, etc.)
         if (_player.state.playing) {
           _wasPlayingBeforeInterruption = true;
           _player.pause();
-          debugPrint('Paused playback due to interruption');
+          AppLoggers.player.i('Paused playback due to interruption');
         }
       } else {
         // Interruption ended - resume playback if it was playing before
@@ -63,7 +63,7 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
           Future.delayed(const Duration(milliseconds: 500), () {
             if (_wasPlayingBeforeInterruption) {
               _player.play();
-              debugPrint('Resumed playback after interruption');
+              AppLoggers.player.i('Resumed playback after interruption');
             }
             _wasPlayingBeforeInterruption = false;
           });
@@ -73,15 +73,15 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
     // Listen to becoming noisy events (headphones unplugged)
     session.becomingNoisyEventStream.listen((_) {
-      debugPrint('Becoming noisy - pausing playback');
+      AppLoggers.player.i('Becoming noisy - pausing playback');
       if (_player.state.playing) {
         _player.pause();
       }
     });
   }
 
-  void playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl) {
-    var url = download.fullPathMedia ?? download.url;
+  Future<void> playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl, {bool useCaching = false, String? mediaDirectory}) async {
+    final url = download.fullPathMedia ?? download.url;
 
     player.open(Media(url));
 

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+import '../utils/logger_provider.dart';
 
 const _timeout = Duration(seconds: 1);
 
@@ -8,7 +8,7 @@ void getMpvPlaybackPosition(String socketPath, void Function(double? pos) callba
   try {
     final socket = await Socket.connect(InternetAddress(socketPath, type: InternetAddressType.unix), 0, timeout: _timeout);
     // mpv IPC: {"command": ["get_property", "playback-time"]}
-    debugPrint("Connected to mpv IPC socket at $socketPath");
+    AppLoggers.player.d('Connected to mpv IPC socket: $socketPath');
     socket.write('{"command": ["get_property", "playback-time"]}\n');
     await socket.flush();
 
@@ -16,14 +16,14 @@ void getMpvPlaybackPosition(String socketPath, void Function(double? pos) callba
       final json = jsonDecode(utf8.decode(data));
       callback(json['data'] is double ? json['data'] : null);
     }, onDone: () {
-      debugPrint("onDone $socketPath closed");
+      AppLoggers.player.d('MPV socket closed: $socketPath');
     }, onError: (error) {
-      debugPrint("onError: $error");
+      AppLoggers.player.e('MPV socket error', error: error);
     });
     await socket.close();
-    debugPrint("$socketPath closed");
+    AppLoggers.player.d('MPV socket connection closed: $socketPath');
   } catch (e) {
-    debugPrint('mpv IPC error: $e');
+    AppLoggers.player.e('MPV IPC error', error: e);
   }
 }
 
@@ -35,7 +35,7 @@ void setMpvPlaybackPosition(String socketPath, double position, [void Function()
   try {
     final socket = await Socket.connect(InternetAddress(socketPath, type: InternetAddressType.unix), 0, timeout: _timeout);
     // mpv IPC: {"command": ["set_property", "playback-time", position]}
-    debugPrint("Connected to mpv IPC socket at $socketPath for seek to $position");
+    AppLoggers.player.d('Connected to mpv IPC socket for seek: path=$socketPath, position=$position');
     socket.write('{"command": ["set_property", "playback-time", $position]}\n');
     await socket.flush();
 
@@ -46,14 +46,14 @@ void setMpvPlaybackPosition(String socketPath, double position, [void Function()
           callback();
         }
       }, onDone: () {
-        debugPrint("onDone $socketPath closed after seek");
+        AppLoggers.player.d('MPV socket closed after seek: $socketPath');
       }, onError: (error) {
-        debugPrint("onError during seek: $error");
+        AppLoggers.player.e('MPV error during seek', error: error);
       });
     }
     await socket.close();
-    debugPrint("$socketPath closed after seek");
+    AppLoggers.player.d('MPV socket connection closed after seek: $socketPath');
   } catch (e) {
-    debugPrint('mpv IPC seek error: $e');
+    AppLoggers.player.e('MPV IPC seek error', error: e);
   }
 }

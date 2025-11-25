@@ -159,44 +159,9 @@
     "description": "Setting for showing technical info"
   },
 
-  "quota": "Quota",
-  "@quota": {
-    "description": "Quota information"
-  },
-
-  "used": "Used",
-  "@used": {
-    "description": "Used space information"
-  },
-
-  "free": "Free",
-  "@free": {
-    "description": "Free space information"
-  },
-
-  "files": "Files",
-  "@files": {
-    "description": "Files information"
-  },
-
-  "local": "Local",
-  "@local": {
-    "description": "Local storage information"
-  },
-
-  "storage": "Storage",
-  "@storage": {
-    "description": "Storage information"
-  },
-
   "localMediaInfo": "Local media info",
   "@localMediaInfo": {
     "description": "Local media section title"
-  },
-
-  "recordings": "Recordings",
-  "@recordings": {
-    "description": "Recordings count"
   },
 
   "totalSize": "total size",
@@ -227,16 +192,6 @@
   "recordingsCleaned": "recordings cleaned",
   "@recordingsCleaned": {
     "description": "Recordings cleaning completion message"
-  },
-
-  "dataLocalPath": "Data local path",
-  "@dataLocalPath": {
-    "description": "Data local path information"
-  },
-
-  "downloadedLocalMediaPath": "Downloaded local media path",
-  "@downloadedLocalMediaPath": {
-    "description": "Downloaded media path information"
   },
 
   "cleaningStaleFiles": "cleaning stale media local files...",
@@ -833,6 +788,16 @@
     "description": "Housekeeping tab title"
   },
 
+  "downloadWhilePlaying": "Download while playing",
+  "@downloadWhilePlaying": {
+    "description": "Download while playing switch label"
+  },
+
+  "downloadWhilePlayingDescription": "Start download during playback. When download completes, playback will continue from the file.",
+  "@downloadWhilePlayingDescription": {
+    "description": "Download while playing switch description"
+  },
+
   "yourTokenProvidedByBot": "Your token, provided by the bot",
   "@yourTokenProvidedByBot": {
     "description": "Token input field label"
@@ -926,6 +891,15 @@
     "availableFormats": "Available formats:",
   "@availableFormats": {
     "description": "Header for the available formats section"
+  },
+  "formatsCount": "{count, plural, =1{1 format} other{{count} formats}}",
+  "@formatsCount": {
+    "description": "Number of available formats",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "downloadExactFormat": "Download exact this format (prepare this format for viewing)",
   "@downloadExactFormat": {
@@ -1596,5 +1570,36 @@
   "taskStatusPaused": "paused",
   "@taskStatusPaused": {
     "description": "TaskStatus.paused localization"
+  },
+  "cachingMedia": "Caching media. After download completes, playback will use the downloaded file.",
+  "@cachingMedia": {
+    "description": "Message shown when media is being cached during playback"
+  },
+  "nowPlayingFromLocalFile": "Now playing from local file: {filename}",
+  "@nowPlayingFromLocalFile": {
+    "description": "Success message when playback switched to local file",
+    "placeholders": {
+      "filename": {
+        "type": "String"
+      }
+    }
+  },
+  "localFileNotFound": "Local file not found: {filename}",
+  "@localFileNotFound": {
+    "description": "Error message when local file is missing",
+    "placeholders": {
+      "filename": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSwitchToLocalFile": "Failed to switch to local file: {error}",
+  "@failedToSwitchToLocalFile": {
+    "description": "Error message when switching to local file fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }

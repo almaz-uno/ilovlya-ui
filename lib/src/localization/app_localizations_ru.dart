@@ -108,42 +108,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Показывать дополнительную техническую информацию. Только для продвинутых пользователей!';
 
   @override
-  String quota(String quota) {
-    return 'Квота';
-  }
-
-  @override
-  String used(String used) {
-    return 'Использовано';
-  }
-
-  @override
-  String free(String free) {
-    return 'Свободно';
-  }
-
-  @override
-  String files(String files) {
-    return 'Файлы';
-  }
-
-  @override
-  String local(String local) {
-    return 'Локально';
-  }
-
-  @override
-  String storage(String storage) {
-    return 'Хранилище';
-  }
-
-  @override
   String get localMediaInfo => 'Информация о локальных медиа';
-
-  @override
-  String recordings(String count) {
-    return 'Записи';
-  }
 
   @override
   String get totalSize => 'общий размер';
@@ -162,16 +127,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get recordingsCleaned => 'записей очищено';
-
-  @override
-  String dataLocalPath(String path) {
-    return 'Локальный путь данных';
-  }
-
-  @override
-  String downloadedLocalMediaPath(String path) {
-    return 'Путь загруженных локальных медиа';
-  }
 
   @override
   String get cleaningStaleFiles =>
@@ -488,6 +443,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get housekeeping => 'Управление файлами';
 
   @override
+  String get downloadWhilePlaying => 'Загружать во время проигрывания';
+
+  @override
+  String get downloadWhilePlayingDescription =>
+      'Стартовать загрузку во время проигрывания. Когда загрузка закончится, проигрывание продолжится из файла.';
+
+  @override
   String get yourTokenProvidedByBot => 'Ваш токен, предоставленный ботом';
 
   @override
@@ -537,6 +499,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get availableFormats => 'Доступные форматы:';
+
+  @override
+  String formatsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count форматов',
+      few: '$count формата',
+      one: '1 формат',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get downloadExactFormat =>
@@ -591,6 +565,41 @@ class AppLocalizationsRu extends AppLocalizations {
   String get markRecordingAsUnseen => 'Отметить эту запись как непросмотренную';
 
   @override
+  String quota(String quota) {
+    return 'Квота: $quota';
+  }
+
+  @override
+  String used(String used) {
+    return 'Использовано: $used';
+  }
+
+  @override
+  String free(String free) {
+    return 'Свободно: $free';
+  }
+
+  @override
+  String files(String files) {
+    return 'Файлов: $files';
+  }
+
+  @override
+  String local(String local) {
+    return 'Локально: $local';
+  }
+
+  @override
+  String storage(String storage) {
+    return 'Хранилище: $storage';
+  }
+
+  @override
+  String recordings(String count) {
+    return 'Записей: $count';
+  }
+
+  @override
   String filesWithSize(String number, String size) {
     return 'Файлов: $number, общий размер: $size';
   }
@@ -609,6 +618,16 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String cleanAllMetadataForRecordings(String count) {
     return 'Очистить ВСЕ метаданные для $count записей';
+  }
+
+  @override
+  String dataLocalPath(String path) {
+    return 'Локальный путь данных: $path';
+  }
+
+  @override
+  String downloadedLocalMediaPath(String path) {
+    return 'Локальный путь загруженных медиа: $path';
   }
 
   @override
@@ -781,4 +800,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get taskStatusPaused => 'приостановлена';
+
+  @override
+  String get cachingMedia =>
+      'Кэширование медиа. После загрузки проигрывание будет производиться из закачанного файла.';
+
+  @override
+  String nowPlayingFromLocalFile(String filename) {
+    return 'Теперь воспроизводится из локального файла: $filename';
+  }
+
+  @override
+  String localFileNotFound(String filename) {
+    return 'Локальный файл не найден: $filename';
+  }
+
+  @override
+  String failedToSwitchToLocalFile(String error) {
+    return 'Не удалось переключиться на локальный файл: $error';
+  }
 }

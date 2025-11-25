@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -10,6 +9,7 @@ import 'package:universal_platform/universal_platform.dart';
 
 import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
+import '../utils/logger_provider.dart';
 import 'api_riverpod.dart';
 import 'directories_riverpod.dart';
 
@@ -56,10 +56,10 @@ class MediaListNotifier extends _$MediaListNotifier {
       }
       return resultList;
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: e.toString());
+      AppLoggers.media.e('Failed to load recordings from disk', error: e, stackTrace: s);
       rethrow;
     } finally {
-      debugPrint("load recordings from disk in ${stopwatch.elapsed}");
+      AppLoggers.media.d('Load all recordings from disk: elapsed=${stopwatch.elapsed}');
     }
   }
 
@@ -103,10 +103,10 @@ class MediaListNotifier extends _$MediaListNotifier {
 
       return resultList;
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: e.toString());
+      AppLoggers.media.e('Failed to load recordings from disk', error: e, stackTrace: s);
       rethrow;
     } finally {
-      debugPrint("load recordings from disk in ${stopwatch.elapsed}");
+      AppLoggers.media.d('Load recordings from disk: elapsed=${stopwatch.elapsed}');
     }
   }
 
@@ -145,10 +145,10 @@ class MediaListNotifier extends _$MediaListNotifier {
         return true;
       }).toList();
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: e.toString());
+      AppLoggers.media.e('Failed to load recordings from server', error: e, stackTrace: s);
       rethrow;
     } finally {
-      debugPrint("load recordings from server in ${stopwatch.elapsed}");
+      AppLoggers.media.d('Load recordings from server: elapsed=${stopwatch.elapsed}');
     }
   }
 
@@ -165,10 +165,10 @@ class MediaListNotifier extends _$MediaListNotifier {
         File(p.join(recordingsDir.path, recording.id)).writeAsStringSync(r);
       }
     } catch (e, s) {
-      debugPrintStack(stackTrace: s, label: e.toString());
+      AppLoggers.media.e('Failed to pull recordings from server', error: e, stackTrace: s);
       rethrow;
     } finally {
-      debugPrint("pull recordings from server in ${stopwatch.elapsed}");
+      AppLoggers.media.d('Pull recordings from server: elapsed=${stopwatch.elapsed}');
     }
   }
 

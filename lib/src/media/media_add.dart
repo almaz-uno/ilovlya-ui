@@ -9,6 +9,7 @@ import '../api/api_riverpod.dart';
 import '../api/media_list_riverpod.dart';
 import '../localization/app_localizations.dart';
 import '../model/url_info.dart';
+import '../utils/logger_provider.dart';
 import 'format.dart';
 
 class MediaAddView extends ConsumerStatefulWidget {
@@ -53,7 +54,7 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
         _futurePropositions = _getURLInfo(_urlController.text);
       });
     } on Exception catch (e) {
-      debugPrint(e.toString());
+      AppLoggers.ui.e('Failed to get clipboard data', error: e);
     }
   }
 

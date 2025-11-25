@@ -16,6 +16,7 @@ import '../localization/app_localizations.dart';
 import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
+import '../utils/logger_provider.dart';
 import 'format.dart';
 import 'intents.dart';
 import 'media_add.dart';
@@ -68,7 +69,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
       if (MKPlayerHandler.player.state.playing) {
-        debugPrint("skip pull list while playing");
+        AppLoggers.ui.d('Skip pull list while playing');
         return;
       }
       ref.read(mediaListNotifierProvider.notifier).refreshFromServer();

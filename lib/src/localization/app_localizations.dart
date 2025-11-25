@@ -284,53 +284,11 @@ abstract class AppLocalizations {
   /// **'Show additional technical info. For advanced users only!'**
   String get showTechnicalInfo;
 
-  /// User quota information
-  ///
-  /// In en, this message translates to:
-  /// **'Quota: {quota}'**
-  String quota(String quota);
-
-  /// Used storage information
-  ///
-  /// In en, this message translates to:
-  /// **'Used: {used}'**
-  String used(String used);
-
-  /// Free storage information
-  ///
-  /// In en, this message translates to:
-  /// **'Free: {free}'**
-  String free(String free);
-
-  /// Number of files
-  ///
-  /// In en, this message translates to:
-  /// **'Files: {files}'**
-  String files(String files);
-
-  /// Local storage information
-  ///
-  /// In en, this message translates to:
-  /// **'Local: {local}'**
-  String local(String local);
-
-  /// Storage information
-  ///
-  /// In en, this message translates to:
-  /// **'Storage: {storage}'**
-  String storage(String storage);
-
   /// Header for local media information
   ///
   /// In en, this message translates to:
   /// **'Local media info'**
   String get localMediaInfo;
-
-  /// Number of recordings
-  ///
-  /// In en, this message translates to:
-  /// **'Recordings: {count}'**
-  String recordings(String count);
 
   /// Total files size
   ///
@@ -367,18 +325,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'recordings cleaned'**
   String get recordingsCleaned;
-
-  /// Local data path information
-  ///
-  /// In en, this message translates to:
-  /// **'Data local path: {path}'**
-  String dataLocalPath(String path);
-
-  /// Local media path information
-  ///
-  /// In en, this message translates to:
-  /// **'Downloaded local media path: {path}'**
-  String downloadedLocalMediaPath(String path);
 
   /// Stale files cleaning process
   ///
@@ -945,6 +891,18 @@ abstract class AppLocalizations {
   /// **'Housekeeping'**
   String get housekeeping;
 
+  /// Download while playing switch label
+  ///
+  /// In en, this message translates to:
+  /// **'Download while playing'**
+  String get downloadWhilePlaying;
+
+  /// Download while playing switch description
+  ///
+  /// In en, this message translates to:
+  /// **'Start download during playback. When download completes, playback will continue from the file.'**
+  String get downloadWhilePlayingDescription;
+
   /// Token input field label
   ///
   /// In en, this message translates to:
@@ -1035,6 +993,12 @@ abstract class AppLocalizations {
   /// **'Available formats:'**
   String get availableFormats;
 
+  /// Number of available formats
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 format} other{{count} formats}}'**
+  String formatsCount(int count);
+
   /// Tooltip for downloading exact format
   ///
   /// In en, this message translates to:
@@ -1119,6 +1083,48 @@ abstract class AppLocalizations {
   /// **'Mark this recording as unseen'**
   String get markRecordingAsUnseen;
 
+  /// User quota information
+  ///
+  /// In en, this message translates to:
+  /// **'Quota: {quota}'**
+  String quota(String quota);
+
+  /// Used storage information
+  ///
+  /// In en, this message translates to:
+  /// **'Used: {used}'**
+  String used(String used);
+
+  /// Free storage information
+  ///
+  /// In en, this message translates to:
+  /// **'Free: {free}'**
+  String free(String free);
+
+  /// Number of files
+  ///
+  /// In en, this message translates to:
+  /// **'Files: {files}'**
+  String files(String files);
+
+  /// Local storage information
+  ///
+  /// In en, this message translates to:
+  /// **'Local: {local}'**
+  String local(String local);
+
+  /// Storage information
+  ///
+  /// In en, this message translates to:
+  /// **'Storage: {storage}'**
+  String storage(String storage);
+
+  /// Number of recordings
+  ///
+  /// In en, this message translates to:
+  /// **'Recordings: {count}'**
+  String recordings(String count);
+
   /// Files count and total size
   ///
   /// In en, this message translates to:
@@ -1148,6 +1154,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clean ALL metadata for {count} recordings'**
   String cleanAllMetadataForRecordings(String count);
+
+  /// Local data path information
+  ///
+  /// In en, this message translates to:
+  /// **'Data local path: {path}'**
+  String dataLocalPath(String path);
+
+  /// Local media path information
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded local media path: {path}'**
+  String downloadedLocalMediaPath(String path);
 
   /// Progress message when cleaning stale files
   ///
@@ -1419,6 +1437,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'paused'**
   String get taskStatusPaused;
+
+  /// Message shown when media is being cached during playback
+  ///
+  /// In en, this message translates to:
+  /// **'Caching media. After download completes, playback will use the downloaded file.'**
+  String get cachingMedia;
+
+  /// Success message when playback switched to local file
+  ///
+  /// In en, this message translates to:
+  /// **'Now playing from local file: {filename}'**
+  String nowPlayingFromLocalFile(String filename);
+
+  /// Error message when local file is missing
+  ///
+  /// In en, this message translates to:
+  /// **'Local file not found: {filename}'**
+  String localFileNotFound(String filename);
+
+  /// Error message when switching to local file fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to switch to local file: {error}'**
+  String failedToSwitchToLocalFile(String error);
 }
 
 class _AppLocalizationsDelegate

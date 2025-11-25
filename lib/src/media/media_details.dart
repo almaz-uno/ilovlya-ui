@@ -26,6 +26,7 @@ import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
 import '../theme/media_player_theme.dart';
+import '../utils/logger_provider.dart';
 import '../utils/task_status_localization.dart';
 import 'downloads_table.dart';
 import 'format.dart';
@@ -90,6 +91,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   Duration _rewinding = Duration.zero;
   Timer? _rewindTimer;
   Duration? _currentPosition; // Local position override
+  bool _formatsExpanded = false; // Tracks if formats section is expanded
 
   static const _updatePullPeriod = Duration(seconds: 3);
 
@@ -105,7 +107,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
       if (MKPlayerHandler.player.state.playing) {
-        debugPrint("skip pull details while playing");
+        AppLoggers.ui.d('Skip pull details while playing');
         return;
       }
       _pullRefresh();
@@ -234,11 +236,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Text(AppLocalizations.of(context)!.seekToPosition),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('${AppLocalizations.of(context)!.duration}: ${_formatTimePosition(maxDuration)}'),
-                    const SizedBox(height: 16),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('${AppLocalizations.of(context)!.duration}: ${_formatTimePosition(maxDuration)}'),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -353,7 +355,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
   Future<void> _pullRefresh() async {
     getMpvPlaybackPosition(_mpvSocketPath, (double? pos) {
-      debugPrint("Current position: $pos");
+      AppLoggers.player.d('MPV current position: $pos');
       if (pos != null) _sendPosition(widget.id, Duration(seconds: pos.toInt()), false);
     });
     await ref.read(recordingNotifierProvider(widget.id).notifier).refreshFromServer();
@@ -509,14 +511,44 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         ] else
           Text(AppLocalizations.of(context)!.downloadsInfoIsLoading),
         if (recording.formats != null && recording.formats!.isNotEmpty)
-          Center(
-            child: FormatsTable(
-              recording: recording,
-              startPreparation: _startPreparation,
+          Align(
+            alignment: Alignment.center,
+            child: IntrinsicWidth(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: ExpansionTile(
+                  title: Text(
+                    AppLocalizations.of(context)!.availableFormats,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  subtitle: Text(
+                    AppLocalizations.of(context)!.formatsCount(recording.formats!.length),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  initiallyExpanded: false,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      _formatsExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    if (_formatsExpanded)
+                      FormatsTable(
+                        recording: recording,
+                        startPreparation: _startPreparation,
+                      )
+                    else
+                      const SizedBox.shrink(),
+                  ],
+                ),
+              ),
             ),
           )
         else
-          Text(AppLocalizations.of(context)!.noFormatsForRecord),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(AppLocalizations.of(context)!.noFormatsForRecord),
+          ),
       ],
     );
   }
@@ -700,9 +732,26 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     var est = dt.networkSpeed == null || dt.networkSpeed! < 0 ? "" : " ≈ ${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta";
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(l10n.localDownloadingStatus(localizedStatus, dt.filename, est)),
-        if (dt.status?.isFinalState != true) LinearProgressIndicator(value: dt.progress),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.localDownloadingStatus(localizedStatus, dt.filename, est),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+            if (dt.progress != null)
+              Text(
+                '${(dt.progress! * 100).round()}%',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        LinearProgressIndicator(value: dt.progress, minHeight: 2),
       ],
     );
   }
@@ -745,7 +794,15 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     });
   }
 
-  void _recordView(BuildContext context, RecordingInfo recording, Download d) {
+  Future<void> _recordView(BuildContext context, RecordingInfo recording, Download d) async {
+    // Start download if downloadWhilePlaying is enabled and file not downloaded yet
+    if (!UniversalPlatform.isWeb) {
+      final settings = await ref.read(settingsNotifierProvider.future);
+      if (settings.downloadWhilePlaying && d.fullPathMedia == null) {
+        await downloadFile(context, d);
+      }
+    }
+
     Navigator.of(context).push(
       MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
     );
@@ -1053,9 +1110,18 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Future<void> downloadFile(BuildContext context, Download download) async {
+    // Check if download is not already in progress
+    final task = ref.read(localDTNotifierProvider.select((tasks) => tasks[download.id]));
+
+    // Start download only if task doesn't exist or is in final state
+    if (task != null && task.status != null && !task.status!.isFinalState) {
+      AppLoggers.download.d('Download already in progress for ${download.id}');
+      return;
+    }
+
     final sp = await (context as WidgetRef).watch(storePlacesProvider.future);
 
-    final task = DownloadTask(
+    final downloadTask = DownloadTask(
       taskId: download.id,
       url: download.url,
       directory: sp.media().path,
@@ -1064,10 +1130,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       retries: 8,
       updates: Updates.statusAndProgress,
       displayName: download.title,
-      metaData: download.recordingId,
+      //metaData: "",
     );
 
-    FileDownloader().enqueue(task);
+    FileDownloader().enqueue(downloadTask);
   }
 }
 

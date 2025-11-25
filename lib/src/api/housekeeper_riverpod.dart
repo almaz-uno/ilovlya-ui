@@ -1,11 +1,11 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import '../model/recording_info.dart';
+import '../utils/logger_provider.dart';
 import 'directories_riverpod.dart';
 import 'media_list_riverpod.dart';
 import 'recording_riverpod.dart';
@@ -28,7 +28,7 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
     final sp = await ref.watch(storePlacesProvider.future);
 
     for (final entity in sp.media().listSync(recursive: true)) {
-      debugPrint(entity.path);
+      AppLoggers.media.t('Processing media file: ${entity.path}');
       if (entity is! File) continue;
       number++;
       size += entity.lengthSync();

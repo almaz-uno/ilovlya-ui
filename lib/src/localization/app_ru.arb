@@ -185,44 +185,9 @@
     "description": "Настройка показа технической информации"
   },
 
-  "quota": "Квота",
-  "@quota": {
-    "description": "Информация о квоте"
-  },
-
-  "used": "Использовано",
-  "@used": {
-    "description": "Информация об использованном пространстве"
-  },
-
-  "free": "Свободно",
-  "@free": {
-    "description": "Информация о свободном пространстве"
-  },
-
-  "files": "Файлы",
-  "@files": {
-    "description": "Информация о файлах"
-  },
-
-  "local": "Локально",
-  "@local": {
-    "description": "Информация о локальном хранилище"
-  },
-
-  "storage": "Хранилище",
-  "@storage": {
-    "description": "Информация о хранилище"
-  },
-
   "localMediaInfo": "Информация о локальных медиа",
   "@localMediaInfo": {
     "description": "Заголовок секции локальных медиа"
-  },
-
-  "recordings": "Записи",
-  "@recordings": {
-    "description": "Количество записей"
   },
 
   "totalSize": "общий размер",
@@ -253,16 +218,6 @@
   "recordingsCleaned": "записей очищено",
   "@recordingsCleaned": {
     "description": "Сообщение об очистке записей"
-  },
-
-  "dataLocalPath": "Локальный путь данных",
-  "@dataLocalPath": {
-    "description": "Информация о локальном пути данных"
-  },
-
-  "downloadedLocalMediaPath": "Путь загруженных локальных медиа",
-  "@downloadedLocalMediaPath": {
-    "description": "Информация о пути загруженных медиа"
   },
 
   "cleaningStaleFiles": "очистка устаревших локальных медиафайлов...",
@@ -570,6 +525,16 @@
     "description": "Housekeeping tab title"
   },
 
+  "downloadWhilePlaying": "Загружать во время проигрывания",
+  "@downloadWhilePlaying": {
+    "description": "Download while playing switch label"
+  },
+
+  "downloadWhilePlayingDescription": "Стартовать загрузку во время проигрывания. Когда загрузка закончится, проигрывание продолжится из файла.",
+  "@downloadWhilePlayingDescription": {
+    "description": "Download while playing switch description"
+  },
+
   "yourTokenProvidedByBot": "Ваш токен, предоставленный ботом",
   "@yourTokenProvidedByBot": {
     "description": "Token input field label"
@@ -704,6 +669,15 @@
   "copiedToClipboard": "{text} скопировано в буфер обмена",
   "@availableFormats": {
     "description": "Заголовок таблицы доступных форматов"
+  },
+  "formatsCount": "{count, plural, =1{1 формат} few{{count} формата} other{{count} форматов}}",
+  "@formatsCount": {
+    "description": "Количество доступных форматов",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
 
   "id": "ID",
@@ -1287,5 +1261,36 @@
   "taskStatusPaused": "приостановлена",
   "@taskStatusPaused": {
     "description": "TaskStatus.paused localization"
+  },
+  "cachingMedia": "Кэширование медиа. После загрузки проигрывание будет производиться из закачанного файла.",
+  "@cachingMedia": {
+    "description": "Message shown when media is being cached during playback"
+  },
+  "nowPlayingFromLocalFile": "Теперь воспроизводится из локального файла: {filename}",
+  "@nowPlayingFromLocalFile": {
+    "description": "Success message when playback switched to local file",
+    "placeholders": {
+      "filename": {
+        "type": "String"
+      }
+    }
+  },
+  "localFileNotFound": "Локальный файл не найден: {filename}",
+  "@localFileNotFound": {
+    "description": "Error message when local file is missing",
+    "placeholders": {
+      "filename": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSwitchToLocalFile": "Не удалось переключиться на локальный файл: {error}",
+  "@failedToSwitchToLocalFile": {
+    "description": "Error message when switching to local file fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }
