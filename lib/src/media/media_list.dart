@@ -164,6 +164,10 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                   label: AppLocalizations.of(context)!.search,
                   controller: _searchController,
                   labelAlignment: Alignment.centerLeft,
+                  searchStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                  cursorColor: Theme.of(context).colorScheme.primary,
                   onChanged: (String value) {
                     ref.read(searchPhraseNotifierProvider.notifier).setPhrase(value);
                   },
