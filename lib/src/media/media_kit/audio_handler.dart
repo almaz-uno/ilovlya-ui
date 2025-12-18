@@ -6,6 +6,7 @@ import 'package:universal_platform/universal_platform.dart';
 import '../../model/download.dart';
 import '../../model/recording_info.dart';
 import '../../utils/logger_provider.dart';
+import '../../utils/screen_inhibit_service.dart';
 
 class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   static late final MKPlayerHandler _handler;
@@ -87,6 +88,12 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
     player.stream.playing.listen((event) {
       _handler.updatePlaybackState();
+      // Inhibit screen lock when playing, uninhibit when paused
+      if (event) {
+        ScreenInhibitService.inhibit();
+      } else {
+        ScreenInhibitService.uninhibit();
+      }
     });
     player.stream.position.listen((event) {
       _handler.updatePlaybackState();
@@ -139,6 +146,9 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   }
 
   static void dispose() {
+    // Uninhibit screen lock when disposing
+    ScreenInhibitService.uninhibit();
+
     _handler._player.dispose();
 
     _handler.mediaItem.add(null);
@@ -173,6 +183,10 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
   Future<void> stop() async {
     // final session = await AudioSession.instance;
     // await session.setActive(false);
+
+    // Uninhibit screen lock when stopping
+    await ScreenInhibitService.uninhibit();
+
     _player.stop();
 
     // Clear the media item to remove lock screen notification
