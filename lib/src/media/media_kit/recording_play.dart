@@ -61,7 +61,7 @@ const _positionSendPeriod = Duration(seconds: 1);
 class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMediaKitHandler> {
   // String get url => widget.download.url;
   Player get _player => MKPlayerHandler.player;
-  late final _controller = VideoController(_player, configuration: VideoControllerConfiguration(enableHardwareAcceleration: !UniversalPlatform.isLinux));
+  late final _controller = VideoController(_player, configuration: VideoControllerConfiguration(enableHardwareAcceleration: true));
   StreamSubscription? _positionSendSubs;
   Duration _rewinding = Duration.zero;
   Timer? _rewindTimer;
