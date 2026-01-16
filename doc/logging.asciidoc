@@ -1,8 +1,8 @@
-= Логирование в Ilovlya UI
+= Logging in Ilovlya UI
 
-== Установка
+== Installation
 
-Пакет `logger` уже добавлен в `pubspec.yaml`:
+The `logger` package is already added to `pubspec.yaml`:
 
 [source,yaml]
 ----
@@ -10,64 +10,64 @@ dependencies:
   logger: ^2.0.2+1
 ----
 
-== Использование
+== Usage
 
-=== Предопределенные логгеры
+=== Predefined Loggers
 
-В проекте доступны следующие логгеры для разных модулей:
+The following loggers are available for different modules in the project:
 
 [source,dart]
 ----
 import 'package:ilovlya/src/utils/logger_provider.dart';
 
-// API вызовы
+// API calls
 AppLoggers.api.i('Request started');
 
-// Медиа операции
+// Media operations
 AppLoggers.media.d('Loading media');
 
-// Плеер
+// Player
 AppLoggers.player.w('Speed changed');
 
-// Настройки
+// Settings
 AppLoggers.settings.i('Settings saved');
 
-// Загрузки
+// Downloads
 AppLoggers.download.d('Download progress: 50%');
 
-// UI события
+// UI events
 AppLoggers.ui.d('Button pressed');
 ----
 
-=== Уровни логирования
+=== Logging Levels
 
 [cols="1,3,3"]
 |===
-|Метод |Уровень |Использование
+|Method |Level |Usage
 
-|`t()` |Trace |Детальная трассировка выполнения
-|`d()` |Debug |Отладочная информация (только в debug режиме)
-|`i()` |Info |Информационные сообщения
-|`w()` |Warning |Предупреждения
-|`e()` |Error |Ошибки
-|`f()` |Fatal |Критические ошибки
+|`t()` |Trace |Detailed execution tracing
+|`d()` |Debug |Debug information (only in debug mode)
+|`i()` |Info |Informational messages
+|`w()` |Warning |Warnings
+|`e()` |Error |Errors
+|`f()` |Fatal |Critical errors
 |===
 
-=== Логирование с данными
+=== Logging with Data
 
 [source,dart]
 ----
-// Простое сообщение
+// Simple message
 AppLoggers.media.i('Media loaded');
 
-// С дополнительными данными
+// With additional data
 AppLoggers.api.i('Response received', {
   'statusCode': 200,
   'count': 42,
   'timestamp': DateTime.now().toIso8601String(),
 });
 
-// С ошибкой и стектрейсом
+// With error and stack trace
 try {
   // some code
 } catch (e, st) {
@@ -75,7 +75,7 @@ try {
 }
 ----
 
-=== Пример в Riverpod Provider
+=== Example in Riverpod Provider
 
 [source,dart]
 ----
@@ -101,7 +101,7 @@ class MediaNotifier extends StateNotifier<AsyncValue<List<Media>>> {
 }
 ----
 
-=== Пример в медиа-плеере
+=== Example in Media Player
 
 [source,dart]
 ----
@@ -127,28 +127,28 @@ class PlayerHandler {
 }
 ----
 
-== Конфигурация
+== Configuration
 
-=== Debug режим
+=== Debug Mode
 
-В debug режиме (`flutter run`):
+In debug mode (`flutter run`):
 
-- Используется `PrettyPrinter` с цветным выводом и эмодзи
-- Все логи от уровня `debug` и выше
-- Полные стектрейсы при ошибках
-- Временные метки
+- Uses `PrettyPrinter` with colored output and emojis
+- All logs from `debug` level and above
+- Full stack traces on errors
+- Timestamps
 
-=== Release режим
+=== Release Mode
 
-В release режиме (`flutter build`):
+In release mode (`flutter build`):
 
-- Используется `SimplePrinter` без цветов
-- Только логи от уровня `warning` и выше
-- Минимальный оверхед
+- Uses `SimplePrinter` without colors
+- Only logs from `warning` level and above
+- Minimal overhead
 
-== Создание кастомного логгера
+== Creating a Custom Logger
 
-Если нужен специальный логгер с уникальным префиксом:
+If you need a special logger with a unique prefix:
 
 [source,dart]
 ----
@@ -156,9 +156,9 @@ final myLogger = LoggerFactory.create('MyModule');
 myLogger.i('Custom logger message');
 ----
 
-== Вывод логов
+== Log Output
 
-=== Debug режим
+=== Debug Mode
 
 [source]
 ----
@@ -170,26 +170,26 @@ myLogger.i('Custom logger message');
 └──────────────────────────────────────────────────
 ----
 
-=== Release режим
+=== Release Mode
 
 [source]
 ----
 💡 [API] Request started
 ----
 
-== Рекомендации
+== Recommendations
 
-.При разработке
-- Используйте `d()` для отладочной информации
-- Добавляйте контекстные данные в логи
-- Логируйте все HTTP запросы и ответы
+.During Development
+- Use `d()` for debug information
+- Add contextual data to logs
+- Log all HTTP requests and responses
 
-.В production
-- Логируйте только важные события (`i()` и выше)
-- Всегда логируйте ошибки с `error` и `stackTrace`
-- Не логируйте чувствительные данные (пароли, токены)
+.In Production
+- Log only important events (`i()` and above)
+- Always log errors with `error` and `stackTrace`
+- Don't log sensitive data (passwords, tokens)
 
-.Именование
-- Используйте краткие, но понятные сообщения
-- Добавляйте префиксы для группировки (например, "API:", "Player:")
-- Используйте предопределенные логгеры (`AppLoggers.*`)
+.Naming
+- Use brief but clear messages
+- Add prefixes for grouping (e.g., "API:", "Player:")
+- Use predefined loggers (`AppLoggers.*`)
