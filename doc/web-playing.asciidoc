@@ -1,0 +1,506 @@
+= Browser as Cast Receiver
+:toc:
+:toclevels: 3
+
+== Overview
+
+This document describes the architecture for using a web browser as a cast receiver for media playback, controlled from the mobile application.
+
+== User Flow
+
+. User opens `https://ilovlya.space/tv` in a browser
+. The page displays:
+  * QR code
+  * One-time pairing code (6-8 characters: lowercase letters and digits, e.g., `xy9k2m`)
+. User can pair the TV receiver by:
+  * Scanning the QR code with the mobile app
+  * Manually entering the code in the app
+. After pairing, user can:
+  * Initiate media playback from server to the browser
+  * Control playback from either the browser or mobile app
+
+== Architecture
+
+=== Components
+
+==== 1. TV Browser Player (Web Receiver)
+
+* Static web page at `https://ilovlya.space/tv`
+* Generates unique session ID on page load
+* Displays QR code and one-time pairing code
+* Maintains WebSocket connection to server for real-time commands
+* HTML5 video player for media playback
+* Reports playback progress back to server
+
+==== 2. Backend Server (Go)
+
+* Manages TV receiver sessions
+* Stores temporary pairing codes with TTL (~10-15 minutes)
+* Processes commands from mobile application
+* Relays commands to TV receivers via WebSocket
+* Tracks playback progress
+* Handles authentication and authorization
+
+==== 3. Flutter Mobile Application (Sender)
+
+* Scans QR codes or accepts manual code entry
+* Authorizes TV receiver via API
+* Sends playback commands to server
+* Receives playback state updates
+* Lists active receiver devices
+* Selects target device for media casting
+
+== Technical Details
+
+=== WebSocket Protocol
+
+.Server → TV: Play Command
+[source,json]
+----
+{
+  "type": "play",
+  "recordingId": "123",
+  "mediaUrl": "https://ilovlya.space/media/123.mp4",
+  "position": 0
+}
+----
+
+.Server → TV: Control Commands
+[source,json]
+----
+{
+  "type": "pause" | "stop" | "seek",
+  "position": 15.5
+}
+----
+
+.TV → Server: Progress Report
+[source,json]
+----
+{
+  "type": "progress",
+  "position": 45.2,
+  "duration": 300,
+  "state": "playing" | "paused" | "ended"
+}
+----
+
+=== Pairing Code System
+
+.Code Generation
+* **Format:** 6-8 characters from `[a-z0-9]`
+* **Example:** `xy9k2m`
+* **Storage:** Redis or database with TTL
+* **Lifecycle:** Single-use, deleted after successful pairing
+
+.QR Code Content
+----
+ilovlya://tv/pair?code=xy9k2m
+----
+
+or
+
+----
+https://ilovlya.space/pair?code=xy9k2m
+----
+
+=== Deep Linking
+
+The application registers a custom URL scheme (`ilovlya://`) to enable seamless pairing via QR code scanning.
+
+==== Benefits
+
+* **Automatic app opening:** Scanning QR code automatically opens the pairing screen
+* **Pre-filled code:** No manual code entry required
+* **Seamless experience:** Single-step pairing process
+
+==== Implementation
+
+.Android Configuration (AndroidManifest.xml)
+[source,xml]
+----
+<intent-filter>
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data android:scheme="ilovlya" android:host="tv" />
+</intent-filter>
+----
+
+.iOS Configuration (Info.plist)
+[source,xml]
+----
+<key>CFBundleURLTypes</key>
+<array>
+    <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+            <string>ilovlya</string>
+        </array>
+    </dict>
+</array>
+----
+
+.Flutter Deep Link Handling
+[source,dart]
+----
+// Initialize deep link handling
+final initialLink = await getInitialLink();
+if (initialLink != null) {
+  handleDeepLink(initialLink);
+}
+
+// Listen for incoming links
+linkStream.listen((String? link) {
+  if (link != null) {
+    handleDeepLink(link);
+  }
+});
+
+void handleDeepLink(String link) {
+  final uri = Uri.parse(link);
+  if (uri.scheme == 'ilovlya' && uri.host == 'tv') {
+    final code = uri.queryParameters['code'];
+    if (code != null) {
+      // Navigate to Device Pairing screen with pre-filled code
+      context.push('/pair?code=$code');
+    }
+  }
+}
+----
+
+==== Universal Links Alternative
+
+As an alternative or complement to custom URL schemes, **Universal Links** (iOS) and **App Links** (Android) can be implemented using HTTPS URLs:
+
+**Benefits:**
+
+* Works even when app is not installed (falls back to web page)
+* More reliable on iOS
+* No app selection dialog
+
+**Requirements:**
+
+* `.well-known/apple-app-site-association` file on server (iOS)
+* `.well-known/assetlinks.json` file on server (Android)
+* HTTPS configuration
+* Domain verification
+
+**URL Format:**
+----
+https://ilovlya.space/pair?code=xy9k2m
+----
+
+Both custom URL scheme and Universal Links can coexist, providing maximum compatibility across platforms.
+
+=== Security Considerations
+
+. **One-time codes** — codes are invalidated after use
+. **Time-to-live** — codes expire after 10-15 minutes
+. **Session tokens** — JWT tokens used after pairing
+. **CORS** — proper WebSocket CORS configuration
+. **HTTPS** — mandatory for modern browser features and WebRTC
+
+== Architectural Decisions
+
+=== Media Storage
+
+The backend server already handles media delivery through its own mechanisms. Media files must be accessible via direct URLs for browser playback.
+
+=== Media Format Support
+
+Browsers support limited media formats:
+
+* **Video:** H.264 (MP4), VP9 (WebM)
+* **Audio:** AAC, MP3, Opus
+
+On-the-fly transcoding may be required for unsupported formats.
+
+=== State Synchronization
+
+* **App control:** Server sends commands to TV via WebSocket
+* **Browser control:** TV sends events to server
+* **App updates:** Mobile app subscribes to events via WebSocket or polling
+
+=== Multiple Sessions
+
+Users may have multiple active TV receivers:
+
+* App displays list of active devices
+* User selects target device for casting
+* Each device maintains separate session
+
+== Technology Stack
+
+=== TV Browser Player (Frontend)
+
+* **Framework:** Vanilla JS or lightweight (Svelte, Preact)
+* **Media player:** Video.js or Plyr
+* **WebSocket:** Native WebSocket API
+* **QR generation:** QRCode.js
+
+=== Backend (Go)
+
+* **WebSocket:** Gorilla WebSocket or nhooyr.io/websocket
+* **Authentication:** JWT for session tokens
+* **Cache:** Redis for temporary pairing codes
+* **API:** REST endpoints for control
+* **Static files:** Embedded using Go 1.16+ `embed` directive
+
+==== Static Content Deployment
+
+TV player static files (HTML, CSS, JavaScript) are embedded directly into the Go binary using the `embed` package:
+
+.Directory Structure
+----
+ilovlya/
+├── pkg/
+├── static/
+│   └── tv/
+│       ├── index.html
+│       ├── player.js
+│       ├── styles.css
+│       └── qrcode.min.js
+└── main.go
+----
+
+.Embedding Code Example
+[source,go]
+----
+import "embed"
+
+//go:embed static/tv/*
+var tvStaticFiles embed.FS
+
+func setupTVRoutes(r chi.Router) {
+    staticFS, _ := fs.Sub(tvStaticFiles, "static/tv")
+    r.Handle("/tv/*", http.StripPrefix("/tv",
+        http.FileServer(http.FS(staticFS))))
+}
+----
+
+**Benefits:**
+
+* Single binary deployment
+* No separate web server needed
+* Static assets versioned with backend code
+* Simplified deployment process
+
+=== Flutter Application
+
+* **QR scanning:** qr_code_scanner package
+* **WebSocket:** web_socket_channel package
+* **HTTP:** http package for REST API
+* **Deep linking:** uni_links or app_links package for URL scheme handling
+
+== Alternative Approaches
+
+=== Server-Sent Events (SSE)
+
+**Pros:**
+
+* Simpler implementation
+* Native browser support
+
+**Cons:**
+
+* One-way communication only (server → client)
+* Requires separate HTTP endpoint for TV → server commands
+
+=== WebRTC Peer-to-Peer
+
+**Pros:**
+
+* Direct phone ↔ TV connection
+* Reduced server load
+* Lower latency
+
+**Cons:**
+
+* More complex implementation
+* Server needed for signaling
+* NAT traversal challenges
+
+=== MQTT
+
+**Pros:**
+
+* Publish/Subscribe model
+* Good for IoT devices
+* Built-in QoS
+
+**Cons:**
+
+* May be overkill for web browser
+* Additional protocol complexity
+
+== API Design
+
+=== REST Endpoints
+
+.Generate Pairing Session
+----
+POST /api/v1/tv/session
+Response: {
+  "sessionId": "uuid",
+  "code": "xy9k2m",
+  "expiresAt": "2026-01-16T21:00:00Z"
+}
+----
+
+.Pair Mobile App with TV
+----
+POST /api/v1/tv/pair
+Body: {
+  "code": "xy9k2m"
+}
+Response: {
+  "sessionToken": "jwt-token",
+  "deviceId": "uuid"
+}
+----
+
+.Start Playback
+----
+POST /api/v1/tv/{deviceId}/play
+Headers: Authorization: Bearer jwt-token
+Body: {
+  "recordingId": "123",
+  "position": 0
+}
+----
+
+.Control Playback
+----
+POST /api/v1/tv/{deviceId}/control
+Body: {
+  "action": "pause" | "play" | "stop" | "seek",
+  "position": 15.5
+}
+----
+
+.Get Active Devices
+----
+GET /api/v1/tv/devices
+Response: [
+  {
+    "deviceId": "uuid",
+    "name": "Living Room TV",
+    "state": "idle" | "playing",
+    "lastSeen": "2026-01-16T20:55:00Z"
+  }
+]
+----
+
+== Implementation Phases
+
+=== Phase 1: Basic Infrastructure
+
+. WebSocket server in Go
+. Simple HTML page with code display
+. Pairing API endpoints
+. Mobile app QR scanning
+. Deep linking setup (URL scheme registration)
+
+=== Phase 2: Media Playback
+
+. Video player integration
+. Play command implementation
+. Basic playback controls
+. Progress reporting
+
+=== Phase 3: Advanced Features
+
+. Multiple device support
+. Playlist management
+. Playback queue
+. Synchronized progress tracking
+
+=== Phase 4: Polish
+
+. Error handling and reconnection
+. Offline detection
+. Performance optimization
+. UI/UX improvements
+
+== User Interface Design
+
+=== Device Pairing Flow
+
+. On **Media Details screen**, add a **Cast button** in the app bar or actions
+. Clicking Cast button **always** opens **Device Pairing screen** (separate full-screen view)
+. Device Pairing screen provides two options:
+  * Manual code entry (TextField)
+  * QR code scanner
+. After successful pairing:
+  * Cast device is saved and available for playback
+  * User returns to Media Details screen
+  * Toggle becomes available for selecting playback target
+
+=== Playback Control Flow
+
+. On **Media Details/Player screen**, add a **toggle switch**: "Play on remote screen"
+. Toggle states:
+  * **Off (default):** All playback actions execute locally (existing behavior)
+  * **On:** All playback actions execute on the paired cast device
+. When toggle is enabled:
+  * All playback controls (play, pause, seek, speed change) send commands to remote device
+  * Progress updates are received from remote device via WebSocket
+  * UI displays "Playing on: [Device Name]" indicator
+. When toggle is disabled:
+  * All playback controls work with local media player
+  * Standard local playback behavior
+
+=== UI Components
+
+==== Media Details Screen
+* **Cast button** (AppBar action):
+  - Always opens Device Pairing screen
+  - Icon indicates if device is currently paired
+* **Playback target toggle:**
+  - Label: "Play on remote screen"
+  - Only enabled when cast device is paired
+  - Persists selection for current session
+* **All playback controls:**
+  - Route commands based on toggle state
+  - Same UI for both local and remote playback
+
+==== Device Pairing Screen
+* **Title:** "Connect to TV"
+* **Instructions:** "Open https://ilovlya.space/tv on your TV"
+* **Code input field:** 6-8 character TextField
+* **OR divider**
+* **QR Scanner button:** Opens camera for QR code scanning
+* **Currently paired device** (if any):
+  - Display device name and last connection time
+  - **Unpair button:** Removes the device from paired devices
+* **Loading indicator** during pairing process
+* **Error handling** for invalid codes or network issues
+
+==== Player Screen (both local and remote)
+* **Media information:**
+  - Thumbnail/cover art
+  - Recording title
+  - Channel/podcast name
+  - Duration and file size
+* **Playback controls** (unified for both modes):
+  - Play/pause button
+  - Seek buttons (±15s, ±30s, ±1min)
+  - Progress bar with time indicators
+  - Playback speed selector
+* **Remote playback indicator** (when toggle is on):
+  - "Playing on: [Device Name]"
+  - Connection status indicator
+
+== Related Issues
+
+* Issue #22: Add browser casting support
+* Issue #59: (Referenced in #22 comments)
+
+== Future Considerations
+
+* **Multi-room audio** — synchronized playback across multiple devices
+* **Screen mirroring** — stream phone screen to TV
+* **Subtitles support** — WebVTT format
+* **Quality selection** — adaptive bitrate streaming
+* **Chromecast integration** — native Chromecast support alongside web receiver
