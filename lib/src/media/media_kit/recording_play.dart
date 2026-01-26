@@ -586,9 +586,8 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                           ),
                         ),
                       ),
-                      Visibility(
-                        visible: settings.value?.debugMode ?? false,
-                        child: Container(
+                      if (settings.value?.debugMode ?? false)
+                        Container(
                           alignment: Alignment.topLeft,
                           padding: const EdgeInsets.all(8),
                           child: Column(
@@ -613,7 +612,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                             ],
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
