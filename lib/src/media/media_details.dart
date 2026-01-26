@@ -813,78 +813,71 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     RecordingInfo recording,
     Download d,
   ) {
-    switch (d.status) {
-      case "stale":
-        return IconButton(
-          onPressed: () {
-            _startPreparation(context, d.formatId);
-          },
-          tooltip: AppLocalizations.of(context)!.downloadServerFormat,
-          icon: downloadFormatIcon,
-        );
-      case "new":
-      case "in_progress":
-        return Center(child: CircularProgressIndicator(value: d.progressByLastLine()));
-      case "ready":
-        return Row(
-          children: [
-            IconButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
-                );
-              },
-              onLongPress: () async {
-                if (UniversalPlatform.isLinux) {
-                  await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.url],
-                      mode: ProcessStartMode.detached);
+    // Если есть локальный файл — показываем полное меню независимо от статуса
+    final hasLocalFile = d.fullPathMedia != null;
+    final isReady = d.status == "ready";
+
+    if (hasLocalFile || isReady) {
+      return Row(
+        children: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
+              );
+            },
+            onLongPress: () async {
+              if (UniversalPlatform.isLinux) {
+                await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
+                    mode: ProcessStartMode.detached);
+              }
+            },
+            tooltip: hasLocalFile ? AppLocalizations.of(context)!.localFileDownloaded : AppLocalizations.of(context)!.openMediaKit,
+            icon: Icon(hasLocalFile ? Icons.download_done : Icons.flag_circle_outlined),
+          ),
+          PopupMenuButton(
+              tooltip: AppLocalizations.of(context)!.doWithIt,
+              icon: const Icon(Icons.more_vert),
+              onSelected: (String choice) async {
+                switch (choice) {
+                  case "copy":
+                    copyToClipboard(context, d.url);
+                  case "copy-curl":
+                    copyToClipboard(context, "curl '${d.url}' -o '${d.filename}'");
+                  case "mpv-play":
+                    await Process.start(
+                        "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
+                        mode: ProcessStartMode.detached);
+                  case "mpv-play-horizontal-flip":
+                    await Process.start("/usr/bin/flatpak-spawn",
+                        <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
+                        mode: ProcessStartMode.detached);
+                  case "default":
+                    launchUrlString(d.url);
+                  case "server-delete":
+                    confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteServerMediaFile, () {
+                      ref.read(deleteDownloadContentProvider(d.id));
+                      _pullRefresh();
+                      Navigator.pop(context);
+                    });
+                  case "local-delete":
+                    confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteLocalDownloadedMediaFile, () {
+                      ref.read(downloadsNotifierProvider(recording.id).notifier).clean(d.id);
+                      Navigator.pop(context);
+                    });
+                  case "share-url":
+                    await Share.shareUri(Uri.parse(d.url));
+                  case "download":
+                    if (UniversalPlatform.isWeb) {
+                      return;
+                    }
+                    downloadFile(context, d);
                 }
+                setState(() {});
               },
-              tooltip: AppLocalizations.of(context)!.openMediaKit,
-              icon: const Icon(Icons.flag_circle_outlined),
-            ),
-            PopupMenuButton(
-                tooltip: AppLocalizations.of(context)!.doWithIt,
-                icon: const Icon(Icons.more_vert),
-                onSelected: (String choice) async {
-                  switch (choice) {
-                    case "copy":
-                      copyToClipboard(context, d.url);
-                    case "copy-curl":
-                      copyToClipboard(context, "curl '${d.url}' -o '${d.filename}'");
-                    case "mpv-play":
-                      await Process.start(
-                          "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
-                          mode: ProcessStartMode.detached);
-                    case "mpv-play-horizontal-flip":
-                      await Process.start("/usr/bin/flatpak-spawn",
-                          <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
-                          mode: ProcessStartMode.detached);
-                    case "default":
-                      launchUrlString(d.url);
-                    case "server-delete":
-                      confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteServerMediaFile, () {
-                        ref.read(deleteDownloadContentProvider(d.id));
-                        _pullRefresh();
-                        Navigator.pop(context);
-                      });
-                    case "local-delete":
-                      confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteLocalDownloadedMediaFile, () {
-                        ref.read(downloadsNotifierProvider(recording.id).notifier).clean(d.id);
-                        Navigator.pop(context);
-                      });
-                    case "share-url":
-                      await Share.shareUri(Uri.parse(d.url));
-                    case "download":
-                      if (UniversalPlatform.isWeb) {
-                        return;
-                      }
-                      downloadFile(context, d);
-                  }
-                  setState(() {});
-                },
-                itemBuilder: (BuildContext context) {
-                  var menuItems = <PopupMenuItem<String>>[];
+              itemBuilder: (BuildContext context) {
+                var menuItems = <PopupMenuItem<String>>[];
+                if (isReady) {
                   menuItems.add(
                     PopupMenuItem<String>(
                       value: "copy",
@@ -907,32 +900,34 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       ),
                     ),
                   );
-                  if (UniversalPlatform.isLinux) {
-                    menuItems.add(
-                      PopupMenuItem<String>(
-                        value: "mpv-play",
-                        child: Row(
-                          children: [
-                            _playMpvIcon,
-                            Expanded(child: Text(AppLocalizations.of(context)!.playWithEmbeddedMpvPlayer)),
-                          ],
-                        ),
+                }
+                if (UniversalPlatform.isLinux) {
+                  menuItems.add(
+                    PopupMenuItem<String>(
+                      value: "mpv-play",
+                      child: Row(
+                        children: [
+                          _playMpvIcon,
+                          Expanded(child: Text(AppLocalizations.of(context)!.playWithEmbeddedMpvPlayer)),
+                        ],
                       ),
-                    );
+                    ),
+                  );
 
-                    menuItems.add(
-                      PopupMenuItem<String>(
-                        value: "mpv-play-horizontal-flip",
-                        child: Row(
-                          children: [
-                            _playMpvIcon,
-                            _hFlipIcon,
-                            Expanded(child: Text(AppLocalizations.of(context)!.playWithEmbeddedMpvPlayerHorizontalFlip)),
-                          ],
-                        ),
+                  menuItems.add(
+                    PopupMenuItem<String>(
+                      value: "mpv-play-horizontal-flip",
+                      child: Row(
+                        children: [
+                          _playMpvIcon,
+                          _hFlipIcon,
+                          Expanded(child: Text(AppLocalizations.of(context)!.playWithEmbeddedMpvPlayerHorizontalFlip)),
+                        ],
                       ),
-                    );
-                  }
+                    ),
+                  );
+                }
+                if (isReady) {
                   menuItems.add(
                     PopupMenuItem<String>(
                       value: "default",
@@ -957,8 +952,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       ),
                     ),
                   );
+                }
 
-                  if (!UniversalPlatform.isWeb) {
+                if (!UniversalPlatform.isWeb) {
+                  if (hasLocalFile) {
                     menuItems.add(
                       PopupMenuItem<String>(
                         value: "local-delete",
@@ -970,6 +967,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                         ),
                       ),
                     );
+                  }
+                  if (isReady) {
                     if (UniversalPlatform.isMobile) {
                       menuItems.add(
                         PopupMenuItem<String>(
@@ -985,22 +984,39 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                         ),
                       );
                     }
-                    menuItems.add(
-                      PopupMenuItem<String>(
-                        value: "download",
-                        child: Row(
-                          children: [
-                            Icon(Icons.download),
-                            Expanded(child: Text(AppLocalizations.of(context)!.downloadLocalFile)),
-                          ],
+                    if (!hasLocalFile) {
+                      menuItems.add(
+                        PopupMenuItem<String>(
+                          value: "download",
+                          child: Row(
+                            children: [
+                              Icon(Icons.download),
+                              Expanded(child: Text(AppLocalizations.of(context)!.downloadLocalFile)),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    }
                   }
-                  return menuItems;
-                }),
-          ],
+                }
+                return menuItems;
+              }),
+        ],
+      );
+    }
+
+    switch (d.status) {
+      case "stale":
+        return IconButton(
+          onPressed: () {
+            _startPreparation(context, d.formatId);
+          },
+          tooltip: AppLocalizations.of(context)!.downloadServerFormat,
+          icon: downloadFormatIcon,
         );
+      case "new":
+      case "in_progress":
+        return Center(child: CircularProgressIndicator(value: d.progressByLastLine()));
       default:
         return ErrorWidget(AppLocalizations.of(context)!.unexpectedDownloadStatus(d.status));
     }
@@ -1011,22 +1027,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     RecordingInfo recording,
     Download d,
   ) {
+    // Логика для локальных файлов теперь в _buildActions
     if (d.fullPathMedia != null) {
-      return IconButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
-          );
-        },
-        onLongPress: () async {
-          if (UniversalPlatform.isLinux) {
-            await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!],
-                mode: ProcessStartMode.detached);
-          }
-        },
-        tooltip: AppLocalizations.of(context)!.localFileDownloaded,
-        icon: const Icon(Icons.download_done),
-      );
+      return const SizedBox.shrink();
     }
     switch (d.status) {
       case "stale":

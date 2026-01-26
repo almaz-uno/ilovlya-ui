@@ -975,10 +975,16 @@ abstract class AppLocalizations {
   /// **'Copy URL this fragment into clipboard'**
   String get copyUrlFragmentToClipboard;
 
+  /// Best video and audio format option
+  ///
+  /// In en, this message translates to:
+  /// **'Best video and audio (b)'**
+  String get bestVideoAudio;
+
   /// Best audio format option
   ///
   /// In en, this message translates to:
-  /// **'Best audio (ba)'**
+  /// **'Best audio (ba*)'**
   String get bestAudio;
 
   /// Header for common available formats section

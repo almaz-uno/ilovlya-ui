@@ -45,6 +45,11 @@ class DownloadsTable extends ConsumerWidget {
           opacity = 1.0;
       }
 
+      // Use color opacity instead of Opacity widget for better performance
+      final textColor = Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: opacity) ?? Colors.black.withValues(alpha: opacity);
+      final iconColor = Theme.of(context).iconTheme.color?.withValues(alpha: opacity) ?? Colors.black.withValues(alpha: opacity);
+      final textStyle = TextStyle(color: textColor);
+
       return DataRow(cells: [
         DataCell(
           onTap: () {
@@ -54,12 +59,9 @@ class DownloadsTable extends ConsumerWidget {
               startPreparation(context, d.formatId);
             }
           },
-          Opacity(
-            opacity: opacity,
-            child: Tooltip(
-              message: AppLocalizations.of(context)!.tapToPlayInEmbeddingPlayer(d.filename),
-              child: Text(d.formatId),
-            ),
+          Tooltip(
+            message: AppLocalizations.of(context)!.tapToPlayInEmbeddingPlayer(d.filename),
+            child: Text(d.formatId, style: textStyle),
           ),
         ),
         DataCell(Row(
@@ -68,25 +70,24 @@ class DownloadsTable extends ConsumerWidget {
             buildLocalActions(context, recording, d),
           ],
         )),
-        DataCell(Opacity(opacity: opacity, child: Text(d.resolution))),
-        DataCell(Opacity(opacity: opacity, child: Text(d.fps != null ? "${d.fps}" : ""))),
-        DataCell(Opacity(
-          opacity: opacity,
-          child: Row(
+        DataCell(Text(d.resolution, style: textStyle)),
+        DataCell(Text(d.fps != null ? "${d.fps}" : "", style: textStyle)),
+        DataCell(
+          Row(
             children: [
-              Visibility(visible: d.hasAudio, child: const Icon(Icons.audiotrack_rounded)),
-              Visibility(visible: d.hasVideo, child: const Icon(Icons.videocam_rounded)),
+              if (d.hasAudio) Icon(Icons.audiotrack_rounded, color: iconColor),
+              if (d.hasVideo) Icon(Icons.videocam_rounded, color: iconColor),
             ],
           ),
-        )),
-        DataCell(Opacity(opacity: opacity, child: Text(d.size == 0 ? '' : hr))),
+        ),
+        DataCell(Text(d.size == 0 ? '' : hr, style: textStyle)),
         DataCell(
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(builder: (BuildContext context) => DownloadDetailsView(downloadId: d.id)),
             );
           },
-          Opacity(opacity: opacity, child: Text(pr)),
+          Text(pr, style: textStyle),
         ),
       ]);
     });

@@ -485,7 +485,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Copy URL this fragment into clipboard';
 
   @override
-  String get bestAudio => 'Best audio (ba)';
+  String get bestVideoAudio => 'Best video and audio (b)';
+
+  @override
+  String get bestAudio => 'Best audio (ba*)';
 
   @override
   String get commonAvailableFormats => 'Common available formats:';

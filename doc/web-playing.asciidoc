@@ -394,15 +394,121 @@ Response: [
 
 == Implementation Phases
 
-=== Phase 1: Basic Infrastructure
+=== Phase 1: Basic Infrastructure ✅ COMPLETED
 
-. WebSocket server in Go
-. Simple HTML page with code display
-. Pairing API endpoints
-. Mobile app QR scanning
-. Deep linking setup (URL scheme registration)
+*Status:* Implemented on January 17, 2026
 
+==== Backend (Go)
+
+✅ *Database Schema*
+
+* Created migration `20260117000001_tv_sessions.up.sql`
+* Tables:
+  - `tv_sessions` — stores TV receiver sessions
+  - `tv_pairing_codes` — one-time pairing codes with TTL
+* SQLC queries in `pkg/db/sqlc/queries/tv_sessions.sql`
+
+✅ *Service Layer*
+
+* `pkg/service/tv.go` — TV service implementation
+* Features:
+  - Session creation with automatic pairing code generation
+  - Code validation and device pairing
+  - JWT token generation for authenticated sessions
+  - WebSocket connection management
+  - Command routing to TV receivers
+
+✅ *API Endpoints* (`pkg/entry/web/tv_controller.go`)
+
+* `POST /api/tv/session` — create new TV session
+* `POST /api/tv/pair` — pair mobile device with TV
+* `GET /api/tv/devices` — list active TV devices
+* `POST /api/tv/:deviceId/play` — start playback
+* `POST /api/tv/:deviceId/control` — control playback
+
+✅ *WebSocket Handler* (`pkg/entry/web/tv_ws.go`)
+
+* Real-time bidirectional communication
+* Ping/pong heartbeat mechanism
+* Automatic reconnection support
+* Message routing between mobile app and TV
+
+✅ *TV Browser Player* (`static/tv/`)
+
+* HTML5 video player with modern UI
+* QR code display using qrcodejs library
+* Pairing code generation and display
+* WebSocket connection with auto-reconnect
+* Playback state synchronization
+* Time display and progress reporting
+
+Files created:
+
+* `static/tv/index.html` — player interface
+* `static/tv/styles.css` — responsive styling
+* `static/tv/player.js` — WebSocket and playback logic
+
+✅ *Integration*
+
+* Embedded static files using `go:embed`
+* Route `/tv` serves the browser player
+* Added `JWT_SECRET` environment variable
+* TV service integrated into main.go
+
+==== Configuration
+
+No additional environment variables required for Phase 1.
+Authentication uses existing `access_token` system.
+
+==== Testing the Implementation
+
+. Build and run the server:
++
+[source,bash]
+----
+make build && make run
+----
+
+. Open browser at `https://ilovlya.space/tv`
+. You should see:
+  * Pairing code (e.g., `xy9k2m`)
+  * QR code containing `ilovlya://tv/pair?code=xy9k2m`
+  * Instructions for pairing
+
+. Test pairing via API:
++
+[source,bash]
+----
+# Create session
+curl -X POST https://ilovlya.space/api/tv/session \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Pair device
+curl -X POST https://ilovlya.space/api/tv/pair \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"code":"xy9k2m","deviceName":"Living Room"}'
+----
+
+==== Known Limitations (Phase 1)
+
+* Mobile app integration not yet implemented
+* Deep linking configuration pending
+* No playlist management
+* Basic error handling
+* Manual testing required (no automated tests)
+
+==== Next Steps
+
+* Implement Flutter mobile app integration (QR scanner, pairing screen)
+* Configure deep linking for iOS and Android
+* Add media playback commands from mobile app
+* Implement progress synchronization
+
+[[phase-2-media-playback]]
 === Phase 2: Media Playback
+
+*Status:* Pending
 
 . Video player integration
 . Play command implementation

@@ -35,7 +35,8 @@ Widget createThumb(WidgetRef ref, String url) {
   } else {
     final thumbProvider = ref.watch(thumbnailDataNotifierProvider(url));
     if (!thumbProvider.hasValue) {
-      thumbWidget = const CircularProgressIndicator();
+      // Shimmer-like placeholder instead of CircularProgressIndicator
+      thumbWidget = const _ThumbnailPlaceholder();
     } else {
       thumbWidget = Image.memory(
         thumbProvider.requireValue,
@@ -45,6 +46,34 @@ Widget createThumb(WidgetRef ref, String url) {
   }
 
   return thumbWidget;
+}
+
+/// Shimmer-like placeholder for loading thumbnails - more performant than CircularProgressIndicator
+class _ThumbnailPlaceholder extends StatelessWidget {
+  const _ThumbnailPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      height: 180,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [Colors.grey.shade800, Colors.grey.shade700, Colors.grey.shade800]
+              : [Colors.grey.shade300, Colors.grey.shade200, Colors.grey.shade300],
+          stops: const [0.0, 0.5, 1.0],
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        Icons.image_outlined,
+        size: 48,
+        color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+      ),
+    );
+  }
 }
 
 class MediaListViewRiverpod extends ConsumerStatefulWidget {

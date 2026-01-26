@@ -492,7 +492,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Скопировать URL этого фрагмента в буфер обмена';
 
   @override
-  String get bestAudio => 'Лучшее аудио (ba)';
+  String get bestVideoAudio => 'Лучшее видео и аудио (b)';
+
+  @override
+  String get bestAudio => 'Лучшее аудио (ba*)';
 
   @override
   String get commonAvailableFormats => 'Общие доступные форматы:';

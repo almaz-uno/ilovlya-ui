@@ -615,7 +615,12 @@
     "description": "Tooltip for copying URL fragment"
   },
 
-  "bestAudio": "Лучшее аудио (ba)",
+  "bestVideoAudio": "Лучшее видео и аудио (b)",
+  "@bestVideoAudio": {
+    "description": "Best video and audio format option"
+  },
+
+  "bestAudio": "Лучшее аудио (ba*)",
   "@bestAudio": {
     "description": "Best audio format option"
   },
