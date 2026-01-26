@@ -545,6 +545,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Play with embedded mpv player with horizontal flip';
 
   @override
+  String get couldNotOpenFile => 'Could not open file';
+
+  @override
+  String get openFileLocation => 'Open file location...';
+
+  @override
+  String get couldNotOpenFileLocation => 'Could not open file location';
+
+  @override
   String get localFileDownloadedClickToPlay =>
       'Local file is downloaded. Click to play.';
 

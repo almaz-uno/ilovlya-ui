@@ -26,6 +26,7 @@ import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
 import '../theme/media_player_theme.dart';
+import '../utils/file_opener.dart';
 import '../utils/logger_provider.dart';
 import '../utils/task_status_localization.dart';
 import 'downloads_table.dart';
@@ -154,6 +155,70 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       setState(() {
         settingHidden = false;
       });
+    }
+  }
+
+  /// Opens a file in an external application
+  Future<void> _openInExternalApp(BuildContext context, Download d) async {
+    final filePath = d.fullPathMedia;
+
+    // If no local file, try to open URL in browser
+    if (filePath == null) {
+      launchUrlString(d.url);
+      return;
+    }
+
+    // Try to open local file with MIME type
+    final mimeType = FileOpener.getMimeType(filePath);
+    final success = mimeType != null
+        ? await FileOpener.openFileWithType(filePath, mimeType)
+        : await FileOpener.openFile(filePath);
+
+    if (!success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${AppLocalizations.of(context)!.couldNotOpenFile}: ${d.filename}'),
+          action: SnackBarAction(
+            label: 'OK',
+            onPressed: () {},
+          ),
+        ),
+      );
+    }
+  }
+
+  /// Opens the folder containing the file in the system file manager
+  Future<void> _openFileLocation(BuildContext context, Download d) async {
+    final filePath = d.fullPathMedia;
+
+    // Only works for local files
+    if (filePath == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.couldNotOpenFileLocation),
+            action: SnackBarAction(
+              label: 'OK',
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    final success = await FileOpener.openFileLocation(filePath);
+
+    if (!success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.couldNotOpenFileLocation),
+          action: SnackBarAction(
+            label: 'OK',
+            onPressed: () {},
+          ),
+        ),
+      );
     }
   }
 
@@ -874,7 +939,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
                   mode: ProcessStartMode.detached);
             case "default":
-              launchUrlString(d.url);
+              await _openInExternalApp(context, d);
+            case "open-location":
+              await _openFileLocation(context, d);
             case "server-delete":
               confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteServerMediaFile, () {
                 ref.read(deleteDownloadContentProvider(d.id));
@@ -954,8 +1021,14 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 value: "default",
                 child: Row(
                   children: [
-                    Icon(Icons.open_in_browser),
-                    Expanded(child: Text(AppLocalizations.of(context)!.openInDefaultApplication)),
+                    Icon(hasLocalFile ? Icons.open_in_new : Icons.open_in_browser),
+                    Expanded(
+                      child: Text(
+                        hasLocalFile
+                          ? AppLocalizations.of(context)!.openInDefaultApplication
+                          : AppLocalizations.of(context)!.openInDefaultApplication,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -977,6 +1050,18 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
           if (!UniversalPlatform.isWeb) {
             if (hasLocalFile) {
+              // Add "Open file location" menu item for local files
+              menuItems.add(
+                PopupMenuItem<String>(
+                  value: "open-location",
+                  child: Row(
+                    children: [
+                      Icon(Icons.folder_open),
+                      Expanded(child: Text(AppLocalizations.of(context)!.openFileLocation)),
+                    ],
+                  ),
+                ),
+              );
               menuItems.add(
                 PopupMenuItem<String>(
                   value: "local-delete",

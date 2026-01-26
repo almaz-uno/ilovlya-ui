@@ -1064,6 +1064,18 @@
   "@downloadLocalFile": {
     "description": "Menu item text"
   },
+  "couldNotOpenFile": "Could not open file",
+  "@couldNotOpenFile": {
+    "description": "Error message when file cannot be opened"
+  },
+  "openFileLocation": "Open file location...",
+  "@openFileLocation": {
+    "description": "Menu item to open file location in file manager"
+  },
+  "couldNotOpenFileLocation": "Could not open file location",
+  "@couldNotOpenFileLocation": {
+    "description": "Error message when file location cannot be opened"
+  },
   "unexpectedDownloadStatus": "Unexpected download status {status}",
   "@unexpectedDownloadStatus": {
     "description": "Error message for unexpected status",

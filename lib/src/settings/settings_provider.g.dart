@@ -6,7 +6,7 @@ part of 'settings_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$mediaDirsHash() => r'b349574d2432c90c5c14d099d7f699fa338cb186';
+String _$mediaDirsHash() => r'825b397709325523c6c902c40b3b1d356110f888';
 
 /// See also [mediaDirs].
 @ProviderFor(mediaDirs)
@@ -22,7 +22,7 @@ final mediaDirsProvider = AutoDisposeFutureProvider<List<String>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef MediaDirsRef = AutoDisposeFutureProviderRef<List<String>>;
-String _$settingsNotifierHash() => r'3230527e3ff287e79952ff917bb52d352308a803';
+String _$settingsNotifierHash() => r'2c2f8f7b51e576d3864f06641199f424baa66eca';
 
 /// See also [SettingsNotifier].
 @ProviderFor(SettingsNotifier)

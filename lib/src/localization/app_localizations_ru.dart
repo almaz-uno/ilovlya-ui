@@ -554,6 +554,16 @@ class AppLocalizationsRu extends AppLocalizations {
       'Воспроизвести с помощью встроенного mpv плеера с горизонтальным отражением';
 
   @override
+  String get couldNotOpenFile => 'Не удалось открыть файл';
+
+  @override
+  String get openFileLocation => 'Открыть местоположение...';
+
+  @override
+  String get couldNotOpenFileLocation =>
+      'Не удалось открыть местоположение файла';
+
+  @override
   String get localFileDownloadedClickToPlay =>
       'Локальный файл загружен. Нажмите для воспроизведения.';
 

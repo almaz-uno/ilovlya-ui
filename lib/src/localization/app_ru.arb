@@ -340,6 +340,21 @@
     "description": "Действие загрузки локального файла"
   },
 
+  "couldNotOpenFile": "Не удалось открыть файл",
+  "@couldNotOpenFile": {
+    "description": "Сообщение об ошибке при невозможности открыть файл"
+  },
+
+  "openFileLocation": "Открыть местоположение...",
+  "@openFileLocation": {
+    "description": "Пункт меню для открытия местоположения файла в файловом менеджере"
+  },
+
+  "couldNotOpenFileLocation": "Не удалось открыть местоположение файла",
+  "@couldNotOpenFileLocation": {
+    "description": "Сообщение об ошибке при невозможности открыть местоположение файла"
+  },
+
   "localFileDownloaded": "Локальный файл загружен. Нажмите для воспроизведения.",
   "@localFileDownloaded": {
     "description": "Подсказка для воспроизведения загруженного файла"

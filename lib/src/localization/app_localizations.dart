@@ -1065,6 +1065,24 @@ abstract class AppLocalizations {
   /// **'Play with embedded mpv player with horizontal flip'**
   String get playWithEmbeddedMpvPlayerWithHorizontalFlip;
 
+  /// Error message when file cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open file'**
+  String get couldNotOpenFile;
+
+  /// Menu item to open file location in file manager
+  ///
+  /// In en, this message translates to:
+  /// **'Open file location...'**
+  String get openFileLocation;
+
+  /// Error message when file location cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open file location'**
+  String get couldNotOpenFileLocation;
+
   /// Tooltip for downloaded file
   ///
   /// In en, this message translates to:

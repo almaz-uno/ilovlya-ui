@@ -6,7 +6,7 @@ part of 'api_riverpod.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$getUrlInfoHash() => r'5095ffc5abec1f7c86ec4c82d90c3a53594d7cb4';
+String _$getUrlInfoHash() => r'd909f88643dffa354a9b202b77ed01f246bb8180';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -157,7 +157,7 @@ class _GetUrlInfoProviderElement
   String get url => (origin as GetUrlInfoProvider).url;
 }
 
-String _$addRecordingHash() => r'121915de36baffd72e003d81fd7091f22bf131eb';
+String _$addRecordingHash() => r'7e3fe956dee0dc5603caf37ac906a9f4502b0d66';
 
 /// See also [addRecording].
 @ProviderFor(addRecording)
@@ -288,7 +288,7 @@ class _AddRecordingProviderElement
   String get url => (origin as AddRecordingProvider).url;
 }
 
-String _$listRecordingsHash() => r'7d5f8e917037b8c8f958555b76e02c5cfb375f06';
+String _$listRecordingsHash() => r'bf93e51963de11864bd3baf22b1d17cd1e5f259c';
 
 /// See also [listRecordings].
 @ProviderFor(listRecordings)

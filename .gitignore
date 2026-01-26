@@ -47,3 +47,4 @@ android/app/.cxx/
 .flatpak-builder/
 .venv/
 .build/
+android/.kotlin/
