@@ -13,7 +13,6 @@ class DownloadsTable extends ConsumerWidget {
   final void Function(BuildContext, RecordingInfo, Download) recordView;
   final void Function(BuildContext, String) startPreparation;
   final Widget Function(BuildContext, RecordingInfo, Download) buildActions;
-  final Widget Function(BuildContext, RecordingInfo, Download) buildLocalActions;
 
   const DownloadsTable({
     super.key,
@@ -22,7 +21,6 @@ class DownloadsTable extends ConsumerWidget {
     required this.recordView,
     required this.startPreparation,
     required this.buildActions,
-    required this.buildLocalActions,
   });
 
   @override
@@ -64,12 +62,7 @@ class DownloadsTable extends ConsumerWidget {
             child: Text(d.formatId, style: textStyle),
           ),
         ),
-        DataCell(Row(
-          children: [
-            buildActions(context, recording, d),
-            buildLocalActions(context, recording, d),
-          ],
-        )),
+        DataCell(buildActions(context, recording, d)),
         DataCell(Text(d.resolution, style: textStyle)),
         DataCell(Text(d.fps != null ? "${d.fps}" : "", style: textStyle)),
         DataCell(
