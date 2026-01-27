@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../localization/app_localizations.dart';
+import 'package:external_path/external_path.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:wheel_chooser/wheel_chooser.dart';
@@ -219,6 +220,53 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           ),
         ),
       );
+    }
+  }
+
+  /// Copies the local file to the public Downloads folder (Android only)
+  Future<void> _copyToDownloads(BuildContext context, Download d) async {
+    final filePath = d.fullPathMedia;
+
+    if (filePath == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.copyToDownloadsFailed),
+            action: SnackBarAction(label: 'OK', onPressed: () {}),
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      // Construct filename: <title>-<formatId>.<ext>
+      // Sanitize title to remove forbidden characters and limit length
+      final safeTitle = sanitizeForFilename(d.title, maxLength: 180);
+      final fileName = '$safeTitle-${d.formatId}.${d.ext}';
+      final downloadsPath = await ExternalPath.getExternalStoragePublicDirectory(
+        ExternalPath.DIRECTORY_DOWNLOAD,
+      );
+      final destPath = '$downloadsPath/$fileName';
+      await File(filePath).copy(destPath);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.copiedToDownloads(fileName)),
+            action: SnackBarAction(label: 'OK', onPressed: () {}),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.copyToDownloadsFailed),
+            action: SnackBarAction(label: 'OK', onPressed: () {}),
+          ),
+        );
+      }
     }
   }
 
@@ -942,6 +990,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               await _openInExternalApp(context, d);
             case "open-location":
               await _openFileLocation(context, d);
+            case "copy-to-downloads":
+              await _copyToDownloads(context, d);
+            case "share-file":
+              if (d.fullPathMedia != null) {
+                await Share.shareXFiles([XFile(d.fullPathMedia!)]);
+              }
             case "server-delete":
               confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteServerMediaFile, () {
                 ref.read(deleteDownloadContentProvider(d.id));
@@ -1033,35 +1087,64 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 ),
               ),
             );
-            menuItems.add(
-              PopupMenuItem<String>(
-                value: "server-delete",
-                child: Row(
-                  children: [
-                    _cleanServerMediaIcon,
-                    Expanded(
-                      child: Text(AppLocalizations.of(context)!.deleteFileOnServerAndFreeQuota),
-                    ),
-                  ],
-                ),
-              ),
-            );
           }
 
           if (!UniversalPlatform.isWeb) {
             if (hasLocalFile) {
-              // Add "Open file location" menu item for local files
-              menuItems.add(
-                PopupMenuItem<String>(
-                  value: "open-location",
-                  child: Row(
-                    children: [
-                      Icon(Icons.folder_open),
-                      Expanded(child: Text(AppLocalizations.of(context)!.openFileLocation)),
-                    ],
+              // Android: "Copy to Downloads", iOS: "Share file", Desktop: "Open file location"
+              if (UniversalPlatform.isAndroid) {
+                menuItems.add(
+                  PopupMenuItem<String>(
+                    value: "copy-to-downloads",
+                    child: Row(
+                      children: [
+                        Icon(Icons.download),
+                        Expanded(child: Text(AppLocalizations.of(context)!.copyToDownloads)),
+                      ],
+                    ),
                   ),
-                ),
-              );
+                );
+              } else if (UniversalPlatform.isIOS) {
+                menuItems.add(
+                  PopupMenuItem<String>(
+                    value: "share-file",
+                    child: Row(
+                      children: [
+                        Icon(Icons.ios_share),
+                        Expanded(child: Text(AppLocalizations.of(context)!.shareFile)),
+                      ],
+                    ),
+                  ),
+                );
+              } else {
+                menuItems.add(
+                  PopupMenuItem<String>(
+                    value: "open-location",
+                    child: Row(
+                      children: [
+                        Icon(Icons.folder_open),
+                        Expanded(child: Text(AppLocalizations.of(context)!.openFileLocation)),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              // Server delete - show if file is ready on server
+              if (isReady) {
+                menuItems.add(
+                  PopupMenuItem<String>(
+                    value: "server-delete",
+                    child: Row(
+                      children: [
+                        _cleanServerMediaIcon,
+                        Expanded(
+                          child: Text(AppLocalizations.of(context)!.deleteFileOnServerAndFreeQuota),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
               menuItems.add(
                 PopupMenuItem<String>(
                   value: "local-delete",
@@ -1075,21 +1158,6 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               );
             }
             if (isReady) {
-              if (UniversalPlatform.isMobile) {
-                menuItems.add(
-                  PopupMenuItem<String>(
-                    value: "share-url",
-                    child: Row(
-                      children: [
-                        Icon(Icons.ios_share),
-                        Expanded(
-                          child: Text(AppLocalizations.of(context)!.shareDownloadUrlIn),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
               if (!hasLocalFile) {
                 menuItems.add(
                   PopupMenuItem<String>(

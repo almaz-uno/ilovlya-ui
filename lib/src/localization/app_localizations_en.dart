@@ -554,6 +554,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotOpenFileLocation => 'Could not open file location';
 
   @override
+  String get copyToDownloads => 'Copy to Downloads';
+
+  @override
+  String copiedToDownloads(String fileName) {
+    return 'Copied to Downloads: $fileName';
+  }
+
+  @override
+  String get copyToDownloadsFailed => 'Failed to copy file';
+
+  @override
+  String get shareFile => 'Share file...';
+
+  @override
   String get localFileDownloadedClickToPlay =>
       'Local file is downloaded. Click to play.';
 

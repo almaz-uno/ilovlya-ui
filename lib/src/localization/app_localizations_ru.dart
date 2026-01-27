@@ -564,6 +564,20 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось открыть местоположение файла';
 
   @override
+  String get copyToDownloads => 'Скопировать в Downloads';
+
+  @override
+  String copiedToDownloads(String fileName) {
+    return 'Скопировано в Downloads: $fileName';
+  }
+
+  @override
+  String get copyToDownloadsFailed => 'Не удалось скопировать файл';
+
+  @override
+  String get shareFile => 'Отправить файл...';
+
+  @override
   String get localFileDownloadedClickToPlay =>
       'Локальный файл загружен. Нажмите для воспроизведения.';
 

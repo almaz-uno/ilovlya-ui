@@ -355,6 +355,31 @@
     "description": "Сообщение об ошибке при невозможности открыть местоположение файла"
   },
 
+  "copyToDownloads": "Скопировать в Downloads",
+  "@copyToDownloads": {
+    "description": "Пункт меню для копирования файла в папку Downloads"
+  },
+
+  "copiedToDownloads": "Скопировано в Downloads: {fileName}",
+  "@copiedToDownloads": {
+    "description": "Сообщение об успешном копировании файла",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+
+  "copyToDownloadsFailed": "Не удалось скопировать файл",
+  "@copyToDownloadsFailed": {
+    "description": "Сообщение об ошибке при копировании файла"
+  },
+
+  "shareFile": "Отправить файл...",
+  "@shareFile": {
+    "description": "Пункт меню для отправки файла через системный диалог"
+  },
+
   "localFileDownloaded": "Локальный файл загружен. Нажмите для воспроизведения.",
   "@localFileDownloaded": {
     "description": "Подсказка для воспроизведения загруженного файла"

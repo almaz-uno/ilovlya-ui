@@ -1083,6 +1083,30 @@ abstract class AppLocalizations {
   /// **'Could not open file location'**
   String get couldNotOpenFileLocation;
 
+  /// Menu item to copy file to Downloads folder
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to Downloads'**
+  String get copyToDownloads;
+
+  /// Success message when file is copied
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to Downloads: {fileName}'**
+  String copiedToDownloads(String fileName);
+
+  /// Error message when file copy fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to copy file'**
+  String get copyToDownloadsFailed;
+
+  /// Menu item to share file via system share dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Share file...'**
+  String get shareFile;
+
   /// Tooltip for downloaded file
   ///
   /// In en, this message translates to:

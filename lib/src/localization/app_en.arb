@@ -1076,6 +1076,27 @@
   "@couldNotOpenFileLocation": {
     "description": "Error message when file location cannot be opened"
   },
+  "copyToDownloads": "Copy to Downloads",
+  "@copyToDownloads": {
+    "description": "Menu item to copy file to Downloads folder"
+  },
+  "copiedToDownloads": "Copied to Downloads: {fileName}",
+  "@copiedToDownloads": {
+    "description": "Success message when file is copied",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "copyToDownloadsFailed": "Failed to copy file",
+  "@copyToDownloadsFailed": {
+    "description": "Error message when file copy fails"
+  },
+  "shareFile": "Share file...",
+  "@shareFile": {
+    "description": "Menu item to share file via system share dialog"
+  },
   "unexpectedDownloadStatus": "Unexpected download status {status}",
   "@unexpectedDownloadStatus": {
     "description": "Error message for unexpected status",
