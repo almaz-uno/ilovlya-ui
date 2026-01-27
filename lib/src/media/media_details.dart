@@ -994,7 +994,14 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               await _copyToDownloads(context, d);
             case "share-file":
               if (d.fullPathMedia != null) {
-                await Share.shareXFiles([XFile(d.fullPathMedia!)]);
+                final file = File(d.fullPathMedia!);
+                if (file.existsSync()) {
+                  final box = context.findRenderObject() as RenderBox?;
+                  await Share.shareXFiles(
+                    [XFile(d.fullPathMedia!)],
+                    sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+                  );
+                }
               }
             case "server-delete":
               confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteServerMediaFile, () {
