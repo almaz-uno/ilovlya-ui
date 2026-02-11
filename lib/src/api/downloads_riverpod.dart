@@ -82,6 +82,10 @@ class DownloadsNotifier extends _$DownloadsNotifier {
       for (var d in downloads) {
         recording.downloads.add(d.id);
         File(p.join(downloadsDir.path, d.id)).writeAsStringSync(jsonEncode(d.toJson()));
+
+        // Check if local file exists
+        final mediaFile = p.join(sp.media().path, d.filename);
+        d.fullPathMedia = File(mediaFile).existsSync() ? mediaFile : null;
       }
       recordingFile.writeAsStringSync(jsonEncode(recording.toJson()));
 

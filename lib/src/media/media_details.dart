@@ -94,6 +94,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   Timer? _rewindTimer;
   Duration? _currentPosition; // Local position override
   bool _formatsExpanded = false; // Tracks if formats section is expanded
+  bool _showTables = false; // Delay tables rendering until animation completes
 
   static const _updatePullPeriod = Duration(seconds: 3);
 
@@ -105,6 +106,14 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _pullRefresh();
+      // Delay tables rendering to avoid impacting page transition animation
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          setState(() {
+            _showTables = true;
+          });
+        }
+      });
     });
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
@@ -609,7 +618,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       children: [
         _buildHeader(context, recording),
         _buildPreview(context, recording, downloads),
-        if (downloads.hasValue) ...[
+        if (_showTables && downloads.hasValue) ...[
           _localDownloadsTable(context, recording, downloads.requireValue),
           Center(
             child: DownloadsTable(
@@ -620,9 +629,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               buildActions: _buildActions,
             ),
           ),
-        ] else
-          Text(AppLocalizations.of(context)!.downloadsInfoIsLoading),
-        if (recording.formats != null && recording.formats!.isNotEmpty)
+        ] else if (_showTables)
+          Text(AppLocalizations.of(context)!.downloadsInfoIsLoading)
+        else
+          const SizedBox(height: 100), // Placeholder during animation
+        if (_showTables && recording.formats != null && recording.formats!.isNotEmpty)
           Align(
             alignment: Alignment.center,
             child: IntrinsicWidth(
@@ -656,11 +667,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               ),
             ),
           )
-        else
+        else if (_showTables)
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(AppLocalizations.of(context)!.noFormatsForRecord),
-          ),
+          )
+        else
+          const SizedBox(height: 50), // Placeholder during animation
       ],
     );
   }
