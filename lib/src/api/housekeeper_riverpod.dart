@@ -42,7 +42,9 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
     final (number, size) = state.value!;
     sp.media().deleteSync(recursive: true);
     sp.media().createSync(recursive: true);
-    ref.invalidateSelf();
+    // Recalculate and update state directly after cleanup
+    final newState = await _evaluate();
+    state = AsyncValue.data(newState);
     return Future.value((number, size));
   }
 
@@ -66,7 +68,9 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
           });
       }
     }
-    ref.invalidateSelf();
+    // Recalculate and update state directly after cleanup
+    final newState = await _evaluate();
+    state = AsyncValue.data(newState);
     return Future.value((number, size));
   }
 

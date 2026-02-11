@@ -58,7 +58,7 @@ class RecordingNotifier extends _$RecordingNotifier {
     }
   }
 
-  Future<void> _pullFromServer() async {
+  Future<RecordingInfo> _pullFromServer() async {
     final stopwatch = Stopwatch()..start();
     try {
       final sp = await ref.watch(storePlacesProvider.future);
@@ -66,6 +66,8 @@ class RecordingNotifier extends _$RecordingNotifier {
 
       final recordingFile = File(p.join(sp.recordings().path, recordingId));
       recordingFile.writeAsStringSync(jsonEncode(recording.toJson()));
+
+      return recording;
     } catch (e, s) {
       AppLoggers.media.e('Failed to pull recording from server', error: e, stackTrace: s);
       rethrow;
@@ -75,8 +77,13 @@ class RecordingNotifier extends _$RecordingNotifier {
   }
 
   Future<void> refreshFromServer() async {
-    if (!UniversalPlatform.isWeb) await _pullFromServer();
-    ref.invalidateSelf();
+    if (!UniversalPlatform.isWeb) {
+      final newRecording = await _pullFromServer();
+      // Update state directly instead of invalidateSelf()
+      // This avoids full provider recreation and widget tree rebuild
+      state = AsyncValue.data(newRecording);
+    }
+    // Still need to invalidate the list for synchronization
     ref.invalidate(mediaListNotifierProvider);
   }
 

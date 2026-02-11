@@ -152,7 +152,7 @@ class MediaListNotifier extends _$MediaListNotifier {
     }
   }
 
-  Future<void> _pullFromServer() async {
+  Future<List<RecordingInfo>> _pullFromServer() async {
     final stopwatch = Stopwatch()..start();
     try {
       final sp = await ref.watch(storePlacesProvider.future);
@@ -164,6 +164,8 @@ class MediaListNotifier extends _$MediaListNotifier {
         final r = jsonEncode(recording.toJson());
         File(p.join(recordingsDir.path, recording.id)).writeAsStringSync(r);
       }
+
+      return await _filter(_fromDisk());
     } catch (e, s) {
       AppLoggers.media.e('Failed to pull recordings from server', error: e, stackTrace: s);
       rethrow;
@@ -173,8 +175,11 @@ class MediaListNotifier extends _$MediaListNotifier {
   }
 
   Future<void> refreshFromServer() async {
-    if (!UniversalPlatform.isWeb) await _pullFromServer();
-    ref.invalidateSelf();
+    if (!UniversalPlatform.isWeb) {
+      final newList = await _pullFromServer();
+      // Update state directly instead of invalidateSelf()
+      state = AsyncValue.data(newList);
+    }
   }
 }
 

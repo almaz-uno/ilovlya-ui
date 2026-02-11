@@ -44,7 +44,8 @@ class ThumbnailDataNotifier extends _$ThumbnailDataNotifier {
     final fullpath = await _fullPath();
     fullpath.writeAsBytesSync(thumbnailImg, flush: true);
 
-    ref.invalidateSelf();
+    // Update state directly instead of invalidateSelf()
+    state = AsyncValue.data(thumbnailImg);
   }
 
   Future<File> _fullPath() async {
