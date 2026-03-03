@@ -1074,8 +1074,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             ));
           }
 
-          // Open in default app — isReady
-          if (isReady) {
+          // Open in default app — isReady OR hasLocalFile
+          if (isReady || hasLocalFile) {
             menuItems.add(PopupMenuItem<String>(
               value: "default",
               child: Row(children: [

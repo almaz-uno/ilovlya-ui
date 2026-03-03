@@ -4,6 +4,8 @@ Each recording detail screen shows one or more _download rows_, one per server-s
 Every row displays a set of inline action buttons followed by an overflow (`⋮`) menu.
 The visibility of each action depends on the download **status**, whether a **local file** is present, and the target **platform**.
 
+Implemented in link:../lib/src/media/media_details.dart[`media_details.dart`], method `_buildActions`.
+
 == Key Conditions
 
 [cols="1,2", options="header"]
@@ -159,7 +161,7 @@ Items are listed in the order they appear in the menu.
 |Same as above, but applies the `--vf=hflip` video filter.
 
 |Open in default app
-|`isReady`
+|`isReady` OR `hasLocalFile`
 a|
 * *No local file* — opens the server URL in the system browser via `url_launcher` (`launchUrlString`). Icon: `open_in_browser`.
 * *Local file present* — opens the file via `OpenFilex` with a MIME type hint derived from the extension:
