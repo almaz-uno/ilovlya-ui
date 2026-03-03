@@ -948,6 +948,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     // 1. Кнопка подготовки/прогресса/просмотра серверного файла
     switch (d.status) {
       case "stale":
+      case "new":
         actions.add(IconButton(
           onPressed: () {
             _startPreparation(context, d.formatId);
@@ -955,7 +956,6 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           tooltip: AppLocalizations.of(context)!.downloadServerFormat,
           icon: downloadFormatIcon,
         ));
-      case "new":
       case "in_progress":
         actions.add(Center(child: CircularProgressIndicator(value: d.progressByLastLine())));
       case "ready":
@@ -1038,198 +1038,137 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           setState(() {});
         },
         itemBuilder: (BuildContext context) {
+          final l10n = AppLocalizations.of(context)!;
+          final isDesktop = !UniversalPlatform.isAndroid && !UniversalPlatform.isIOS && !UniversalPlatform.isWeb;
           var menuItems = <PopupMenuItem<String>>[];
-          if (isReady) {
-            menuItems.add(
-              PopupMenuItem<String>(
-                value: "copy",
-                child: Row(
-                  children: [
-                    copyURLIcon,
-                    Expanded(child: Text(AppLocalizations.of(context)!.copyFileLinkToClipboard)),
-                  ],
-                ),
-              ),
-            );
-            menuItems.add(
-              PopupMenuItem<String>(
-                value: "copy-curl",
-                child: Row(
-                  children: [
-                    _copyCURLIcon,
-                    Expanded(child: Text(AppLocalizations.of(context)!.copyCurlCommandToClipboard)),
-                  ],
-                ),
-              ),
-            );
-          }
-          if (UniversalPlatform.isLinux) {
-            menuItems.add(
-              PopupMenuItem<String>(
-                value: "mpv-play",
-                child: Row(
-                  children: [
-                    _playMpvIcon,
-                    Expanded(child: Text(AppLocalizations.of(context)!.playWithEmbeddedMpvPlayer)),
-                  ],
-                ),
-              ),
-            );
 
-            menuItems.add(
-              PopupMenuItem<String>(
-                value: "mpv-play-horizontal-flip",
-                child: Row(
-                  children: [
-                    _playMpvIcon,
-                    _hFlipIcon,
-                    Expanded(child: Text(AppLocalizations.of(context)!.playWithEmbeddedMpvPlayerHorizontalFlip)),
-                  ],
-                ),
-              ),
-            );
-          }
+          // Copy file link — isReady
           if (isReady) {
-            menuItems.add(
-              PopupMenuItem<String>(
-                value: "default",
-                child: Row(
-                  children: [
-                    Icon(hasLocalFile ? Icons.open_in_new : Icons.open_in_browser),
-                    Expanded(
-                      child: Text(
-                        hasLocalFile
-                          ? AppLocalizations.of(context)!.openInDefaultApplication
-                          : AppLocalizations.of(context)!.openInDefaultApplication,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
+            menuItems.add(PopupMenuItem<String>(
+              value: "copy",
+              child: Row(children: [copyURLIcon, Expanded(child: Text(l10n.copyFileLinkToClipboard))]),
+            ));
           }
 
-          if (!UniversalPlatform.isWeb) {
-            if (hasLocalFile) {
-              // Android: "Copy to Downloads", iOS: "Share file", Desktop: "Open file location"
-              if (UniversalPlatform.isAndroid) {
-                menuItems.add(
-                  PopupMenuItem<String>(
-                    value: "copy-to-downloads",
-                    child: Row(
-                      children: [
-                        Icon(Icons.download),
-                        Expanded(child: Text(AppLocalizations.of(context)!.copyToDownloads)),
-                      ],
-                    ),
-                  ),
-                );
-              } else if (UniversalPlatform.isIOS) {
-                menuItems.add(
-                  PopupMenuItem<String>(
-                    value: "share-file",
-                    child: Row(
-                      children: [
-                        Icon(Icons.ios_share),
-                        Expanded(child: Text(AppLocalizations.of(context)!.shareFile)),
-                      ],
-                    ),
-                  ),
-                );
-              } else {
-                menuItems.add(
-                  PopupMenuItem<String>(
-                    value: "open-location",
-                    child: Row(
-                      children: [
-                        Icon(Icons.folder_open),
-                        Expanded(child: Text(AppLocalizations.of(context)!.openFileLocation)),
-                      ],
-                    ),
-                  ),
-                );
-              }
-              // Server delete - show if file is ready on server
-              if (isReady) {
-                menuItems.add(
-                  PopupMenuItem<String>(
-                    value: "server-delete",
-                    child: Row(
-                      children: [
-                        _cleanServerMediaIcon,
-                        Expanded(
-                          child: Text(AppLocalizations.of(context)!.deleteFileOnServerAndFreeQuota),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-              menuItems.add(
-                PopupMenuItem<String>(
-                  value: "local-delete",
-                  child: Row(
-                    children: [
-                      _cleanDownloadedMediaIcon,
-                      Expanded(child: Text(AppLocalizations.of(context)!.deleteLocalFile)),
-                    ],
-                  ),
-                ),
-              );
-            }
-            if (isReady) {
-              if (!hasLocalFile) {
-                menuItems.add(
-                  PopupMenuItem<String>(
-                    value: "download",
-                    child: Row(
-                      children: [
-                        Icon(Icons.download),
-                        Expanded(child: Text(AppLocalizations.of(context)!.downloadLocalFile)),
-                      ],
-                    ),
-                  ),
-                );
-              }
-            }
+          // Copy curl command — isReady
+          if (isReady) {
+            menuItems.add(PopupMenuItem<String>(
+              value: "copy-curl",
+              child: Row(children: [_copyCURLIcon, Expanded(child: Text(l10n.copyCurlCommandToClipboard))]),
+            ));
           }
+
+          // Play with mpv — Linux AND (isReady OR hasLocalFile)
+          if (UniversalPlatform.isLinux && (isReady || hasLocalFile)) {
+            menuItems.add(PopupMenuItem<String>(
+              value: "mpv-play",
+              child: Row(children: [_playMpvIcon, Expanded(child: Text(l10n.playWithEmbeddedMpvPlayer))]),
+            ));
+          }
+
+          // Play with mpv (horizontal flip) — Linux AND (isReady OR hasLocalFile)
+          if (UniversalPlatform.isLinux && (isReady || hasLocalFile)) {
+            menuItems.add(PopupMenuItem<String>(
+              value: "mpv-play-horizontal-flip",
+              child: Row(children: [_playMpvIcon, _hFlipIcon, Expanded(child: Text(l10n.playWithEmbeddedMpvPlayerHorizontalFlip))]),
+            ));
+          }
+
+          // Open in default app — isReady
+          if (isReady) {
+            menuItems.add(PopupMenuItem<String>(
+              value: "default",
+              child: Row(children: [
+                Icon(hasLocalFile ? Icons.open_in_new : Icons.open_in_browser),
+                Expanded(child: Text(l10n.openInDefaultApplication)),
+              ]),
+            ));
+          }
+
+          // Copy to Downloads — hasLocalFile AND Android
+          if (hasLocalFile && UniversalPlatform.isAndroid) {
+            menuItems.add(PopupMenuItem<String>(
+              value: "copy-to-downloads",
+              child: Row(children: [const Icon(Icons.download), Expanded(child: Text(l10n.copyToDownloads))]),
+            ));
+          }
+
+          // Share file — hasLocalFile AND iOS
+          if (hasLocalFile && UniversalPlatform.isIOS) {
+            menuItems.add(PopupMenuItem<String>(
+              value: "share-file",
+              child: Row(children: [const Icon(Icons.ios_share), Expanded(child: Text(l10n.shareFile))]),
+            ));
+          }
+
+          // Open file location — hasLocalFile AND desktop
+          if (hasLocalFile && isDesktop) {
+            menuItems.add(PopupMenuItem<String>(
+              value: "open-location",
+              child: Row(children: [const Icon(Icons.folder_open), Expanded(child: Text(l10n.openFileLocation))]),
+            ));
+          }
+
+          // Delete file on server — isReady
+          if (isReady) {
+            menuItems.add(PopupMenuItem<String>(
+              value: "server-delete",
+              child: Row(children: [_cleanServerMediaIcon, Expanded(child: Text(l10n.deleteFileOnServerAndFreeQuota))]),
+            ));
+          }
+
+          // Delete local file — not Web AND hasLocalFile
+          if (!UniversalPlatform.isWeb && hasLocalFile) {
+            menuItems.add(PopupMenuItem<String>(
+              value: "local-delete",
+              child: Row(children: [_cleanDownloadedMediaIcon, Expanded(child: Text(l10n.deleteLocalFile))]),
+            ));
+          }
+
+          // Download to local storage — not Web AND isReady AND NOT hasLocalFile
+          if (!UniversalPlatform.isWeb && isReady && !hasLocalFile) {
+            menuItems.add(PopupMenuItem<String>(
+              value: "download",
+              child: Row(children: [const Icon(Icons.download), Expanded(child: Text(l10n.downloadLocalFile))]),
+            ));
+          }
+
           return menuItems;
         }));
 
-    // 3. Кнопка загрузки локального файла или просмотра если он уже есть
-    if (!UniversalPlatform.isWeb && isReady) {
-      if (hasLocalFile) {
-        // Файл уже загружен — показываем кнопку просмотра
-        actions.add(
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
-              );
-            },
-            onLongPress: () async {
-              if (UniversalPlatform.isLinux) {
-                await Process.start(
-                    "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!],
-                    mode: ProcessStartMode.detached);
-              }
-            },
-            tooltip: AppLocalizations.of(context)!.localFileDownloaded,
-            icon: const Icon(Icons.download_done),
-          ),
-        );
-      } else {
-        // Файл не загружен — показываем кнопку загрузки
-        actions.add(
-          IconButton(
-            onPressed: () {
-              downloadFile(context, d);
-            },
-            icon: const Icon(Icons.download),
-            tooltip: AppLocalizations.of(context)!.downloadToLocalStorage,
-          ),
-        );
-      }
+    // 5. Download to Device — not Web AND isReady AND NOT hasLocalFile
+    if (!UniversalPlatform.isWeb && isReady && !hasLocalFile) {
+      actions.add(
+        IconButton(
+          onPressed: () {
+            downloadFile(context, d);
+          },
+          icon: const Icon(Icons.download),
+          tooltip: AppLocalizations.of(context)!.downloadToLocalStorage,
+        ),
+      );
+    }
+
+    // 6. Play — Local File — not Web AND hasLocalFile
+    if (!UniversalPlatform.isWeb && hasLocalFile) {
+      actions.add(
+        IconButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
+            );
+          },
+          onLongPress: () async {
+            if (UniversalPlatform.isLinux) {
+              await Process.start(
+                  "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!],
+                  mode: ProcessStartMode.detached);
+            }
+          },
+          tooltip: AppLocalizations.of(context)!.localFileDownloaded,
+          icon: const Icon(Icons.download_done),
+        ),
+      );
     }
 
     return Row(children: actions);
