@@ -48,3 +48,10 @@ android/app/.cxx/
 .venv/
 .build/
 android/.kotlin/
+
+# Flutter generated plugin registration files
+**/flutter/generated_plugin_registrant.cc
+**/flutter/generated_plugin_registrant.h
+**/flutter/generated_plugins.cmake
+**/Flutter/GeneratedPluginRegistrant.swift
+**/Flutter/GeneratedPluginRegistrant.m
