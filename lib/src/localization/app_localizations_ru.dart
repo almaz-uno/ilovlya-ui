@@ -492,7 +492,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Скопировать URL этого фрагмента в буфер обмена';
 
   @override
-  String get bestAudio => 'Лучшее аудио (ba)';
+  String get bestVideoAudio => 'Лучшее видео и аудио (b)';
+
+  @override
+  String get bestAudio => 'Лучшее аудио (ba*)';
 
   @override
   String get commonAvailableFormats => 'Общие доступные форматы:';
@@ -549,6 +552,30 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get playWithEmbeddedMpvPlayerWithHorizontalFlip =>
       'Воспроизвести с помощью встроенного mpv плеера с горизонтальным отражением';
+
+  @override
+  String get couldNotOpenFile => 'Не удалось открыть файл';
+
+  @override
+  String get openFileLocation => 'Открыть местоположение...';
+
+  @override
+  String get couldNotOpenFileLocation =>
+      'Не удалось открыть местоположение файла';
+
+  @override
+  String get copyToDownloads => 'Скопировать в Downloads';
+
+  @override
+  String copiedToDownloads(String fileName) {
+    return 'Скопировано в Downloads: $fileName';
+  }
+
+  @override
+  String get copyToDownloadsFailed => 'Не удалось скопировать файл';
+
+  @override
+  String get shareFile => 'Отправить файл...';
 
   @override
   String get localFileDownloadedClickToPlay =>

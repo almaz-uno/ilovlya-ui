@@ -975,10 +975,16 @@ abstract class AppLocalizations {
   /// **'Copy URL this fragment into clipboard'**
   String get copyUrlFragmentToClipboard;
 
+  /// Best video and audio format option
+  ///
+  /// In en, this message translates to:
+  /// **'Best video and audio (b)'**
+  String get bestVideoAudio;
+
   /// Best audio format option
   ///
   /// In en, this message translates to:
-  /// **'Best audio (ba)'**
+  /// **'Best audio (ba*)'**
   String get bestAudio;
 
   /// Header for common available formats section
@@ -1058,6 +1064,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Play with embedded mpv player with horizontal flip'**
   String get playWithEmbeddedMpvPlayerWithHorizontalFlip;
+
+  /// Error message when file cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open file'**
+  String get couldNotOpenFile;
+
+  /// Menu item to open file location in file manager
+  ///
+  /// In en, this message translates to:
+  /// **'Open file location...'**
+  String get openFileLocation;
+
+  /// Error message when file location cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open file location'**
+  String get couldNotOpenFileLocation;
+
+  /// Menu item to copy file to Downloads folder
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to Downloads'**
+  String get copyToDownloads;
+
+  /// Success message when file is copied
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to Downloads: {fileName}'**
+  String copiedToDownloads(String fileName);
+
+  /// Error message when file copy fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to copy file'**
+  String get copyToDownloadsFailed;
+
+  /// Menu item to share file via system share dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Share file...'**
+  String get shareFile;
 
   /// Tooltip for downloaded file
   ///

@@ -56,3 +56,30 @@ String since(DateTime? dt, bool short, [String? locale]) {
 
   return timeago.format(dt, locale: locale);
 }
+
+/// Sanitizes a string for use as a filename.
+/// Removes forbidden characters, collapses underscores, and truncates.
+/// [maxLength] limits the result to avoid filesystem limits (255 bytes on most systems).
+String sanitizeForFilename(String input, {int maxLength = 180}) {
+  if (input.isEmpty) return 'media';
+
+  // Replace forbidden characters with underscore
+  // Forbidden: / \ : * ? " < > | and control chars
+  var sanitized = input.replaceAll(RegExp(r'[/\\:*?"<>|\r\n\t\x00-\x1F]'), '_');
+
+  // Replace multiple spaces/underscores with single underscore
+  sanitized = sanitized.replaceAll(RegExp(r'[\s_]+'), '_');
+
+  // Remove leading/trailing underscores and whitespace
+  sanitized = sanitized.trim().replaceAll(RegExp(r'^_+|_+$'), '');
+
+  // Truncate to maxLength (accounting for multi-byte chars in filesystem)
+  // We use character count but limit conservatively
+  if (sanitized.length > maxLength) {
+    sanitized = sanitized.substring(0, maxLength);
+    // Don't end with underscore after truncation
+    sanitized = sanitized.replaceAll(RegExp(r'_+$'), '');
+  }
+
+  return sanitized.isEmpty ? 'media' : sanitized;
+}

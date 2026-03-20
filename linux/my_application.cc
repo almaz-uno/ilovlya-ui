@@ -10,6 +10,7 @@ using namespace std;
 using namespace std::filesystem;
 
 #include "flutter/generated_plugin_registrant.h"
+#include "screen_inhibit_plugin.h"
 
 struct _MyApplication {
   GtkApplication parent_instance;
@@ -68,6 +69,11 @@ static void my_application_activate(GApplication* application) {
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
+
+  // Register custom screen inhibit plugin
+  g_autoptr(FlPluginRegistrar) screen_inhibit_registrar =
+      fl_plugin_registry_get_registrar_for_plugin(FL_PLUGIN_REGISTRY(view), "ScreenInhibitPlugin");
+  screen_inhibit_plugin_register_with_registrar(screen_inhibit_registrar);
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
 }

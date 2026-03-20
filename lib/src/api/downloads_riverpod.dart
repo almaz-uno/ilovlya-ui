@@ -82,6 +82,10 @@ class DownloadsNotifier extends _$DownloadsNotifier {
       for (var d in downloads) {
         recording.downloads.add(d.id);
         File(p.join(downloadsDir.path, d.id)).writeAsStringSync(jsonEncode(d.toJson()));
+
+        // Check if local file exists
+        final mediaFile = p.join(sp.media().path, d.filename);
+        d.fullPathMedia = File(mediaFile).existsSync() ? mediaFile : null;
       }
       recordingFile.writeAsStringSync(jsonEncode(recording.toJson()));
 
@@ -109,12 +113,18 @@ class DownloadsNotifier extends _$DownloadsNotifier {
       final f = File(dp.fullPathMedia!);
       if (f.existsSync()) f.deleteSync();
     }
-    ref.invalidateSelf();
+    // Re-read data from disk and update state directly
+    final newDownloads = await _fromDisk();
+    state = AsyncValue.data(newDownloads);
     ref.invalidate(recordingNotifierProvider(recordingId));
   }
 
   Future<void> refreshFromServer() async {
-    if (!UniversalPlatform.isWeb) await _pullFromServer();
-    ref.invalidateSelf();
+    if (!UniversalPlatform.isWeb) {
+      final newDownloads = await _pullFromServer();
+      // Update state directly instead of invalidateSelf()
+      // This avoids full provider recreation and widget tree rebuild
+      state = AsyncValue.data(newDownloads);
+    }
   }
 }

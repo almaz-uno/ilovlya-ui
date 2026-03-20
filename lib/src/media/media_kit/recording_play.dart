@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:async/async.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
@@ -63,6 +64,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   Player get _player => MKPlayerHandler.player;
   late final _controller = VideoController(_player, configuration: VideoControllerConfiguration(enableHardwareAcceleration: true));
   StreamSubscription? _positionSendSubs;
+  StreamSubscription? _uiUpdateSubs;
   Duration _rewinding = Duration.zero;
   Timer? _rewindTimer;
   bool _hasAttemptedSwitch = false; // Flag to prevent multiple switch attempts
@@ -107,22 +109,14 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       _player.setRate(ref.read(settingsNotifierProvider.select((s) => s.value?.playerSpeed)) ?? 1.0);
     });
 
-    _player.stream.buffering.listen((event) {
-      if (!mounted) return;
-      setState(() {});
-    });
-
-    _player.stream.buffer.listen((event) {
-      if (!mounted) return;
-      setState(() {});
-    });
-
-    _player.stream.playing.listen((event) {
-      if (!mounted) return;
-      setState(() {});
-    });
-
-    _player.stream.videoParams.listen((event) {
+    // Combine multiple UI-updating streams into one to avoid excessive setState calls
+    _uiUpdateSubs = StreamGroup.merge([
+      _player.stream.buffering,
+      _player.stream.buffer,
+      _player.stream.playing,
+      _player.stream.videoParams,
+      _player.stream.position,
+    ]).listen((event) {
       if (!mounted) return;
       setState(() {});
     });
@@ -140,11 +134,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
         _player.state.position,
         event,
       );
-      setState(() {});
-    });
-
-    _player.stream.position.listen((Duration position) {
-      if (!mounted) return;
       setState(() {});
     });
 
@@ -296,6 +285,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     MKPlayerHandler.player.stop();
     MKPlayerHandler.clearMediaSession(); // Clear lock screen notification
     _positionSendSubs?.cancel();
+    _uiUpdateSubs?.cancel();
     super.deactivate();
   }
 
@@ -586,9 +576,8 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                           ),
                         ),
                       ),
-                      Visibility(
-                        visible: settings.value?.debugMode ?? false,
-                        child: Container(
+                      if (settings.value?.debugMode ?? false)
+                        Container(
                           alignment: Alignment.topLeft,
                           padding: const EdgeInsets.all(8),
                           child: Column(
@@ -613,7 +602,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                             ],
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),

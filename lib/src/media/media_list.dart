@@ -35,7 +35,8 @@ Widget createThumb(WidgetRef ref, String url) {
   } else {
     final thumbProvider = ref.watch(thumbnailDataNotifierProvider(url));
     if (!thumbProvider.hasValue) {
-      thumbWidget = const CircularProgressIndicator();
+      // Shimmer-like placeholder instead of CircularProgressIndicator
+      thumbWidget = const _ThumbnailPlaceholder();
     } else {
       thumbWidget = Image.memory(
         thumbProvider.requireValue,
@@ -45,6 +46,34 @@ Widget createThumb(WidgetRef ref, String url) {
   }
 
   return thumbWidget;
+}
+
+/// Shimmer-like placeholder for loading thumbnails - more performant than CircularProgressIndicator
+class _ThumbnailPlaceholder extends StatelessWidget {
+  const _ThumbnailPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      height: 180,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [Colors.grey.shade800, Colors.grey.shade700, Colors.grey.shade800]
+              : [Colors.grey.shade300, Colors.grey.shade200, Colors.grey.shade300],
+          stops: const [0.0, 0.5, 1.0],
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        Icons.image_outlined,
+        size: 48,
+        color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+      ),
+    );
+  }
 }
 
 class MediaListViewRiverpod extends ConsumerStatefulWidget {
@@ -321,7 +350,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                 onRefresh: () => ref.read(mediaListNotifierProvider.notifier).refreshFromServer(),
                 child: Stack(
                   children: [
-                    Visibility(visible: mediaList.isLoading, child: const LinearProgressIndicator()),
+                    if (mediaList.isLoading) const LinearProgressIndicator(),
                     _buildRecordingsList(context, mediaList),
                   ],
                 ),
@@ -354,7 +383,6 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     return ListView.builder(
       controller: _scrollController,
       scrollDirection: Axis.vertical,
-      shrinkWrap: true,
       itemCount: mediaList.requireValue.length,
       itemBuilder: (BuildContext context, int index) {
         var item = mediaList.requireValue[index];
@@ -385,33 +413,45 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
 
         final dt = setting.requireValue.sortBy == "updated_at" ? item.updatedAt : item.createdAt;
 
-        return Opacity(
-          opacity: opacity,
-          child: Column(
-            children: [
-              ListTile(
-                leading: SizedBox(
-                  width: 100, // alignment
-                  child: Center(
-                    child: createThumb(ref, item.thumbnailUrl),
-                  ),
+        // Use ColorFiltered or alpha in text styles instead of Opacity widget for better performance
+        final textColor = Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: opacity);
+        final subtitleColor = Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: opacity);
+
+        return Column(
+          children: [
+            ListTile(
+              leading: SizedBox(
+                width: 100, // alignment
+                child: Center(
+                  child: opacity < 1.0
+                      ? ColorFiltered(
+                          colorFilter: ColorFilter.mode(
+                            Colors.grey.withValues(alpha: 1.0 - opacity),
+                            BlendMode.srcATop,
+                          ),
+                          child: createThumb(ref, item.thumbnailUrl),
+                        )
+                      : createThumb(ref, item.thumbnailUrl),
                 ),
-                title: Text(
-                  "${item.title} ∙ ${formatDuration(dur)}$viewedSrt",
-                  // style: textStyle,
-                ),
-                subtitle: Text("${item.uploader} ∙ ${item.extractor} • ${formatDate(dt)} (${since(dt, true, Localizations.localeOf(context).languageCode)})"),
-                trailing: right.isEmpty ? null : Wrap(children: right),
-                onTap: () {
-                  Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);
-                },
               ),
-              LinearProgressIndicator(
-                backgroundColor: const Color.fromARGB(127, 158, 158, 158),
-                value: item.duration == 0 ? null : item.position / item.duration,
+              title: Text(
+                "${item.title} ∙ ${formatDuration(dur)}$viewedSrt",
+                style: TextStyle(color: textColor),
               ),
-            ],
-          ),
+              subtitle: Text(
+                "${item.uploader} ∙ ${item.extractor} • ${formatDate(dt)} (${since(dt, true, Localizations.localeOf(context).languageCode)})",
+                style: TextStyle(color: subtitleColor),
+              ),
+              trailing: right.isEmpty ? null : Wrap(children: right),
+              onTap: () {
+                Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);
+              },
+            ),
+            LinearProgressIndicator(
+              backgroundColor: const Color.fromARGB(127, 158, 158, 158),
+              value: item.duration == 0 ? null : item.position / item.duration,
+            ),
+          ],
         );
       },
     );

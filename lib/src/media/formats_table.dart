@@ -79,7 +79,14 @@ class FormatsTable extends StatelessWidget {
           ),
           TextButton.icon(
             onPressed: () {
-              startPreparation(context, "ba");
+              startPreparation(context, "b");
+            },
+            icon: const Icon(Icons.play_circle_filled),
+            label: Text(AppLocalizations.of(context)!.bestVideoAudio),
+          ),
+          TextButton.icon(
+            onPressed: () {
+              startPreparation(context, "ba*");
             },
             icon: const Icon(Icons.audiotrack_rounded),
             label: Text(AppLocalizations.of(context)!.bestAudio),

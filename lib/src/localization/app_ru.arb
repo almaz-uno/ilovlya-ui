@@ -340,6 +340,46 @@
     "description": "Действие загрузки локального файла"
   },
 
+  "couldNotOpenFile": "Не удалось открыть файл",
+  "@couldNotOpenFile": {
+    "description": "Сообщение об ошибке при невозможности открыть файл"
+  },
+
+  "openFileLocation": "Открыть местоположение...",
+  "@openFileLocation": {
+    "description": "Пункт меню для открытия местоположения файла в файловом менеджере"
+  },
+
+  "couldNotOpenFileLocation": "Не удалось открыть местоположение файла",
+  "@couldNotOpenFileLocation": {
+    "description": "Сообщение об ошибке при невозможности открыть местоположение файла"
+  },
+
+  "copyToDownloads": "Скопировать в Downloads",
+  "@copyToDownloads": {
+    "description": "Пункт меню для копирования файла в папку Downloads"
+  },
+
+  "copiedToDownloads": "Скопировано в Downloads: {fileName}",
+  "@copiedToDownloads": {
+    "description": "Сообщение об успешном копировании файла",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+
+  "copyToDownloadsFailed": "Не удалось скопировать файл",
+  "@copyToDownloadsFailed": {
+    "description": "Сообщение об ошибке при копировании файла"
+  },
+
+  "shareFile": "Отправить файл...",
+  "@shareFile": {
+    "description": "Пункт меню для отправки файла через системный диалог"
+  },
+
   "localFileDownloaded": "Локальный файл загружен. Нажмите для воспроизведения.",
   "@localFileDownloaded": {
     "description": "Подсказка для воспроизведения загруженного файла"
@@ -615,7 +655,12 @@
     "description": "Tooltip for copying URL fragment"
   },
 
-  "bestAudio": "Лучшее аудио (ba)",
+  "bestVideoAudio": "Лучшее видео и аудио (b)",
+  "@bestVideoAudio": {
+    "description": "Best video and audio format option"
+  },
+
+  "bestAudio": "Лучшее аудио (ba*)",
   "@bestAudio": {
     "description": "Best audio format option"
   },

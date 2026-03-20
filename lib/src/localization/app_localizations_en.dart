@@ -485,7 +485,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Copy URL this fragment into clipboard';
 
   @override
-  String get bestAudio => 'Best audio (ba)';
+  String get bestVideoAudio => 'Best video and audio (b)';
+
+  @override
+  String get bestAudio => 'Best audio (ba*)';
 
   @override
   String get commonAvailableFormats => 'Common available formats:';
@@ -540,6 +543,29 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get playWithEmbeddedMpvPlayerWithHorizontalFlip =>
       'Play with embedded mpv player with horizontal flip';
+
+  @override
+  String get couldNotOpenFile => 'Could not open file';
+
+  @override
+  String get openFileLocation => 'Open file location...';
+
+  @override
+  String get couldNotOpenFileLocation => 'Could not open file location';
+
+  @override
+  String get copyToDownloads => 'Copy to Downloads';
+
+  @override
+  String copiedToDownloads(String fileName) {
+    return 'Copied to Downloads: $fileName';
+  }
+
+  @override
+  String get copyToDownloadsFailed => 'Failed to copy file';
+
+  @override
+  String get shareFile => 'Share file...';
 
   @override
   String get localFileDownloadedClickToPlay =>

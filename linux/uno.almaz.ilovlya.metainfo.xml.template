@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>uno.almaz.ilovlya</id>
+  <name>Ilovlya</name>
+  <summary>Media Player for downloaded content</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <description>
+    <p>
+      Ilovlya is a media center application for viewing and managing audio/video content.
+      It allows you to play recordings, manage playlists, and control playback settings.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Audio and video playback with media_kit</li>
+      <li>Support for Bluetooth headsets and media buttons</li>
+      <li>Variable playback speed</li>
+      <li>Position bookmarking and resume</li>
+      <li>Download management</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">uno.almaz.ilovlya.desktop</launchable>
+
+  <url type="homepage">https://ilovlya.space</url>
+
+  <provides>
+    <binary>ilovlya</binary>
+  </provides>
+
+  <releases>
+    <release version="__VERSION__" date="__DATE__"/>
+  </releases>
+
+  <content_rating type="oars-1.1"/>
+
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+    <category>Video</category>
+    <category>Player</category>
+  </categories>
+</component>

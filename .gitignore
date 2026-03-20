@@ -46,3 +46,12 @@ app.*.map.json
 android/app/.cxx/
 .flatpak-builder/
 .venv/
+.build/
+android/.kotlin/
+
+# Flutter generated plugin registration files
+**/flutter/generated_plugin_registrant.cc
+**/flutter/generated_plugin_registrant.h
+**/flutter/generated_plugins.cmake
+**/Flutter/GeneratedPluginRegistrant.swift
+**/Flutter/GeneratedPluginRegistrant.m

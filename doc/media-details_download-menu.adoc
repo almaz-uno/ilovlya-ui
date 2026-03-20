@@ -1,0 +1,197 @@
+= Download Row — Actions & Conditions
+
+Each recording detail screen shows one or more _download rows_, one per server-side download object.
+Every row displays a set of inline action buttons followed by an overflow (`⋮`) menu.
+The visibility of each action depends on the download **status**, whether a **local file** is present, and the target **platform**.
+
+Implemented in link:../lib/src/media/media_details.dart[`media_details.dart`], method `_buildActions`.
+
+== Key Conditions
+
+[cols="1,2", options="header"]
+|===
+|Condition |Definition
+
+|`isReady`
+|`download.status == "ready"` — the server has finished processing the file.
+
+|`hasLocalFile`
+|`download.fullPathMedia != null` — the file has been downloaded to the device.
+
+|Platform
+|Detected at runtime via `UniversalPlatform` (`isAndroid`, `isIOS`, `isLinux`, `isWeb`, etc.).
+|===
+
+== Server-Side Download Statuses
+
+[cols="1,3", options="header"]
+|===
+|Status |Meaning
+
+|`new`
+|Download record was just created (`createdAt == updatedAt` and elapsed time is below the threshold). No file yet.
+
+|`in_progress`
+|No file yet, but the server worker is actively processing it (`updatedAt` is recent).
+
+|`stale`
+|No file on the server and `updatedAt` is old — the job has stalled or never progressed. The user can re-trigger preparation.
+
+|`ready`
+|The media file physically exists on the server and is ready to stream or download.
+|===
+
+== Inline Action Buttons
+
+Buttons appear in the row in the following left-to-right order.
+
+=== 1. Prepare (server format)
+
+[cols="1,3", options="header"]
+|===
+|Property |Value
+
+|Icon
+|`downloadFormatIcon`
+
+|Condition
+|`status == "new"` or `status == "stale"`
+
+|Action
+|Starts server-side preparation of the file in the selected format.
+|===
+
+=== 2. Progress Indicator
+
+[cols="1,3", options="header"]
+|===
+|Property |Value
+
+|Widget
+|`CircularProgressIndicator` (value from last progress line)
+
+|Condition
+|`status == "in_progress"`
+
+|Action
+|Read-only indicator; no user interaction.
+|===
+
+=== 3. Play — Server Stream
+
+[cols="1,3", options="header"]
+|===
+|Property |Value
+
+|Icon
+|`Icons.flag_circle_outlined`
+
+|Condition
+|`status == "ready"` (always shown when ready, regardless of local file)
+
+|Tap action
+|Opens `RecordingViewMediaKitHandler` with the server stream URL.
+
+|Long-press action
+|Linux only — launches the file in the embedded mpv player via `flatpak-spawn`, resuming from the saved position.
+|===
+
+=== 4. Overflow Menu (`⋮`)
+
+Always shown. See <<overflow-menu>> below.
+
+=== 5. Download to Device
+
+[cols="1,3", options="header"]
+|===
+|Property |Value
+
+|Icon
+|`Icons.download`
+
+|Condition
+|Not Web AND `isReady` AND NOT `hasLocalFile`
+
+|Action
+|Enqueues a background file download to the local media storage directory.
+|===
+
+=== 6. Play — Local File
+
+[cols="1,3", options="header"]
+|===
+|Property |Value
+
+|Icon
+|`Icons.download_done`
+
+|Condition
+|Not Web AND `hasLocalFile`
+
+|Tap action
+|Opens `RecordingViewMediaKitHandler` with the local file path.
+
+|Long-press action
+|Linux only — launches the local file in the embedded mpv player via `flatpak-spawn`, resuming from the saved position.
+|===
+
+[#overflow-menu]
+== Overflow Menu Items
+
+Items are listed in the order they appear in the menu.
+
+[cols="1,2,3", options="header"]
+|===
+|Action |Condition |Description
+
+|Copy file link
+|`isReady`
+|Copies the server stream URL to the clipboard.
+
+|Copy curl command
+|`isReady`
+|Copies a `curl` command (`curl '<url>' -o '<filename>'`) to the clipboard.
+
+|Play with mpv
+|Linux AND (`isReady` OR `hasLocalFile`)
+|Launches the file (local path if available, otherwise URL) in the embedded mpv player, resuming from the saved position.
+
+|Play with mpv (horizontal flip)
+|Linux AND (`isReady` OR `hasLocalFile`)
+|Same as above, but applies the `--vf=hflip` video filter.
+
+|Open in default app
+|`isReady` OR `hasLocalFile`
+a|
+* *No local file* — opens the server URL in the system browser via `url_launcher` (`launchUrlString`). Icon: `open_in_browser`.
+* *Local file present* — opens the file via `OpenFilex` with a MIME type hint derived from the extension:
+** *Android* — sends an `ACTION_VIEW` intent; the system shows an app chooser if more than one app supports the type.
+** *iOS* — uses `UIDocumentInteractionController` to present the file to registered apps.
+** *Linux / macOS / Windows* — delegates to the OS file association (`xdg-open` / `open` / `start`).
++
+If no app is found or the file is missing, a snack-bar error is shown. Icon: `open_in_new`.
+
+|Copy to Downloads
+|`hasLocalFile` AND Android
+|Copies the local file to the public `Downloads` folder.
+
+|Share file
+|`hasLocalFile` AND iOS
+|Shares the local file using the iOS share sheet (`Share.shareXFiles`).
+
+|Open file location
+|`hasLocalFile` AND desktop (not Android, not iOS)
+|Opens the containing folder in the system file manager.
+
+|Delete file on server
+|`isReady`
+|Shows a confirmation dialog; on confirmation deletes the server-side media file, freeing quota, then refreshes the view.
+
+|Delete local file
+|Not Web AND `hasLocalFile`
+|Shows a confirmation dialog; on confirmation removes the locally downloaded file from the device.
+
+|Download to local storage
+|Not Web AND `isReady` AND NOT `hasLocalFile`
+|Enqueues the file for background download to the local media storage directory.
+|===
