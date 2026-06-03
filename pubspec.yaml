@@ -11,17 +11,17 @@ environment:
 
 dependencies:
   animated_search_bar: ^2.8.0
-  app_links: ^7.0.0
+  app_links: ^7.1.1
   async: ^2.13.1
   audio_service: ^0.18.18
   audio_video_progress_bar: ^2.0.2
-  background_downloader: ^9.5.4
-  device_info_plus: ^12.4.0
+  background_downloader: ^9.5.5
+  device_info_plus: ^13.1.0
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  flutter_riverpod: ^2.5.1
+  flutter_riverpod: ^3.1.0
   fuzzywuzzy: ^1.1.6
   google_fonts: ^8.1.0
   http: ^1.6.0
@@ -32,11 +32,11 @@ dependencies:
   media_kit_libs_video: ^1.0.7
   media_kit_video: ^2.0.1
   open_filex: ^4.5.0
-  package_info_plus: ^9.0.1
+  package_info_plus: ^10.1.0
   path: ^1.8.3
   path_provider: ^2.1.2
-  riverpod_annotation: ^2.2.1
-  share_plus: ^12.0.2
+  riverpod_annotation: ^4.0.0
+  share_plus: ^13.1.0
   shared_preferences: ^2.5.5
   timeago: ^3.7.0
   universal_platform: ^1.0.0+1
@@ -49,11 +49,11 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^6.0.0
-  build_runner: ^2.5.4
-  json_serializable: ^6.9.5
-  riverpod_generator: ^2.3.5
-  custom_lint: ^0.7.6
-  riverpod_lint: ^2.3.2
+  build_runner: ^2.15.0
+  json_serializable: ^6.11.2
+  riverpod_generator: ^4.0.0+1
+  custom_lint: ^0.8.1
+  riverpod_lint: ^3.1.0
 
 flutter:
   uses-material-design: true
