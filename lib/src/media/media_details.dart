@@ -95,6 +95,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   Duration? _currentPosition; // Local position override
   bool _formatsExpanded = false; // Tracks if formats section is expanded
   bool _showTables = false; // Delay tables rendering until animation completes
+  Animation<double>? _routeAnimation; // Page transition animation, used to defer heavy work
 
   static const _updatePullPeriod = Duration(seconds: 3);
 
@@ -104,16 +105,18 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
     _mpvSocketPath = "/tmp/${widget.id}";
 
+    // Defer table rendering and the first server refresh until the page
+    // transition animation has finished, so nothing competes with it for the
+    // frame budget. Gating on the real route animation (instead of a fixed
+    // 300ms timer) adapts to the actual transition duration and refresh rate.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _pullRefresh();
-      // Delay tables rendering to avoid impacting page transition animation
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted) {
-          setState(() {
-            _showTables = true;
-          });
-        }
-      });
+      if (!mounted) return;
+      final anim = _routeAnimation = ModalRoute.of(context)?.animation;
+      if (anim == null || anim.status == AnimationStatus.completed || anim.status == AnimationStatus.dismissed) {
+        _onTransitionFinished();
+      } else {
+        anim.addStatusListener(_onRouteAnimStatus);
+      }
     });
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
@@ -125,8 +128,25 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     });
   }
 
+  void _onRouteAnimStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed) {
+      _routeAnimation?.removeStatusListener(_onRouteAnimStatus);
+      _onTransitionFinished();
+    }
+  }
+
+  // Runs once the page transition animation has settled.
+  void _onTransitionFinished() {
+    if (!mounted) return;
+    setState(() {
+      _showTables = true;
+    });
+    _pullRefresh();
+  }
+
   @override
   void deactivate() {
+    _routeAnimation?.removeStatusListener(_onRouteAnimStatus);
     _updatePullSubs?.cancel();
     _rewindTimer?.cancel();
     super.deactivate();
@@ -483,6 +503,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     await ref.read(recordingNotifierProvider(widget.id).notifier).refreshFromServer();
     await ref.read(downloadsNotifierProvider(widget.id).notifier).refreshFromServer();
 
+    // The refreshes above are async; the page may have been popped meanwhile.
+    if (!mounted) return;
     // Reset local position after server refresh
     setState(() {
       _currentPosition = null;
@@ -732,7 +754,14 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    createThumb(ref, recording.thumbnailUrl),
+                    createThumb(
+                      ref,
+                      recording.thumbnailUrl,
+                      // Decode to screen width in physical pixels instead of the
+                      // full source resolution — avoids a decode spike on the
+                      // first detail frame during the transition.
+                      cacheWidth: (MediaQuery.of(context).size.width * MediaQuery.of(context).devicePixelRatio).round(),
+                    ),
                     // Current position display (top center)
                     Positioned(
                       top: 16,

@@ -23,7 +23,7 @@ import 'media_add.dart';
 import 'media_details.dart';
 import 'media_kit/audio_handler.dart';
 
-Widget createThumb(WidgetRef ref, String url) {
+Widget createThumb(WidgetRef ref, String url, {int? cacheWidth}) {
   late Widget thumbWidget;
   if (UniversalPlatform.isWeb) {
     thumbWidget = Image.network(
@@ -31,6 +31,7 @@ Widget createThumb(WidgetRef ref, String url) {
       isAntiAlias: true,
       filterQuality: FilterQuality.high,
       fit: BoxFit.fitWidth,
+      cacheWidth: cacheWidth,
     );
   } else {
     final thumbProvider = ref.watch(thumbnailDataNotifierProvider(url));
@@ -41,6 +42,7 @@ Widget createThumb(WidgetRef ref, String url) {
       thumbWidget = Image.memory(
         thumbProvider.requireValue,
         fit: BoxFit.fitWidth,
+        cacheWidth: cacheWidth,
       );
     }
   }
