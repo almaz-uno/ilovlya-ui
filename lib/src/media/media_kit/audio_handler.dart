@@ -1,6 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import '../../model/download.dart';
@@ -21,6 +22,17 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     logLevel: MPVLogLevel.info,
     osc: false,
   ));
+
+  // Single shared video controller, reused across every open/close of the
+  // player screen. Recreating a VideoController per open (and letting it be
+  // torn down on close) caused a ~0.5-0.9s native video-output teardown that
+  // froze the return transition. Created lazily on first playback and kept for
+  // the app lifetime so the texture is never re-created/destroyed on the fly.
+  static VideoController get videoController => _handler._videoController;
+  late final VideoController _videoController = VideoController(
+    _player,
+    configuration: const VideoControllerConfiguration(enableHardwareAcceleration: true),
+  );
 
   bool _wasPlayingBeforeInterruption = false;
 

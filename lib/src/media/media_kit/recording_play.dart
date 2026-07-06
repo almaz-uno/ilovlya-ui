@@ -62,7 +62,9 @@ const _positionSendPeriod = Duration(seconds: 1);
 class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMediaKitHandler> {
   // String get url => widget.download.url;
   Player get _player => MKPlayerHandler.player;
-  late final _controller = VideoController(_player, configuration: VideoControllerConfiguration(enableHardwareAcceleration: true));
+  // Shared, app-lifetime controller (see MKPlayerHandler.videoController):
+  // avoids per-open video-output creation/teardown that froze the return.
+  VideoController get _controller => MKPlayerHandler.videoController;
   StreamSubscription? _positionSendSubs;
   StreamSubscription? _uiUpdateSubs;
   Duration _rewinding = Duration.zero;
@@ -281,11 +283,17 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   }
 
   @override
-  void deactivate() async {
-    MKPlayerHandler.player.stop();
-    MKPlayerHandler.clearMediaSession(); // Clear lock screen notification
+  void deactivate() {
+    // Stop UI-updating streams immediately.
     _positionSendSubs?.cancel();
     _uiUpdateSubs?.cancel();
+    // Defer the native player teardown until after the pop transition. The
+    // native stop() (releasing the HW video decoder) otherwise blocks the
+    // platform thread during the reverse slide, causing a visible jerk.
+    Future.delayed(const Duration(milliseconds: 400), () {
+      MKPlayerHandler.player.stop();
+      MKPlayerHandler.clearMediaSession(); // Clear lock screen notification
+    });
     super.deactivate();
   }
 
@@ -354,16 +362,26 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     // final rewindTextStyle = Theme.of(context).textTheme.titleSmall;
     final techInfoStyle = GoogleFonts.ptMono();
     return PopScope(
-      onPopInvokedWithResult: (bool didPop, Object? result) async {
+      onPopInvokedWithResult: (bool didPop, Object? result) {
         final updateThumbnails = ref.read(settingsNotifierProvider.select((value) => value.requireValue.updateThumbnails));
-        if (!UniversalPlatform.isWeb && updateThumbnails) {
-          MKPlayerHandler.player.screenshot(format: "image/png").then((imgData) {
-            ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).notifier).updateThumbnailImg(imgData);
-          });
-        }
-
-        ref.invalidate(recordingNotifierProvider(widget.recording.id));
-        ref.invalidate(mediaListNotifierProvider);
+        // Capture the container now: `ref` becomes invalid once this widget is
+        // disposed by the pop, but the container outlives it.
+        final container = ProviderScope.containerOf(context, listen: false);
+        final recId = widget.recording.id;
+        final thumbUrl = widget.recording.thumbnailUrl;
+        // Defer the teardown (thumbnail screenshot + provider invalidations)
+        // past the pop transition. Run synchronously here it rebuilds/refetches
+        // the details and the whole media list underneath, blocking the button's
+        // programmatic pop animation (a swipe hides it — it is finger-driven).
+        Future.delayed(const Duration(milliseconds: 350), () {
+          if (!UniversalPlatform.isWeb && updateThumbnails) {
+            MKPlayerHandler.player.screenshot(format: "image/png").then((imgData) {
+              container.read(thumbnailDataNotifierProvider(thumbUrl).notifier).updateThumbnailImg(imgData);
+            });
+          }
+          container.invalidate(recordingNotifierProvider(recId));
+          container.invalidate(mediaListNotifierProvider);
+        });
       },
       child: Scaffold(
         // appBar: AppBar(
