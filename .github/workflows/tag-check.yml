@@ -1,0 +1,40 @@
+name: Tag consistency
+
+# A release tag names the version of the whole product, so it has to match the
+# client version declared in pubspec.yaml. The backend repository checks the
+# same invariant before building the image; this one catches a wrong tag right
+# where it is pushed.
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  tag-matches-pubspec:
+    name: Tag matches pubspec version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Compare the tag with the pubspec version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -eu
+
+          version=$(awk '$1 == "version:" { print $2; exit }' pubspec.yaml | cut -d+ -f1)
+
+          if [ -z "$version" ]; then
+            echo "::error::No version found in pubspec.yaml"
+            exit 1
+          fi
+
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::Tag $TAG does not match the version in pubspec.yaml ($version), expected v$version"
+            exit 1
+          fi
+
+          echo "Tag $TAG matches the version $version"
