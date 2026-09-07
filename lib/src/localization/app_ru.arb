@@ -1337,5 +1337,105 @@
         "type": "String"
       }
     }
+  },
+  "tvCast": "Транслировать на ТВ",
+  "@tvCast": {
+    "description": "Action that starts casting a recording to a browser on a television"
+  },
+  "tvNoReadyDownload": "На сервере ещё нет готового файла",
+  "@tvNoReadyDownload": {
+    "description": "Shown when casting is asked for but no download is ready"
+  },
+  "tvPairTitle": "Подключение к телевизору",
+  "@tvPairTitle": {
+    "description": "Title of the pairing dialog"
+  },
+  "tvPairHint": "Откройте страницу /tv в браузере телевизора и введите показанный код",
+  "@tvPairHint": {
+    "description": "Instruction in the pairing dialog"
+  },
+  "tvPairCodeLabel": "Код подключения",
+  "@tvPairCodeLabel": {
+    "description": "Label of the pairing code field"
+  },
+  "tvPairScan": "Сканировать",
+  "@tvPairScan": {
+    "description": "Button that opens the QR scanner"
+  },
+  "tvPairConnect": "Подключить",
+  "@tvPairConnect": {
+    "description": "Button that submits the pairing code"
+  },
+  "tvPairingFailed": "Код неизвестен или истёк",
+  "@tvPairingFailed": {
+    "description": "Shown when pairing is refused"
+  },
+  "tvScanTitle": "Сканирование кода",
+  "@tvScanTitle": {
+    "description": "Title of the QR scanner screen"
+  },
+  "tvScanHint": "Наведите камеру на код на экране телевизора",
+  "@tvScanHint": {
+    "description": "Instruction on the QR scanner screen"
+  },
+  "tvStatusPlaying": "Воспроизводится на телевизоре",
+  "@tvStatusPlaying": {
+    "description": "Cast status"
+  },
+  "tvStatusPaused": "Пауза на телевизоре",
+  "@tvStatusPaused": {
+    "description": "Cast status"
+  },
+  "tvStatusLoading": "Загрузка на телевизоре",
+  "@tvStatusLoading": {
+    "description": "Cast status"
+  },
+  "tvStatusReady": "Телевизор готов",
+  "@tvStatusReady": {
+    "description": "Cast status"
+  },
+  "tvStatusDisconnected": "Телевизор не на связи",
+  "@tvStatusDisconnected": {
+    "description": "Cast status"
+  },
+  "tvDisconnect": "Отключить",
+  "@tvDisconnect": {
+    "description": "Ends the cast session"
+  },
+  "tvPlay": "Воспроизвести",
+  "@tvPlay": {
+    "description": "Transport control"
+  },
+  "tvPause": "Пауза",
+  "@tvPause": {
+    "description": "Transport control"
+  },
+  "tvStop": "Остановить",
+  "@tvStop": {
+    "description": "Transport control"
+  },
+  "tvRewind": "Назад 30 секунд",
+  "@tvRewind": {
+    "description": "Transport control"
+  },
+  "tvForward": "Вперёд 30 секунд",
+  "@tvForward": {
+    "description": "Transport control"
+  },
+  "tvCommandFailed": "Телевизор не принял команду",
+  "@tvCommandFailed": {
+    "description": "Shown when a cast command fails"
+  },
+  "tvSessionLost": "Связь с телевизором потеряна",
+  "@tvSessionLost": {
+    "description": "Shown when the cast session cannot be read"
+  },
+  "tvErrorUnsupportedMedia": "Телевизор не может воспроизвести этот формат",
+  "@tvErrorUnsupportedMedia": {
+    "description": "Receiver reported an unsupported codec"
+  },
+  "tvErrorPlayback": "Ошибка воспроизведения на телевизоре",
+  "@tvErrorPlayback": {
+    "description": "Receiver reported a playback failure"
   }
 }
