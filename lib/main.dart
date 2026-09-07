@@ -3,6 +3,7 @@ import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 import 'src/app.dart';
 import 'src/media/media_kit/audio_handler.dart';
@@ -18,12 +19,16 @@ void main() async {
 
   MKPlayerHandler.init();
 
-  // Configure FileDownloader globally
-  await FileDownloader().configure(
-    globalConfig: [
-      (Config.checkAvailableSpace, 200), // 200 MB minimum free space
-    ],
-  );
+  // Configure FileDownloader globally.
+  // background_downloader supports no web: its configure() future never
+  // completes there, hanging main() before runApp() and leaving a blank page.
+  if (!UniversalPlatform.isWeb) {
+    await FileDownloader().configure(
+      globalConfig: [
+        (Config.checkAvailableSpace, 200), // 200 MB minimum free space
+      ],
+    );
+  }
 
   runApp(const ProviderScope(child: MyApp()));
 }
