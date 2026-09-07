@@ -835,4 +835,81 @@ class AppLocalizationsEn extends AppLocalizations {
   String failedToSwitchToLocalFile(String error) {
     return 'Failed to switch to local file: $error';
   }
+
+  @override
+  String get tvCast => 'Cast to TV';
+
+  @override
+  String get tvNoReadyDownload => 'No file is ready on the server yet';
+
+  @override
+  String get tvPairTitle => 'Connect to a television';
+
+  @override
+  String get tvPairHint =>
+      'Open the /tv page in the television browser and type the code it shows';
+
+  @override
+  String get tvPairCodeLabel => 'Pairing code';
+
+  @override
+  String get tvPairScan => 'Scan';
+
+  @override
+  String get tvPairConnect => 'Connect';
+
+  @override
+  String get tvPairingFailed => 'The code is unknown or has expired';
+
+  @override
+  String get tvScanTitle => 'Scan the code';
+
+  @override
+  String get tvScanHint => 'Point the camera at the code on the television';
+
+  @override
+  String get tvStatusPlaying => 'Playing on the television';
+
+  @override
+  String get tvStatusPaused => 'Paused on the television';
+
+  @override
+  String get tvStatusLoading => 'Loading on the television';
+
+  @override
+  String get tvStatusReady => 'Television is ready';
+
+  @override
+  String get tvStatusDisconnected => 'Television is not connected';
+
+  @override
+  String get tvDisconnect => 'Disconnect';
+
+  @override
+  String get tvPlay => 'Play';
+
+  @override
+  String get tvPause => 'Pause';
+
+  @override
+  String get tvStop => 'Stop';
+
+  @override
+  String get tvRewind => 'Back 30 seconds';
+
+  @override
+  String get tvForward => 'Forward 30 seconds';
+
+  @override
+  String get tvCommandFailed => 'The television did not take the command';
+
+  @override
+  String get tvSessionLost => 'Lost the connection to the television';
+
+  @override
+  String get tvErrorUnsupportedMedia =>
+      'The television cannot play this format';
+
+  @override
+  String get tvErrorPlayback => 'Playback failed on the television';
 }
