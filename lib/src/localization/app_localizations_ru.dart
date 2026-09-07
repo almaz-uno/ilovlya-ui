@@ -846,4 +846,81 @@ class AppLocalizationsRu extends AppLocalizations {
   String failedToSwitchToLocalFile(String error) {
     return 'Не удалось переключиться на локальный файл: $error';
   }
+
+  @override
+  String get tvCast => 'Транслировать на ТВ';
+
+  @override
+  String get tvNoReadyDownload => 'На сервере ещё нет готового файла';
+
+  @override
+  String get tvPairTitle => 'Подключение к телевизору';
+
+  @override
+  String get tvPairHint =>
+      'Откройте страницу /tv в браузере телевизора и введите показанный код';
+
+  @override
+  String get tvPairCodeLabel => 'Код подключения';
+
+  @override
+  String get tvPairScan => 'Сканировать';
+
+  @override
+  String get tvPairConnect => 'Подключить';
+
+  @override
+  String get tvPairingFailed => 'Код неизвестен или истёк';
+
+  @override
+  String get tvScanTitle => 'Сканирование кода';
+
+  @override
+  String get tvScanHint => 'Наведите камеру на код на экране телевизора';
+
+  @override
+  String get tvStatusPlaying => 'Воспроизводится на телевизоре';
+
+  @override
+  String get tvStatusPaused => 'Пауза на телевизоре';
+
+  @override
+  String get tvStatusLoading => 'Загрузка на телевизоре';
+
+  @override
+  String get tvStatusReady => 'Телевизор готов';
+
+  @override
+  String get tvStatusDisconnected => 'Телевизор не на связи';
+
+  @override
+  String get tvDisconnect => 'Отключить';
+
+  @override
+  String get tvPlay => 'Воспроизвести';
+
+  @override
+  String get tvPause => 'Пауза';
+
+  @override
+  String get tvStop => 'Остановить';
+
+  @override
+  String get tvRewind => 'Назад 30 секунд';
+
+  @override
+  String get tvForward => 'Вперёд 30 секунд';
+
+  @override
+  String get tvCommandFailed => 'Телевизор не принял команду';
+
+  @override
+  String get tvSessionLost => 'Связь с телевизором потеряна';
+
+  @override
+  String get tvErrorUnsupportedMedia =>
+      'Телевизор не может воспроизвести этот формат';
+
+  @override
+  String get tvErrorPlayback => 'Ошибка воспроизведения на телевизоре';
 }

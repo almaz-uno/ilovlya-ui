@@ -1509,6 +1509,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to switch to local file: {error}'**
   String failedToSwitchToLocalFile(String error);
+
+  /// Action that starts casting a recording to a browser on a television
+  ///
+  /// In en, this message translates to:
+  /// **'Cast to TV'**
+  String get tvCast;
+
+  /// Shown when casting is asked for but no download is ready
+  ///
+  /// In en, this message translates to:
+  /// **'No file is ready on the server yet'**
+  String get tvNoReadyDownload;
+
+  /// Title of the pairing dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to a television'**
+  String get tvPairTitle;
+
+  /// Instruction in the pairing dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Open the /tv page in the television browser and type the code it shows'**
+  String get tvPairHint;
+
+  /// Label of the pairing code field
+  ///
+  /// In en, this message translates to:
+  /// **'Pairing code'**
+  String get tvPairCodeLabel;
+
+  /// Button that opens the QR scanner
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get tvPairScan;
+
+  /// Button that submits the pairing code
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get tvPairConnect;
+
+  /// Shown when pairing is refused
+  ///
+  /// In en, this message translates to:
+  /// **'The code is unknown or has expired'**
+  String get tvPairingFailed;
+
+  /// Title of the QR scanner screen
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the code'**
+  String get tvScanTitle;
+
+  /// Instruction on the QR scanner screen
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at the code on the television'**
+  String get tvScanHint;
+
+  /// Cast status
+  ///
+  /// In en, this message translates to:
+  /// **'Playing on the television'**
+  String get tvStatusPlaying;
+
+  /// Cast status
+  ///
+  /// In en, this message translates to:
+  /// **'Paused on the television'**
+  String get tvStatusPaused;
+
+  /// Cast status
+  ///
+  /// In en, this message translates to:
+  /// **'Loading on the television'**
+  String get tvStatusLoading;
+
+  /// Cast status
+  ///
+  /// In en, this message translates to:
+  /// **'Television is ready'**
+  String get tvStatusReady;
+
+  /// Cast status
+  ///
+  /// In en, this message translates to:
+  /// **'Television is not connected'**
+  String get tvStatusDisconnected;
+
+  /// Ends the cast session
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get tvDisconnect;
+
+  /// Transport control
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get tvPlay;
+
+  /// Transport control
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get tvPause;
+
+  /// Transport control
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get tvStop;
+
+  /// Transport control
+  ///
+  /// In en, this message translates to:
+  /// **'Back 30 seconds'**
+  String get tvRewind;
+
+  /// Transport control
+  ///
+  /// In en, this message translates to:
+  /// **'Forward 30 seconds'**
+  String get tvForward;
+
+  /// Shown when a cast command fails
+  ///
+  /// In en, this message translates to:
+  /// **'The television did not take the command'**
+  String get tvCommandFailed;
+
+  /// Shown when the cast session cannot be read
+  ///
+  /// In en, this message translates to:
+  /// **'Lost the connection to the television'**
+  String get tvSessionLost;
+
+  /// Receiver reported an unsupported codec
+  ///
+  /// In en, this message translates to:
+  /// **'The television cannot play this format'**
+  String get tvErrorUnsupportedMedia;
+
+  /// Receiver reported a playback failure
+  ///
+  /// In en, this message translates to:
+  /// **'Playback failed on the television'**
+  String get tvErrorPlayback;
 }
 
 class _AppLocalizationsDelegate

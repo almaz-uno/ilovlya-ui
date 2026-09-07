@@ -34,6 +34,10 @@ import 'downloads_table.dart';
 import 'format.dart';
 import 'formats_table.dart';
 import 'intents.dart';
+import '../tv/tv_api.dart';
+import '../tv/tv_cast_sheet.dart';
+import '../tv/tv_models.dart';
+import '../tv/tv_pairing_view.dart';
 import 'media_kit/audio_handler.dart';
 import 'media_kit/recording_play.dart';
 import 'media_list.dart';
@@ -511,6 +515,45 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     });
   }
 
+  /// Casting needs a file the server holds: a television cannot reach a copy
+  /// that lives on this device. A paired session is remembered by the server,
+  /// so pairing is asked for only when none is live.
+  Future<void> _castToTv(RecordingInfo recording) async {
+    final downloads = ref.read(downloadsNotifierProvider(recording.id)).valueOrNull;
+    final (_, ready, _) = _findAppropriateDownloads(downloads ?? <Download>[]);
+
+    if (ready == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.tvNoReadyDownload)));
+      }
+      return;
+    }
+
+    TvSession? session;
+    try {
+      final sessions = await ref.read(tvSessionsProvider.future);
+      for (final s in sessions) {
+        if (s.isLive) {
+          session = s;
+          break;
+        }
+      }
+    } catch (e, st) {
+      AppLoggers.api.w('Failed to list tv sessions', error: e, stackTrace: st);
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    session ??= await TvPairingView.show(context);
+    if (session == null || !mounted) {
+      return;
+    }
+
+    await TvCastSheet.show(context, sessionId: session.id, recording: recording, download: ready);
+  }
+
   @override
   Widget build(BuildContext context) {
     final recording = ref.watch(recordingNotifierProvider(widget.id));
@@ -568,6 +611,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             appBar: AppBar(
               title: recording.hasValue ? Text(recording.requireValue.title) : Text(AppLocalizations.of(context)!.loadingInfo),
               actions: [
+                if (recording.hasValue)
+                  IconButton(
+                    icon: const Icon(Icons.cast),
+                    tooltip: AppLocalizations.of(context)!.tvCast,
+                    onPressed: () => _castToTv(recording.requireValue),
+                  ),
                 IconButton(
                   icon: _cleanServerMediaIcon,
                   tooltip: AppLocalizations.of(context)!.cleanAllDownloadedContentOnServer,
