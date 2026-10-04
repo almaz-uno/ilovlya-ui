@@ -96,16 +96,27 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   void initState() {
     super.initState();
 
-    ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+    _refreshList();
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
       if (MKPlayerHandler.player.state.playing) {
         AppLoggers.ui.d('Skip pull list while playing');
         return;
       }
-      ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+      _refreshList();
       ref.invalidate(getTenantProvider);
     });
+  }
+
+  /// Refreshes the list from the server; the returned future never completes with an error.
+  /// The error is already logged by [MediaListNotifier], so it is only noted here to keep it
+  /// from escaping as an unhandled exception. The next periodic pull retries.
+  Future<void> _refreshList() async {
+    try {
+      await ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+    } catch (e) {
+      AppLoggers.ui.w('Media list refresh failed: $e');
+    }
   }
 
   @override
@@ -161,7 +172,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         actions: <Type, Action<Intent>>{
           RefreshIntent: CallbackAction<RefreshIntent>(
             onInvoke: (intent) {
-              ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+              _refreshList();
               return null;
             },
           ),
@@ -208,7 +219,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                       icon: const Icon(Icons.refresh),
                       tooltip: AppLocalizations.of(context)!.refreshList,
                       onPressed: () {
-                        ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+                        _refreshList();
                       }),
                   PopupMenuButton(
                       tooltip: AppLocalizations.of(context)!.moreOptions,
@@ -349,7 +360,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                 ],
               ),
               body: RefreshIndicator(
-                onRefresh: () => ref.read(mediaListNotifierProvider.notifier).refreshFromServer(),
+                onRefresh: _refreshList,
                 child: Stack(
                   children: [
                     if (mediaList.isLoading) const LinearProgressIndicator(),

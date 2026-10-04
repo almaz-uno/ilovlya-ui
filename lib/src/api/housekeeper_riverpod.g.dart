@@ -24,7 +24,7 @@ final localMediaHousekeeperProvider = AutoDisposeAsyncNotifierProvider<
 
 typedef _$LocalMediaHousekeeper
     = AutoDisposeAsyncNotifier<(int number, int size)>;
-String _$localDataNotifierHash() => r'b4fc2336cc7f9e84a627619e627db4e6aa101587';
+String _$localDataNotifierHash() => r'aca88d207f05536b35455461c943b4ffd5523757';
 
 /// See also [LocalDataNotifier].
 @ProviderFor(LocalDataNotifier)
