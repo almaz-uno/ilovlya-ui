@@ -42,7 +42,9 @@ class Fetcher {
 
   final PartialFile file;
   final Uri url;
-  final String? bearerToken;
+  /// The `Authorization` header value the rest of the client sends (`getAuthHeader`), or `null` for none. The content
+  /// endpoint is public today and ignores it; sending it keeps the transfer working if that ever changes.
+  final String? authorization;
   final HttpClient _client;
   final Duration Function(int failures, bool readerWaiting) _backoff;
 
@@ -63,7 +65,7 @@ class Fetcher {
   bool _running = false;
   int _requests = 0;
 
-  Fetcher({required this.file, required this.url, this.bearerToken, HttpClient? client, Duration Function(int failures, bool readerWaiting)? backoff})
+  Fetcher({required this.file, required this.url, this.authorization, HttpClient? client, Duration Function(int failures, bool readerWaiting)? backoff})
       : _client = client ?? HttpClient(),
         _backoff = backoff ?? defaultBackoff;
 
@@ -172,7 +174,7 @@ class Fetcher {
       request.headers.set(HttpHeaders.rangeHeader, end == null ? 'bytes=$start-' : 'bytes=$start-${end - 1}');
       final lastModified = file.lastModified;
       if (lastModified != null) request.headers.set(HttpHeaders.ifRangeHeader, lastModified);
-      if (bearerToken != null) request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $bearerToken');
+      if (authorization != null) request.headers.set(HttpHeaders.authorizationHeader, authorization!);
       response = await request.close();
     } on Object catch (e) {
       if (_interrupted) return _Attempt.interrupted;

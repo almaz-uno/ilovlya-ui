@@ -25,7 +25,7 @@ class PartialSource implements EndpointSource {
 
   final PartialFile file;
   final Uri url;
-  final String? bearerToken;
+  final String? authorization;
   final HttpClient _client;
   late final Fetcher fetcher;
 
@@ -40,9 +40,9 @@ class PartialSource implements EndpointSource {
   StreamSubscription<void>? _lengthWatch;
   Completer<int>? _length;
 
-  PartialSource({required this.file, required this.url, this.bearerToken, HttpClient? client, Duration Function(int failures, bool readerWaiting)? backoff, this.onChange})
+  PartialSource({required this.file, required this.url, this.authorization, HttpClient? client, Duration Function(int failures, bool readerWaiting)? backoff, this.onChange})
       : _client = client ?? HttpClient() {
-    fetcher = Fetcher(file: file, url: url, bearerToken: bearerToken, client: _client, backoff: backoff);
+    fetcher = Fetcher(file: file, url: url, authorization: authorization, client: _client, backoff: backoff);
     if (file.isComplete) _state = SourceState.complete;
   }
 
@@ -145,7 +145,7 @@ class PartialSource implements EndpointSource {
   Stream<List<int>> upstream(int start, int end) async* {
     final req = await _client.getUrl(url);
     req.headers.set(HttpHeaders.rangeHeader, 'bytes=$start-${end - 1}');
-    if (bearerToken != null) req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $bearerToken');
+    if (authorization != null) req.headers.set(HttpHeaders.authorizationHeader, authorization!);
     final res = await req.close();
     if (res.statusCode != HttpStatus.partialContent) {
       await res.drain<void>();

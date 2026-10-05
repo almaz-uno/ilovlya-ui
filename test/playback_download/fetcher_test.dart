@@ -31,7 +31,7 @@ void main() {
   PartialFile open([String id = 'd1']) => PartialFile.open(mediaDir: media.path, downloadId: id, filename: '$id.mp4', url: up.url.toString());
 
   Fetcher fetcher(PartialFile f, {String? token, Duration backoff = Duration.zero}) {
-    final fx = Fetcher(file: f, url: up.url, bearerToken: token, backoff: (_, __) => backoff);
+    final fx = Fetcher(file: f, url: up.url, authorization: token, backoff: (_, __) => backoff);
     fetchers.add(fx);
     return fx;
   }
@@ -58,7 +58,7 @@ void main() {
     expect(await finish(f), src);
     expect(up.log.length, 1);
     expect(up.log.single.range, 'bytes=0-');
-    expect(up.log.single.authorization, 'Bearer t0k');
+    expect(up.log.single.authorization, 't0k', reason: 'the header value as getAuthHeader sends it');
     expect(up.bytesServed, src.length);
   });
 
