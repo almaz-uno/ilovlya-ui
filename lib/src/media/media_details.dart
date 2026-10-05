@@ -34,6 +34,9 @@ import 'downloads_table.dart';
 import 'format.dart';
 import 'formats_table.dart';
 import 'intents.dart';
+import '../tv/tv_api.dart';
+import '../tv/tv_models.dart';
+import '../tv/tv_pairing_view.dart';
 import 'media_kit/audio_handler.dart';
 import 'media_kit/recording_play.dart';
 import 'media_list.dart';
@@ -96,6 +99,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   bool _formatsExpanded = false; // Tracks if formats section is expanded
   bool _showTables = false; // Delay tables rendering until animation completes
   Animation<double>? _routeAnimation; // Page transition animation, used to defer heavy work
+  // The television this recording is cast to. While it is set, the playback
+  // controls of this screen act on the television instead of on this device.
+  String? _castSessionId;
+  // The television reports its position every few seconds; between reports the
+  // position shown here advances by the clock, so it moves like the picture.
+  int _castReported = -1;
+  DateTime _castReportedAt = DateTime.now();
 
   static const _updatePullPeriod = Duration(seconds: 3);
 
@@ -142,6 +152,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       _showTables = true;
     });
     _pullRefresh();
+    _adoptCastSession();
   }
 
   @override
@@ -200,9 +211,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
     // Try to open local file with MIME type
     final mimeType = FileOpener.getMimeType(filePath);
-    final success = mimeType != null
-        ? await FileOpener.openFileWithType(filePath, mimeType)
-        : await FileOpener.openFile(filePath);
+    final success = mimeType != null ? await FileOpener.openFileWithType(filePath, mimeType) : await FileOpener.openFile(filePath);
 
     if (!success && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -329,6 +338,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       _currentPosition = position;
     });
 
+    if (_castSessionId != null) {
+      _castCommand(TvCommand.seek(position.inSeconds));
+      return;
+    }
+
     _seekToPosition(position);
   }
 
@@ -357,9 +371,41 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     setState(() {});
   }
 
-  /// Get current position with local override for immediate UI updates
+  /// Get current position with local override for immediate UI updates.
+  /// While casting, the position is the television's.
   Duration _getCurrentPosition(RecordingInfo recording) {
-    return _currentPosition ?? Duration(seconds: recording.position);
+    final override = _currentPosition;
+    if (override != null) {
+      return override;
+    }
+    final cast = _castSession;
+    if (cast == null) {
+      return Duration(seconds: recording.position);
+    }
+    var position = Duration(seconds: cast.position);
+    if (cast.isPlaying && cast.position == _castReported) {
+      // Never further than one report interval ahead of what was reported.
+      final elapsed = DateTime.now().difference(_castReportedAt);
+      position += elapsed < _castReportInterval ? elapsed : _castReportInterval;
+    }
+    return position;
+  }
+
+  static const _castReportInterval = Duration(seconds: 5);
+
+  /// Remembers when the reported position last changed, for interpolation.
+  void _onCastSession(AsyncValue<TvSession>? previous, AsyncValue<TvSession> next) {
+    final session = next.valueOrNull;
+    if (session != null && session.position != _castReported) {
+      _castReported = session.position;
+      _castReportedAt = DateTime.now();
+    }
+  }
+
+  /// The session of the television this screen casts to, as last polled.
+  TvSession? get _castSession {
+    final id = _castSessionId;
+    return id == null ? null : ref.read(tvSessionStateProvider(id)).valueOrNull;
   }
 
   /// Shows manual seek dialog with hour, minute, second inputs
@@ -511,6 +557,222 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     });
   }
 
+  /// Casting needs a file the server holds: a television cannot reach a copy
+  /// that lives on this device. A paired session is remembered by the server,
+  /// so pairing is asked for only when none is live.
+  Future<void> _castToTv(RecordingInfo recording) async {
+    final downloads = ref.read(downloadsNotifierProvider(recording.id)).valueOrNull;
+    final (_, ready, _) = _findAppropriateDownloads(downloads ?? <Download>[]);
+
+    if (ready == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.tvNoReadyDownload)));
+      }
+      return;
+    }
+
+    TvSession? session;
+    try {
+      final sessions = await ref.read(tvSessionsProvider.future);
+      for (final s in sessions) {
+        if (s.isLive) {
+          session = s;
+          break;
+        }
+      }
+    } catch (e, st) {
+      AppLoggers.api.w('Failed to list tv sessions', error: e, stackTrace: st);
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    session ??= await TvPairingView.show(context);
+    if (session == null || !mounted) {
+      return;
+    }
+
+    // One picture at a time: local playback stops where the television takes over.
+    if (MKPlayerHandler.player.state.playing) {
+      await MKPlayerHandler.player.pause();
+    }
+
+    setState(() => _castSessionId = session!.id);
+
+    // The television continues from what this screen shows, so switching to it
+    // does not jump.
+    await _castCommand(TvCommand.play(ready.id, position: _getCurrentPosition(recording).inSeconds));
+  }
+
+  /// A television already casting this recording — the screen was left and
+  /// opened again — is taken over without restarting it.
+  Future<void> _adoptCastSession() async {
+    if (_castSessionId != null) {
+      return;
+    }
+    try {
+      final sessions = await ref.read(tvSessionsProvider.future);
+      for (final s in sessions) {
+        if (s.isLive && s.recordingId == widget.id && !s.isIdle) {
+          if (mounted) {
+            setState(() => _castSessionId = s.id);
+          }
+          return;
+        }
+      }
+    } catch (e, st) {
+      AppLoggers.api.w('Failed to list tv sessions', error: e, stackTrace: st);
+    }
+  }
+
+  Future<void> _castCommand(TvCommand cmd) async {
+    final id = _castSessionId;
+    if (id == null) {
+      return;
+    }
+    try {
+      await ref.read(tvSessionStateProvider(id).notifier).command(cmd);
+    } catch (e, st) {
+      AppLoggers.api.w('The television refused a command', error: e, stackTrace: st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.tvCommandFailed)));
+      }
+    }
+  }
+
+  /// The play button while casting: start the recording on an idle television,
+  /// otherwise pause or resume it.
+  Future<void> _castPlayPause(Download? ready) async {
+    final session = _castSession;
+    if (session == null) {
+      return;
+    }
+    if (session.isIdle || session.recordingId != widget.id) {
+      if (ready != null) {
+        final recording = ref.read(recordingNotifierProvider(widget.id)).value;
+        await _castCommand(TvCommand.play(ready.id, position: recording == null ? null : _getCurrentPosition(recording).inSeconds));
+      }
+      return;
+    }
+    await _castCommand(TvCommand(type: session.isPlaying ? TvCommandType.pause : TvCommandType.resume));
+  }
+
+  /// Hands playback back to this device at the frame the television shows: the
+  /// television is paused first, so the position it reports is exact, and that
+  /// position is stored before the television lets the recording go — a stopped
+  /// session no longer records positions for it.
+  Future<void> _stopCasting({required bool disconnect}) async {
+    final id = _castSessionId;
+    if (id == null) {
+      return;
+    }
+    final notifier = ref.read(tvSessionStateProvider(id).notifier);
+    Duration? last;
+
+    try {
+      final session = _castSession;
+      if (session != null && session.isLive && session.recordingId == widget.id) {
+        var current = session;
+        if (current.isPlaying) {
+          await notifier.command(TvCommand(type: TvCommandType.pause));
+          final deadline = DateTime.now().add(const Duration(seconds: 2));
+          while (DateTime.now().isBefore(deadline)) {
+            await Future<void>.delayed(const Duration(milliseconds: 200));
+            current = await ref.read(tvSessionStateProvider(id).future);
+            if (current.phase == TvPhase.paused) {
+              break;
+            }
+          }
+        }
+        last = Duration(seconds: current.position);
+        await ref.read(putPositionProvider(widget.id, last, false).future);
+      }
+      if (disconnect) {
+        await notifier.end();
+      } else if (session != null && session.isLive) {
+        await notifier.command(TvCommand(type: TvCommandType.stop));
+      }
+    } catch (e, st) {
+      // The television may be gone; control returns to this device regardless.
+      AppLoggers.api.w('Failed to stop casting cleanly', error: e, stackTrace: st);
+    }
+
+    ref.invalidate(tvSessionsProvider);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _castSessionId = null;
+      if (last != null) {
+        _currentPosition = last;
+      }
+    });
+    await _pullRefresh();
+  }
+
+  String _castStatus(AppLocalizations l10n, AsyncValue<TvSession> session) {
+    final s = session.valueOrNull;
+    if (s == null) {
+      return session.hasError ? l10n.tvSessionLost : l10n.tvStatusLoading;
+    }
+    if (!s.connected) {
+      return l10n.tvStatusDisconnected;
+    }
+    switch (s.phase) {
+      case TvPhase.playing:
+        return l10n.tvStatusPlaying;
+      case TvPhase.paused:
+        return l10n.tvStatusPaused;
+      case TvPhase.loading:
+        return l10n.tvStatusLoading;
+      default:
+        return l10n.tvStatusReady;
+    }
+  }
+
+  Widget _castStatusLine(BuildContext context, AsyncValue<TvSession> session) {
+    final l10n = AppLocalizations.of(context)!;
+    final error = session.valueOrNull?.error;
+    final errorStyle = TextStyle(color: Theme.of(context).colorScheme.error);
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Column(
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cast_connected, size: 18),
+              const SizedBox(width: 8),
+              Text(_castStatus(l10n, session), style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+          if (error != null) Text(error.code == TvErrorCode.unsupportedMedia ? l10n.tvErrorUnsupportedMedia : l10n.tvErrorPlayback, style: errorStyle),
+        ],
+      ),
+    );
+  }
+
+  Widget _castButton(RecordingInfo recording) {
+    final l10n = AppLocalizations.of(context)!;
+    if (_castSessionId == null) {
+      return IconButton(
+        icon: const Icon(Icons.cast),
+        tooltip: l10n.tvCast,
+        onPressed: () => _castToTv(recording),
+      );
+    }
+    return PopupMenuButton<bool>(
+      icon: const Icon(Icons.cast_connected),
+      tooltip: l10n.tvCast,
+      onSelected: (disconnect) => _stopCasting(disconnect: disconnect),
+      itemBuilder: (context) => [
+        PopupMenuItem(value: false, child: Text(l10n.tvStop)),
+        PopupMenuItem(value: true, child: Text(l10n.tvDisconnect)),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final recording = ref.watch(recordingNotifierProvider(widget.id));
@@ -568,6 +830,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             appBar: AppBar(
               title: recording.hasValue ? Text(recording.requireValue.title) : Text(AppLocalizations.of(context)!.loadingInfo),
               actions: [
+                if (recording.hasValue) _castButton(recording.requireValue),
                 IconButton(
                   icon: _cleanServerMediaIcon,
                   tooltip: AppLocalizations.of(context)!.cleanAllDownloadedContentOnServer,
@@ -713,8 +976,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               children: [
                 Text("${recording.id}: ${recording.title}", style: Theme.of(context).textTheme.bodyLarge),
                 Text("${recording.uploader} • ${recording.extractor}"),
-                Text(AppLocalizations.of(context)!.createdAtWithDate(formatDateLong(recording.createdAt), since(recording.createdAt, false, Localizations.localeOf(context).languageCode))),
-                Text(AppLocalizations.of(context)!.updatedAtWithDate(formatDateLong(recording.updatedAt), since(recording.updatedAt, false, Localizations.localeOf(context).languageCode))),
+                Text(AppLocalizations.of(context)!
+                    .createdAtWithDate(formatDateLong(recording.createdAt), since(recording.createdAt, false, Localizations.localeOf(context).languageCode))),
+                Text(AppLocalizations.of(context)!
+                    .updatedAtWithDate(formatDateLong(recording.updatedAt), since(recording.updatedAt, false, Localizations.localeOf(context).languageCode))),
                 Row(
                   children: [
                     Text(recording.webpageUrl, style: const TextStyle(overflow: TextOverflow.fade, decoration: TextDecoration.underline, color: Colors.blue)),
@@ -733,21 +998,37 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     );
   }
 
+  /// Play on this device, or — while casting — play or pause the television.
+  void _play(BuildContext context, RecordingInfo recording, AsyncValue<List<Download>> downloads) {
+    var (local, ready, stale) = downloads.hasValue ? _findAppropriateDownloads(downloads.requireValue) : (null, null, null);
+    if (_castSessionId != null) {
+      _castPlayPause(ready);
+    } else if (local != null) {
+      _recordView(context, recording, local);
+    } else if (ready != null) {
+      _recordView(context, recording, ready);
+    } else if (stale != null) {
+      _startPreparation(context, stale.formatId);
+    }
+  }
+
   Widget _buildPreview(BuildContext context, RecordingInfo recording, AsyncValue<List<Download>> downloads) {
+    final castId = _castSessionId;
+    // Watched so the screen follows the television; the value is read through
+    // _castSession where the position is needed.
+    final cast = castId == null ? null : ref.watch(tvSessionStateProvider(castId));
+    if (castId != null) {
+      ref.listen(tvSessionStateProvider(castId), _onCastSession);
+    }
+    final castPlaying = cast?.valueOrNull?.isPlaying ?? false;
+    final castDuration = cast?.valueOrNull?.duration ?? 0;
+    final l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: InkWell(
-          onTap: () {
-            var (local, ready, stale) = downloads.hasValue ? _findAppropriateDownloads(downloads.requireValue) : (null, null, null);
-            if (local != null) {
-              _recordView(context, recording, local);
-            } else if (ready != null) {
-              _recordView(context, recording, ready);
-            } else if (stale != null) {
-              _startPreparation(context, stale.formatId);
-            }
-          },
+          onTap: () => _play(context, recording, downloads),
           child: Column(
             children: [
               SizedBox(
@@ -801,7 +1082,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 progressBarColor: MediaPlayerTheme.getProgressBarColor(context),
                 timeLabelLocation: TimeLabelLocation.sides,
                 progress: _getCurrentPosition(recording),
-                total: Duration(seconds: recording.duration),
+                total: Duration(seconds: castDuration > 0 ? castDuration : recording.duration),
                 timeLabelType: TimeLabelType.remainingTime,
                 onSeek: (position) {
                   _seek(position);
@@ -830,19 +1111,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     },
                     child: const Icon(Icons.fast_rewind),
                   ),
-                  // Play button - use existing tap logic
                   TextButton(
-                    onPressed: () {
-                      var (local, ready, stale) = downloads.hasValue ? _findAppropriateDownloads(downloads.requireValue) : (null, null, null);
-                      if (local != null) {
-                        _recordView(context, recording, local);
-                      } else if (ready != null) {
-                        _recordView(context, recording, ready);
-                      } else if (stale != null) {
-                        _startPreparation(context, stale.formatId);
-                      }
-                    },
-                    child: const Icon(Icons.play_arrow),
+                    onPressed: () => _play(context, recording, downloads),
+                    child: Tooltip(
+                      message: castPlaying ? l10n.tvPause : l10n.tvPlay,
+                      child: Icon(castPlaying ? Icons.pause : Icons.play_arrow),
+                    ),
                   ),
                   TextButton(
                     onLongPress: () {
@@ -864,6 +1138,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   ),
                 ],
               ),
+              if (cast != null) _castStatusLine(context, cast),
             ],
           ),
         ),
@@ -998,8 +1273,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             },
             onLongPress: () async {
               if (UniversalPlatform.isLinux) {
-                await Process.start(
-                    "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.url],
+                await Process.start("/usr/bin/flatpak-spawn",
+                    <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.url],
                     mode: ProcessStartMode.detached);
               }
             },
@@ -1022,11 +1297,26 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               copyToClipboard(context, "curl '${d.url}' -o '${d.filename}'");
             case "mpv-play":
               await Process.start(
-                  "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
+                  "/usr/bin/flatpak-spawn",
+                  <String>[
+                    _mpvPlayer,
+                    "--start=${recording.position}",
+                    "--title=${recording.title}",
+                    "--input-ipc-server=$_mpvSocketPath",
+                    d.fullPathMedia ?? d.url
+                  ],
                   mode: ProcessStartMode.detached);
             case "mpv-play-horizontal-flip":
-              await Process.start("/usr/bin/flatpak-spawn",
-                  <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
+              await Process.start(
+                  "/usr/bin/flatpak-spawn",
+                  <String>[
+                    _mpvPlayer,
+                    "--vf=hflip",
+                    "--start=${recording.position}",
+                    "--title=${recording.title}",
+                    "--input-ipc-server=$_mpvSocketPath",
+                    d.fullPathMedia ?? d.url
+                  ],
                   mode: ProcessStartMode.detached);
             case "default":
               await _openInExternalApp(context, d);
@@ -1189,8 +1479,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           },
           onLongPress: () async {
             if (UniversalPlatform.isLinux) {
-              await Process.start(
-                  "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!],
+              await Process.start("/usr/bin/flatpak-spawn",
+                  <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!],
                   mode: ProcessStartMode.detached);
             }
           },
