@@ -7,7 +7,7 @@ All notable changes to the Ilovlya UI project will be documented in this file.
 
 The format is based on https://keepachangelog.com/[Keep a Changelog], and this project adheres to https://semver.org/[Semantic Versioning].
 
-== [3.7.0] - Unreleased
+== [3.7.0 Glauconite] - 2026-10-06
 
 Casting a recording to a television through the television's browser. Casting
 needs a server that provides `/api/tv`.
@@ -15,7 +15,7 @@ needs a server that provides `/api/tv`.
 .Added
 - Cast to TV on a recording's details screen, offered when the server holds a ready download
 - Pairing with the code shown at `/tv` in the television's browser, typed or scanned as a QR code on Android and iOS
-- Control while casting: play, pause, 30-second skips and stop, with the position reported by the television
+- Control while casting with the recording's own player: play/pause, skips and the progress bar act on the television; the cast button stops casting, handing playback back to the phone at the frame the television showed, or disconnects the television
 - Position watched on the television is stored like local playback, so the recording resumes where it was left
 - Control on the television itself: the video's own controls and the remote's OK, play/pause and arrow keys
 
