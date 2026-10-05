@@ -1398,7 +1398,7 @@
   "@tvStatusDisconnected": {
     "description": "Cast status"
   },
-  "tvDisconnect": "Отключить",
+  "tvDisconnect": "Отключить телевизор",
   "@tvDisconnect": {
     "description": "Ends the cast session"
   },
@@ -1410,16 +1410,8 @@
   "@tvPause": {
     "description": "Transport control"
   },
-  "tvStop": "Остановить",
+  "tvStop": "Остановить трансляцию",
   "@tvStop": {
-    "description": "Transport control"
-  },
-  "tvRewind": "Назад 30 секунд",
-  "@tvRewind": {
-    "description": "Transport control"
-  },
-  "tvForward": "Вперёд 30 секунд",
-  "@tvForward": {
     "description": "Transport control"
   },
   "tvCommandFailed": "Телевизор не принял команду",

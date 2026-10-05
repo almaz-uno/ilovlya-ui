@@ -883,7 +883,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tvStatusDisconnected => 'Television is not connected';
 
   @override
-  String get tvDisconnect => 'Disconnect';
+  String get tvDisconnect => 'Disconnect the television';
 
   @override
   String get tvPlay => 'Play';
@@ -892,13 +892,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tvPause => 'Pause';
 
   @override
-  String get tvStop => 'Stop';
-
-  @override
-  String get tvRewind => 'Back 30 seconds';
-
-  @override
-  String get tvForward => 'Forward 30 seconds';
+  String get tvStop => 'Stop casting';
 
   @override
   String get tvCommandFailed => 'The television did not take the command';

@@ -894,7 +894,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tvStatusDisconnected => 'Телевизор не на связи';
 
   @override
-  String get tvDisconnect => 'Отключить';
+  String get tvDisconnect => 'Отключить телевизор';
 
   @override
   String get tvPlay => 'Воспроизвести';
@@ -903,13 +903,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tvPause => 'Пауза';
 
   @override
-  String get tvStop => 'Остановить';
-
-  @override
-  String get tvRewind => 'Назад 30 секунд';
-
-  @override
-  String get tvForward => 'Вперёд 30 секунд';
+  String get tvStop => 'Остановить трансляцию';
 
   @override
   String get tvCommandFailed => 'Телевизор не принял команду';

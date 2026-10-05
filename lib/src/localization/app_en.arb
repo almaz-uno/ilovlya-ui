@@ -1700,9 +1700,9 @@
   "@tvStatusDisconnected": {
     "description": "Cast status"
   },
-  "tvDisconnect": "Disconnect",
+  "tvDisconnect": "Disconnect the television",
   "@tvDisconnect": {
-    "description": "Ends the cast session"
+    "description": "Ends the cast session; the television shows a new pairing code"
   },
   "tvPlay": "Play",
   "@tvPlay": {
@@ -1712,17 +1712,9 @@
   "@tvPause": {
     "description": "Transport control"
   },
-  "tvStop": "Stop",
+  "tvStop": "Stop casting",
   "@tvStop": {
-    "description": "Transport control"
-  },
-  "tvRewind": "Back 30 seconds",
-  "@tvRewind": {
-    "description": "Transport control"
-  },
-  "tvForward": "Forward 30 seconds",
-  "@tvForward": {
-    "description": "Transport control"
+    "description": "Hands playback back to the device at the television's position"
   },
   "tvCommandFailed": "The television did not take the command",
   "@tvCommandFailed": {

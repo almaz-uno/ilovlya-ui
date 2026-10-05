@@ -1600,10 +1600,10 @@ abstract class AppLocalizations {
   /// **'Television is not connected'**
   String get tvStatusDisconnected;
 
-  /// Ends the cast session
+  /// Ends the cast session; the television shows a new pairing code
   ///
   /// In en, this message translates to:
-  /// **'Disconnect'**
+  /// **'Disconnect the television'**
   String get tvDisconnect;
 
   /// Transport control
@@ -1618,23 +1618,11 @@ abstract class AppLocalizations {
   /// **'Pause'**
   String get tvPause;
 
-  /// Transport control
+  /// Hands playback back to the device at the television's position
   ///
   /// In en, this message translates to:
-  /// **'Stop'**
+  /// **'Stop casting'**
   String get tvStop;
-
-  /// Transport control
-  ///
-  /// In en, this message translates to:
-  /// **'Back 30 seconds'**
-  String get tvRewind;
-
-  /// Transport control
-  ///
-  /// In en, this message translates to:
-  /// **'Forward 30 seconds'**
-  String get tvForward;
 
   /// Shown when a cast command fails
   ///
