@@ -7,7 +7,7 @@ part of 'housekeeper_riverpod.dart';
 // **************************************************************************
 
 String _$localMediaHousekeeperHash() =>
-    r'0bec6151985d8395ba0063fe0541553c90ccbad1';
+    r'72b6f862fac37474feb5d1f481a97fb1d5987464';
 
 /// See also [LocalMediaHousekeeper].
 @ProviderFor(LocalMediaHousekeeper)
@@ -24,7 +24,7 @@ final localMediaHousekeeperProvider = AutoDisposeAsyncNotifierProvider<
 
 typedef _$LocalMediaHousekeeper
     = AutoDisposeAsyncNotifier<(int number, int size)>;
-String _$localDataNotifierHash() => r'b4fc2336cc7f9e84a627619e627db4e6aa101587';
+String _$localDataNotifierHash() => r'aca88d207f05536b35455461c943b4ffd5523757';
 
 /// See also [LocalDataNotifier].
 @ProviderFor(LocalDataNotifier)

@@ -108,7 +108,10 @@ class LocalDataNotifier extends _$LocalDataNotifier {
     sp.thumbnails().createSync(recursive: true);
     sp.downloads().createSync(recursive: true);
     ref.invalidateSelf();
-    ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+    // Not awaited: a failed pull must not fail the cleanup that has already been done.
+    ref.read(mediaListNotifierProvider.notifier).refreshFromServer().catchError((Object e) {
+      AppLoggers.media.w('Media list refresh after metadata cleanup failed: $e');
+    });
     return Future.value(number);
   }
 }

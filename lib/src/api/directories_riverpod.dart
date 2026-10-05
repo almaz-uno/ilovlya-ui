@@ -44,8 +44,10 @@ class StorePlaces {
 
 @riverpod
 Future<StorePlaces> storePlaces(Ref ref) async {
-  final dataDir = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.dataStorageDirectory));
-  final mediaDir = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.mediaStorageDirectory));
+  // selectAsync waits for settings to load instead of throwing on AsyncLoading;
+  // both dependencies are registered before the first await.
+  final dataDir = ref.watch(settingsNotifierProvider.selectAsync((value) => value.dataStorageDirectory));
+  final mediaDir = ref.watch(settingsNotifierProvider.selectAsync((value) => value.mediaStorageDirectory));
 
-  return StorePlaces(dataDir: dataDir, mediaDir: mediaDir);
+  return StorePlaces(dataDir: await dataDir, mediaDir: await mediaDir);
 }

@@ -6,7 +6,7 @@ part of 'directories_riverpod.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$storePlacesHash() => r'870c73d2771294c1731e14e6be35610744b285a5';
+String _$storePlacesHash() => r'8e7053109007ec4be5aa8bf5176955a8c3e67786';
 
 /// See also [storePlaces].
 @ProviderFor(storePlaces)
