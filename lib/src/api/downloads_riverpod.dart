@@ -6,6 +6,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
 import '../model/download.dart';
 import '../model/recording_info.dart';
+import '../playback_download/partial_file.dart';
+import '../playback_download/playback_downloads.dart';
 import '../utils/logger_provider.dart';
 import 'api_riverpod.dart';
 import 'directories_riverpod.dart';
@@ -107,9 +109,14 @@ class DownloadsNotifier extends _$DownloadsNotifier {
   }
 
   Future<void> _clean({String downloadId = ""}) async {
+    final sp = await ref.read(storePlacesProvider.future);
+    final playback = ref.read(playbackDownloadsProvider.notifier);
     for (final dp in state.requireValue) {
-      if (dp.fullPathMedia == null) continue;
       if (downloadId != "" && dp.id != downloadId) continue;
+      // The partial file belongs to the download as much as the final one does.
+      await playback.discard(dp.id);
+      PartialFile.deleteFor(sp.media().path, dp.filename);
+      if (dp.fullPathMedia == null) continue;
       final f = File(dp.fullPathMedia!);
       if (f.existsSync()) f.deleteSync();
     }

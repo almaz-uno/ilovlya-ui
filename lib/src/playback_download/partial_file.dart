@@ -94,6 +94,16 @@ class PartialFile {
     return PartialFile._(downloadId, url, dataPath, statePath, p.join(mediaDir, filename), ranges, length, lastModified);
   }
 
+  /// Deletes the partial file of [filename] and its record, if there are any; for cleaning a partial file no session
+  /// holds, such as one paused in an earlier run of the application.
+  static void deleteFor(String mediaDir, String filename) {
+    final dataPath = p.join(mediaDir, partialDirName, filename);
+    for (final path in [dataPath, '$dataPath.state.json', '$dataPath.state.json.tmp']) {
+      final f = File(path);
+      if (f.existsSync()) f.deleteSync();
+    }
+  }
+
   /// The file's length, known from the server's first answer and fixed afterwards.
   int? get length => _length;
 

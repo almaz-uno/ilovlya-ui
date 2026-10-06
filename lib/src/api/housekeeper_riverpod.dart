@@ -5,6 +5,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import '../model/recording_info.dart';
+import '../playback_download/partial_file.dart';
+import '../playback_download/playback_downloads.dart';
 import '../utils/logger_provider.dart';
 import 'directories_riverpod.dart';
 import 'media_list_riverpod.dart';
@@ -40,6 +42,8 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
   Future<(int, int)> cleanAll() async {
     final sp = await ref.watch(storePlacesProvider.future);
     final (number, size) = state.value!;
+    // Partial files go with everything else; a download a player still reads continues as a plain stream.
+    await ref.read(playbackDownloadsProvider.notifier).stopAll();
     sp.media().deleteSync(recursive: true);
     sp.media().createSync(recursive: true);
     // Recalculate and update state directly after cleanup
@@ -66,6 +70,28 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
               f.deleteSync();
             }
           });
+      }
+    }
+    // Partial files follow the same rule: the partial file of a seen or hidden recording goes.
+    final partial = Directory(p.join(sp.media().path, PartialFile.partialDirName));
+    if (partial.existsSync()) {
+      for (final e in partial.listSync()) {
+        if (e is! File || e.path.endsWith('.state.json') || e.path.endsWith('.tmp')) continue;
+        final bn = p.basename(e.path);
+        final pos = bn.indexOf('-');
+        if (pos < 0) continue;
+        final RecordingInfo ri;
+        try {
+          ri = await ref.read(recordingNotifierProvider(bn.substring(0, pos)).future);
+        } on Object catch (err) {
+          AppLoggers.media.w('Cannot tell whether the partial file $bn is stale', error: err);
+          continue;
+        }
+        if (ri.seenAt == null && ri.hiddenAt == null) continue;
+        number++;
+        size += e.lengthSync();
+        await ref.read(playbackDownloadsProvider.notifier).discardFile(bn);
+        PartialFile.deleteFor(sp.media().path, bn);
       }
     }
     // Recalculate and update state directly after cleanup
