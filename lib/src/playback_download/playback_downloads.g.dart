@@ -6,7 +6,7 @@ part of 'playback_downloads.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$playbackDownloadsHash() => r'0f0b797f12267a1c49f830a63c0e0a97466414a9';
+String _$playbackDownloadsHash() => r'0c12e88a716a7eda8afa78e7716cfca756ddd99b';
 
 /// The owner of the playback downloads: one [PartialSource] per download, served by one [LocalMediaEndpoint].
 ///
