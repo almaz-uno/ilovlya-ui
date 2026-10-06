@@ -49,4 +49,16 @@ class LocalDTNotifier extends _$LocalDTNotifier {
     state = <String, LocalDownloadTask>{}..addAll(state);
 
   }
+
+  /// Puts the state of a download that is not a `background_downloader` task — a playback download — beside the tasks,
+  /// so that the progress line in the player and the guard in `downloadFile` see it like any other.
+  void publish(LocalDownloadTask task) {
+    state = {...state, task.id: task};
+  }
+
+  /// Drops what [publish] put there, once the download is gone.
+  void forget(String id) {
+    if (!state.containsKey(id)) return;
+    state = {...state}..remove(id);
+  }
 }
