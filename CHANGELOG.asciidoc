@@ -7,6 +7,24 @@ All notable changes to the Ilovlya UI project will be documented in this file.
 
 The format is based on https://keepachangelog.com/[Keep a Changelog], and this project adheres to https://semver.org/[Semantic Versioning].
 
+== [3.8.0] - Unreleased
+
+Playing a recording from its own download: with "Download while playing" on, the
+file is fetched from the server once and played from while it arrives.
+
+.Added
+- Playback from the file being downloaded: one transfer instead of a stream and a download side by side, and no switch, reopening or message when the download completes
+- Seeking beyond what has arrived, and files whose index sits at the end, are served by moving the download to where the player reads
+- A playback download interrupted by closing the application resumes from what was stored the next time the recording is played
+
+.Changed
+- The description of "Download while playing" says what it now does
+- A paused playback download gives way to the explicit download button, which starts its own download
+
+.Fixed
+- A server outage during playback no longer ends the recording: the player keeps the position, says the playback was interrupted, and continues from there once the server is back — instead of marking the recording watched, or starting it from the beginning on play
+- The position is no longer set to zero on the server at the start of every playback
+
 == [3.7.0 Glauconite] - 2026-10-06
 
 Casting a recording to a television through the television's browser. Casting
