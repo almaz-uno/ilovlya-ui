@@ -793,9 +793,24 @@
     "description": "Download while playing switch label"
   },
 
-  "downloadWhilePlayingDescription": "Start download during playback. When download completes, playback will continue from the file.",
+  "downloadWhilePlayingDescription": "Save the file while playing. Playback runs from the file being downloaded, and nothing is downloaded twice.",
   "@downloadWhilePlayingDescription": {
     "description": "Download while playing switch description"
+  },
+
+  "playbackDownloadNotSaved": "The file cannot be saved. Playback continues without saving.",
+  "@playbackDownloadNotSaved": {
+    "description": "Shown once when a playback download cannot write its file and the playback continues as a plain stream"
+  },
+
+  "playbackInterrupted": "Playback was interrupted. Press play to continue from {position}.",
+  "@playbackInterrupted": {
+    "description": "Shown when the stream ended before the recording did, typically because the server became unreachable",
+    "placeholders": {
+      "position": {
+        "type": "String"
+      }
+    }
   },
 
   "yourTokenProvidedByBot": "Your token, provided by the bot",

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:async/async.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
@@ -22,6 +23,8 @@ import '../../localization/app_localizations.dart';
 import '../../model/download.dart';
 import '../../model/local_download.dart';
 import '../../model/recording_info.dart';
+import '../../playback_download/partial_source.dart';
+import '../../playback_download/playback_downloads.dart';
 import '../../settings/settings_provider.dart';
 import '../../theme/media_player_theme.dart';
 import '../../utils/logger_provider.dart';
@@ -46,11 +49,16 @@ class RecordingViewMediaKitHandler extends ConsumerStatefulWidget {
   final Download download;
   final bool inFull;
 
+  /// Where to read from instead of the download itself: the local endpoint of a playback download. `null` plays the
+  /// local file or the server's URL, as before, and keeps the switch to a local file an explicit download completes.
+  final Uri? source;
+
   const RecordingViewMediaKitHandler({
     super.key,
     required this.recording,
     required this.download,
     this.inFull = false,
+    this.source,
   });
 
   @override
@@ -71,6 +79,9 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   Timer? _rewindTimer;
   bool _hasAttemptedSwitch = false; // Flag to prevent multiple switch attempts
   bool _isFirstDurationEvent = true; // Flag to auto-play only on first duration event
+  bool _interrupted = false; // The stream ended before the recording did; reopening at the position
+  int _reopenAttempts = 0;
+  Timer? _reopenRetry;
 
   @override
   void initState() {
@@ -94,6 +105,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       thumbnailUrl,
       useCaching: useCaching,
       mediaDirectory: mediaDirectory,
+      source: widget.source,
     );
 
     if (UniversalPlatform.isDesktop || UniversalPlatform.isWeb) {
@@ -102,6 +114,11 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
     _player.stream.duration.listen((event) {
       if (!mounted) return;
+      if (_interrupted && event > Duration.zero) {
+        // The reopened source has loaded; play continues from the position the seek below restores.
+        _interrupted = false;
+        _reopenRetry?.cancel();
+      }
       _seek(Duration(seconds: widget.recording.position));
       // Auto-play only on first duration event (initial load)
       if (_isFirstDurationEvent) {
@@ -131,11 +148,14 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
     _player.stream.completed.listen((event) {
       if (!mounted) return;
-      _sendPosition(
-        widget.recording.id,
-        _player.state.position,
-        event,
-      );
+      // `false` arrives on every open and seek, while the position may still be zero; it says nothing the periodic
+      // tick does not, and sending it wrote a zero to the server at every start.
+      if (!event) return;
+      if (_reachedEnd()) {
+        _sendPosition(widget.recording.id, _player.state.position, true);
+      } else {
+        _onInterrupted();
+      }
       setState(() {});
     });
 
@@ -149,6 +169,49 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
         );
       }
       setState(() {});
+    });
+  }
+
+  /// Whether the player's end of file is the end of the recording: within max(2 s, 1 %) of the duration. libmpv reports
+  /// the end of the file also when the server went away and the buffer ran out, at the position where the bytes did.
+  /// Without a duration the end of the file keeps its old meaning.
+  bool _reachedEnd() {
+    final duration = _player.state.duration;
+    if (duration <= Duration.zero) return true;
+    final tolerance = Duration(milliseconds: max(2000, duration.inMilliseconds ~/ 100));
+    return duration - _player.state.position <= tolerance;
+  }
+
+  /// The stream ended before the recording did. The position is kept as an ordinary one, not as finished, and the same
+  /// source is opened again, paused at that position: a completed player would otherwise start from zero on play.
+  void _onInterrupted() {
+    final position = _player.state.position;
+    AppLoggers.player.w('Playback of ${widget.recording.id} ended at ${position.inSeconds}s of ${_player.state.duration.inSeconds}s: an interruption, not the end');
+    _sendPosition(widget.recording.id, position, false);
+    widget.recording.position = position.inSeconds;
+    if (!_interrupted) {
+      final l10n = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.playbackInterrupted(formatDuration(position)))));
+    }
+    _interrupted = true;
+    _reopenAttempts = 0;
+    _reopen();
+  }
+
+  /// Opens the source again, paused; the duration listener seeks to the kept position once it loads. A source that
+  /// does not load — the server still away — is tried again every 5 s for two minutes while the screen is open.
+  Future<void> _reopen() async {
+    if (!mounted || !_interrupted) return;
+    _reopenAttempts++;
+    final url = widget.source?.toString() ?? widget.download.fullPathMedia ?? widget.download.url;
+    try {
+      await _player.open(Media(url), play: false);
+    } catch (e, s) {
+      AppLoggers.player.w('Reopening ${widget.recording.id} failed (attempt $_reopenAttempts)', error: e, stackTrace: s);
+    }
+    _reopenRetry?.cancel();
+    _reopenRetry = Timer(const Duration(seconds: 5), () {
+      if (mounted && _interrupted && _player.state.duration <= Duration.zero && _reopenAttempts < 24) _reopen();
     });
   }
 
@@ -287,6 +350,10 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     // Stop UI-updating streams immediately.
     _positionSendSubs?.cancel();
     _uiUpdateSubs?.cancel();
+    _reopenRetry?.cancel();
+    _interrupted = false;
+    // A playback download outlives the player: it continues unattended.
+    if (widget.source != null) ref.read(playbackDownloadsProvider.notifier).detach(widget.download.id);
     // Defer the native player teardown until after the pop transition. The
     // native stop() (releasing the HW video decoder) otherwise blocks the
     // platform thread during the reverse slide, causing a visible jerk.
@@ -359,6 +426,14 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     }
 
     final settings = ref.watch(settingsNotifierProvider);
+    if (widget.source != null) {
+      // Told once: writing the file failed, and the playback goes on as a plain stream.
+      ref.listen(playbackDownloadsProvider.select((s) => s[widget.download.id]), (previous, next) {
+        if (next == SourceState.passThrough && previous != SourceState.passThrough && ref.read(playbackDownloadsProvider.notifier).savingFailed(widget.download.id)) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.playbackDownloadNotSaved)));
+        }
+      });
+    }
     // final rewindTextStyle = Theme.of(context).textTheme.titleSmall;
     final techInfoStyle = GoogleFonts.ptMono();
     return PopScope(
@@ -510,7 +585,8 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                           final task = ref.watch(localDTNotifierProvider.select((tasks) => tasks[widget.download.id]));
 
                           // Check if download completed and file exists, then switch to local
-                          if (task != null && task.status == TaskStatus.complete && !_hasAttemptedSwitch) {
+                          // Only a playback that reads the server's URL switches; a playback download is the file already.
+                          if (widget.source == null && task != null && task.status == TaskStatus.complete && !_hasAttemptedSwitch) {
                             final settings = ref.read(settingsNotifierProvider).requireValue;
                             final localFilePath = p.join(settings.mediaStorageDirectory, task.filename);
                             final localFile = File(localFilePath);

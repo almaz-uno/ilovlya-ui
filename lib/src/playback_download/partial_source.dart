@@ -34,6 +34,7 @@ class PartialSource implements EndpointSource {
 
   SourceState _state = SourceState.idle;
   String? _goneReason;
+  bool _writeFailed = false;
   Future<void>? _run;
   int _readers = 0;
   int? _steeredTo;
@@ -49,6 +50,9 @@ class PartialSource implements EndpointSource {
   SourceState get state => _state;
 
   String? get goneReason => _goneReason;
+
+  /// Whether the source passes through because writing failed, as opposed to the media having been cleaned.
+  bool get writeFailed => _writeFailed;
 
   bool get isRunning => _run != null;
 
@@ -199,6 +203,7 @@ class PartialSource implements EndpointSource {
         await file.discard();
         _gone('the server sent no length');
       case FetchOutcome.writeFailed:
+        _writeFailed = true;
         await file.discard();
         _setState(SourceState.passThrough);
     }

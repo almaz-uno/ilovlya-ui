@@ -93,8 +93,10 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     });
   }
 
-  Future<void> playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl, {bool useCaching = false, String? mediaDirectory}) async {
-    final url = download.fullPathMedia ?? download.url;
+  /// Opens [download] — from [source] when given, the local endpoint of a playback download, otherwise from the local
+  /// file or the server's URL.
+  Future<void> playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl, {bool useCaching = false, String? mediaDirectory, Uri? source}) async {
+    final url = source?.toString() ?? download.fullPathMedia ?? download.url;
 
     player.open(Media(url));
 
@@ -113,7 +115,8 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
     player.stream.duration.listen((event) {
       mediaItem.add(MediaItem(
-        id: url,
+        // The endpoint's port changes per process; the media session's identity should not.
+        id: source == null ? url : download.url,
         title: recording.title,
         artist: recording.uploader,
         album: recording.extractor,

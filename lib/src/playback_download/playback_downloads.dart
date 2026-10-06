@@ -66,6 +66,9 @@ class PlaybackDownloads extends _$PlaybackDownloads {
   /// Whether the playback download of [downloadId] is transferring right now.
   bool isActive(String downloadId) => _sessions[downloadId]?.source.isRunning ?? false;
 
+  /// Whether the playback download of [downloadId] stopped saving because its file could not be written.
+  bool savingFailed(String downloadId) => _sessions[downloadId]?.source.writeFailed ?? false;
+
   /// Starts or resumes the playback download of [d] and returns the URL the player opens.
   ///
   /// If the server's first answer carries no length — which `http.ServeContent` never does, but a proxy in front of
@@ -130,6 +133,13 @@ class PlaybackDownloads extends _$PlaybackDownloads {
     if (s == null) return;
     await s.source.discard('discarded');
     await _drop(downloadId);
+  }
+
+  /// Stops and deletes the playback download whose file is [filename], if one is held; for cleaning by file name.
+  Future<void> discardFile(String filename) async {
+    for (final s in _sessions.values.toList()) {
+      if (s.download.filename == filename) await discard(s.download.id);
+    }
   }
 
   /// Deletes every partial file, before the media directory is cleaned. A download a player is reading from turns into
