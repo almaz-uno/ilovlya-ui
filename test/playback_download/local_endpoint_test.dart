@@ -183,6 +183,23 @@ void main() {
     expect(Directory(p.join(media.path, PartialFile.partialDirName)).listSync(), isEmpty);
   });
 
+  test('when the record stops being writable mid-download, the rest comes from the server', () async {
+    final big = randomBytes(PartialFile.checkpointBytes + (1 << 20), 3);
+    up.replace(big, 'Thu, 24 Sep 2026 10:00:00 GMT');
+    up.rate = 16 << 20;
+    final (source, url) = serve();
+    final reading = fetch(player, url, range: 'bytes=0-');
+    while (source.file.ranges.stored == 0) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    await Process.run('chmod', ['a-w', p.join(media.path, PartialFile.partialDirName)]);
+    final r = await reading;
+    expect(r.error, isNull);
+    expect(r.body, big);
+    expect(source.state, SourceState.passThrough);
+    expect(source.writeFailed, isTrue);
+  });
+
   test('a file replaced on the server during playback ends the playback rather than splicing two files', () async {
     up.rate = 1 << 20;
     final (source, url) = serve();

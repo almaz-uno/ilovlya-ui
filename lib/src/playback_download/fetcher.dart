@@ -230,14 +230,20 @@ class Fetcher {
         try {
           await file.write(offset, chunk);
         } on FileSystemException catch (e) {
-          AppLoggers.download.e('Playback download cannot write ${file.dataPath}', error: e);
-          _request?.abort();
-          return _Attempt.writeFailed;
+          return _cannotWrite(file.dataPath, e);
         }
         offset += chunk.length;
         _position = offset;
         _measure(chunk.length);
-        if (file.checkpointDue) await file.checkpoint();
+        // The record is written anew beside the data, so it fails where the open data file does not: a directory
+        // that became read-only, space that ran out between the two. Either way nothing more can be kept.
+        if (file.checkpointDue) {
+          try {
+            await file.checkpoint();
+          } on FileSystemException catch (e) {
+            return _cannotWrite(file.statePath, e);
+          }
+        }
       }
     } on Object catch (e) {
       if (_interrupted) return _Attempt.interrupted;
@@ -251,6 +257,12 @@ class Fetcher {
   }
 
   bool get _interrupted => _stopped || _retargetTo != null;
+
+  _Attempt _cannotWrite(String path, FileSystemException e) {
+    AppLoggers.download.e('Playback download cannot write $path', error: e);
+    _request?.abort();
+    return _Attempt.writeFailed;
+  }
 
   void _measure(int bytes) {
     if (!_window.isRunning) _window.start();

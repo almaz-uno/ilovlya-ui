@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ilovlya/src/playback_download/fetcher.dart';
 import 'package:ilovlya/src/playback_download/partial_file.dart';
+import 'package:path/path.dart' as p;
 
 import 'upstream.dart';
 
@@ -137,6 +138,26 @@ void main() {
   test('an answer without a length cannot be kept', () async {
     up.noLength = true;
     expect(await fetcher(open()).run(0), FetchOutcome.noLength);
+  });
+
+  test('a record that cannot be written ends the run as a write failure, not as a network one', () async {
+    // The open data file keeps taking bytes; only the record, written anew at each checkpoint, needs the directory.
+    // Enough data for a checkpoint by size, arriving slowly enough to take the directory away before it.
+    up.replace(randomBytes(PartialFile.checkpointBytes + (1 << 20), 3), 'Thu, 24 Sep 2026 10:00:00 GMT');
+    up.rate = 16 << 20;
+    final f = open();
+    final run = fetcher(f).run(0);
+    while (f.ranges.stored == 0) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    final dir = p.dirname(f.statePath);
+    await Process.run('chmod', ['a-w', dir]);
+    try {
+      expect(await run, FetchOutcome.writeFailed);
+      expect(up.log.length, 1, reason: 'not retried: ${up.log}');
+    } finally {
+      await Process.run('chmod', ['u+w', dir]);
+    }
   });
 
   test('stop ends a run that is waiting out a backoff', () async {

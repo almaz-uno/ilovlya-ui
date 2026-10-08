@@ -204,8 +204,13 @@ class PartialSource implements EndpointSource {
         _gone('the server sent no length');
       case FetchOutcome.writeFailed:
         _writeFailed = true;
-        await file.discard();
         _setState(SourceState.passThrough);
+        // A directory that refused the record refuses the deletion too; what is left there goes with the next clean.
+        try {
+          await file.discard();
+        } on FileSystemException catch (e) {
+          AppLoggers.download.w('Playback download of ${file.downloadId} could not remove its partial file', error: e);
+        }
     }
   }
 
