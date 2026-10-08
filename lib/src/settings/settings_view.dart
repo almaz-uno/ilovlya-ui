@@ -33,16 +33,21 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final tokenController = TextEditingController(text: settings.requireValue.token);
     final serverUrlController = TextEditingController(text: settings.requireValue.serverUrl);
 
+    // File management is about files on the device, and a browser keeps none:
+    // on web the tab would only wait for directories that do not exist there.
+    final withHousekeeping = !UniversalPlatform.isWeb;
+
     return DefaultTabController(
-      length: 3,
-      initialIndex: 2,
+      length: withHousekeeping ? 3 : 2,
+      initialIndex: withHousekeeping ? 2 : 1,
       child: Scaffold(
         appBar: AppBar(
           bottom: TabBar(
             tabs: [
               Tab(icon: const Icon(Icons.person), text: AppLocalizations.of(context)!.userProfile),
               Tab(icon: const Icon(Icons.settings), text: AppLocalizations.of(context)!.settings),
-              Tab(icon: const Icon(Icons.cleaning_services), text: AppLocalizations.of(context)!.housekeeping),
+              if (withHousekeeping)
+                Tab(icon: const Icon(Icons.cleaning_services), text: AppLocalizations.of(context)!.housekeeping),
             ],
           ),
           title: Text(AppLocalizations.of(context)!.settings),
@@ -88,10 +93,11 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
               const SizedBox(height: 0),
               ..._commonSettings(),
             ]),
-            _tab([
-              const SizedBox(height: 0),
-              ..._housekeeping(context),
-            ]),
+            if (withHousekeeping)
+              _tab([
+                const SizedBox(height: 0),
+                ..._housekeeping(context),
+              ]),
           ],
         ),
       ),
