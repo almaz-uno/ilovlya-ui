@@ -47,14 +47,9 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           ),
           title: Text(AppLocalizations.of(context)!.settings),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: TabBarView(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 8.0,
-                children: <Widget>[
+        body: TabBarView(
+          children: [
+            _tab(<Widget>[
                       const SizedBox(height:0),
                       Consumer(
                         builder: (context, ref, child) {
@@ -88,27 +83,29 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         },
                       ),
                     ] +
-                    tenantInfo(ref),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 8.0,
-                children: [
-                  const SizedBox(height: 0),
-                  ..._commonSettings(),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 8.0,
-                children: [
-                  const SizedBox(height: 0),
-                  ..._housekeeping(context),
-                ],
-              ),
-            ],
-          ),
+                    tenantInfo(ref)),
+            _tab([
+              const SizedBox(height: 0),
+              ..._commonSettings(),
+            ]),
+            _tab([
+              const SizedBox(height: 0),
+              ..._housekeeping(context),
+            ]),
+          ],
         ),
+      ),
+    );
+  }
+
+  // A tab scrolls, so that its content fits a small screen and an open keyboard.
+  Widget _tab(List<Widget> children) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 8.0,
+        children: children,
       ),
     );
   }
@@ -299,10 +296,13 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           // fall back to an offered directory, so this only guards the screen.
           initialValue: mediaDirs.requireValue.contains(mediaDir) ? mediaDir : null,
           alignment: AlignmentDirectional.topStart,
+          isExpanded: true,
           onChanged: (String? directory) {
             ref.read(settingsNotifierProvider.notifier).updateMediaStorageDirectory(directory ?? "");
           },
-          items: [for (final d in mediaDirs.requireValue) DropdownMenuItem(value: d, child: Text(d))],
+          items: [
+            for (final d in mediaDirs.requireValue) DropdownMenuItem(value: d, child: Text(d, overflow: TextOverflow.ellipsis)),
+          ],
         ),
       if (sp.hasValue) Text(AppLocalizations.of(context)!.dataLocalPath(sp.requireValue.data().path)),
       if (sp.hasValue) Text(AppLocalizations.of(context)!.downloadedLocalMediaPath(sp.requireValue.media().path)),

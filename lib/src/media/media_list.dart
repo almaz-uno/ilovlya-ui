@@ -353,11 +353,10 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                   ),
                 ],
               ),
-              bottomNavigationBar: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(usageInfo),
-                ],
+              // Not in a Row: there the text gets unbounded width and runs off
+              // the screen instead of wrapping.
+              bottomNavigationBar: SafeArea(
+                child: Text(usageInfo, textAlign: TextAlign.center),
               ),
               body: RefreshIndicator(
                 onRefresh: _refreshList,
