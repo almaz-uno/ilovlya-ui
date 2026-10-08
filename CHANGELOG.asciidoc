@@ -7,6 +7,13 @@ All notable changes to the Ilovlya UI project will be documented in this file.
 
 The format is based on https://keepachangelog.com/[Keep a Changelog], and this project adheres to https://semver.org/[Semantic Versioning].
 
+== [3.7.1] - 2026-10-08
+
+.Fixed
+- Settings open after the application is reinstalled: a stored data or media directory that is no longer offered falls back to the default
+- Settings tabs scroll on a small screen, and a long media directory path is shortened instead of overflowing
+- The quota line under the media list wraps instead of running off the screen
+
 == [3.7.0 Glauconite] - 2026-10-06
 
 Casting a recording to a television through the television's browser. Casting
