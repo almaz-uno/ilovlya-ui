@@ -231,6 +231,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final (number, size) = media.requireValue;
 
     final mediaDirs = ref.watch(mediaDirsProvider);
+    final mediaDir = ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory));
 
     return [
       Text(AppLocalizations.of(context)!.localMediaInfo, style: Theme.of(context).textTheme.bodyLarge),
@@ -294,7 +295,9 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       if (mediaDirs.hasValue)
         DropdownButtonFormField<String>(
           decoration: InputDecoration(labelText: AppLocalizations.of(context)!.mediaDirectory),
-          initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory)),
+          // A value outside the items fails an assertion; the settings already
+          // fall back to an offered directory, so this only guards the screen.
+          initialValue: mediaDirs.requireValue.contains(mediaDir) ? mediaDir : null,
           alignment: AlignmentDirectional.topStart,
           onChanged: (String? directory) {
             ref.read(settingsNotifierProvider.notifier).updateMediaStorageDirectory(directory ?? "");
