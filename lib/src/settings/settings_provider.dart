@@ -26,28 +26,45 @@ Map<double, String> getSpeedRates(AppLocalizations l10n) {
   };
 }
 
+Future<String> _defaultDir(String name) async {
+  final documents = await getApplicationDocumentsDirectory();
+  if (UniversalPlatform.isDesktop) {
+    return p.join(documents.path, appName, name);
+  }
+  return p.join(documents.path, name);
+}
+
+// A stored directory is honoured only while the application still offers it,
+// otherwise the default is used. The settings keep absolute paths, and iOS
+// gives a reinstalled application a new container: a path into the old one is
+// refused by the sandbox on a device, but on the simulator it is silently
+// recreated, and the application goes on working in a container that is gone.
+Future<String> _storageDir(String kind, String srcDir, List<String> choices) async {
+  var dir = choices.first;
+  if (choices.contains(srcDir)) {
+    dir = srcDir;
+  } else if (srcDir != "") {
+    AppLoggers.settings.w('Stored $kind directory is no longer offered, using the default: $srcDir');
+  }
+
+  try {
+    Directory(dir).createSync(recursive: true);
+  } catch (e, s) {
+    AppLoggers.settings.e('Failed to create $kind directory: $dir', error: e, stackTrace: s);
+    if (dir != choices.first) {
+      return _storageDir(kind, "", choices);
+    }
+  }
+
+  return dir;
+}
+
 Future<String> _dataDir(String srcDir) async {
   if (UniversalPlatform.isWeb) {
     return "<unavailable>";
   }
 
-  if (srcDir == "") {
-    final documents = await getApplicationDocumentsDirectory();
-    if (UniversalPlatform.isDesktop) {
-      srcDir = p.join(documents.path, appName, "data");
-    } else {
-      srcDir = p.join(documents.path, "data");
-    }
-  }
-
-  try {
-    Directory(srcDir).createSync(recursive: true);
-  } catch (e, s) {
-    AppLoggers.settings.e('Failed to create data directory: $srcDir', error: e, stackTrace: s);
-    return _dataDir("");
-  }
-
-  return srcDir;
+  return _storageDir("data", srcDir, [await _defaultDir("data")]);
 }
 
 Future<String> _mediaDir(String srcDir) async {
@@ -55,26 +72,21 @@ Future<String> _mediaDir(String srcDir) async {
     return "<unavailable>";
   }
 
-  if (srcDir == "") {
-    final documents = await getApplicationDocumentsDirectory();
-    if (UniversalPlatform.isDesktop) {
-      srcDir = p.join(documents.path, appName, "media");
-    } else {
-      srcDir = p.join(documents.path, "media");
-    }
-  }
-  try {
-    Directory(srcDir).createSync(recursive: true);
-  } catch (e, s) {
-    AppLoggers.settings.e('Failed to create media directory: $srcDir', error: e, stackTrace: s);
-    return _mediaDir("");
-  }
-  return srcDir;
+  return _storageDir("media", srcDir, await _mediaDirChoices());
 }
 
 @riverpod
 Future<List<String>> mediaDirs(Ref ref) async {
-  final dirs = <String>[await _mediaDir("")];
+  if (UniversalPlatform.isWeb) {
+    return ["<unavailable>"];
+  }
+
+  return _mediaDirChoices();
+}
+
+// The directories offered for media, the default first.
+Future<List<String>> _mediaDirChoices() async {
+  final dirs = <String>[await _defaultDir("media")];
 
   if (UniversalPlatform.isAndroid) {
     try {
