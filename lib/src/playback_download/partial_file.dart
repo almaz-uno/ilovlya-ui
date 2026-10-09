@@ -200,10 +200,35 @@ class PartialFile {
     await _releaseHandles();
   }
 
-  /// Releases the handles and deletes the data and the record.
+  /// Starts over for a server file that changed: what was stored is dropped, on disk and from [ranges], and [length]
+  /// and [lastModified] are taken from the new file. The record goes first, so that a crash cannot bring the old bytes
+  /// back under the new length.
+  Future<void> restart(int length, String? lastModified) {
+    if (_completed || _closed) throw StateError('Partial file $dataPath is no longer writable');
+    return _chainWrite(() async {
+      await _writer?.close();
+      _writer = null;
+      await _chainRead(() async {
+        await _reader?.close();
+        _reader = null;
+      });
+      for (final path in [statePath, '$statePath.tmp', dataPath]) {
+        final f = File(path);
+        if (f.existsSync()) f.deleteSync();
+      }
+      ranges.clear();
+      _uncheckpointed = 0;
+      _length = length;
+      _lastModified = lastModified;
+      _changes.add(null);
+    });
+  }
+
+  /// Releases the handles and deletes the data and the record. Nothing is readable afterwards.
   Future<void> discard() async {
     _closed = true;
     await _releaseHandles();
+    ranges.clear();
     for (final path in [dataPath, statePath, '$statePath.tmp']) {
       final f = File(path);
       if (f.existsSync()) f.deleteSync();

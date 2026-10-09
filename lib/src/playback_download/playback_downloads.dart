@@ -104,7 +104,9 @@ class PlaybackDownloads extends _$PlaybackDownloads {
     s.source.resume(0);
     _changed(d.id);
 
-    if (s.source.file.length == null) {
+    // A fresh download waits for its length; a resumed one for the server to confirm that the file did not change, so
+    // that the player is not handed the old file's length.
+    if (s.source.file.length == null || !s.source.confirmed) {
       try {
         await s.source.length().timeout(lengthWait);
       } on SourceGone catch (e) {
@@ -125,6 +127,13 @@ class PlaybackDownloads extends _$PlaybackDownloads {
     s.attached = false;
     s.source.fetcher.playerAttached = false;
     if (s.source.state != SourceState.running && s.source.state != SourceState.idle) unawaited(_drop(downloadId));
+  }
+
+  /// The player has played [downloadId] to its end. A pass-through after a failed write drops what it kept for the way
+  /// through: nothing ahead needs it, and a seek back is served from the server like any byte it did not keep.
+  Future<void> ended(String downloadId) async {
+    final s = _sessions[downloadId];
+    if (s != null && s.source.state == SourceState.passThrough) await s.source.releaseStored();
   }
 
   /// Stops the playback download of [downloadId] and deletes its partial file.
@@ -168,6 +177,7 @@ class PlaybackDownloads extends _$PlaybackDownloads {
     if (s == null) return;
     (await _endpoint)?.unregister(id);
     await s.source.dispose();
+    if (s.source.state == SourceState.passThrough) await s.source.releaseStored();
     if (s.source.state != SourceState.complete) ref.read(localDTNotifierProvider.notifier).forget(id);
     state = {...state}..remove(id);
   }

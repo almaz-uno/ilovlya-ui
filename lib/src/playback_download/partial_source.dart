@@ -17,15 +17,27 @@ enum SourceState { idle, running, complete, passThrough, gone }
 ///
 /// Every read is classified against what is stored. Stored bytes are served at once. Bytes the connection is about to
 /// reach — within 2 s at its measured rate, and in any case within 2 MiB — are waited for. Anything else moves the
-/// connection there. When writing fails, the source turns into a pass-through and every read is piped from the server.
+/// connection there. When writing fails, the source turns into a pass-through: what is stored is still served, and
+/// the rest is piped from the server.
+///
+/// A partial file resumed from an earlier session serves nothing until the server's first answer confirms that it is
+/// still the server's file; a file that changed meanwhile is started over, and the player never sees the old bytes.
 class PartialSource implements EndpointSource {
   /// A read this close ahead of the transfer waits instead of moving it.
   static const minWindow = 2 << 20;
   static const windowTime = Duration(seconds: 2);
 
+  /// How long a read waits for a server that does not answer before it is given up — shorter than the player's own
+  /// network timeout for this source, so that the player learns of the interruption from the endpoint.
+  static const defaultGiveUpAfter = Duration(seconds: 45);
+
+  /// How long a reader that arrives after that is given for the server to answer the try it prompts.
+  static const retryGrace = Duration(seconds: 1);
+
   final PartialFile file;
   final Uri url;
   final String? authorization;
+  final Duration giveUpAfter;
   final HttpClient _client;
   late final Fetcher fetcher;
 
@@ -40,10 +52,21 @@ class PartialSource implements EndpointSource {
   int? _steeredTo;
   StreamSubscription<void>? _lengthWatch;
   Completer<int>? _length;
+  bool _confirmed;
 
-  PartialSource({required this.file, required this.url, this.authorization, HttpClient? client, Duration Function(int failures, bool readerWaiting)? backoff, this.onChange})
-      : _client = client ?? HttpClient() {
-    fetcher = Fetcher(file: file, url: url, authorization: authorization, client: _client, backoff: backoff);
+  PartialSource(
+      {required this.file,
+      required this.url,
+      this.authorization,
+      this.giveUpAfter = defaultGiveUpAfter,
+      HttpClient? client,
+      Duration Function(int failures, bool readerWaiting)? backoff,
+      this.onChange})
+      : _client = client ?? HttpClient(),
+        _confirmed = file.ranges.isEmpty || file.isComplete {
+    fetcher = Fetcher(file: file, url: url, authorization: authorization, client: _client, backoff: backoff)
+      ..restartOnChange = !_confirmed
+      ..onAnswer = _onAnswer;
     if (file.isComplete) _state = SourceState.complete;
   }
 
@@ -95,6 +118,16 @@ class PartialSource implements EndpointSource {
     _setState(SourceState.passThrough);
   }
 
+  /// Removes what a pass-through after a failed write kept for reading, once nobody reads from it.
+  Future<void> releaseStored() async {
+    try {
+      await file.discard();
+    } on FileSystemException catch (e) {
+      // A directory that refused the writes may refuse the deletion too; what is left goes with the next clean.
+      AppLoggers.download.w('Playback download of ${file.downloadId} could not remove its partial file', error: e);
+    }
+  }
+
   /// Stops the transfer, waits for it to settle, and releases the connection. What was stored stays on disk.
   Future<void> dispose() async {
     fetcher.stop();
@@ -103,10 +136,13 @@ class PartialSource implements EndpointSource {
     fetcher.close();
   }
 
+  /// Whether the stored bytes are known to be the server's file: nothing was stored, or the server has answered.
+  bool get confirmed => _confirmed;
+
   @override
   Future<int> length() {
     final known = file.length;
-    if (known != null) return Future.value(known);
+    if (known != null && _confirmed) return Future.value(known);
     if (isGone) return Future.error(SourceGone(_goneReason!));
     final c = _length ??= Completer<int>();
     _lengthWatch ??= file.changes.listen((_) => _deliverLength());
@@ -114,24 +150,42 @@ class PartialSource implements EndpointSource {
     return c.future;
   }
 
-  /// Completes a pending [length] once the fetcher has learnt it. Called on every write and every change of state,
-  /// because a write that fails — the reason for a pass-through — fires no change, while the length is already known.
+  /// Completes a pending [length] once the fetcher has learnt it, and the server has confirmed it. Called on every
+  /// write, every answer and every change of state, because a write that fails — the reason for a pass-through —
+  /// fires no change, while the length is already known.
   void _deliverLength() {
     final c = _length;
     final l = file.length;
-    if (c != null && l != null && !c.isCompleted) c.complete(l);
+    if (c != null && l != null && _confirmed && !c.isCompleted) c.complete(l);
+  }
+
+  void _onAnswer() {
+    if (_confirmed) return;
+    _confirmed = true;
+    fetcher.restartOnChange = false;
+    _deliverLength();
   }
 
   @override
   Future<int> available(int offset, bool Function() isCancelled) async {
     _readers++;
     fetcher.readerWaiting = true;
+    // A new reader while the server fails — the player reconnecting, or reopening — is worth a try at once, and the
+    // try is waited for before the reader is given up: the server may be back.
+    if (fetcher.failingFor != null) fetcher.wake();
+    final arrived = DateTime.now();
+    final grace = giveUpAfter < retryGrace ? giveUpAfter : retryGrace;
     try {
       while (true) {
         if (isGone) throw SourceGone(_goneReason!);
-        if (_state == SourceState.passThrough) throw const PassThroughRequested();
-        final end = file.ranges.end(offset);
-        if (end > offset) return end - offset;
+        if (_confirmed) {
+          final end = file.ranges.end(offset);
+          if (end > offset) return end - offset;
+        }
+        final length = file.length;
+        if (_state == SourceState.passThrough) throw PassThroughRequested(_confirmed && length != null ? file.ranges.gapEnd(offset, length) : null);
+        final failing = fetcher.failingFor;
+        if (failing != null && failing >= giveUpAfter && DateTime.now().difference(arrived) >= grace) throw UpstreamUnavailable(failing);
         if (isCancelled()) return 0;
         _steer(offset);
         await file.changes.first.timeout(const Duration(milliseconds: 250), onTimeout: () {});
@@ -203,14 +257,10 @@ class PartialSource implements EndpointSource {
         await file.discard();
         _gone('the server sent no length');
       case FetchOutcome.writeFailed:
+        // What is stored stays readable, so that none of it is fetched twice; [releaseStored] removes it once the
+        // session ends.
         _writeFailed = true;
         _setState(SourceState.passThrough);
-        // A directory that refused the record refuses the deletion too; what is left there goes with the next clean.
-        try {
-          await file.discard();
-        } on FileSystemException catch (e) {
-          AppLoggers.download.w('Playback download of ${file.downloadId} could not remove its partial file', error: e);
-        }
     }
   }
 

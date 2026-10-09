@@ -105,11 +105,41 @@ void main() {
     expect(up.bytesServed - servedBefore, src.length - had);
   });
 
-  test('a file replaced on the server is detected on resume', () async {
+  test('a file replaced on the server is detected on resume, and its body is not drained', () async {
     await interruptAfter(open(), 1 << 20);
     up.replace(randomBytes(src.length, 2), 'Wed, 23 Sep 2026 10:00:00 GMT');
+    up.rate = 1 << 20;
     expect(await fetcher(open()).run(0), FetchOutcome.fileChanged);
     expect(up.log.last.status, 200, reason: 'If-Range no longer matched, so the server sent the whole file');
+    expect(up.log.last.bytes, lessThan(256 * 1024), reason: 'the whole new file is not read only to be thrown away');
+  });
+
+  test('a file replaced on the server before anything was served is started over from the answer that showed it', () async {
+    await interruptAfter(open(), 1 << 20);
+    final replaced = randomBytes(src.length + 4096, 2);
+    up.replace(replaced, 'Wed, 23 Sep 2026 10:00:00 GMT');
+    final servedBefore = up.bytesServed;
+    final f = open();
+    var answers = 0;
+    final fx = fetcher(f)
+      ..restartOnChange = true
+      ..onAnswer = () => answers++;
+    expect(await fx.run(0), FetchOutcome.complete);
+    expect(await finish(f), replaced);
+    expect(f.lastModified, 'Wed, 23 Sep 2026 10:00:00 GMT');
+    expect(up.log.last.status, 200);
+    expect(up.bytesServed - servedBefore, replaced.length, reason: 'the 200 body is the new file, taken as it is');
+    expect(answers, greaterThan(0));
+  });
+
+  test('failingFor runs from the first failure of a streak and clears with an answer', () async {
+    up.failNext.addAll([503, 503]);
+    final fx = fetcher(open(), backoff: const Duration(milliseconds: 100));
+    final run = fx.run(0);
+    await Future.delayed(const Duration(milliseconds: 150));
+    expect(fx.failingFor, isNotNull);
+    expect(await run, FetchOutcome.complete);
+    expect(fx.failingFor, isNull);
   });
 
   test('a connection cut short is resumed at the byte it reached', () async {

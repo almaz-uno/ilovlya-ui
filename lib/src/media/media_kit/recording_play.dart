@@ -67,6 +67,9 @@ class RecordingViewMediaKitHandler extends ConsumerStatefulWidget {
 
 const _positionSendPeriod = Duration(seconds: 1);
 
+/// Positions written per recording, by any player: a position kept for a server that is away gives way to a newer one.
+final _positionWrites = <String, int>{};
+
 class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMediaKitHandler> {
   // String get url => widget.download.url;
   Player get _player => MKPlayerHandler.player;
@@ -153,6 +156,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       if (!event) return;
       if (_reachedEnd()) {
         _sendPosition(widget.recording.id, _player.state.position, true);
+        if (widget.source != null) unawaited(ref.read(playbackDownloadsProvider.notifier).ended(widget.download.id));
       } else {
         _onInterrupted();
       }
@@ -187,7 +191,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   void _onInterrupted() {
     final position = _player.state.position;
     AppLoggers.player.w('Playback of ${widget.recording.id} ended at ${position.inSeconds}s of ${_player.state.duration.inSeconds}s: an interruption, not the end');
-    _sendPosition(widget.recording.id, position, false);
+    _keepPosition(position);
     widget.recording.position = position.inSeconds;
     if (!_interrupted) {
       final l10n = AppLocalizations.of(context)!;
@@ -198,14 +202,43 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     _reopen();
   }
 
+  /// Sends the position of an interruption until the server takes it: the server is often what went away, and with
+  /// the playback stopped no periodic position follows to correct it. The retries run on the container, past this
+  /// screen, and give way to any newer position written for the recording.
+  void _keepPosition(Duration position) {
+    final id = widget.recording.id;
+    final container = ProviderScope.containerOf(context, listen: false);
+    final generation = _positionWrites[id] = (_positionWrites[id] ?? 0) + 1;
+    container.read(recordingNotifierProvider(id).notifier).putPosition(position, false);
+    unawaited(() async {
+      for (var attempt = 1; attempt <= 120 && _positionWrites[id] == generation; attempt++) {
+        final provider = putPositionProvider(id, position, false);
+        final keepAlive = container.listen(provider, (_, __) {}); // an auto-dispose provider read once may not finish
+        try {
+          await container.read(provider.future);
+          return;
+        } on Object catch (e) {
+          if (attempt == 1) AppLoggers.player.w('The server did not take the position ${position.inSeconds}s of $id; trying again every 5 s', error: e);
+        } finally {
+          keepAlive.close();
+        }
+        await Future<void>.delayed(const Duration(seconds: 5));
+      }
+    }());
+  }
+
   /// Opens the source again, paused; the duration listener seeks to the kept position once it loads. A source that
-  /// does not load — the server still away — is tried again every 5 s for two minutes while the screen is open.
+  /// does not load — the server still away — is tried again every 5 s for two minutes while the screen is open. A
+  /// playback download is opened through its owner again, which starts it over if its file changed on the server.
   Future<void> _reopen() async {
     if (!mounted || !_interrupted) return;
     _reopenAttempts++;
-    final url = widget.source?.toString() ?? widget.download.fullPathMedia ?? widget.download.url;
     try {
-      await _player.open(Media(url), play: false);
+      final url = widget.source == null
+          ? widget.download.fullPathMedia ?? widget.download.url
+          : (await ref.read(playbackDownloadsProvider.notifier).open(widget.download)).toString();
+      if (!mounted || !_interrupted) return;
+      await MKPlayerHandler.openMedia(url, play: false);
     } catch (e, s) {
       AppLoggers.player.w('Reopening ${widget.recording.id} failed (attempt $_reopenAttempts)', error: e, stackTrace: s);
     }
@@ -402,6 +435,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   }
 
   void _sendPosition(String recordingId, Duration position, bool autoFinished) {
+    _positionWrites[recordingId] = (_positionWrites[recordingId] ?? 0) + 1;
     if (ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)) == false) autoFinished = false;
     ref.read(recordingNotifierProvider(recordingId).notifier).putPosition(position, autoFinished);
     ref.read(putPositionProvider(recordingId, position, autoFinished));

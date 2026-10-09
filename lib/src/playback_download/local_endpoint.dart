@@ -26,19 +26,34 @@ abstract interface class EndpointSource {
   Future<int> length();
 
   /// How many bytes are readable at [offset] right now, waiting for them if there are none. [isCancelled] is consulted
-  /// while waiting, so that a reader the player has abandoned stops steering the transfer. Throws [SourceGone], or
-  /// [PassThroughRequested] when the bytes will not be stored and have to come from the server directly.
+  /// while waiting, so that a reader the player has abandoned stops steering the transfer. Throws [SourceGone],
+  /// [PassThroughRequested] when the bytes will not be stored and have to come from the server directly, or
+  /// [UpstreamUnavailable].
   Future<int> available(int offset, bool Function() isCancelled);
 
   Future<List<int>> read(int offset, int count);
 
-  /// `[start, end)` piped from the server, for a source that can no longer store what it receives.
+  /// `[start, end)` piped from the server, for bytes the source can no longer store.
   Stream<List<int>> upstream(int start, int end);
 }
 
-/// The source can no longer store bytes; the rest of the response comes from [EndpointSource.upstream].
+/// The source can no longer store bytes; the bytes up to [until] come from [EndpointSource.upstream].
 class PassThroughRequested implements Exception {
-  const PassThroughRequested();
+  /// Where the bytes the server has to supply end — the next stored byte; `null` for the end of the response.
+  final int? until;
+
+  const PassThroughRequested([this.until]);
+}
+
+/// The server has been unreachable for too long. The response is reset, and so is every one after it while that lasts,
+/// so that the player gives up and says so instead of waiting for a server that does not come back.
+class UpstreamUnavailable implements Exception {
+  final Duration failingFor;
+
+  const UpstreamUnavailable(this.failingFor);
+
+  @override
+  String toString() => 'UpstreamUnavailable(${failingFor.inSeconds} s)';
 }
 
 /// An HTTP endpoint on the loopback interface from which the player reads a download while it arrives.
@@ -144,10 +159,11 @@ class LocalMediaEndpoint {
         int n;
         try {
           n = await source.available(pos, () => cancelled);
-        } on PassThroughRequested {
-          await socket.addStream(source.upstream(pos, end));
-          pos = end;
-          break;
+        } on PassThroughRequested catch (p) {
+          final upTo = min(end, p.until ?? end);
+          await socket.addStream(source.upstream(pos, upTo));
+          pos = upTo;
+          continue;
         }
         if (cancelled) break;
         final chunk = await source.read(pos, min(n, min(65536, end - pos)));

@@ -52,6 +52,13 @@ class Upstream {
     lastModified = newLastModified;
   }
 
+  /// Resets every open connection, as a server that goes away does; the listening socket stays.
+  void dropConnections() {
+    for (final s in _open.toList()) {
+      s.destroy();
+    }
+  }
+
   Future<void> close() async {
     await _server.close();
     for (final s in _open.toList()) {

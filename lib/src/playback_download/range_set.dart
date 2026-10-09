@@ -63,6 +63,19 @@ class RangeSet {
 
   bool contains(int offset) => end(offset) > offset;
 
+  /// Where the stored bytes resume after [offset], which is not stored: the start of the next interval, or [length].
+  int gapEnd(int offset, int length) {
+    final next = _firstStartAbove(offset);
+    return next < _starts.length ? min(_starts[next], length) : length;
+  }
+
+  /// Forgets every interval.
+  void clear() {
+    _starts.clear();
+    _ends.clear();
+    _stored = 0;
+  }
+
   /// The first missing range within `[0, length)` at or after [from]; if there is none, the first missing range from 0.
   /// `null` when the file is complete.
   ///

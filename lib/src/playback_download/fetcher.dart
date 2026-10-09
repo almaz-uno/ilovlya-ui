@@ -55,7 +55,15 @@ class Fetcher {
   /// Whether a player is reading from this download. Without one, [maxFailuresUnattended] failures end the run.
   bool playerAttached = true;
 
+  /// Set while no stored byte has reached a reader. A file found changed on the server is then started over, the new
+  /// file taken from the answer that revealed the change, instead of ending the run with [FetchOutcome.fileChanged].
+  bool restartOnChange = false;
+
+  /// Called for every answer the transfer goes on with: the stored bytes are the server's file, or were started over.
+  void Function()? onAnswer;
+
   int _position = 0;
+  DateTime? _failingSince;
   double _rate = 0;
   int _windowBytes = 0;
   final Stopwatch _window = Stopwatch();
@@ -86,6 +94,15 @@ class Fetcher {
   /// Requests made so far; what a test or a log line counts.
   int get requests => _requests;
 
+  /// How long every request has failed, from the first failure of the current streak; `null` while the server answers.
+  Duration? get failingFor {
+    final since = _failingSince;
+    return since == null ? null : DateTime.now().difference(since);
+  }
+
+  /// Cuts a backoff short: a reader has come, and the server may be back.
+  void wake() => _wakeUp();
+
   /// Fetches until the file is complete, or the run ends otherwise, starting from [from].
   Future<FetchOutcome> run(int from) async {
     if (_running) throw StateError('Fetcher is already running');
@@ -114,11 +131,13 @@ class Fetcher {
         final result = await _fetch(start, end);
         switch (result) {
           case _Attempt.done:
+          case _Attempt.restarted:
             failures = 0;
           case _Attempt.interrupted:
             break;
           case _Attempt.failed:
             failures++;
+            _failingSince ??= DateTime.now();
             if (!playerAttached && failures >= maxFailuresUnattended) return FetchOutcome.failed;
             await _sleepUnlessInterrupted(_backoff(failures, readerWaiting));
           case _Attempt.fileChanged:
@@ -182,38 +201,47 @@ class Fetcher {
       return _Attempt.failed;
     }
 
+    // A body that is not taken is abandoned, not drained: it can be the whole file.
+    final lastModified = response.headers.value(HttpHeaders.lastModifiedHeader);
     int offset;
     switch (response.statusCode) {
       case HttpStatus.partialContent:
         final range = _ContentRange.parse(response.headers.value(HttpHeaders.contentRangeHeader));
         if (range == null || range.start != start) {
           AppLoggers.download.w('Playback download got an unusable Content-Range: ${response.headers.value(HttpHeaders.contentRangeHeader)}');
-          await _drain(response);
+          await _abandon(response);
           return _Attempt.failed;
         }
         if (range.total == null) {
-          await _drain(response);
+          await _abandon(response);
           return _Attempt.noLength;
         }
         if (file.length == null) {
-          file.setLength(range.total!, response.headers.value(HttpHeaders.lastModifiedHeader));
+          file.setLength(range.total!, lastModified);
         } else if (file.length != range.total) {
-          await _drain(response);
-          return _Attempt.fileChanged;
+          await _abandon(response);
+          if (!restartOnChange) return _Attempt.fileChanged;
+          await file.restart(range.total!, lastModified);
+          _answered();
+          return _Attempt.restarted;
         }
         offset = start;
       case HttpStatus.ok:
         // The whole file instead of the range: `If-Range` no longer matched, so the file changed — or, on the very
         // first request, the server ignored the range, and the body is simply the file from byte 0.
-        if (file.length != null) {
-          await _drain(response);
-          return _Attempt.fileChanged;
-        }
         if (response.contentLength < 0) {
-          await _drain(response);
+          await _abandon(response);
           return _Attempt.noLength;
         }
-        file.setLength(response.contentLength, response.headers.value(HttpHeaders.lastModifiedHeader));
+        if (file.length == null) {
+          file.setLength(response.contentLength, lastModified);
+        } else if (restartOnChange) {
+          // Nothing stored was served yet, so the new file simply replaces it, starting with this very body.
+          await file.restart(response.contentLength, lastModified);
+        } else {
+          await _abandon(response);
+          return _Attempt.fileChanged;
+        }
         offset = 0;
       default:
         AppLoggers.download.w('Playback download got ${response.statusCode} for [$start, ${end ?? ''})');
@@ -221,6 +249,7 @@ class Fetcher {
         return _Attempt.failed;
     }
 
+    _answered();
     _position = offset;
     try {
       await for (final chunk in response) {
@@ -264,6 +293,12 @@ class Fetcher {
     return _Attempt.writeFailed;
   }
 
+  /// The server answered with something the transfer goes on with.
+  void _answered() {
+    _failingSince = null;
+    onAnswer?.call();
+  }
+
   void _measure(int bytes) {
     if (!_window.isRunning) _window.start();
     _windowBytes += bytes;
@@ -283,9 +318,19 @@ class Fetcher {
       // Nothing to keep from an answer that is being thrown away.
     }
   }
+
+  /// Closes the connection without reading the body: cancelling the subscription is what stops one that is arriving.
+  Future<void> _abandon(HttpClientResponse response) async {
+    _request?.abort();
+    try {
+      await response.listen(null).cancel();
+    } on Object {
+      // Nothing to keep from an answer that is being thrown away.
+    }
+  }
 }
 
-enum _Attempt { done, interrupted, failed, fileChanged, noLength, writeFailed }
+enum _Attempt { done, restarted, interrupted, failed, fileChanged, noLength, writeFailed }
 
 class _ContentRange {
   final int start;

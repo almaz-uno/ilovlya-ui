@@ -76,9 +76,9 @@ void main() {
     media.deleteSync(recursive: true);
   });
 
-  (PartialSource, Uri) serve({String id = 'd1'}) {
+  (PartialSource, Uri) serve({String id = 'd1', Duration giveUpAfter = PartialSource.defaultGiveUpAfter, Duration backoff = Duration.zero}) {
     final file = PartialFile.open(mediaDir: media.path, downloadId: id, filename: '$id.mp4', url: up.url.toString());
-    final source = PartialSource(file: file, url: up.url, backoff: (_, __) => Duration.zero);
+    final source = PartialSource(file: file, url: up.url, giveUpAfter: giveUpAfter, backoff: (_, __) => backoff);
     sources.add(source);
     return (source, endpoint.register(id, '$id.mp4', source));
   }
@@ -198,6 +198,50 @@ void main() {
     expect(r.body, big);
     expect(source.state, SourceState.passThrough);
     expect(source.writeFailed, isTrue);
+    expect(up.bytesServed, lessThan(big.length + (1 << 20)), reason: 'what was stored is read from the file, not fetched again');
+  });
+
+  test('a partial file whose server file changed meanwhile is started over, and serves none of the old bytes', () async {
+    up.rate = 4 << 20;
+    final (first, url) = serve();
+    await fetch(player, url, range: 'bytes=0-', take: 1 << 20);
+    await first.dispose(); // the application went away, keeping what was stored
+    final replaced = randomBytes(src.length + 4096, 2);
+    up.replace(replaced, 'Wed, 23 Sep 2026 10:00:00 GMT');
+    up.rate = null;
+
+    final (second, again) = serve();
+    expect(second.confirmed, isFalse);
+    final r = await fetch(player, again, range: 'bytes=0-');
+    expect(r.status, 206);
+    expect(r.headers.value(HttpHeaders.contentRangeHeader), 'bytes 0-${replaced.length - 1}/${replaced.length}');
+    expect(r.body, replaced);
+    await settle(second);
+    expect(second.state, SourceState.complete);
+    expect(File(p.join(media.path, 'd1.mp4')).readAsBytesSync(), replaced);
+  });
+
+  test('a read waiting for a server that stays away gives up, and so does every read while it lasts', () async {
+    up.rate = 1 << 20;
+    final (source, url) = serve(giveUpAfter: const Duration(milliseconds: 400), backoff: const Duration(milliseconds: 50));
+    await fetch(player, url, range: 'bytes=0-', take: 100000);
+    up.down = true;
+    up.dropConnections();
+    final clock = Stopwatch()..start();
+    final waiting = await fetch(player, url, range: 'bytes=${3 << 20}-');
+    expect(waiting.error, isNotNull, reason: 'reset, so that the player learns of it');
+    expect(clock.elapsed, greaterThanOrEqualTo(const Duration(milliseconds: 300)));
+    clock.reset();
+    final next = await fetch(player, url, range: 'bytes=${3 << 20}-');
+    expect(next.error, isNotNull);
+    expect(clock.elapsed, lessThan(const Duration(seconds: 1)), reason: 'one try for it, not a second full wait');
+
+    up.down = false;
+    up.rate = null;
+    final back = await fetch(player, url, range: 'bytes=${3 << 20}-');
+    expect(back.error, isNull);
+    expect(back.body, Uint8List.sublistView(src, 3 << 20));
+    expect(source.isGone, isFalse);
   });
 
   test('a file replaced on the server during playback ends the playback rather than splicing two files', () async {
