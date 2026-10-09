@@ -7,6 +7,15 @@ All notable changes to the Ilovlya UI project will be documented in this file.
 
 The format is based on https://keepachangelog.com/[Keep a Changelog], and this project adheres to https://semver.org/[Semantic Versioning].
 
+== [3.7.2] - 2026-10-09
+
+.Fixed
+- The television pairing dialog fits a phone: scanning the QR code sits in the code field, the dialog scrolls above the keyboard, and the misleading character counter is gone
+- Settings on web open without the file management tab, which spun forever and has nothing to manage in a browser
+
+.Changed
+- Built with Flutter 3.47.7, pinned in `.fvmrc`; Flutter 3.44 or later is required
+
 == [3.7.1] - 2026-10-08
 
 .Fixed
