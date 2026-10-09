@@ -1,0 +1,85 @@
+# Codemagic builds of the mobile clients, started by a release tag v*.
+#
+# Codemagic reads this file from the commit it builds, so a tag without it is
+# not built by these workflows. The Flutter version comes from .fvmrc.
+#
+# Signing comes from Team settings > codemagic.yaml settings > Code signing
+# identities, which is separate from what the Workflow Editor stores:
+# - Android keystores: the release keystore with the reference name ilovlya
+#   (key alias ilovlya);
+# - iOS certificates and provisioning profiles: the distribution certificate
+#   and an ad hoc profile for uno.almaz.ilovlya, fetched from the Apple
+#   Developer Portal with the App Store Connect API key.
+#
+# The specs/ submodule is a private repository cloned over SSH. Codemagic has
+# no key for it, logs the failure and goes on: the build does not need it.
+
+definitions:
+  triggering: &triggering
+    events:
+      - tag
+    tag_patterns:
+      - pattern: 'v*'
+        include: true
+  scripts:
+    - &tag_matches_pubspec
+      name: Tag matches the pubspec version
+      script: |
+        version=$(awk '$1 == "version:" { print $2; exit }' pubspec.yaml | cut -d+ -f1)
+        if [ "$CM_TAG" != "v$version" ]; then
+          echo "Tag $CM_TAG does not match the version in pubspec.yaml ($version)"
+          exit 1
+        fi
+    - &build_number
+      name: Build number from the version
+      script: |
+        # 3.7.2 gives 30702: it grows with every release while minor and patch
+        # stay below 100, which stores and installed ad hoc builds rely on.
+        version=$(awk '$1 == "version:" { print $2; exit }' pubspec.yaml | cut -d+ -f1)
+        major=${version%%.*}
+        rest=${version#*.}
+        minor=${rest%%.*}
+        patch=${rest#*.}
+        echo "VERSION_BUILD_NUMBER=$((major * 10000 + minor * 100 + patch))" >> "$CM_ENV"
+
+workflows:
+  android:
+    name: Android
+    max_build_duration: 60
+    environment:
+      flutter: fvm
+      android_signing:
+        - ilovlya
+    triggering: *triggering
+    scripts:
+      - *tag_matches_pubspec
+      - *build_number
+      - name: Build APK
+        script: flutter build apk --release --build-number="$VERSION_BUILD_NUMBER"
+    artifacts:
+      - build/app/outputs/**/*.apk
+
+  ios:
+    name: iOS
+    max_build_duration: 90
+    environment:
+      flutter: fvm
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: ad_hoc
+        bundle_identifier: uno.almaz.ilovlya
+    triggering: *triggering
+    scripts:
+      - *tag_matches_pubspec
+      - *build_number
+      - name: Use the signing profiles
+        script: xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --build-number="$VERSION_BUILD_NUMBER" \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log

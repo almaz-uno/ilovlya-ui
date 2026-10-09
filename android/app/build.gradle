@@ -62,11 +62,23 @@ android {
         preDexLibraries false
     }
 
+    signingConfigs {
+        // Codemagic exports the keystore named by android_signing in codemagic.yaml.
+        if (System.getenv("CM_KEYSTORE_PATH")) {
+            release {
+                storeFile file(System.getenv("CM_KEYSTORE_PATH"))
+                storePassword System.getenv("CM_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("CM_KEY_ALIAS")
+                keyPassword System.getenv("CM_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig signingConfigs.debug
+            // The release keystore on Codemagic. Elsewhere the debug keys, so that
+            // `flutter run --release` works without a keystore.
+            signingConfig System.getenv("CM_KEYSTORE_PATH") ? signingConfigs.release : signingConfigs.debug
         }
     }
 
