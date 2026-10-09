@@ -8,6 +8,9 @@ version: 3.7.1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
+  # The oldest Flutter the client builds with: the web image of the server uses
+  # 3.44. Development and Codemagic use the version pinned in .fvmrc.
+  flutter: ">=3.44.0"
 
 dependencies:
   animated_search_bar: ^2.8.0
