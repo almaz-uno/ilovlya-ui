@@ -1,0 +1,85 @@
+name: Flatpak
+
+# Builds the Linux Flatpak of a published release and attaches it to that
+# release, beside the APK. The recipe is linux/flatpak/uno.almaz.ilovlya.yml; it
+# has to build with the Flutter that .fvmrc pins, which is checked first. A run
+# can be repeated by hand for a release whose bundle is missing.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to build and attach, e.g. v3.7.2'
+        required: true
+
+env:
+  FLATPAK_ID: uno.almaz.ilovlya
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
+
+jobs:
+  build:
+    name: Build the bundle
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:freedesktop-24.08
+      options: --privileged
+
+    steps:
+      - name: Checkout the release
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Check the recipe's Flutter against .fvmrc
+        run: |
+          set -eu
+          pinned=$(sed -n 's/.*"flutter": *"\([^"]*\)".*/\1/p' .fvmrc)
+          if ! grep -q "flutter_linux_${pinned}-stable.tar.xz" linux/flatpak/uno.almaz.ilovlya.yml; then
+            echo "::error file=linux/flatpak/uno.almaz.ilovlya.yml::the recipe does not build with Flutter ${pinned}, which .fvmrc pins"
+            exit 1
+          fi
+
+      - name: Install the runtime and SDKs
+        run: |
+          flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install -y flathub \
+            org.freedesktop.Platform//24.08 \
+            org.freedesktop.Sdk//24.08 \
+            org.freedesktop.Sdk.Extension.llvm19//24.08
+
+      - name: Build
+        run: |
+          flatpak-builder --force-clean --user --default-branch="${TAG#v}" \
+            flatpak-build linux/flatpak/uno.almaz.ilovlya.yml
+
+      - name: Bundle
+        run: |
+          flatpak build-export repo "flatpak-build" "${TAG#v}"
+          flatpak build-bundle repo "ilovlya-${TAG}.flatpak" "$FLATPAK_ID" "${TAG#v}"
+
+      - name: Keep the bundle for the next job
+        uses: actions/upload-artifact@v4
+        with:
+          name: flatpak-bundle
+          path: ilovlya-${{ env.TAG }}.flatpak
+          retention-days: 7
+
+  attach:
+    name: Attach to the release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Fetch the bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: flatpak-bundle
+
+      - name: Upload it to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" "ilovlya-$TAG.flatpak" --clobber --repo "$GITHUB_REPOSITORY"

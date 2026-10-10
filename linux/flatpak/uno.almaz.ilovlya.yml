@@ -1,0 +1,311 @@
+# The Flatpak of ilovlya, built by .github/workflows/flatpak.yml for every published release and attached to it.
+# The branch is the version, given as --default-branch. Flutter is the one .fvmrc pins; the workflow checks it.
+# Locally, from the repository's root:
+#   flatpak-builder --force-clean --default-branch=<version> flatpak-build linux/flatpak/uno.almaz.ilovlya.yml
+app-id: uno.almaz.ilovlya
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: ilovlya
+appstream-compose: false
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.llvm19
+finish-args:
+  - --device=all
+  - --device=dri
+  - --socket=pulseaudio
+  - --filesystem=host
+  - --filesystem=/tmp
+  - --share=ipc
+  - --share=network
+  - --socket=x11
+  - --socket=fallback-x11
+  - --socket=wayland
+  # D-Bus access for screen lock inhibition
+  - --talk-name=org.freedesktop.ScreenSaver
+  - --talk-name=org.gnome.SessionManager
+  - --env=LD_LIBRARY_PATH=/app/lib
+  - --env=GDK_GL=gles
+  - --env=VK_ICD_FILENAMES=/usr/lib/x86_64-linux-gnu/GL/vulkan/icd.d/intel_icd.x86_64.json:/usr/lib/x86_64-linux-gnu/GL/vulkan/icd.d/radeon_icd.x86_64.json:/usr/lib/x86_64-linux-gnu/GL/vulkan/icd.d/lvp_icd.x86_64.json
+  - --env=__EGL_VENDOR_LIBRARY_FILENAMES=/usr/lib/x86_64-linux-gnu/GL/glvnd/egl_vendor.d/50_mesa.json
+modules:
+  - name: ilovlya
+    buildsystem: simple
+    build-options:
+      build-args:
+        - --share=network
+      arch:
+        x86_64:
+          env:
+            BUNDLE_PATH: /run/build/ilovlya/build/linux/x64/release/bundle
+      append-path: /usr/lib/sdk/llvm19/bin:/run/build/ilovlya/flutter/bin
+      prepend-ld-library-path: /usr/lib/sdk/llvm19/lib
+      env:
+        PUB_CACHE: /run/build/ilovlya/.pub-cache
+
+    build-commands:
+      - flutter pub get
+      - flutter build linux --release
+      #- ls -la "${BUNDLE_PATH}/lib"
+      # - pwd
+      - install -d "${FLATPAK_DEST}/lib"
+      - cp -r ${BUNDLE_PATH}/lib/* "${FLATPAK_DEST}/lib/"
+      - install -d "${FLATPAK_DEST}/data"
+      - cp -r ${BUNDLE_PATH}/data/* "${FLATPAK_DEST}/data/"
+      - install -Dm755 "${BUNDLE_PATH}/ilovlya" "${FLATPAK_DEST}/ilovlya"
+      - install -d "${FLATPAK_DEST}/bin"
+      - |
+        cat > "${FLATPAK_DEST}/bin/ilovlya" << 'EOF'
+        #!/bin/sh
+        export GDK_GL=gles
+        exec /app/ilovlya "$@"
+        EOF
+      - chmod +x "${FLATPAK_DEST}/bin/ilovlya"
+      - install -Dm644 linux/${FLATPAK_ID}.desktop "${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop"
+      - install -Dm644 assets/images/${FLATPAK_ID}.svg "${FLATPAK_DEST}/share/icons/hicolor/scalable/apps/${FLATPAK_ID}.svg"
+      # Generate metainfo with version from pubspec.yaml
+      - |
+        VERSION=$(grep '^version:' pubspec.yaml | cut -d' ' -f2)
+        DATE=$(date +%Y-%m-%d)
+        sed -e "s/__VERSION__/${VERSION}/g" -e "s/__DATE__/${DATE}/g" \
+          linux/${FLATPAK_ID}.metainfo.xml.template > linux/${FLATPAK_ID}.metainfo.xml
+      - install -Dm644 linux/${FLATPAK_ID}.metainfo.xml "${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml"
+
+    sources:
+      - type: archive
+        url: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.7-stable.tar.xz
+        sha256: af7455f540df951184c7953fbe3cf884766e7541dacf8571f9f582db03dd6230
+        dest: flutter
+      - type: dir
+        path: ../..
+        skip:
+          - .git
+          - .dart_tool
+          - build
+          - flatpak-build
+          - .flatpak-builder
+    modules:
+      - name: libshaderc
+        buildsystem: cmake-ninja
+        builddir: true
+        build-options:
+          build-args:
+            - --share=network
+        config-opts:
+          - -DCMAKE_BUILD_TYPE=Release
+          - -DSHADERC_SKIP_TESTS=ON
+          - -DSHADERC_SKIP_EXAMPLES=ON
+          - -DSHADERC_SKIP_COPYRIGHT_CHECK=ON
+        cleanup:
+          - /bin
+          - /include
+          - /lib/pkgconfig
+          - /lib/*.a
+          - /lib64/*.a
+          - /lib64/cmake
+        post-install:
+          - install -Dm755 libshaderc/libshaderc_shared.so.1 ${FLATPAK_DEST}/lib/libshaderc_shared.so.1
+        sources:
+          - type: git
+            url: https://github.com/google/shaderc.git
+            tag: v2024.3
+          - type: shell
+            commands:
+              - ./utils/git-sync-deps
+      - name: libmpv
+        cleanup:
+          - /include
+          - /lib/pkgconfig
+          - /lib/*.a
+          - /lib/debug
+        buildsystem: simple
+        build-commands:
+          - python3 waf configure --prefix=${FLATPAK_DEST} --enable-libmpv-shared --enable-lua --disable-alsa --disable-manpage-build --disable-debug-build --enable-sdl2 --enable-libarchive
+          - python3 waf build
+          - python3 waf install
+        sources:
+          - type: archive
+            url: https://github.com/mpv-player/mpv/archive/v0.36.0.tar.gz
+            sha256: 29abc44f8ebee013bb2f9fe14d80b30db19b534c679056e4851ceadf5a5e8bf6
+          - type: file
+            url: https://waf.io/waf-2.0.26
+            sha256: dcec3e179f9c33a66544f1b3d7d91f20f6373530510fa6a858cddb6bfdcde14b
+            dest-filename: waf
+        modules:
+          - name: luajit
+            no-autogen: true
+            cleanup:
+              - /bin
+              - /include
+              - /lib/pkgconfig
+              - /share/man
+            sources:
+              - type: git
+                url: https://github.com/LuaJIT/LuaJIT.git
+                disable-shallow-clone: true
+                commit: eec7a8016c3381b949b5d84583800d05897fa960
+                x-checker-data:
+                  type: json
+                  url: https://api.github.com/repos/LuaJIT/LuaJIT/branches/v2.1
+                  commit-query: .commit.sha
+                  version-query: .commit.sha
+                  timestamp-query: .commit.commit.committer.date
+              - type: shell
+                commands:
+                  - sed -i 's|/usr/local|/app|' ./Makefile
+          - name: libass
+            cleanup:
+              - /include
+              - /lib/*.la
+              - /lib/pkgconfig
+            config-opts:
+              - --disable-static
+            sources:
+              - type: archive
+                url: https://github.com/libass/libass/releases/download/0.17.1/libass-0.17.1.tar.gz
+                sha256: d653be97198a0543c69111122173c41a99e0b91426f9e17f06a858982c2fb03d
+            modules:
+              - name: fribidi
+                cleanup:
+                  - /bin
+                  - /include
+                  - /lib/pkgconfig
+                  - /lib/*.la
+                  - /share/man
+                buildsystem: meson
+                config-opts:
+                  - --buildtype=release
+                  - -Ddocs=false
+                sources:
+                  - type: git
+                    url: https://github.com/fribidi/fribidi.git
+                    tag: v1.0.12
+                    commit: 6428d8469e536bcbb6e12c7b79ba6659371c435a
+          - name: ffmpeg
+            cleanup:
+              - /include
+              - /lib/pkgconfig
+              - /share/ffmpeg/examples
+            config-opts:
+              - --enable-shared
+              - --disable-static
+              - --disable-debug
+              - --enable-gnutls
+              - --disable-doc
+              #- --disable-ffplay
+              - --enable-gpl
+              - --enable-libass
+              - --enable-libfribidi
+              - --enable-libmp3lame
+              - --enable-libpulse
+              - --enable-libtheora
+              - --enable-libvorbis
+              - --enable-libvpx
+              - --enable-libx264
+              - --enable-libx265
+              - --enable-libxvid
+            build-options:
+              arch:
+                x86_64:
+                  config-opts:
+                    - --enable-nvdec
+            sources:
+              - type: archive
+                url: https://ffmpeg.org/releases/ffmpeg-6.1.2.tar.xz
+                sha256: 3b624649725ecdc565c903ca6643d41f33bd49239922e45c9b1442c63dca4e38
+            modules:
+              - name: ffnvcodec
+                only-arches:
+                  - x86_64
+                buildsystem: simple
+                build-commands:
+                  - make
+                  - make install PREFIX=${FLATPAK_DEST}
+                sources:
+                  - type: archive
+                    url: https://github.com/FFmpeg/nv-codec-headers/releases/download/n12.1.14.0/nv-codec-headers-12.1.14.0.tar.gz
+                    sha256: 62b30ab37e4e9be0d0c5b37b8fee4b094e38e570984d56e1135a6b6c2c164c9f
+              - name: xvid
+                subdir: build/generic
+                sources:
+                  - type: archive
+                    url: https://downloads.xvid.com/downloads/xvidcore-1.3.7.tar.gz
+                    sha256: abbdcbd39555691dd1c9b4d08f0a031376a3b211652c0d8b3b8aa9be1303ce2d
+              - name: libvpx
+                config-opts:
+                  - --enable-runtime-cpu-detect
+                  - --enable-shared
+                  - --disable-static
+                  - --enable-pic
+                  - --disable-install-bins
+                  - --disable-install-docs
+                  - --disable-install-srcs
+                  - --enable-vp8
+                  - --enable-postproc
+                  - --enable-vp9
+                  - --enable-vp9-highbitdepth
+                sources:
+                  - type: archive
+                    url: https://github.com/webmproject/libvpx/archive/refs/tags/v1.13.1.tar.gz
+                    sha256: 00dae80465567272abd077f59355f95ac91d7809a2d3006f9ace2637dd429d14
+              - name: x264
+                config-opts:
+                  - --enable-shared
+                  - --disable-cli
+                  - --disable-lavf
+                  - --enable-pic
+                build-options:
+                  arch:
+                    aarch64:
+                      cxxflags: -fPIC
+                      config-opts:
+                        - --disable-lto
+                    x86_64:
+                      config-opts:
+                        - --disable-asm
+                post-install:
+                  - ln -srf ${FLATPAK_DEST}/lib/libx264.so.* ${FLATPAK_DEST}/lib/libx264.so
+                sources:
+                  - type: git
+                    commit: 1771b556ee45207f8711744ccbd5d42a3949b14c
+                    url: https://git.videolan.org/git/x264.git
+              - name: x265
+                buildsystem: simple
+                build-options:
+                  arch:
+                    aarch64:
+                      cxxflags: -fPIC
+                build-commands:
+                  - mkdir source/build-8 source/build-10 source/build-12
+                  - cd source/build-12 && cmake .. -DCMAKE_INSTALL_PREFIX=${FLATPAK_DEST} -DHIGH_BIT_DEPTH='TRUE' -DMAIN12='TRUE' -DEXPORT_C_API='FALSE' -DENABLE_CLI='FALSE' -DENABLE_SHARED='FALSE'
+                  - cd source/build-12 && make
+                  - cd source/build-10 && cmake .. -DCMAKE_INSTALL_PREFIX=${FLATPAK_DEST} -DHIGH_BIT_DEPTH='TRUE' -DEXPORT_C_API='FALSE' -DENABLE_CLI='FALSE' -DENABLE_SHARED='FALSE'
+                  - cd source/build-10 && make
+                  - ln -s ../build-10/libx265.a source/build-8/libx265_main10.a
+                  - ln -s ../build-12/libx265.a source/build-8/libx265_main12.a
+                  - cd source/build-8 && cmake .. -DCMAKE_INSTALL_PREFIX=${FLATPAK_DEST} -DENABLE_SHARED='TRUE' -DENABLE_CLI='FALSE' -DENABLE_HDR10_PLUS='TRUE' -DEXTRA_LIB='x265_main10.a;x265_main12.a' -DEXTRA_LINK_FLAGS='-L.' -DLINKED_10BIT='TRUE' -DLINKED_12BIT='TRUE'
+                  - cd source/build-8 && make
+                  - cd source/build-8 && make install
+                sources:
+                  - type: archive
+                    url: https://bitbucket.org/multicoreware/x265_git/downloads/x265_3.3.tar.gz
+                    sha256: c6d744a87eda55560da715f56f878640554ddc06e2d0fcbd822fa330affc22cc
+              - name: fdkaac
+                config-opts:
+                  - --disable-static
+                sources:
+                  - type: archive
+                    url: https://github.com/mstorsjo/fdk-aac/archive/v2.0.2.tar.gz
+                    sha256: 7812b4f0cf66acda0d0fe4302545339517e702af7674dd04e5fe22a5ade16a90
+              - name: lame
+                cleanup:
+                  - /share/doc
+                config-opts:
+                  - --enable-shared
+                  - --disable-static
+                  - --disable-frontend
+                  - --enable-nasm
+                sources:
+                  - type: archive
+                    url: https://downloads.sourceforge.net/lame/lame-3.100.tar.gz
+                    sha256: ddfe36cab873794038ae2c1210557ad34857a4b6bdc515785d1da9e175b1da1e
