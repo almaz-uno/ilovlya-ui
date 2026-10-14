@@ -79,6 +79,15 @@ class PartialSource implements EndpointSource {
 
   bool get isRunning => _run != null;
 
+  /// Whether reads beyond what is stored are given up, the server having failed for [giveUpAfter]. Asking prompts a
+  /// try, so that a server that has come back is noticed without waiting out the backoff.
+  bool get serverAway {
+    final failing = fetcher.failingFor;
+    if (failing == null) return false;
+    fetcher.wake();
+    return failing >= giveUpAfter;
+  }
+
   @override
   bool get isGone => _state == SourceState.gone;
 

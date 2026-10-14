@@ -227,24 +227,32 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     }());
   }
 
-  /// Opens the source again, paused; the duration listener seeks to the kept position once it loads. A source that
-  /// does not load — the server still away — is tried again every 5 s for two minutes while the screen is open. A
-  /// playback download is opened through its owner again, which starts it over if its file changed on the server.
+  /// Opens the source again, paused; the duration listener seeks to the kept position once it loads, which ends the
+  /// interruption. A source that does not load — the server still away — is tried again every 5 s, 24 times, while
+  /// the screen is open. A playback download is opened through its owner again, which starts it over if its file
+  /// changed on the server — but not while its server is away: the local endpoint would open at once and give up again
+  /// at the first byte it does not hold, leaving the player at an end it does not leave. It is checked every 5 s
+  /// instead, and opened once the server answers.
   Future<void> _reopen() async {
     if (!mounted || !_interrupted) return;
-    _reopenAttempts++;
-    try {
-      final url = widget.source == null
-          ? widget.download.fullPathMedia ?? widget.download.url
-          : (await ref.read(playbackDownloadsProvider.notifier).open(widget.download)).toString();
-      if (!mounted || !_interrupted) return;
-      await MKPlayerHandler.openMedia(url, play: false);
-    } catch (e, s) {
-      AppLoggers.player.w('Reopening ${widget.recording.id} failed (attempt $_reopenAttempts)', error: e, stackTrace: s);
+    final downloads = ref.read(playbackDownloadsProvider.notifier);
+    if (widget.source != null && downloads.serverAway(widget.download.id)) {
+      AppLoggers.player.i('Reopening ${widget.recording.id} waits for the server');
+    } else {
+      _reopenAttempts++;
+      AppLoggers.player.i('Reopening ${widget.recording.id} (attempt $_reopenAttempts), the player reporting ${_player.state.duration.inSeconds}s');
+      try {
+        final url = widget.source == null ? widget.download.fullPathMedia ?? widget.download.url : (await downloads.open(widget.download)).toString();
+        if (!mounted || !_interrupted) return;
+        await MKPlayerHandler.openMedia(url, play: false);
+      } catch (e, s) {
+        AppLoggers.player.w('Reopening ${widget.recording.id} failed (attempt $_reopenAttempts)', error: e, stackTrace: s);
+      }
     }
     _reopenRetry?.cancel();
+    // Until the reopened source reports its duration; not `state.duration`, which a skipped open leaves as it was.
     _reopenRetry = Timer(const Duration(seconds: 5), () {
-      if (mounted && _interrupted && _player.state.duration <= Duration.zero && _reopenAttempts < 24) _reopen();
+      if (mounted && _interrupted && _reopenAttempts < 24) _reopen();
     });
   }
 

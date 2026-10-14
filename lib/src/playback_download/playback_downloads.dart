@@ -69,6 +69,9 @@ class PlaybackDownloads extends _$PlaybackDownloads {
   /// Whether the playback download of [downloadId] stopped saving because its file could not be written.
   bool savingFailed(String downloadId) => _sessions[downloadId]?.source.writeFailed ?? false;
 
+  /// Whether the playback download of [downloadId] has given up on its server for now; see [PartialSource.serverAway].
+  bool serverAway(String downloadId) => _sessions[downloadId]?.source.serverAway ?? false;
+
   /// Starts or resumes the playback download of [d] and returns the URL the player opens.
   ///
   /// If the server's first answer carries no length — which `http.ServeContent` never does, but a proxy in front of
