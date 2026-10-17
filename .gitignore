@@ -60,3 +60,7 @@ android/.kotlin/
 
 # FVM keeps a link to the pinned Flutter SDK here
 .fvm/
+
+# Local Flatpak builds (linux/flatpak/uno.almaz.ilovlya.yml)
+flatpak-build/
+.flatpak-builder/
