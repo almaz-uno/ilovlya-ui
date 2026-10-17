@@ -24,6 +24,7 @@ import '../api/recording_riverpod.dart';
 import '../model/download.dart';
 import '../model/local_download.dart';
 import '../model/recording_info.dart';
+import '../playback_download/playback_downloads.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
 import '../theme/media_player_theme.dart';
@@ -1224,17 +1225,31 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Future<void> _recordView(BuildContext context, RecordingInfo recording, Download d) async {
-    // Start download if downloadWhilePlaying is enabled and file not downloaded yet
-    if (!UniversalPlatform.isWeb) {
-      final settings = await ref.read(settingsNotifierProvider.future);
-      if (settings.downloadWhilePlaying && d.fullPathMedia == null) {
-        await downloadFile(context, d);
-      }
-    }
-
+    final source = await _playbackSource(d);
+    if (!context.mounted) return;
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
+      MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d, source: source)),
     );
+  }
+
+  /// The URL a playback reads from when "Download while playing" is on: the playback download's, which is downloaded
+  /// once and played from as it arrives. `null` keeps today's paths — the local file when there is one, the server's URL
+  /// with the setting off or on the web, and the stream-then-switch while an explicit download of the file runs.
+  Future<Uri?> _playbackSource(Download d) async {
+    if (UniversalPlatform.isWeb || d.fullPathMedia != null) return null;
+    final settings = await ref.read(settingsNotifierProvider.future);
+    if (!settings.downloadWhilePlaying) return null;
+    final playback = ref.read(playbackDownloadsProvider.notifier);
+    final task = ref.read(localDTNotifierProvider)[d.id];
+    final explicitRunning = task != null && task.status != null && !task.status!.isFinalState && !playback.owns(d.id);
+    if (explicitRunning) return null;
+    try {
+      final url = await playback.open(d);
+      return url.toString() == d.url ? null : url;
+    } catch (e, s) {
+      AppLoggers.download.e('Playback download of ${d.id} could not start; streaming instead', error: e, stackTrace: s);
+      return null;
+    }
   }
 
   Widget _buildActions(
@@ -1554,6 +1569,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Future<void> downloadFile(BuildContext context, Download download) async {
+    // A paused playback download yields to the explicit one: two downloaders do not share a partial file. An active one
+    // is caught by the guard below and shows its progress instead.
+    final playback = ref.read(playbackDownloadsProvider.notifier);
+    if (playback.owns(download.id) && !playback.isActive(download.id)) await playback.discard(download.id);
+
     // Check if download is not already in progress
     final task = ref.read(localDTNotifierProvider.select((tasks) => tasks[download.id]));
 

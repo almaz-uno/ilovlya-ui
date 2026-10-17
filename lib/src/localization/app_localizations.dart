@@ -900,8 +900,20 @@ abstract class AppLocalizations {
   /// Download while playing switch description
   ///
   /// In en, this message translates to:
-  /// **'Start download during playback. When download completes, playback will continue from the file.'**
+  /// **'Save the file while playing. Playback runs from the file being downloaded, and nothing is downloaded twice.'**
   String get downloadWhilePlayingDescription;
+
+  /// Shown once when a playback download cannot write its file and the playback continues as a plain stream
+  ///
+  /// In en, this message translates to:
+  /// **'The file cannot be saved. Playback continues without saving.'**
+  String get playbackDownloadNotSaved;
+
+  /// Shown when the stream ended before the recording did, typically because the server became unreachable
+  ///
+  /// In en, this message translates to:
+  /// **'Playback was interrupted. Press play to continue from {position}.'**
+  String playbackInterrupted(String position);
 
   /// Token input field label
   ///
