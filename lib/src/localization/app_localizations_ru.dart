@@ -447,7 +447,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get downloadWhilePlayingDescription =>
-      'Стартовать загрузку во время проигрывания. Когда загрузка закончится, проигрывание продолжится из файла.';
+      'Сохранять файл во время проигрывания. Проигрывание идёт из загружаемого файла, ничего не скачивается дважды.';
+
+  @override
+  String get playbackDownloadNotSaved =>
+      'Файл не удаётся сохранить. Проигрывание продолжается без сохранения.';
+
+  @override
+  String playbackInterrupted(String position) {
+    return 'Проигрывание прервано. Нажмите воспроизведение, чтобы продолжить с $position.';
+  }
 
   @override
   String get yourTokenProvidedByBot => 'Ваш токен, предоставленный ботом';

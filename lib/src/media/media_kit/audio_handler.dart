@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:media_kit/media_kit.dart';
@@ -93,10 +95,28 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     });
   }
 
-  Future<void> playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl, {bool useCaching = false, String? mediaDirectory}) async {
-    final url = download.fullPathMedia ?? download.url;
+  /// libmpv's read timeout for the local endpoint of a playback download. The endpoint holds a read while the server is
+  /// away and gives up on its own after 45 s (`PartialSource.defaultGiveUpAfter`); with media_kit's 5 s libmpv would
+  /// reconnect instead, and a reconnect may be sleeping out its delay when the server returns.
+  static const loopbackNetworkTimeout = Duration(seconds: 60);
 
-    player.open(Media(url));
+  /// Opens [url], with the network timeout that suits it: [loopbackNetworkTimeout] for the local endpoint, media_kit's
+  /// own 5 s for everything else, since the player is shared.
+  static Future<void> openMedia(String url, {bool play = true}) async {
+    final platform = player.platform;
+    if (platform is NativePlayer) {
+      final loopback = Uri.tryParse(url)?.host == '127.0.0.1';
+      await platform.setProperty('network-timeout', loopback ? '${loopbackNetworkTimeout.inSeconds}' : '5');
+    }
+    await player.open(Media(url), play: play);
+  }
+
+  /// Opens [download] — from [source] when given, the local endpoint of a playback download, otherwise from the local
+  /// file or the server's URL.
+  Future<void> playRecording(RecordingInfo recording, Download download, Uri thumbnailUrl, {bool useCaching = false, String? mediaDirectory, Uri? source}) async {
+    final url = source?.toString() ?? download.fullPathMedia ?? download.url;
+
+    unawaited(openMedia(url));
 
     player.stream.playing.listen((event) {
       _handler.updatePlaybackState();
@@ -113,7 +133,8 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
 
     player.stream.duration.listen((event) {
       mediaItem.add(MediaItem(
-        id: url,
+        // The endpoint's port changes per process; the media session's identity should not.
+        id: source == null ? url : download.url,
         title: recording.title,
         artist: recording.uploader,
         album: recording.extractor,

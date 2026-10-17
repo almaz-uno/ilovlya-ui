@@ -440,7 +440,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get downloadWhilePlayingDescription =>
-      'Start download during playback. When download completes, playback will continue from the file.';
+      'Save the file while playing. Playback runs from the file being downloaded, and nothing is downloaded twice.';
+
+  @override
+  String get playbackDownloadNotSaved =>
+      'The file cannot be saved. Playback continues without saving.';
+
+  @override
+  String playbackInterrupted(String position) {
+    return 'Playback was interrupted. Press play to continue from $position.';
+  }
 
   @override
   String get yourTokenProvidedByBot => 'Your token, provided by the bot';
