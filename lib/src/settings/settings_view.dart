@@ -33,28 +33,28 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final tokenController = TextEditingController(text: settings.requireValue.token);
     final serverUrlController = TextEditingController(text: settings.requireValue.serverUrl);
 
+    // File management is about files on the device, and a browser keeps none:
+    // on web the tab would only wait for directories that do not exist there.
+    final withHousekeeping = !UniversalPlatform.isWeb;
+
     return DefaultTabController(
-      length: 3,
-      initialIndex: 2,
+      length: withHousekeeping ? 3 : 2,
+      initialIndex: withHousekeeping ? 2 : 1,
       child: Scaffold(
         appBar: AppBar(
           bottom: TabBar(
             tabs: [
               Tab(icon: const Icon(Icons.person), text: AppLocalizations.of(context)!.userProfile),
               Tab(icon: const Icon(Icons.settings), text: AppLocalizations.of(context)!.settings),
-              Tab(icon: const Icon(Icons.cleaning_services), text: AppLocalizations.of(context)!.housekeeping),
+              if (withHousekeeping)
+                Tab(icon: const Icon(Icons.cleaning_services), text: AppLocalizations.of(context)!.housekeeping),
             ],
           ),
           title: Text(AppLocalizations.of(context)!.settings),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: TabBarView(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 8.0,
-                children: <Widget>[
+        body: TabBarView(
+          children: [
+            _tab(<Widget>[
                       const SizedBox(height:0),
                       Consumer(
                         builder: (context, ref, child) {
@@ -88,27 +88,30 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         },
                       ),
                     ] +
-                    tenantInfo(ref),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 8.0,
-                children: [
-                  const SizedBox(height: 0),
-                  ..._commonSettings(),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 8.0,
-                children: [
-                  const SizedBox(height: 0),
-                  ..._housekeeping(context),
-                ],
-              ),
-            ],
-          ),
+                    tenantInfo(ref)),
+            _tab([
+              const SizedBox(height: 0),
+              ..._commonSettings(),
+            ]),
+            if (withHousekeeping)
+              _tab([
+                const SizedBox(height: 0),
+                ..._housekeeping(context),
+              ]),
+          ],
         ),
+      ),
+    );
+  }
+
+  // A tab scrolls, so that its content fits a small screen and an open keyboard.
+  Widget _tab(List<Widget> children) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 8.0,
+        children: children,
       ),
     );
   }
@@ -231,6 +234,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final (number, size) = media.requireValue;
 
     final mediaDirs = ref.watch(mediaDirsProvider);
+    final mediaDir = ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory));
 
     return [
       Text(AppLocalizations.of(context)!.localMediaInfo, style: Theme.of(context).textTheme.bodyLarge),
@@ -294,12 +298,17 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       if (mediaDirs.hasValue)
         DropdownButtonFormField<String>(
           decoration: InputDecoration(labelText: AppLocalizations.of(context)!.mediaDirectory),
-          initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory)),
+          // A value outside the items fails an assertion; the settings already
+          // fall back to an offered directory, so this only guards the screen.
+          initialValue: mediaDirs.requireValue.contains(mediaDir) ? mediaDir : null,
           alignment: AlignmentDirectional.topStart,
+          isExpanded: true,
           onChanged: (String? directory) {
             ref.read(settingsNotifierProvider.notifier).updateMediaStorageDirectory(directory ?? "");
           },
-          items: [for (final d in mediaDirs.requireValue) DropdownMenuItem(value: d, child: Text(d))],
+          items: [
+            for (final d in mediaDirs.requireValue) DropdownMenuItem(value: d, child: Text(d, overflow: TextOverflow.ellipsis)),
+          ],
         ),
       if (sp.hasValue) Text(AppLocalizations.of(context)!.dataLocalPath(sp.requireValue.data().path)),
       if (sp.hasValue) Text(AppLocalizations.of(context)!.downloadedLocalMediaPath(sp.requireValue.media().path)),

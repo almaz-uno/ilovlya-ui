@@ -77,6 +77,9 @@ class _TvPairingViewState extends ConsumerState<TvPairingView> {
     final l10n = AppLocalizations.of(context)!;
 
     return AlertDialog(
+      // The keyboard leaves little height on a phone: the content scrolls
+      // instead of running under the buttons.
+      scrollable: true,
       title: Text(l10n.tvPairTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -93,14 +96,24 @@ class _TvPairingViewState extends ConsumerState<TvPairingView> {
             maxLength: _codeLength + 2, // room for a dash or a space
             inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9 \-]'))],
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(letterSpacing: 4),
-            decoration: InputDecoration(labelText: l10n.tvPairCodeLabel, errorText: _failure),
+            decoration: InputDecoration(
+              labelText: l10n.tvPairCodeLabel,
+              errorText: _failure,
+              // The limit only leaves room for a dash or a space; a counter of
+              // ten for an eight-character code would mislead.
+              counterText: '',
+              // Scanning fills this very field, so it lives in it rather than
+              // among the dialog actions, which do not fit three on a phone.
+              suffixIcon: _canScan
+                  ? IconButton(tooltip: l10n.tvPairScan, icon: const Icon(Icons.qr_code_scanner), onPressed: _pairing ? null : _scan)
+                  : null,
+            ),
             onSubmitted: _pair,
           ),
           if (_pairing) const Padding(padding: EdgeInsets.only(top: 8), child: LinearProgressIndicator()),
         ],
       ),
       actions: [
-        if (_canScan) TextButton.icon(onPressed: _pairing ? null : _scan, icon: const Icon(Icons.qr_code_scanner), label: Text(l10n.tvPairScan)),
         TextButton(onPressed: _pairing ? null : () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
         FilledButton(onPressed: _pairing ? null : () => _pair(_controller.text), child: Text(l10n.tvPairConnect)),
       ],

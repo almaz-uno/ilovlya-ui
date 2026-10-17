@@ -26,8 +26,7 @@ ext.kotlin_version = '1.9.20'
 
 android {
     namespace "uno.almaz.ilovlya"
-//    compileSdkVersion flutter.compileSdkVersion
-    compileSdkVersion 34
+    compileSdkVersion flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
     compileOptions {

@@ -57,3 +57,6 @@ android/.kotlin/
 **/flutter/generated_plugins.cmake
 **/Flutter/GeneratedPluginRegistrant.swift
 **/Flutter/GeneratedPluginRegistrant.m
+
+# FVM keeps a link to the pinned Flutter SDK here
+.fvm/
