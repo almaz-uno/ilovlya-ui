@@ -189,14 +189,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         },
         controlAffinity: ListTileControlAffinity.leading,
       ),
-      SwitchListTile(
-        title: Text(AppLocalizations.of(context)!.showTechnicalInfo),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.debugMode ?? false)),
-        onChanged: (bool? debugMode) {
-          ref.read(settingsNotifierProvider.notifier).updateDebugMode(debugMode);
-        },
-        controlAffinity: ListTileControlAffinity.leading,
-      ),
     ];
   }
 

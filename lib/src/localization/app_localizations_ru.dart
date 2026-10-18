@@ -104,10 +104,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Обновлять миниатюру в соответствии с прогрессом просмотра видео';
 
   @override
-  String get showTechnicalInfo =>
-      'Показывать дополнительную техническую информацию. Только для продвинутых пользователей!';
-
-  @override
   String get localMediaInfo => 'Информация о локальных медиа';
 
   @override
@@ -926,4 +922,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tvErrorPlayback => 'Ошибка воспроизведения на телевизоре';
+
+  @override
+  String get playbackDetails => 'Подробности';
 }

@@ -118,7 +118,6 @@ class SettingsNotifier extends _$SettingsNotifier {
       },
       token: prefs.getString("token") ?? "",
       serverUrl: prefs.getString("server_url") ?? serverBaseURL,
-      debugMode: prefs.getBool("debug_mode") ?? false,
       volume: prefs.getDouble("volume") ?? 50.0,
       sortBy: prefs.getString("sort_by") ?? "created_at",
       showHidden: prefs.getBool("show_hidden") ?? false,
@@ -149,7 +148,6 @@ class SettingsNotifier extends _$SettingsNotifier {
 
     prefs.setString("token", state.value?.token ?? "");
     prefs.setString("server_url", state.value?.serverUrl ?? serverBaseURL);
-    prefs.setBool("debug_mode", state.value?.debugMode ?? false);
     prefs.setDouble("volume", state.value?.volume ?? 50.0);
     prefs.setString("sort_by", state.value?.sortBy ?? "created_at");
     prefs.setBool("show_hidden", state.value?.showHidden ?? false);
@@ -177,11 +175,6 @@ class SettingsNotifier extends _$SettingsNotifier {
 
   void updateServerUrl(String serverUrl) {
     state = AsyncData(state.requireValue.copyWith(serverUrl: serverUrl));
-    save();
-  }
-
-  void updateDebugMode(bool? debugMode) {
-    state = AsyncData(state.requireValue.copyWith(debugMode: debugMode));
     save();
   }
 

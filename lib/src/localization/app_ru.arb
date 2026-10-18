@@ -180,11 +180,6 @@
     "description": "Настройка обновления миниатюры по прогрессу просмотра"
   },
 
-  "showTechnicalInfo": "Показывать дополнительную техническую информацию. Только для продвинутых пользователей!",
-  "@showTechnicalInfo": {
-    "description": "Настройка показа технической информации"
-  },
-
   "localMediaInfo": "Информация о локальных медиа",
   "@localMediaInfo": {
     "description": "Заголовок секции локальных медиа"
@@ -1444,5 +1439,9 @@
   "tvErrorPlayback": "Ошибка воспроизведения на телевизоре",
   "@tvErrorPlayback": {
     "description": "Receiver reported a playback failure"
+  },
+  "playbackDetails": "Подробности",
+  "@playbackDetails": {
+    "description": "Title of the collapsible section under the player with the recording's and the player's details"
   }
 }

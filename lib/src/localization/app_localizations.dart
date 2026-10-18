@@ -278,12 +278,6 @@ abstract class AppLocalizations {
   /// **'Update thumbnail according to video viewing progress'**
   String get updateThumbnailProgress;
 
-  /// Setting for showing technical info
-  ///
-  /// In en, this message translates to:
-  /// **'Show additional technical info. For advanced users only!'**
-  String get showTechnicalInfo;
-
   /// Header for local media information
   ///
   /// In en, this message translates to:
@@ -1659,6 +1653,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Playback failed on the television'**
   String get tvErrorPlayback;
+
+  /// Title of the collapsible section under the player with the recording's and the player's details
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get playbackDetails;
 }
 
 class _AppLocalizationsDelegate
