@@ -249,7 +249,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.showSeen ? Icons.check : null, color: primary),
-                                Text(AppLocalizations.of(context)!.showSeen, style: TextStyle(color: primary)),
+                                Flexible(child: Text(AppLocalizations.of(context)!.showSeen, style: TextStyle(color: primary))),
                               ],
                             ),
                           ),
@@ -260,7 +260,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.showHidden ? Icons.check : null, color: primary),
-                                Text(AppLocalizations.of(context)!.showHidden, style: TextStyle(color: primary)),
+                                Flexible(child: Text(AppLocalizations.of(context)!.showHidden, style: TextStyle(color: primary))),
                               ],
                             ),
                           ),
@@ -271,7 +271,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.sortBy == "created_at" ? Icons.check : null, color: primary),
-                                Text(AppLocalizations.of(context)!.sortByCreated, style: TextStyle(color: primary)),
+                                Flexible(child: Text(AppLocalizations.of(context)!.sortByCreated, style: TextStyle(color: primary))),
                               ],
                             ),
                           ),
@@ -282,7 +282,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.sortBy == "updated_at" ? Icons.check : null, color: primary),
-                                Text(AppLocalizations.of(context)!.sortByUpdated, style: TextStyle(color: primary)),
+                                Flexible(child: Text(AppLocalizations.of(context)!.sortByUpdated, style: TextStyle(color: primary))),
                               ],
                             ),
                           ),
@@ -293,7 +293,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.withServerFile ? Icons.flag_circle_outlined : null, color: primary),
-                                Text(AppLocalizations.of(context)!.showOnlyWithServerFile, style: TextStyle(color: primary)),
+                                Flexible(child: Text(AppLocalizations.of(context)!.showOnlyWithServerFile, style: TextStyle(color: primary))),
                               ],
                             ),
                           ),
@@ -304,7 +304,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.withLocalFile ? Icons.download_done : null, color: primary),
-                                Text(AppLocalizations.of(context)!.showOnlyWithLocalFile, style: TextStyle(color: primary)),
+                                Flexible(child: Text(AppLocalizations.of(context)!.showOnlyWithLocalFile, style: TextStyle(color: primary))),
                               ],
                             ),
                           ),

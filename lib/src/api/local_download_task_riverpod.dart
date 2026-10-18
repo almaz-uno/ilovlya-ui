@@ -56,9 +56,17 @@ class LocalDTNotifier extends _$LocalDTNotifier {
     state = {...state, task.id: task};
   }
 
-  /// Drops what [publish] put there, once the download is gone.
+  /// Drops a download's task: what [publish] put there once the download is gone, or a task whose file was cleaned.
   void forget(String id) {
     if (!state.containsKey(id)) return;
     state = {...state}..remove(id);
+  }
+
+  /// Drops every task that has ended, for when the media is cleaned: a complete one would otherwise still be shown
+  /// as complete. Tasks that still run stay.
+  void forgetEnded() {
+    final ended = [for (final e in state.entries) if (e.value.status?.isFinalState ?? false) e.key];
+    if (ended.isEmpty) return;
+    state = {...state}..removeWhere((id, _) => ended.contains(id));
   }
 }
