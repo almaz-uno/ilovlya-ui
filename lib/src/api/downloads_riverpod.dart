@@ -11,6 +11,7 @@ import '../playback_download/playback_downloads.dart';
 import '../utils/logger_provider.dart';
 import 'api_riverpod.dart';
 import 'directories_riverpod.dart';
+import 'local_download_task_riverpod.dart';
 import 'recording_riverpod.dart';
 
 part 'downloads_riverpod.g.dart';
@@ -111,11 +112,14 @@ class DownloadsNotifier extends _$DownloadsNotifier {
   Future<void> _clean({String downloadId = ""}) async {
     final sp = await ref.read(storePlacesProvider.future);
     final playback = ref.read(playbackDownloadsProvider.notifier);
+    final tasks = ref.read(localDTNotifierProvider.notifier);
     for (final dp in state.requireValue) {
       if (downloadId != "" && dp.id != downloadId) continue;
       // The partial file belongs to the download as much as the final one does.
       await playback.discard(dp.id);
       PartialFile.deleteFor(sp.media().path, dp.filename);
+      // So does its task: a complete one would still be shown as complete. One still running is left to finish.
+      if (ref.read(localDTNotifierProvider)[dp.id]?.status?.isFinalState ?? false) tasks.forget(dp.id);
       if (dp.fullPathMedia == null) continue;
       final f = File(dp.fullPathMedia!);
       if (f.existsSync()) f.deleteSync();

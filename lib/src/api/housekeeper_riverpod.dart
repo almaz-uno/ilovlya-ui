@@ -9,6 +9,7 @@ import '../playback_download/partial_file.dart';
 import '../playback_download/playback_downloads.dart';
 import '../utils/logger_provider.dart';
 import 'directories_riverpod.dart';
+import 'local_download_task_riverpod.dart';
 import 'media_list_riverpod.dart';
 import 'recording_riverpod.dart';
 
@@ -46,6 +47,7 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
     await ref.read(playbackDownloadsProvider.notifier).stopAll();
     sp.media().deleteSync(recursive: true);
     sp.media().createSync(recursive: true);
+    ref.read(localDTNotifierProvider.notifier).forgetEnded();
     // Recalculate and update state directly after cleanup
     final newState = await _evaluate();
     state = AsyncValue.data(newState);
