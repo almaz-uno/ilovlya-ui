@@ -255,4 +255,54 @@ void main() {
     expect(source.state, SourceState.gone);
     expect((await fetch(player, url, range: 'bytes=0-')).status, 404);
   });
+
+  test('a suspended endpoint refuses connections, and serves the same URL on the same port once resumed', () async {
+    up.rate = 1 << 20;
+    final (_, url) = serve();
+    final port = endpoint.port;
+    final open = fetch(player, url, range: 'bytes=0-');
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await endpoint.suspend();
+    expect(endpoint.isListening, isFalse);
+    final cut = await open;
+    expect(cut.error ?? (cut.body.length < src.length ? 'short' : null), isNotNull, reason: 'the open response is reset');
+    await expectLater(fetch(player, url, range: 'bytes=0-'), throwsA(isA<SocketException>()));
+
+    up.rate = null;
+    await endpoint.resume();
+    expect(endpoint.isListening, isTrue);
+    expect(endpoint.port, port);
+    final back = await fetch(player, url, range: 'bytes=${cut.body.length}-');
+    expect(back.error, isNull);
+    expect(back.status, 206);
+    expect(back.body, Uint8List.sublistView(src, cut.body.length));
+    expect((await fetch(player, url.replace(pathSegments: ['wrong', ...url.pathSegments.skip(1)]))).status, 404, reason: 'the token is kept, and still required');
+  });
+
+  test('the port is bound again at once after the endpoint closed the connections itself', () async {
+    final (_, url) = serve();
+    for (var i = 0; i < 3; i++) {
+      // The endpoint closes each response first, which leaves its side of the connection in TIME_WAIT.
+      expect((await fetch(player, url, range: 'bytes=0-1023')).status, 206);
+    }
+    await endpoint.suspend();
+    final clock = Stopwatch()..start();
+    await endpoint.resume();
+    expect(clock.elapsed, lessThan(const Duration(seconds: 1)));
+    expect((await fetch(player, url, range: 'bytes=0-1023')).body, Uint8List.sublistView(src, 0, 1024));
+  });
+
+  test('resuming on a port another socket holds gives up after the wait', () async {
+    serve();
+    await endpoint.suspend();
+    final squatter = await ServerSocket.bind(InternetAddress.loopbackIPv4, endpoint.port);
+    try {
+      final clock = Stopwatch()..start();
+      await expectLater(endpoint.resume(wait: const Duration(milliseconds: 600)), throwsA(isA<SocketException>()));
+      expect(clock.elapsed, greaterThanOrEqualTo(const Duration(milliseconds: 600)));
+      expect(endpoint.isListening, isFalse);
+    } finally {
+      await squatter.close();
+    }
+  });
 }

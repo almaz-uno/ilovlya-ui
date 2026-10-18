@@ -148,4 +148,50 @@ void main() {
     expect(File(p.join(root.path, 'media', PartialFile.partialDirName, 'd1.mp4')).existsSync(), isFalse);
     expect((await fetch(player, url, range: 'bytes=0-')).status, 404);
   });
+
+  test('in the background the endpoint listens only while the player plays, and keeps its URL across', () async {
+    up.rate = 512 * 1024;
+    final url = await downloads().open(download('d1'));
+    final first = await fetch(player, url, range: 'bytes=0-', take: 50000);
+
+    downloads().playerPlaying = true;
+    downloads().inFront = false;
+    await downloads().listeningSettled;
+    expect((await fetch(player, url, range: 'bytes=0-', take: 1000)).status, 206, reason: 'playing keeps the process running');
+
+    downloads().playerPlaying = false;
+    await downloads().listeningSettled;
+    await expectLater(fetch(player, url, range: 'bytes=0-'), throwsA(isA<SocketException>()), reason: 'about to be suspended');
+    expect(downloads().owns('d1'), isTrue, reason: 'the download is frozen, not ended');
+
+    downloads().inFront = true;
+    await downloads().listeningSettled;
+    up.rate = null;
+    final back = await fetch(player, url, range: 'bytes=${first.body.length}-');
+    expect(back.body, src.sublist(first.body.length));
+    expect(await downloads().open(download('d1')), url, reason: 'the same port and token');
+    await downloads().discard('d1');
+  });
+
+  test('if the port cannot be bound again, the next open serves the download from a new endpoint', () async {
+    up.rate = 512 * 1024;
+    final url = await downloads().open(download('d1'));
+    await fetch(player, url, range: 'bytes=0-', take: 50000);
+    downloads().inFront = false;
+    await downloads().listeningSettled;
+    final squatter = await ServerSocket.bind(InternetAddress.loopbackIPv4, url.port);
+    try {
+      downloads().inFront = true;
+      await downloads().listeningSettled;
+    } finally {
+      await squatter.close();
+    }
+    expect(downloads().owns('d1'), isTrue);
+
+    up.rate = null;
+    final again = await downloads().open(download('d1'));
+    expect(again, isNot(url));
+    expect((await fetch(player, again, range: 'bytes=0-')).body, src);
+    await downloads().discard('d1');
+  });
 }

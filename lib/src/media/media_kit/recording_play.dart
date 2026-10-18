@@ -78,6 +78,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   VideoController get _controller => MKPlayerHandler.videoController;
   StreamSubscription? _positionSendSubs;
   StreamSubscription? _uiUpdateSubs;
+  StreamSubscription? _playingSubs;
   Duration _rewinding = Duration.zero;
   Timer? _rewindTimer;
   bool _hasAttemptedSwitch = false; // Flag to prevent multiple switch attempts
@@ -142,6 +143,12 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       if (!mounted) return;
       setState(() {});
     });
+
+    // While it plays from a playback download, the local endpoint keeps listening with the application in the background.
+    if (widget.source != null) {
+      final downloads = ref.read(playbackDownloadsProvider.notifier);
+      _playingSubs = _player.stream.playing.listen((playing) => downloads.playerPlaying = playing);
+    }
 
     _player.stream.volume.listen((double volume) {
       if (!mounted) return;
@@ -391,10 +398,15 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     // Stop UI-updating streams immediately.
     _positionSendSubs?.cancel();
     _uiUpdateSubs?.cancel();
+    _playingSubs?.cancel();
     _reopenRetry?.cancel();
     _interrupted = false;
     // A playback download outlives the player: it continues unattended.
-    if (widget.source != null) ref.read(playbackDownloadsProvider.notifier).detach(widget.download.id);
+    if (widget.source != null) {
+      final downloads = ref.read(playbackDownloadsProvider.notifier);
+      downloads.playerPlaying = false;
+      downloads.detach(widget.download.id);
+    }
     // Defer the native player teardown until after the pop transition. The
     // native stop() (releasing the HW video decoder) otherwise blocks the
     // platform thread during the reverse slide, causing a visible jerk.
