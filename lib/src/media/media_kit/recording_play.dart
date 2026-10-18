@@ -467,7 +467,6 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       playerW = playerW * mediaH / playerH;
     }
 
-    final settings = ref.watch(settingsNotifierProvider);
     if (widget.source != null) {
       // Told once: writing the file failed, and the playback goes on as a plain stream.
       ref.listen(playbackDownloadsProvider.select((s) => s[widget.download.id]), (previous, next) {
@@ -685,59 +684,69 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                           return const SizedBox.shrink();
                         },
                       ),
-                      Container(
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.all(8),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(AppLocalizations.of(context)!
-                                  .createdAtWithDate(formatDateLong(widget.recording.createdAt), since(widget.recording.createdAt, false, Localizations.localeOf(context).languageCode))),
-                              if (_player.state.playlist.medias.isNotEmpty)
-                                Row(
-                                  children: [
-                                    Text("${AppLocalizations.of(context)!.playingFrom}: ${_player.state.playlist.medias[0].uri}"),
-                                    IconButton(
-                                      onPressed: () {
-                                        copyToClipboard(context, _player.state.playlist.medias[0].uri);
-                                      },
-                                      icon: const Icon(Icons.copy),
-                                    )
-                                  ],
-                                ),
-                              Text("${AppLocalizations.of(context)!.sizeLabel}: ${fileSizeHumanReadable(widget.download.size)}"),
-                            ],
+                      // The details, collapsed as "Available formats" on the recording's screen, but to the left: the arrow
+                      // before the title rather than at the far end of the row.
+                      ExpansionTile(
+                        title: Text(AppLocalizations.of(context)!.playbackDetails, style: Theme.of(context).textTheme.titleMedium),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        initiallyExpanded: false,
+                        expandedAlignment: Alignment.centerLeft,
+                        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            alignment: Alignment.centerLeft,
+                            padding: const EdgeInsets.all(8),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(AppLocalizations.of(context)!
+                                      .createdAtWithDate(formatDateLong(widget.recording.createdAt), since(widget.recording.createdAt, false, Localizations.localeOf(context).languageCode))),
+                                  if (_player.state.playlist.medias.isNotEmpty)
+                                    Row(
+                                      children: [
+                                        Text("${AppLocalizations.of(context)!.playingFrom}: ${_player.state.playlist.medias[0].uri}"),
+                                        IconButton(
+                                          onPressed: () {
+                                            copyToClipboard(context, _player.state.playlist.medias[0].uri);
+                                          },
+                                          icon: const Icon(Icons.copy),
+                                        )
+                                      ],
+                                    ),
+                                  Text("${AppLocalizations.of(context)!.sizeLabel}: ${fileSizeHumanReadable(widget.download.size)}"),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
+                          Container(
+                            alignment: Alignment.topLeft,
+                            padding: const EdgeInsets.all(8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(AppLocalizations.of(context)!.withAudioHandler, style: techInfoStyle),
+                                if (widget.recording.seenAt != null)
+                                  Text("${AppLocalizations.of(context)!.seenAt}: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugCreatedAt}: ${widget.download.createdAt}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugUpdatedAt}: ${widget.download.updatedAt}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugDuration}: ${formatDuration(_player.state.duration)}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugPosition}: ${formatDuration(_player.state.position)}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugBuffered}: ${formatDuration(_player.state.buffer)}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugBuffering}: ${_player.state.buffering ? '>>' : '__'}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugVolume}: ${_player.state.volume}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugAudioBitrate}: ${_player.state.audioBitrate}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugAudioDevice}: ${_player.state.audioDevice}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugSize}: ${_player.state.width}x${_player.state.height}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugVideoParams}: ${_player.state.videoParams}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugAudioParams}: ${_player.state.audioParams}", style: techInfoStyle),
+                                // Text("${_controller.value}"),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      if (settings.value?.debugMode ?? false)
-                        Container(
-                          alignment: Alignment.topLeft,
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(AppLocalizations.of(context)!.withAudioHandler, style: techInfoStyle),
-                              if (widget.recording.seenAt != null)
-                                Text("${AppLocalizations.of(context)!.seenAt}: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugCreatedAt}: ${widget.download.createdAt}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugUpdatedAt}: ${widget.download.updatedAt}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugDuration}: ${formatDuration(_player.state.duration)}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugPosition}: ${formatDuration(_player.state.position)}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugBuffered}: ${formatDuration(_player.state.buffer)}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugBuffering}: ${_player.state.buffering ? '>>' : '__'}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugVolume}: ${_player.state.volume}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugAudioBitrate}: ${_player.state.audioBitrate}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugAudioDevice}: ${_player.state.audioDevice}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugSize}: ${_player.state.width}x${_player.state.height}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugVideoParams}: ${_player.state.videoParams}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugAudioParams}: ${_player.state.audioParams}", style: techInfoStyle),
-                              // Text("${_controller.value}"),
-                            ],
-                          ),
-                        ),
                     ],
                   ),
                 ),

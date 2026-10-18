@@ -103,10 +103,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Update thumbnail according to video viewing progress';
 
   @override
-  String get showTechnicalInfo =>
-      'Show additional technical info. For advanced users only!';
-
-  @override
   String get localMediaInfo => 'Local media info';
 
   @override
@@ -915,4 +911,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tvErrorPlayback => 'Playback failed on the television';
+
+  @override
+  String get playbackDetails => 'Details';
 }

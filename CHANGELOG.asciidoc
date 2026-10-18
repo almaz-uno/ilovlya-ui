@@ -20,6 +20,10 @@ file is fetched from the server once and played from while it arrives.
 .Changed
 - The description of "Download while playing" says what it now does
 - A paused playback download gives way to the explicit download button, which starts its own download
+- The details under the player — when the recording was created, what is playing, its size and the player's technical state — sit in a "Details" section, collapsed when the player opens
+
+.Removed
+- The setting "Show additional technical info": the player's technical state is now always in the "Details" section
 
 .Fixed
 - A server outage during playback no longer ends the recording: the player keeps the position, says the playback was interrupted, and continues from there once the server is back — instead of marking the recording watched, or starting it from the beginning on play

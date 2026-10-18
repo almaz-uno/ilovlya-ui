@@ -154,11 +154,6 @@
     "description": "Setting for updating thumbnail by viewing progress"
   },
 
-  "showTechnicalInfo": "Show additional technical info. For advanced users only!",
-  "@showTechnicalInfo": {
-    "description": "Setting for showing technical info"
-  },
-
   "localMediaInfo": "Local media info",
   "@localMediaInfo": {
     "description": "Local media section title"
@@ -1746,5 +1741,9 @@
   "tvErrorPlayback": "Playback failed on the television",
   "@tvErrorPlayback": {
     "description": "Receiver reported a playback failure"
+  },
+  "playbackDetails": "Details",
+  "@playbackDetails": {
+    "description": "Title of the collapsible section under the player with the recording's and the player's details"
   }
 }
