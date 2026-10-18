@@ -106,7 +106,9 @@ class MKPlayerHandler extends BaseAudioHandler with SeekHandler {
     final platform = player.platform;
     if (platform is NativePlayer) {
       final loopback = Uri.tryParse(url)?.host == '127.0.0.1';
-      await platform.setProperty('network-timeout', loopback ? '${loopbackNetworkTimeout.inSeconds}' : '5');
+      // Through `dynamic`: on the web `NativePlayer` is media_kit's stub, which has no `setProperty`, and the build fails
+      // to compile against it. The web never gets here — its player is not a `NativePlayer`.
+      await (platform as dynamic).setProperty('network-timeout', loopback ? '${loopbackNetworkTimeout.inSeconds}' : '5');
     }
     await player.open(Media(url), play: play);
   }
