@@ -21,6 +21,7 @@ file is fetched from the server once and played from while it arrives.
 - The description of "Download while playing" says what it now does
 - A paused playback download gives way to the explicit download button, which starts its own download
 - The details under the player — when the recording was created, what is playing, its size and the player's technical state — sit in a "Details" section, collapsed when the player opens
+- "Playing from" shows the server's URL while the file arrives and the local file once it has, not the local address the player reads from
 
 .Removed
 - The setting "Show additional technical info": the player's technical state is now always in the "Details" section

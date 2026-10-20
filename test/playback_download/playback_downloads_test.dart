@@ -80,11 +80,13 @@ void main() {
     final url = await downloads().open(d);
     expect(url.host, '127.0.0.1');
     expect(task('d1')?.status, isNotNull);
+    expect(downloads().shownSource('d1'), d.url, reason: 'while it arrives, the server is shown, not the endpoint');
 
     final r = await fetch(player, url, range: 'bytes=0-');
     expect(r.body, src);
     await until(() => c.read(playbackDownloadsProvider)['d1'] == SourceState.complete);
     expect(File(media('d1.mp4')).readAsBytesSync(), src);
+    expect(downloads().shownSource('d1'), media('d1.mp4'), reason: 'once all of it has arrived, the local file is shown');
     expect(task('d1')?.status, TaskStatus.complete);
     expect(task('d1')?.progress, 1.0);
     expect(up.log.every((r) => r.authorization == 'tok'), isTrue, reason: 'the bare token, as getAuthHeader sends it');

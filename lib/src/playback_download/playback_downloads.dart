@@ -87,6 +87,15 @@ class PlaybackDownloads extends _$PlaybackDownloads {
   /// Whether the playback download of [downloadId] has given up on its server for now; see [PartialSource.serverAway].
   bool serverAway(String downloadId) => _sessions[downloadId]?.source.serverAway ?? false;
 
+  /// Where a playback of [downloadId] is played from, as the user should see it: the server's URL while the file is
+  /// still arriving, the local file once all of it has. The endpoint's own loopback URL is an implementation detail.
+  /// `null` when no playback download of [downloadId] exists.
+  String? shownSource(String downloadId) {
+    final s = _sessions[downloadId];
+    if (s == null) return null;
+    return s.source.state == SourceState.complete ? s.source.file.finalPath : s.download.url;
+  }
+
   /// Starts or resumes the playback download of [d] and returns the URL the player opens.
   ///
   /// If the server's first answer carries no length — which `http.ServeContent` never does, but a proxy in front of

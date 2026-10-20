@@ -461,6 +461,16 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     ref.read(putPositionProvider(recordingId, position, autoFinished));
   }
 
+  /// What "Playing from" shows. A playback download is played through the local endpoint whatever its state, so its
+  /// loopback URL is not shown: the server's URL while the file arrives, the local file once it has. Watching the state
+  /// rebuilds the line when the download completes.
+  String _shownSource() {
+    final played = _player.state.playlist.medias[0].uri;
+    if (widget.source == null) return played;
+    ref.watch(playbackDownloadsProvider.select((s) => s[widget.download.id]));
+    return ref.read(playbackDownloadsProvider.notifier).shownSource(widget.download.id) ?? widget.download.fullPathMedia ?? widget.download.url;
+  }
+
   @override
   Widget build(BuildContext context) {
     double aspectRatio = 9.0 / 16.0;
@@ -718,10 +728,10 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                                   if (_player.state.playlist.medias.isNotEmpty)
                                     Row(
                                       children: [
-                                        Text("${AppLocalizations.of(context)!.playingFrom}: ${_player.state.playlist.medias[0].uri}"),
+                                        Text("${AppLocalizations.of(context)!.playingFrom}: ${_shownSource()}"),
                                         IconButton(
                                           onPressed: () {
-                                            copyToClipboard(context, _player.state.playlist.medias[0].uri);
+                                            copyToClipboard(context, _shownSource());
                                           },
                                           icon: const Icon(Icons.copy),
                                         )
