@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:background_downloader/background_downloader.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/widgets.dart' show AppLifecycleListener, AppLifecycleState;
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderBase;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -22,11 +25,10 @@ part 'playback_downloads.g.dart';
 class _Session {
   final Download download;
   final PartialSource source;
-  final Uri url;
   bool attached = false;
   bool announced = false;
 
-  _Session(this.download, this.source, this.url);
+  _Session(this.download, this.source);
 }
 
 /// The owner of the playback downloads: one [PartialSource] per download, served by one [LocalMediaEndpoint].
@@ -38,6 +40,11 @@ class _Session {
 /// The state is the [SourceState] of every download it owns; the progress itself is published into
 /// [localDTNotifierProvider], beside the `background_downloader` tasks, which is where the player's progress line and
 /// the explicit download's guard already look.
+///
+/// On iOS the endpoint listens only while it may be needed: with the application in front, or with the player playing,
+/// which keeps the process running in the background. Otherwise the process is about to be suspended, and its sockets
+/// reclaimed; the endpoint stops listening and listens again on the same port on return, so that the player's URL stays
+/// valid (spec 004, "On iOS").
 @Riverpod(keepAlive: true)
 class PlaybackDownloads extends _$PlaybackDownloads {
   /// How long [open] waits for the server's first answer before handing the player the URL regardless.
@@ -46,10 +53,18 @@ class PlaybackDownloads extends _$PlaybackDownloads {
   final Map<String, _Session> _sessions = {};
   Future<LocalMediaEndpoint>? _endpoint;
   Timer? _ticker;
+  AppLifecycleListener? _lifecycle;
+  bool _inFront = true;
+  bool _playerPlaying = false;
+  Future<void> _listening = Future.value();
 
   @override
   Map<String, SourceState> build() {
+    if (Platform.isIOS) {
+      _lifecycle = AppLifecycleListener(onStateChange: (s) => inFront = s != AppLifecycleState.paused && s != AppLifecycleState.detached);
+    }
     ref.onDispose(() {
+      _lifecycle?.dispose();
       _ticker?.cancel();
       for (final s in _sessions.values) {
         unawaited(s.source.dispose());
@@ -72,12 +87,22 @@ class PlaybackDownloads extends _$PlaybackDownloads {
   /// Whether the playback download of [downloadId] has given up on its server for now; see [PartialSource.serverAway].
   bool serverAway(String downloadId) => _sessions[downloadId]?.source.serverAway ?? false;
 
+  /// Where a playback of [downloadId] is played from, as the user should see it: the server's URL while the file is
+  /// still arriving, the local file once all of it has. The endpoint's own loopback URL is an implementation detail.
+  /// `null` when no playback download of [downloadId] exists.
+  String? shownSource(String downloadId) {
+    final s = _sessions[downloadId];
+    if (s == null) return null;
+    return s.source.state == SourceState.complete ? s.source.file.finalPath : s.download.url;
+  }
+
   /// Starts or resumes the playback download of [d] and returns the URL the player opens.
   ///
   /// If the server's first answer carries no length — which `http.ServeContent` never does, but a proxy in front of
   /// the server might — nothing can be stored, and the server's own URL is returned: the playback streams, as with the
   /// setting off.
   Future<Uri> open(Download d) async {
+    await _listening;
     final endpoint = await (_endpoint ??= LocalMediaEndpoint.start());
     for (final other in _sessions.values.toList()) {
       if (other.download.id != d.id && other.source.isRunning) {
@@ -97,11 +122,13 @@ class PlaybackDownloads extends _$PlaybackDownloads {
       final sp = await ref.read(storePlacesProvider.future);
       final file = PartialFile.open(mediaDir: sp.media().path, downloadId: d.id, filename: d.filename, url: d.url);
       final source = PartialSource(file: file, url: Uri.parse(d.url), authorization: await _authorization());
-      s = _Session(d, source, endpoint.register(d.id, d.filename, source));
+      s = _Session(d, source);
       source.onChange = () => _changed(d.id);
       _sessions[d.id] = s;
       AppLoggers.download.i('Playback download of ${d.id} opened: ${file.ranges.stored} of ${file.length ?? '?'} bytes stored');
     }
+    // On every open: the endpoint may be a new one, after the old one could not listen again.
+    final url = endpoint.register(d.id, d.filename, s.source);
     s.attached = true;
     s.source.fetcher.playerAttached = true;
     s.source.resume(0);
@@ -120,7 +147,45 @@ class PlaybackDownloads extends _$PlaybackDownloads {
         // The server is slow to answer. The endpoint keeps waiting for the length, as the player would on a stream.
       }
     }
-    return s.url;
+    return url;
+  }
+
+  /// Whether the player reading from the endpoint is playing; set by the player. While it plays, iOS keeps the process
+  /// running in the background, and the endpoint keeps listening.
+  set playerPlaying(bool playing) {
+    if (_playerPlaying == playing) return;
+    _playerPlaying = playing;
+    _listenWhileNeeded();
+  }
+
+  /// Whether the application is in front; followed on iOS only, so that elsewhere the endpoint never stops listening.
+  @visibleForTesting
+  set inFront(bool inFront) {
+    if (_inFront == inFront) return;
+    _inFront = inFront;
+    _listenWhileNeeded();
+  }
+
+  /// Completes once the endpoint listens or not as the last change of [inFront] or [playerPlaying] asked.
+  @visibleForTesting
+  Future<void> get listeningSettled => _listening;
+
+  /// Suspends or resumes the endpoint for the state at the time the change runs; changes run one after another.
+  void _listenWhileNeeded() {
+    _listening = _listening.then((_) async {
+      final pending = _endpoint;
+      if (pending == null) return;
+      final endpoint = await pending;
+      if (!_inFront && !_playerPlaying) return endpoint.suspend();
+      try {
+        await endpoint.resume();
+      } on SocketException {
+        // The URLs handed out are dead. The player takes the refused connection for an interruption, and its reopening
+        // registers the downloads on a new endpoint.
+        if (_endpoint == pending) _endpoint = null;
+        await endpoint.close();
+      }
+    }).catchError((Object e) => AppLoggers.download.w('Local media endpoint: changing whether it listens failed', error: e));
   }
 
   /// The player has closed. The download continues unattended, or ends here if there is nothing left to do.

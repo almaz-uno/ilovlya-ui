@@ -67,15 +67,21 @@ class UpstreamUnavailable implements Exception {
 /// `Range` header, `416` past the end. The request is parsed by [HttpServer]; for a body the socket is then taken over,
 /// so that a response that cannot be completed is reset rather than left hanging — libmpv reconnects with `Range`
 /// either way, and a reset is the honest answer.
+///
+/// On iOS the endpoint stops listening while the application is suspended, whose sockets the system reclaims, and
+/// listens again on the same port on return: see [suspend] and [resume].
 class LocalMediaEndpoint {
-  final HttpServer _server;
+  /// How long [resume] tries to bind the port again before it gives up.
+  static const rebindWait = Duration(seconds: 5);
+
+  HttpServer? _server;
+  final int port;
   final String _token;
   final Map<String, EndpointSource> _sources = {};
   final Map<String, Set<Socket>> _bodies = {};
 
-  LocalMediaEndpoint._(this._server, this._token) {
-    _server.autoCompress = false;
-    _server.listen(_handle);
+  LocalMediaEndpoint._(HttpServer server, this._token) : port = server.port {
+    _serve(server);
   }
 
   static Future<LocalMediaEndpoint> start() async {
@@ -86,7 +92,13 @@ class LocalMediaEndpoint {
     return LocalMediaEndpoint._(server, token);
   }
 
-  int get port => _server.port;
+  void _serve(HttpServer server) {
+    _server = server..autoCompress = false;
+    server.listen(_handle);
+  }
+
+  /// Whether the endpoint is accepting connections: started and not suspended.
+  bool get isListening => _server != null;
 
   /// Serves [source] under [id] and returns the URL the player opens. [name] is there only so that the player and the
   /// media session see a sensible file name and extension.
@@ -107,7 +119,43 @@ class LocalMediaEndpoint {
     for (final id in _sources.keys.toList()) {
       unregister(id);
     }
-    await _server.close(force: true);
+    await suspend();
+  }
+
+  /// Stops listening, keeping the port, the token and the registered sources, so that the URLs handed out stay valid
+  /// for [resume]. Open responses are reset; the player reconnects with `Range` once the endpoint listens again.
+  Future<void> suspend() async {
+    final server = _server;
+    if (server == null) return;
+    _server = null;
+    for (final sockets in _bodies.values) {
+      for (final s in sockets.toList()) {
+        s.destroy();
+      }
+    }
+    await server.close(force: true);
+    AppLoggers.download.i('Local media endpoint stopped listening on 127.0.0.1:$port');
+  }
+
+  /// Listens again on the port [suspend] kept, trying for up to [wait] while the port is held — by a socket of
+  /// the closed listener the system has not released yet, or by another process. Throws the last [SocketException]
+  /// if the port stays taken: the URLs handed out are then dead, and the endpoint is to be closed.
+  Future<void> resume({Duration wait = rebindWait}) async {
+    if (_server != null) return;
+    final deadline = DateTime.now().add(wait);
+    while (true) {
+      try {
+        _serve(await HttpServer.bind(InternetAddress.loopbackIPv4, port));
+        AppLoggers.download.i('Local media endpoint listening again on 127.0.0.1:$port');
+        return;
+      } on SocketException catch (e) {
+        if (DateTime.now().isAfter(deadline)) {
+          AppLoggers.download.w('Local media endpoint cannot listen on 127.0.0.1:$port again', error: e);
+          rethrow;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+      }
+    }
   }
 
   Future<void> _handle(HttpRequest req) async {
