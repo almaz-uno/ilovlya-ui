@@ -7,7 +7,7 @@ All notable changes to the Ilovlya UI project will be documented in this file.
 
 The format is based on https://keepachangelog.com/[Keep a Changelog], and this project adheres to https://semver.org/[Semantic Versioning].
 
-== [3.8.0] - Unreleased
+== [3.8.0] - 2026-10-21
 
 Playing a recording from its own download: with "Download while playing" on, the
 file is fetched from the server once and played from while it arrives.
@@ -16,6 +16,7 @@ file is fetched from the server once and played from while it arrives.
 - Playback from the file being downloaded: one transfer instead of a stream and a download side by side, and no switch, reopening or message when the download completes
 - Seeking beyond what has arrived, and files whose index sits at the end, are served by moving the download to where the player reads
 - A playback download interrupted by closing the application resumes from what was stored the next time the recording is played
+- On iOS, a playback paused in the background continues on return: the local address the player reads from stops listening while the application is suspended and listens again, on the same address, when it is back
 
 .Changed
 - The description of "Download while playing" says what it now does
