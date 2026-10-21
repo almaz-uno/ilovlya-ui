@@ -17,6 +17,8 @@ on:
 env:
   FLATPAK_ID: uno.almaz.ilovlya
   TAG: ${{ github.event.release.tag_name || inputs.tag }}
+  # One branch for every release, so that a new bundle replaces the installed one; the version is in the metadata.
+  BRANCH: master
 
 jobs:
   build:
@@ -51,13 +53,13 @@ jobs:
 
       - name: Build
         run: |
-          flatpak-builder --force-clean --user --default-branch="${TAG#v}" \
+          flatpak-builder --force-clean --user --default-branch="$BRANCH" \
             flatpak-build linux/flatpak/uno.almaz.ilovlya.yml
 
       - name: Bundle
         run: |
-          flatpak build-export repo "flatpak-build" "${TAG#v}"
-          flatpak build-bundle repo "ilovlya-${TAG}.flatpak" "$FLATPAK_ID" "${TAG#v}"
+          flatpak build-export repo "flatpak-build" "$BRANCH"
+          flatpak build-bundle repo "ilovlya-${TAG}.flatpak" "$FLATPAK_ID" "$BRANCH"
 
       - name: Keep the bundle for the next job
         uses: actions/upload-artifact@v4
