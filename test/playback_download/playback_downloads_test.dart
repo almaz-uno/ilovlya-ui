@@ -151,6 +151,25 @@ void main() {
     expect((await fetch(player, url, range: 'bytes=0-')).status, 404);
   });
 
+  test('a download whose server fails waits to retry, with no speed and no time remaining, and runs again once it answers', () async {
+    up.rate = 512 * 1024;
+    final url = await downloads().open(download('d1'));
+    await fetch(player, url, range: 'bytes=0-', take: 50000);
+    await until(() => task('d1')?.status == TaskStatus.running && task('d1')?.networkSpeed != null);
+
+    up.down = true;
+    up.dropConnections();
+    await until(() => task('d1')?.status == TaskStatus.waitingToRetry);
+    expect(task('d1')!.networkSpeed, isNull, reason: 'the last speed says nothing about a server that does not answer');
+    expect(task('d1')!.timeRemaining, isNull);
+    expect(downloads().failingFor('d1'), isNotNull, reason: 'what the progress line shows instead');
+
+    up.down = false;
+    await until(() => task('d1')?.status == TaskStatus.running);
+    expect(downloads().failingFor('d1'), isNull);
+    await downloads().discard('d1');
+  });
+
   test('in the background the endpoint listens only while the player plays, and keeps its URL across', () async {
     up.rate = 512 * 1024;
     final url = await downloads().open(download('d1'));

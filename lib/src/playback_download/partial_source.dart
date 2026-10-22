@@ -38,6 +38,7 @@ class PartialSource implements EndpointSource {
   final Uri url;
   final String? authorization;
   final Duration giveUpAfter;
+  final Duration silenceTimeout;
   final HttpClient _client;
   late final Fetcher fetcher;
 
@@ -61,10 +62,11 @@ class PartialSource implements EndpointSource {
       this.giveUpAfter = defaultGiveUpAfter,
       HttpClient? client,
       Duration Function(int failures, bool readerWaiting)? backoff,
+      this.silenceTimeout = Fetcher.defaultSilenceTimeout,
       this.onChange})
-      : _client = client ?? HttpClient(),
+      : _client = client ?? (HttpClient()..connectionTimeout = silenceTimeout),
         _confirmed = file.ranges.isEmpty || file.isComplete {
-    fetcher = Fetcher(file: file, url: url, authorization: authorization, client: _client, backoff: backoff)
+    fetcher = Fetcher(file: file, url: url, authorization: authorization, client: _client, backoff: backoff, silenceTimeout: silenceTimeout)
       ..restartOnChange = !_confirmed
       ..onAnswer = _onAnswer;
     if (file.isComplete) _state = SourceState.complete;
@@ -213,12 +215,16 @@ class PartialSource implements EndpointSource {
     final req = await _client.getUrl(url);
     req.headers.set(HttpHeaders.rangeHeader, 'bytes=$start-${end - 1}');
     if (authorization != null) req.headers.set(HttpHeaders.authorizationHeader, authorization!);
-    final res = await req.close();
+    // Silent as the fetcher would be: the endpoint resets the player's response, and the player asks again.
+    final res = await req.close().timeout(silenceTimeout, onTimeout: () {
+      req.abort();
+      throw TimeoutException('Pass-through for [$start, $end) got no answer', silenceTimeout);
+    });
     if (res.statusCode != HttpStatus.partialContent) {
       await res.drain<void>();
       throw HttpException('Pass-through for [$start, $end) got ${res.statusCode}', uri: url);
     }
-    yield* res;
+    yield* res.timeout(silenceTimeout);
   }
 
   void _steer(int offset) {

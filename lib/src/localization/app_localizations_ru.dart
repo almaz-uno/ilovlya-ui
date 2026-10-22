@@ -455,6 +455,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String playbackDownloadNoAnswer(String duration) {
+    return '— сервер не отвечает уже $duration';
+  }
+
+  @override
   String get yourTokenProvidedByBot => 'Ваш токен, предоставленный ботом';
 
   @override

@@ -87,6 +87,13 @@ class PlaybackDownloads extends _$PlaybackDownloads {
   /// Whether the playback download of [downloadId] has given up on its server for now; see [PartialSource.serverAway].
   bool serverAway(String downloadId) => _sessions[downloadId]?.source.serverAway ?? false;
 
+  /// How long every request of the running playback download of [downloadId] has failed; `null` while its server
+  /// answers, or when it is not running. What the progress line shows while the download waits to retry.
+  Duration? failingFor(String downloadId) {
+    final s = _sessions[downloadId];
+    return s != null && s.source.isRunning ? s.source.fetcher.failingFor : null;
+  }
+
   /// Where a playback of [downloadId] is played from, as the user should see it: the server's URL while the file is
   /// still arriving, the local file once all of it has. The endpoint's own loopback URL is an implementation detail.
   /// `null` when no playback download of [downloadId] exists.
@@ -164,6 +171,12 @@ class PlaybackDownloads extends _$PlaybackDownloads {
     if (_inFront == inFront) return;
     _inFront = inFront;
     _listenWhileNeeded();
+    // Back in front, the network is likely back too: a transfer sleeping out a backoff tries at once.
+    if (inFront) {
+      for (final s in _sessions.values) {
+        if (s.source.isRunning && s.source.fetcher.failingFor != null) s.source.fetcher.wake();
+      }
+    }
   }
 
   /// Completes once the endpoint listens or not as the last change of [inFront] or [playerPlaying] asked.
@@ -275,20 +288,25 @@ class PlaybackDownloads extends _$PlaybackDownloads {
     final stored = src.file.ranges.stored;
     final rate = src.fetcher.rate;
     final complete = src.state == SourceState.complete;
+    // Between failed tries the transfer shows as waiting to retry, with neither a speed nor a time remaining: the last
+    // measured ones say nothing about a server that does not answer. A stall that has not failed yet shows the speed
+    // decaying, and no time remaining.
+    final waiting = src.isRunning && src.fetcher.failingFor != null;
+    final measured = src.isRunning && !waiting && rate > 0;
     ref.read(localDTNotifierProvider.notifier).publish(LocalDownloadTask(
           id: s.download.id,
           displayName: s.download.title,
           filename: s.download.filename,
           status: switch (src.state) {
-            SourceState.running => TaskStatus.running,
+            SourceState.running => waiting ? TaskStatus.waitingToRetry : TaskStatus.running,
             SourceState.idle => TaskStatus.paused,
             SourceState.complete => TaskStatus.complete,
             SourceState.passThrough => TaskStatus.failed,
             SourceState.gone => TaskStatus.canceled,
           },
           progress: complete ? 1.0 : (length == null || length == 0 ? null : stored / length),
-          networkSpeed: src.isRunning && rate > 0 ? rate / 1e6 : null,
-          timeRemaining: src.isRunning && rate > 0 && length != null ? Duration(seconds: ((length - stored) / rate).round()) : null,
+          networkSpeed: measured ? rate / 1e6 : null,
+          timeRemaining: measured && src.fetcher.flowing && length != null ? Duration(seconds: ((length - stored) / rate).round()) : null,
         ));
   }
 

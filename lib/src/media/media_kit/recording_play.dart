@@ -67,6 +67,14 @@ class RecordingViewMediaKitHandler extends ConsumerStatefulWidget {
 
 const _positionSendPeriod = Duration(seconds: 1);
 
+/// How long after an error libmpv reports while opening the source it is given to load regardless; libmpv retries a
+/// connection on its own for a while.
+const _openErrorGrace = Duration(seconds: 2);
+
+/// How long the server of a playback download must have answered, after a return to the foreground, before a source
+/// that has still not loaded is opened again.
+const _openAfterResumeGrace = Duration(seconds: 10);
+
 /// Positions written per recording, by any player: a position kept for a server that is away gives way to a newer one.
 final _positionWrites = <String, int>{};
 
@@ -86,6 +94,11 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   bool _interrupted = false; // The stream ended before the recording did; reopening at the position
   int _reopenAttempts = 0;
   Timer? _reopenRetry;
+  StreamSubscription? _errorSubs;
+  AppLifecycleListener? _lifecycle;
+  Timer? _openCheck;
+  bool _watchingOpen = false; // Back in the foreground with nothing loaded; see _watchOpen
+  DateTime? _answeringSince;
 
   @override
   void initState() {
@@ -148,6 +161,22 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     if (widget.source != null) {
       final downloads = ref.read(playbackDownloadsProvider.notifier);
       _playingSubs = _player.stream.playing.listen((playing) => downloads.playerPlaying = playing);
+      // An open that fails leaves the player at 0:00 with nothing to wait for: libmpv reports an error and goes idle,
+      // and no `completed` follows. That happens when the endpoint gave up the read, or lost its connections, while the
+      // application was in the background (#144). Errors once the source has loaded are left to libmpv.
+      _errorSubs = _player.stream.error.listen((error) {
+        if (!mounted || _loaded) return;
+        AppLoggers.player.w('Opening ${widget.recording.id} reported an error: $error');
+        _openCheck?.cancel();
+        _openCheck = Timer(_openErrorGrace, () {
+          if (mounted && !_loaded) _onOpenFailed('an error while opening');
+        });
+      });
+      _lifecycle = AppLifecycleListener(onResume: () {
+        if (_loaded || _interrupted) return;
+        _watchingOpen = true;
+        _answeringSince = null;
+      });
     }
 
     _player.stream.volume.listen((double volume) {
@@ -172,6 +201,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
     _positionSendSubs = Stream.periodic(_positionSendPeriod).listen((event) {
       if (!mounted) return;
+      _watchOpen();
       if (_player.state.playing && !_player.state.buffering && _player.state.position != Duration.zero) {
         _sendPosition(
           widget.recording.id,
@@ -204,6 +234,39 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.playbackInterrupted(formatDuration(position)))));
     }
+    _interrupted = true;
+    _reopenAttempts = 0;
+    _reopen();
+  }
+
+  /// Whether the source has loaded: the player knows its duration.
+  bool get _loaded => _player.state.duration > Duration.zero;
+
+  /// Back in the foreground with nothing loaded, the server is watched: once it has answered for
+  /// [_openAfterResumeGrace] and the source has still not loaded, libmpv is taken to have given up on an open nobody
+  /// was told about, and the source is opened again.
+  void _watchOpen() {
+    if (!_watchingOpen) return;
+    if (_loaded || _interrupted) {
+      _watchingOpen = false;
+      return;
+    }
+    if (ref.read(playbackDownloadsProvider.notifier).failingFor(widget.download.id) != null) {
+      _answeringSince = null;
+      return;
+    }
+    final since = _answeringSince ??= DateTime.now();
+    if (DateTime.now().difference(since) < _openAfterResumeGrace) return;
+    _watchingOpen = false;
+    _onOpenFailed('nothing loaded ${_openAfterResumeGrace.inSeconds} s after the server answered again');
+  }
+
+  /// The source did not load. It is opened again through the same path as an interruption — waiting while the server
+  /// is away, tried every 5 s — at the saved position, and played once it loads; nothing was played, so nothing is
+  /// announced and no position is written.
+  void _onOpenFailed(String why) {
+    if (!mounted || _interrupted || _loaded) return;
+    AppLoggers.player.w('Opening ${widget.recording.id} failed ($why); opening it again at ${widget.recording.position}s');
     _interrupted = true;
     _reopenAttempts = 0;
     _reopen();
@@ -399,6 +462,11 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     _positionSendSubs?.cancel();
     _uiUpdateSubs?.cancel();
     _playingSubs?.cancel();
+    _errorSubs?.cancel();
+    _lifecycle?.dispose();
+    _lifecycle = null;
+    _openCheck?.cancel();
+    _watchingOpen = false;
     _reopenRetry?.cancel();
     _interrupted = false;
     // A playback download outlives the player: it continues unattended.
@@ -672,9 +740,14 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                             // Localize status
                             final localizedStatus = TaskStatusLocalization.getLocalizedStatusWithFallback(task.status!, l10n);
 
-                            // Format estimate (speed and ETA)
+                            // Format estimate (speed and ETA); a playback download waiting to retry tells how long its server has not answered
                             final eta = task.timeRemaining == null ? "" : formatDuration(task.timeRemaining!);
-                            final est = task.networkSpeed == null || task.networkSpeed! < 0 ? "" : " ≈ ${task.networkSpeed!.toStringAsFixed(2)} MB/s, ETA: $eta";
+                            final failing = widget.source != null && task.status == TaskStatus.waitingToRetry ? ref.read(playbackDownloadsProvider.notifier).failingFor(widget.download.id) : null;
+                            final est = failing != null
+                                ? " ${l10n.playbackDownloadNoAnswer(formatDuration(failing))}"
+                                : task.networkSpeed == null || task.networkSpeed! < 0
+                                    ? ""
+                                    : " ≈ ${task.networkSpeed!.toStringAsFixed(2)} MB/s${eta.isEmpty ? '' : ', ETA: $eta'}";
 
                             return Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),

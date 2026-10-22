@@ -31,8 +31,8 @@ void main() {
 
   PartialFile open([String id = 'd1']) => PartialFile.open(mediaDir: media.path, downloadId: id, filename: '$id.mp4', url: up.url.toString());
 
-  Fetcher fetcher(PartialFile f, {String? token, Duration backoff = Duration.zero}) {
-    final fx = Fetcher(file: f, url: up.url, authorization: token, backoff: (_, __) => backoff);
+  Fetcher fetcher(PartialFile f, {String? token, Duration backoff = Duration.zero, Duration silence = Fetcher.defaultSilenceTimeout}) {
+    final fx = Fetcher(file: f, url: up.url, authorization: token, backoff: (_, __) => backoff, silenceTimeout: silence);
     fetchers.add(fx);
     return fx;
   }
@@ -149,6 +149,66 @@ void main() {
     expect(await finish(f), src);
     expect(up.log.length, 2);
     expect(up.bytesServed - src.length, lessThan(64 * 1024), reason: 'what was in flight at the cut, at most');
+  });
+
+  test('a request the server never answers fails after the silence, and the next one completes the file', () async {
+    const silence = Duration(milliseconds: 300);
+    up.silent = true;
+    final f = open();
+    final clock = Stopwatch()..start();
+    final run = fetcher(f, silence: silence).run(0);
+    while (up.log.isEmpty) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    up.silent = false;
+    expect(await run, FetchOutcome.complete);
+    expect(clock.elapsed, greaterThanOrEqualTo(silence));
+    expect(await finish(f), src);
+    expect(up.log.length, 2, reason: '${up.log}');
+    expect(up.log.first.silenced, isTrue);
+  });
+
+  test('a body that falls silent is resumed at the byte it reached', () async {
+    up.silentNextAfter = 300000;
+    final f = open();
+    expect(await fetcher(f, silence: const Duration(milliseconds: 300)).run(0), FetchOutcome.complete);
+    expect(await finish(f), src);
+    expect(up.log.length, 2, reason: '${up.log}');
+    expect(up.log.first.silenced, isTrue);
+    expect(up.log[1].range, 'bytes=${up.log.first.bytes}-${src.length - 1}');
+    expect(up.bytesServed, src.length, reason: 'every byte sent before the silence was kept');
+  });
+
+  test('a silent failure counts from the moment the request fell silent', () async {
+    // So that the endpoint gives a read up the same time after its bytes stopped, however long the silence timeout.
+    const silence = Duration(milliseconds: 400);
+    up.silent = true;
+    final fx = fetcher(open(), silence: silence, backoff: const Duration(hours: 1));
+    final run = fx.run(0);
+    while (fx.failingFor == null) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    expect(fx.failingFor, greaterThanOrEqualTo(silence));
+    fx.stop();
+    expect(await run, FetchOutcome.stopped);
+  });
+
+  test('while no byte arrives the rate decays and the transfer is not flowing', () async {
+    up.rate = 1 << 20;
+    up.silentNextAfter = 2 << 20;
+    final fx = fetcher(open(), silence: const Duration(seconds: 30));
+    final run = fx.run(0);
+    while (!(up.log.isNotEmpty && up.log.first.silenced)) {
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
+    final measured = fx.rate;
+    expect(measured, greaterThan(0));
+    expect(fx.flowing, isTrue);
+    await Future.delayed(const Duration(milliseconds: 2300));
+    expect(fx.flowing, isFalse);
+    expect(fx.rate, lessThanOrEqualTo(measured * 0.49 + 1), reason: 'two empty one-second windows: (1 - 0.3)²');
+    fx.stop();
+    expect(await run, FetchOutcome.stopped);
   });
 
   test('failures are retried while a player is attached', () async {

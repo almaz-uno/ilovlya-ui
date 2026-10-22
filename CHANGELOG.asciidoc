@@ -7,6 +7,13 @@ All notable changes to the Ilovlya UI project will be documented in this file.
 
 The format is based on https://keepachangelog.com/[Keep a Changelog], and this project adheres to https://semver.org/[Semantic Versioning].
 
+== [Unreleased]
+
+.Fixed
+- With "Download while playing" on, a playback whose server stops sending without closing the connection no longer stays at 0% until the player is reopened: a request with no answer or no byte for 15 s is retried from the byte it reached, and a seek moves the download at once even while the server is silent (#144)
+- While a playback download waits to retry its server, the progress line under the player says so and how long the server has not answered, instead of a frozen speed and time remaining; a stalled transfer's speed decays, and no time remaining is shown while no bytes arrive (#144)
+- A player whose source failed to open — the local address gave up on the server, or lost its connections while the application was in the background — opens it again at the saved position once the server answers, instead of staying at 0:00 (#144)
+
 == [3.8.0] - 2026-10-21
 
 Playing a recording from its own download: with "Download while playing" on, the
