@@ -60,12 +60,13 @@ dev_dependencies:
   riverpod_lint: ^2.3.2
 
 # media_kit_video 2.0.1 renders video in software on Linux with Flutter 3.38 and later, X11 and XWayland included:
-# no EGL context is current on the platform thread (media-kit/media-kit#1404). media-kit/media-kit#1466 fixes it;
-# pinned to the commit tested on NVIDIA, Intel and AMD (#142). Drop this once a release of media_kit_video has the fix.
+# no EGL context is current on the platform thread (media-kit/media-kit#1404). media-kit/media-kit#1466 fixes it.
+# almaz-uno/media-kit is our fork holding a pinned copy of that PR: the commit tested on NVIDIA, Intel and AMD (#142),
+# kept alive by the tag pr1466-5c533691. Drop this once a release of media_kit_video has the fix.
 dependency_overrides:
   media_kit_video:
     git:
-      url: https://github.com/freeKC/media-kit.git
+      url: https://github.com/almaz-uno/media-kit.git
       ref: 5c533691f0f1d75747b5cdad2456cc09de91ec9b
       path: media_kit_video
 

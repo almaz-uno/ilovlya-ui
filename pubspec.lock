@@ -715,7 +715,7 @@ packages:
       path: media_kit_video
       ref: "5c533691f0f1d75747b5cdad2456cc09de91ec9b"
       resolved-ref: "5c533691f0f1d75747b5cdad2456cc09de91ec9b"
-      url: "https://github.com/freeKC/media-kit.git"
+      url: "https://github.com/almaz-uno/media-kit.git"
     source: git
     version: "2.0.1"
   meta:
