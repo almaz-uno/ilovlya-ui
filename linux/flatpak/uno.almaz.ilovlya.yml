@@ -28,8 +28,9 @@ finish-args:
   # NetworkManager on the system bus, which connectivity_plus asks through background_downloader
   - --system-talk-name=org.freedesktop.NetworkManager
   - --env=LD_LIBRARY_PATH=/app/lib
-  # The only place GDK_GL is set, so that `flatpak run --unset-env=GDK_GL` or an override can drop it.
-  # No EGL vendor or Vulkan ICD list here: the runtime's GL extension picks the driver, NVIDIA's included (#141).
+  # GDK_GL is set here for `flatpak info` and anything else that reads the metadata, and again in /app/bin/ilovlya below,
+  # which is what takes effect. No EGL vendor or Vulkan ICD list here: the runtime's GL extension picks the driver,
+  # NVIDIA's included (#141).
   - --env=GDK_GL=gles
 modules:
   - name: ilovlya
@@ -57,9 +58,12 @@ modules:
       - cp -r ${BUNDLE_PATH}/data/* "${FLATPAK_DEST}/data/"
       - install -Dm755 "${BUNDLE_PATH}/ilovlya" "${FLATPAK_DEST}/ilovlya"
       - install -d "${FLATPAK_DEST}/bin"
+      # The launcher sets GDK_GL itself: the environment it execs with wins over `flatpak override`, and an override left
+      # from older builds with GDK_GL=disable gives GDK no GL context, which leaves the whole window black.
       - |
         cat > "${FLATPAK_DEST}/bin/ilovlya" << 'EOF'
         #!/bin/sh
+        export GDK_GL=gles
         exec /app/ilovlya "$@"
         EOF
       - chmod +x "${FLATPAK_DEST}/bin/ilovlya"
