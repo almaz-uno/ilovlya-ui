@@ -7,6 +7,12 @@ All notable changes to the Ilovlya UI project will be documented in this file.
 
 The format is based on https://keepachangelog.com/[Keep a Changelog], and this project adheres to https://semver.org/[Semantic Versioning].
 
+== [Unreleased]
+
+.Fixed
+- Video plays smoothly on Linux under X11 and XWayland: the player draws it on the GPU again instead of in software, which showed only about every other frame on NVIDIA machines (#142)
+- The Flatpak draws on the GPU on NVIDIA machines instead of in software: it no longer pins the EGL driver to Mesa nor lists Vulkan drivers without NVIDIA (#141)
+
 == [3.8.0] - 2026-10-21
 
 Playing a recording from its own download: with "Download while playing" on, the

@@ -28,9 +28,9 @@ finish-args:
   # NetworkManager on the system bus, which connectivity_plus asks through background_downloader
   - --system-talk-name=org.freedesktop.NetworkManager
   - --env=LD_LIBRARY_PATH=/app/lib
+  # The only place GDK_GL is set, so that `flatpak run --unset-env=GDK_GL` or an override can drop it.
+  # No EGL vendor or Vulkan ICD list here: the runtime's GL extension picks the driver, NVIDIA's included (#141).
   - --env=GDK_GL=gles
-  - --env=VK_ICD_FILENAMES=/usr/lib/x86_64-linux-gnu/GL/vulkan/icd.d/intel_icd.x86_64.json:/usr/lib/x86_64-linux-gnu/GL/vulkan/icd.d/radeon_icd.x86_64.json:/usr/lib/x86_64-linux-gnu/GL/vulkan/icd.d/lvp_icd.x86_64.json
-  - --env=__EGL_VENDOR_LIBRARY_FILENAMES=/usr/lib/x86_64-linux-gnu/GL/glvnd/egl_vendor.d/50_mesa.json
 modules:
   - name: ilovlya
     buildsystem: simple
@@ -60,7 +60,6 @@ modules:
       - |
         cat > "${FLATPAK_DEST}/bin/ilovlya" << 'EOF'
         #!/bin/sh
-        export GDK_GL=gles
         exec /app/ilovlya "$@"
         EOF
       - chmod +x "${FLATPAK_DEST}/bin/ilovlya"
