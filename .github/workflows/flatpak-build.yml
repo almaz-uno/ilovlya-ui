@@ -66,4 +66,3 @@ jobs:
           name: flatpak-bundle
           path: ilovlya-${{ env.TAG }}.flatpak
           retention-days: 7
-
