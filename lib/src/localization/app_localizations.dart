@@ -395,9 +395,9 @@ abstract class AppLocalizations {
   /// Quota and usage information
   ///
   /// In en, this message translates to:
-  /// **'quote: {quota} usage: {usage} ({files}) free: {free}{store}'**
+  /// **'quota: {quota} usage: {usage} ({files, plural, one{{files} file} other{{files} files}}) free: {free}{store}'**
   String quotaUsageInfo(
-      String quota, String usage, String files, String free, String store);
+      String quota, String usage, int files, String free, String store);
 
   /// Message about waiting data from server
   ///
@@ -948,7 +948,7 @@ abstract class AppLocalizations {
   /// Confirmation message for deleting all metadata
   ///
   /// In en, this message translates to:
-  /// **'This will delete ALL metadata for {count} recordings,\ndownloaded media files will be retained.\nThis data can be downloaded from the server.'**
+  /// **'This will delete ALL metadata for {count, plural, one{{count} recording} other{{count} recordings}},\ndownloaded media files will be retained.\nThis data can be downloaded from the server.'**
   String deleteAllMetadataMessage(int count);
 
   /// Confirmation dialog text for server cleanup
@@ -1008,7 +1008,7 @@ abstract class AppLocalizations {
   /// Number of available formats
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 format} other{{count} formats}}'**
+  /// **'{count, plural, one{{count} format} other{{count} formats}}'**
   String formatsCount(int count);
 
   /// Tooltip for downloading exact format
@@ -1158,8 +1158,8 @@ abstract class AppLocalizations {
   /// Number of files
   ///
   /// In en, this message translates to:
-  /// **'Files: {files}'**
-  String files(String files);
+  /// **'{files, plural, one{{files} file} other{{files} files}}'**
+  String files(int files);
 
   /// Local storage information
   ///
@@ -1176,14 +1176,14 @@ abstract class AppLocalizations {
   /// Number of recordings
   ///
   /// In en, this message translates to:
-  /// **'Recordings: {count}'**
-  String recordings(String count);
+  /// **'{count, plural, one{{count} recording} other{{count} recordings}}'**
+  String recordings(int count);
 
   /// Files count and total size
   ///
   /// In en, this message translates to:
-  /// **'Files: {number}, total size: {size}'**
-  String filesWithSize(String number, String size);
+  /// **'{number, plural, one{{number} file} other{{number} files}}, total size: {size}'**
+  String filesWithSize(int number, String size);
 
   /// Button text for cleaning stale media
   ///
@@ -1194,7 +1194,7 @@ abstract class AppLocalizations {
   /// Files cleaned message
   ///
   /// In en, this message translates to:
-  /// **'{count} files, {size} cleaned'**
+  /// **'{count, plural, one{Cleaned {count} file, {size}} other{Cleaned {count} files, {size}}}'**
   String filesCleanedMessage(int count, String size);
 
   /// Button text for cleaning all media
@@ -1206,8 +1206,8 @@ abstract class AppLocalizations {
   /// Button text for cleaning metadata
   ///
   /// In en, this message translates to:
-  /// **'Clean ALL metadata for {count} recordings'**
-  String cleanAllMetadataForRecordings(String count);
+  /// **'Clean ALL metadata for {count, plural, one{{count} recording} other{{count} recordings}}'**
+  String cleanAllMetadataForRecordings(int count);
 
   /// Local data path information
   ///
@@ -1345,7 +1345,7 @@ abstract class AppLocalizations {
   /// Recordings cleaned message
   ///
   /// In en, this message translates to:
-  /// **'{count} recordings cleaned'**
+  /// **'{count, plural, one{Cleaned {count} recording} other{Cleaned {count} recordings}}'**
   String recordingsCleanedMessage(int count);
 
   /// Copied to clipboard message
@@ -1375,7 +1375,7 @@ abstract class AppLocalizations {
   /// Files label with count
   ///
   /// In en, this message translates to:
-  /// **'Files: {files}'**
+  /// **'{files, plural, one{{files} file} other{{files} files}}'**
   String filesLabel(int files);
 
   /// Local label with value
@@ -1393,13 +1393,13 @@ abstract class AppLocalizations {
   /// Recordings label with count
   ///
   /// In en, this message translates to:
-  /// **'Recordings: {recordings}'**
+  /// **'{recordings, plural, one{{recordings} recording} other{{recordings} recordings}}'**
   String recordingsLabel(int recordings);
 
   /// Files count and total size label
   ///
   /// In en, this message translates to:
-  /// **'Files: {count}, total size: {size}'**
+  /// **'{count, plural, one{{count} file} other{{count} files}}, total size: {size}'**
   String filesTotalSizeLabel(int count, String size);
 
   /// Blocked at label with date
