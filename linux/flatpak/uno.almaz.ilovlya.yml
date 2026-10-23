@@ -144,7 +144,8 @@ modules:
             tag: v0.40.0
             commit: e48ac7ce08462f5e33af6ef9deeac6fa87eef01e
         modules:
-          # As in Flathub's io.mpv.Mpv on 25.08; shaderc is the module above.
+          # As in Flathub's io.mpv.Mpv on 25.08; shaderc is the module above. 7.351 does not build there: its vk.xml
+          # generator fails on the SDK's Python 3.13 (`expected an Element, not ElementTree`).
           - name: libplacebo
             buildsystem: meson
             config-opts:
@@ -159,8 +160,8 @@ modules:
             sources:
               - type: git
                 url: https://github.com/haasn/libplacebo.git
-                tag: v7.351.0
-                commit: 3188549fba13bbdf3a5a98de2a38c2e71f04e21e
+                tag: v7.360.1
+                commit: cee9b076f2c63104ccfd497fa79c39a867293ec4
           - name: luajit
             no-autogen: true
             cleanup:
