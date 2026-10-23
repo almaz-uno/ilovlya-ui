@@ -54,25 +54,30 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
     return Future.value((number, size));
   }
 
+  /// Deletes the downloaded media of seen or hidden recordings and returns how many files and bytes went.
+  ///
+  /// A file whose recording cannot be loaded is kept. The counters are re-evaluated even when the cleanup fails.
   Future<(int, int)> cleanStale() async {
-    final sp = await ref.watch(storePlacesProvider.future);
+    try {
+      return await _cleanStale();
+    } finally {
+      try {
+        state = AsyncValue.data(await _evaluate());
+      } on Object catch (err, st) {
+        AppLoggers.media.w('Cannot re-evaluate the downloaded media', error: err, stackTrace: st);
+      }
+    }
+  }
+
+  Future<(int, int)> _cleanStale() async {
+    final sp = await ref.read(storePlacesProvider.future);
 
     int number = 0, size = 0;
     for (final e in sp.media().listSync()) {
-      switch (e) {
-        case File f:
-          final bn = p.basename(f.path);
-          final pos = bn.indexOf('-');
-          if (pos < 0) continue;
-          final id = bn.substring(0, pos);
-          await ref.read(recordingNotifierProvider(id).future).then((RecordingInfo ri) {
-            if (ri.seenAt != null || ri.hiddenAt != null) {
-              number++;
-              size += f.lengthSync();
-              f.deleteSync();
-            }
-          });
-      }
+      if (e is! File || !await _isStale(p.basename(e.path))) continue;
+      number++;
+      size += e.lengthSync();
+      e.deleteSync();
     }
     // Partial files follow the same rule: the partial file of a seen or hidden recording goes.
     final partial = Directory(p.join(sp.media().path, PartialFile.partialDirName));
@@ -80,28 +85,30 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
       for (final e in partial.listSync()) {
         if (e is! File || e.path.endsWith('.state.json') || e.path.endsWith('.tmp')) continue;
         final bn = p.basename(e.path);
-        final pos = bn.indexOf('-');
-        if (pos < 0) continue;
-        final RecordingInfo ri;
-        try {
-          ri = await ref.read(recordingNotifierProvider(bn.substring(0, pos)).future);
-        } on Object catch (err) {
-          AppLoggers.media.w('Cannot tell whether the partial file $bn is stale', error: err);
-          continue;
-        }
-        if (ri.seenAt == null && ri.hiddenAt == null) continue;
+        if (!await _isStale(bn)) continue;
         number++;
         size += e.lengthSync();
         await ref.read(playbackDownloadsProvider.notifier).discardFile(bn);
         PartialFile.deleteFor(sp.media().path, bn);
       }
     }
-    // Recalculate and update state directly after cleanup
-    final newState = await _evaluate();
-    state = AsyncValue.data(newState);
-    return Future.value((number, size));
+    return (number, size);
   }
 
+  /// Whether the media file [name] (`<recording id>-...`) belongs to a seen or hidden recording.
+  /// A name without an id and a recording that cannot be loaded count as not stale.
+  Future<bool> _isStale(String name) async {
+    final pos = name.indexOf('-');
+    if (pos < 0) return false;
+    final RecordingInfo ri;
+    try {
+      ri = await ref.read(recordingNotifierProvider(name.substring(0, pos)).future);
+    } on Object catch (err) {
+      AppLoggers.media.w('Cannot tell whether the media file $name is stale', error: err);
+      return false;
+    }
+    return ri.seenAt != null || ri.hiddenAt != null;
+  }
 }
 
 // Drives local data housekeeping
