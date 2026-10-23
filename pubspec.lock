@@ -713,8 +713,8 @@ packages:
     dependency: "direct main"
     description:
       path: media_kit_video
-      ref: "5c533691f0f1d75747b5cdad2456cc09de91ec9b"
-      resolved-ref: "5c533691f0f1d75747b5cdad2456cc09de91ec9b"
+      ref: babde3e83a5a1ae1a6160a15840cbf2294d4074a
+      resolved-ref: babde3e83a5a1ae1a6160a15840cbf2294d4074a
       url: "https://github.com/almaz-uno/media-kit.git"
     source: git
     version: "2.0.1"
