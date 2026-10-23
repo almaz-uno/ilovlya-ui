@@ -925,4 +925,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get playbackDetails => 'Подробности';
+
+  @override
+  String cleanStaleMediaFailed(String error) {
+    return 'Не удалось очистить старые медиа: $error';
+  }
 }

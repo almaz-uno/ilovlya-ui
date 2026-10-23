@@ -12,6 +12,7 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 .Fixed
 - Video plays smoothly on Linux under X11 and XWayland: the player draws it on the GPU again instead of in software, which showed only about every other frame on NVIDIA machines (#142)
 - The Flatpak draws on the GPU on NVIDIA machines instead of in software: it no longer pins the EGL driver to Mesa nor lists Vulkan drivers without NVIDIA (#141)
+- "Clean stale downloaded media" no longer stops silently at a file whose recording is not stored locally: such a file is kept and the cleanup goes on; the result, or an unexpected failure, is always shown, and the counters are updated either way (#148)
 
 == [3.8.0] - 2026-10-21
 

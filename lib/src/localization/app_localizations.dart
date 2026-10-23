@@ -1659,6 +1659,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Details'**
   String get playbackDetails;
+
+  /// Shown when cleaning stale downloaded media fails unexpectedly
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaning stale media failed: {error}'**
+  String cleanStaleMediaFailed(String error);
 }
 
 class _AppLocalizationsDelegate

@@ -9,6 +9,7 @@ import '../api/directories_riverpod.dart';
 import '../api/housekeeper_riverpod.dart';
 import '../localization/app_localizations.dart';
 import '../media/format.dart';
+import '../utils/logger_provider.dart';
 import 'app_version_provider.dart';
 import 'settings_provider.dart';
 
@@ -246,19 +247,27 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         child: Text(AppLocalizations.of(context)!.cleanStaleDownloadedMedia),
         onPressed: () async {
           if (_cleaningStaleMedia) return;
+          // Taken before the await: the result is reported even if the screen is gone by then.
+          final messenger = ScaffoldMessenger.of(context);
+          final l10n = AppLocalizations.of(context)!;
+          setState(() {
+            _cleaningStaleMedia = true;
+          });
+          String message;
           try {
-            setState(() {
-              _cleaningStaleMedia = true;
-            });
             final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanStale();
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(AppLocalizations.of(context)!.filesCleanedMessage(number, fileSizeHumanReadable(size))),
-            ));
+            message = l10n.filesCleanedMessage(number, fileSizeHumanReadable(size));
+          } on Object catch (err, st) {
+            AppLoggers.media.e('Cleaning stale downloaded media failed', error: err, stackTrace: st);
+            message = l10n.cleanStaleMediaFailed('$err');
           } finally {
-            setState(() {
-              _cleaningStaleMedia = false;
-            });
+            if (mounted) {
+              setState(() {
+                _cleaningStaleMedia = false;
+              });
+            }
           }
+          messenger.showSnackBar(SnackBar(content: Text(message)));
         },
       ),
       OutlinedButton(

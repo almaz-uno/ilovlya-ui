@@ -1443,5 +1443,14 @@
   "playbackDetails": "Подробности",
   "@playbackDetails": {
     "description": "Title of the collapsible section under the player with the recording's and the player's details"
+  },
+  "cleanStaleMediaFailed": "Не удалось очистить старые медиа: {error}",
+  "@cleanStaleMediaFailed": {
+    "description": "Shown when cleaning stale downloaded media fails unexpectedly",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }
