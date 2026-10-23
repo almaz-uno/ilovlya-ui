@@ -16,6 +16,7 @@ import '../model/download.dart';
 import '../model/local_download.dart';
 import '../settings/settings_provider.dart';
 import '../utils/logger_provider.dart';
+import 'fetcher.dart';
 import 'local_endpoint.dart';
 import 'partial_file.dart';
 import 'partial_source.dart';
@@ -49,6 +50,15 @@ class _Session {
 class PlaybackDownloads extends _$PlaybackDownloads {
   /// How long [open] waits for the server's first answer before handing the player the URL regardless.
   static const lengthWait = Duration(seconds: 5);
+
+  /// [Fetcher.silenceTimeout], [Fetcher.flowingWithin] and [Fetcher.recoveredAfter] of the downloads opened from now
+  /// on; tests shorten them.
+  @visibleForTesting
+  Duration silenceTimeout = Fetcher.defaultSilenceTimeout;
+  @visibleForTesting
+  Duration flowingWithin = Fetcher.defaultFlowingWithin;
+  @visibleForTesting
+  Duration recoveredAfter = Fetcher.defaultRecoveredAfter;
 
   final Map<String, _Session> _sessions = {};
   Future<LocalMediaEndpoint>? _endpoint;
@@ -87,11 +97,12 @@ class PlaybackDownloads extends _$PlaybackDownloads {
   /// Whether the playback download of [downloadId] has given up on its server for now; see [PartialSource.serverAway].
   bool serverAway(String downloadId) => _sessions[downloadId]?.source.serverAway ?? false;
 
-  /// How long every request of the running playback download of [downloadId] has failed; `null` while its server
-  /// answers, or when it is not running. What the progress line shows while the download waits to retry.
-  Duration? failingFor(String downloadId) {
+  /// How long the server of the running playback download of [downloadId] has not been answering it
+  /// ([Fetcher.notAnsweringFor]); `null` while it answers, or when the download is not running. What the progress line
+  /// shows while the download waits to retry.
+  Duration? notAnsweringFor(String downloadId) {
     final s = _sessions[downloadId];
-    return s != null && s.source.isRunning ? s.source.fetcher.failingFor : null;
+    return s != null && s.source.isRunning ? s.source.fetcher.notAnsweringFor : null;
   }
 
   /// Where a playback of [downloadId] is played from, as the user should see it: the server's URL while the file is
@@ -128,7 +139,8 @@ class PlaybackDownloads extends _$PlaybackDownloads {
     if (s == null) {
       final sp = await ref.read(storePlacesProvider.future);
       final file = PartialFile.open(mediaDir: sp.media().path, downloadId: d.id, filename: d.filename, url: d.url);
-      final source = PartialSource(file: file, url: Uri.parse(d.url), authorization: await _authorization());
+      final source = PartialSource(
+          file: file, url: Uri.parse(d.url), authorization: await _authorization(), silenceTimeout: silenceTimeout, flowingWithin: flowingWithin, recoveredAfter: recoveredAfter);
       s = _Session(d, source);
       source.onChange = () => _changed(d.id);
       _sessions[d.id] = s;
@@ -288,10 +300,10 @@ class PlaybackDownloads extends _$PlaybackDownloads {
     final stored = src.file.ranges.stored;
     final rate = src.fetcher.rate;
     final complete = src.state == SourceState.complete;
-    // Between failed tries the transfer shows as waiting to retry, with neither a speed nor a time remaining: the last
-    // measured ones say nothing about a server that does not answer. A stall that has not failed yet shows the speed
-    // decaying, and no time remaining.
-    final waiting = src.isRunning && src.fetcher.failingFor != null;
+    // While its server does not answer — tries failing, or answering with a portion and falling silent again — the
+    // transfer shows as waiting to retry, with neither a speed nor a time remaining: the measured ones say nothing about
+    // such a server. A stall that has not failed yet shows the speed decaying, and no time remaining.
+    final waiting = src.isRunning && src.fetcher.notAnsweringFor != null;
     final measured = src.isRunning && !waiting && rate > 0;
     ref.read(localDTNotifierProvider.notifier).publish(LocalDownloadTask(
           id: s.download.id,

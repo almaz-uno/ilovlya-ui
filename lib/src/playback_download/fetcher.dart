@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
 import 'dart:math';
 
@@ -51,7 +52,20 @@ class Fetcher {
   static const defaultSilenceTimeout = Duration(seconds: 15);
 
   /// A transfer that has received no byte for this long is not flowing: no time remaining can be estimated for it.
-  static const flowingWithin = Duration(seconds: 2);
+  static const defaultFlowingWithin = Duration(seconds: 2);
+
+  /// How long bytes must flow, with no pause of [flowingWithin], before a server that was not answering counts as back.
+  /// A server that sends a portion on every new request and then falls silent — what a stalled proxy or a dying
+  /// upstream does — answers each retry at once; the portion arrives within a second or two at the link's speed, so 5 s
+  /// keeps such a transfer marked as not answering, while a server that is really back is shown so within 5 s.
+  static const defaultRecoveredAfter = Duration(seconds: 5);
+
+  /// The fewest bytes per [silenceTimeout] for a running transfer to count as answered: 64 KiB per 15 s, about
+  /// 35 kbit/s. That is below the leanest audio-only format a recording comes in (about 48 kbit/s), so a transfer under
+  /// it cannot keep any playback going; a slow mobile link stays well above it. It catches a server that drips a byte
+  /// now and then and so never trips [silenceTimeout]. It is not the recording's bitrate on purpose: a link slower than
+  /// the recording is slow, not silent, and the speed shown says so.
+  static const defaultMinProgress = 64 << 10;
 
   final PartialFile file;
   final Uri url;
@@ -61,6 +75,9 @@ class Fetcher {
   final HttpClient _client;
   final Duration Function(int failures, bool readerWaiting) _backoff;
   final Duration silenceTimeout;
+  final Duration flowingWithin;
+  final Duration recoveredAfter;
+  final int minProgress;
 
   /// Set while the endpoint has a read waiting on bytes that are not stored. Retrying then happens every second,
   /// because libmpv gives up about 36 s after its bytes stop and every second of backoff is taken from that window.
@@ -79,6 +96,12 @@ class Fetcher {
   int _position = 0;
   DateTime? _failingSince;
   DateTime? _silentSince;
+  DateTime? _troubleSince;
+  DateTime? _flowingSince;
+  DateTime? _runSince;
+  /// Bytes received, in slices of at most [_slice], over the last [silenceTimeout].
+  final Queue<(DateTime, int)> _arrivals = Queue();
+  static const _slice = Duration(milliseconds: 100);
   double _rate = 0;
   int _windowBytes = 0;
   final Stopwatch _window = Stopwatch();
@@ -96,7 +119,10 @@ class Fetcher {
       this.authorization,
       HttpClient? client,
       Duration Function(int failures, bool readerWaiting)? backoff,
-      this.silenceTimeout = defaultSilenceTimeout})
+      this.silenceTimeout = defaultSilenceTimeout,
+      this.flowingWithin = defaultFlowingWithin,
+      this.recoveredAfter = defaultRecoveredAfter,
+      this.minProgress = defaultMinProgress})
       : _client = client ?? (HttpClient()..connectionTimeout = silenceTimeout),
         _backoff = backoff ?? defaultBackoff;
 
@@ -130,6 +156,46 @@ class Fetcher {
     return since == null ? null : DateTime.now().difference(since);
   }
 
+  /// How long the server has not been answering this transfer, for the user to see; `null` while it answers.
+  ///
+  /// Broader than [failingFor], which an answer of any size clears. It runs from the first failure or silence of a
+  /// streak — or from the start of a [silenceTimeout] that brought fewer than [minProgress] bytes — and it goes on
+  /// through answers that bring a portion and fall silent again, until bytes have flowed for [recoveredAfter].
+  Duration? get notAnsweringFor {
+    final now = DateTime.now();
+    _assess(now);
+    final since = _troubleSince;
+    return since == null ? null : now.difference(since);
+  }
+
+  void _assess(DateTime now) {
+    if (_failingSince != null) {
+      _troubleSince ??= _failingSince;
+      return;
+    }
+    final window = now.subtract(silenceTimeout);
+    final runSince = _runSince;
+    if (_running && runSince != null && !runSince.isAfter(window) && _bytesSince(window) < minProgress) {
+      _troubleSince ??= window;
+      return;
+    }
+    final flowingSince = _flowingSince;
+    if (_troubleSince != null && flowing && flowingSince != null && now.difference(flowingSince) >= recoveredAfter) {
+      _troubleSince = null;
+    }
+  }
+
+  int _bytesSince(DateTime t) {
+    _forgetBefore(t);
+    return _arrivals.fold(0, (sum, a) => sum + a.$2);
+  }
+
+  void _forgetBefore(DateTime t) {
+    while (_arrivals.isNotEmpty && _arrivals.first.$1.isBefore(t)) {
+      _arrivals.removeFirst();
+    }
+  }
+
   /// Cuts a backoff short: a reader has come, and the server may be back.
   void wake() => _wakeUp();
 
@@ -139,6 +205,10 @@ class Fetcher {
     _running = true;
     _stopped = false;
     _position = from;
+    _runSince = DateTime.now();
+    _troubleSince = null;
+    _flowingSince = null;
+    _arrivals.clear();
     var failures = 0;
     try {
       while (!_stopped) {
@@ -168,6 +238,7 @@ class Fetcher {
           case _Attempt.failed:
             failures++;
             _failingSince ??= _silentSince ?? DateTime.now();
+            _troubleSince ??= _failingSince;
             if (!playerAttached && failures >= maxFailuresUnattended) return FetchOutcome.failed;
             await _sleepUnlessInterrupted(_backoff(failures, readerWaiting));
           case _Attempt.fileChanged:
@@ -351,6 +422,16 @@ class Fetcher {
   }
 
   void _measure(int bytes) {
+    final now = DateTime.now();
+    if (!flowing) _flowingSince = now;
+    final last = _arrivals.isEmpty ? null : _arrivals.last;
+    if (last != null && now.difference(last.$1) < _slice) {
+      _arrivals.removeLast();
+      _arrivals.addLast((last.$1, last.$2 + bytes));
+    } else {
+      _arrivals.addLast((now, bytes));
+      _forgetBefore(now.subtract(silenceTimeout));
+    }
     if (_sinceChunk.elapsedMicroseconds >= 1000000) {
       // The first byte after a pause: the rate keeps what the pause took from it, and a new window starts here.
       _rate = rate;

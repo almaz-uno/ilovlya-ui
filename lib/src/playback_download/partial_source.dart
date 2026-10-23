@@ -63,10 +63,12 @@ class PartialSource implements EndpointSource {
       HttpClient? client,
       Duration Function(int failures, bool readerWaiting)? backoff,
       this.silenceTimeout = Fetcher.defaultSilenceTimeout,
+      Duration flowingWithin = Fetcher.defaultFlowingWithin,
+      Duration recoveredAfter = Fetcher.defaultRecoveredAfter,
       this.onChange})
       : _client = client ?? (HttpClient()..connectionTimeout = silenceTimeout),
         _confirmed = file.ranges.isEmpty || file.isComplete {
-    fetcher = Fetcher(file: file, url: url, authorization: authorization, client: _client, backoff: backoff, silenceTimeout: silenceTimeout)
+    fetcher = Fetcher(file: file, url: url, authorization: authorization, client: _client, backoff: backoff, silenceTimeout: silenceTimeout, flowingWithin: flowingWithin, recoveredAfter: recoveredAfter)
       ..restartOnChange = !_confirmed
       ..onAnswer = _onAnswer;
     if (file.isComplete) _state = SourceState.complete;

@@ -37,6 +37,10 @@ class Upstream {
   /// Stops sending the next response's body after this many bytes, once, as [silent] does.
   int? silentNextAfter;
 
+  /// While set, every response's body stops after this many bytes, as [silent] does: a server that answers each retry
+  /// with a portion and falls silent again.
+  int? silentEveryAfter;
+
   /// Answers `200` with the whole file and no `Content-Length`; the body ends when the connection closes.
   bool noLength = false;
 
@@ -169,7 +173,7 @@ class Upstream {
 
     final cut = cutNextAfter;
     cutNextAfter = null;
-    final quiet = silentNextAfter;
+    final quiet = silentNextAfter ?? silentEveryAfter;
     silentNextAfter = null;
     const chunk = 16384;
     final clock = Stopwatch()..start();

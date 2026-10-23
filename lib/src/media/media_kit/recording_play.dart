@@ -251,7 +251,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       _watchingOpen = false;
       return;
     }
-    if (ref.read(playbackDownloadsProvider.notifier).failingFor(widget.download.id) != null) {
+    if (ref.read(playbackDownloadsProvider.notifier).notAnsweringFor(widget.download.id) != null) {
       _answeringSince = null;
       return;
     }
@@ -742,7 +742,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
                             // Format estimate (speed and ETA); a playback download waiting to retry tells how long its server has not answered
                             final eta = task.timeRemaining == null ? "" : formatDuration(task.timeRemaining!);
-                            final failing = widget.source != null && task.status == TaskStatus.waitingToRetry ? ref.read(playbackDownloadsProvider.notifier).failingFor(widget.download.id) : null;
+                            final failing = widget.source != null && task.status == TaskStatus.waitingToRetry ? ref.read(playbackDownloadsProvider.notifier).notAnsweringFor(widget.download.id) : null;
                             final est = failing != null
                                 ? " ${l10n.playbackDownloadNoAnswer(formatDuration(failing))}"
                                 : task.networkSpeed == null || task.networkSpeed! < 0
