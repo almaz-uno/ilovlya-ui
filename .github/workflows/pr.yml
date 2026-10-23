@@ -1,0 +1,69 @@
+name: Pull request
+
+on:
+  pull_request:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Analyze and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Flutter from .fvmrc
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: .fvmrc
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        id: dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: flutter test
+
+  changes:
+    name: Detect Flatpak changes
+    runs-on: ubuntu-latest
+    outputs:
+      flatpak: ${{ steps.paths.outputs.flatpak }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check build inputs
+        id: paths
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -eu
+          git diff --no-renames --name-only "$BASE_SHA...$HEAD_SHA" > /tmp/pr-paths
+          if grep -E '^(linux/flatpak/|\.github/workflows/|\.fvmrc$|pubspec\.lock$)' /tmp/pr-paths; then
+            echo 'flatpak=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'flatpak=false' >> "$GITHUB_OUTPUT"
+          fi
+
+  flatpak:
+    name: Flatpak
+    needs: changes
+    if: needs.changes.outputs.flatpak == 'true'
+    uses: ./.github/workflows/flatpak-build.yml

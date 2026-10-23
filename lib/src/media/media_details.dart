@@ -1208,10 +1208,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
   Future<void> _startPreparation(BuildContext context, String format) async {
     ref.read(newDownloadProvider(widget.id, format).future).then((d) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(AppLocalizations.of(context)!.preparationStarting(d.formatId)),
       ));
     }).catchError((err) {
+      if (!context.mounted) return;
       showDialog(
           context: context,
           barrierDismissible: true,
@@ -1344,10 +1346,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 final file = File(d.fullPathMedia!);
                 if (file.existsSync()) {
                   final box = context.findRenderObject() as RenderBox?;
-                  await Share.shareXFiles(
-                    [XFile(d.fullPathMedia!)],
+                  await SharePlus.instance.share(ShareParams(
+                    files: [XFile(d.fullPathMedia!)],
                     sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
-                  );
+                  ));
                 }
               }
             case "server-delete":
@@ -1362,7 +1364,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 Navigator.pop(context);
               });
             case "share-url":
-              await Share.shareUri(Uri.parse(d.url));
+              await SharePlus.instance.share(ShareParams(uri: Uri.parse(d.url)));
             case "download":
               if (UniversalPlatform.isWeb) {
                 return;
@@ -1603,6 +1605,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
 Future<void> copyToClipboard(BuildContext context, String textData) async {
   await Clipboard.setData(ClipboardData(text: textData)).then((value) {
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(AppLocalizations.of(context)!.copiedToClipboard(textData)),
     ));

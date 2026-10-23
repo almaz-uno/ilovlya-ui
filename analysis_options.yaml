@@ -9,6 +9,11 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 analyzer:
+  errors:
+    # Riverpod 2.6's riverpod_lint requires legacy custom_lint. Keep its checks
+    # until the Riverpod 3 migration enables the native analysis_server_plugin.
+    # Suppress only the registration deprecation, not plugin or application lints.
+    analysis_options_deprecated_plugins: ignore
   exclude:
     - build/**
     - android/**
