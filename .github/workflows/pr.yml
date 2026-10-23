@@ -55,7 +55,7 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -eu
-          git diff --name-only "$BASE_SHA...$HEAD_SHA" > /tmp/pr-paths
+          git diff --no-renames --name-only "$BASE_SHA...$HEAD_SHA" > /tmp/pr-paths
           if grep -E '^(linux/flatpak/|\.github/workflows/|\.fvmrc$|pubspec\.lock$)' /tmp/pr-paths; then
             echo 'flatpak=true' >> "$GITHUB_OUTPUT"
           else
