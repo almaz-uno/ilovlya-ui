@@ -31,8 +31,22 @@ void main() {
 
   PartialFile open([String id = 'd1']) => PartialFile.open(mediaDir: media.path, downloadId: id, filename: '$id.mp4', url: up.url.toString());
 
-  Fetcher fetcher(PartialFile f, {String? token, Duration backoff = Duration.zero}) {
-    final fx = Fetcher(file: f, url: up.url, authorization: token, backoff: (_, __) => backoff);
+  Fetcher fetcher(PartialFile f,
+      {String? token,
+      Duration backoff = Duration.zero,
+      Duration silence = Fetcher.defaultSilenceTimeout,
+      Duration flowing = Fetcher.defaultFlowingWithin,
+      Duration recovered = Fetcher.defaultRecoveredAfter,
+      int minProgress = Fetcher.defaultMinProgress}) {
+    final fx = Fetcher(
+        file: f,
+        url: up.url,
+        authorization: token,
+        backoff: (_, __) => backoff,
+        silenceTimeout: silence,
+        flowingWithin: flowing,
+        recoveredAfter: recovered,
+        minProgress: minProgress);
     fetchers.add(fx);
     return fx;
   }
@@ -153,6 +167,129 @@ void main() {
     expect(await finish(f), src);
     expect(up.log.length, 2);
     expect(up.bytesServed - src.length, lessThan(64 * 1024), reason: 'what was in flight at the cut, at most');
+  });
+
+  test('a request the server never answers fails after the silence, and the next one completes the file', () async {
+    const silence = Duration(milliseconds: 300);
+    up.silent = true;
+    final f = open();
+    final clock = Stopwatch()..start();
+    final run = fetcher(f, silence: silence).run(0);
+    while (up.log.isEmpty) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    up.silent = false;
+    expect(await run, FetchOutcome.complete);
+    expect(clock.elapsed, greaterThanOrEqualTo(silence));
+    expect(await finish(f), src);
+    expect(up.log.length, 2, reason: '${up.log}');
+    expect(up.log.first.silenced, isTrue);
+  });
+
+  test('a body that falls silent is resumed at the byte it reached', () async {
+    up.silentNextAfter = 300000;
+    final f = open();
+    expect(await fetcher(f, silence: const Duration(milliseconds: 300)).run(0), FetchOutcome.complete);
+    expect(await finish(f), src);
+    expect(up.log.length, 2, reason: '${up.log}');
+    expect(up.log.first.silenced, isTrue);
+    expect(up.log[1].range, 'bytes=${up.log.first.bytes}-${src.length - 1}');
+    expect(up.bytesServed, src.length, reason: 'every byte sent before the silence was kept');
+  });
+
+  test('a silent failure counts from the moment the request fell silent', () async {
+    // So that the endpoint gives a read up the same time after its bytes stopped, however long the silence timeout.
+    const silence = Duration(milliseconds: 400);
+    up.silent = true;
+    final fx = fetcher(open(), silence: silence, backoff: const Duration(hours: 1));
+    final run = fx.run(0);
+    while (fx.failingFor == null) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    expect(fx.failingFor, greaterThanOrEqualTo(silence));
+    fx.stop();
+    expect(await run, FetchOutcome.stopped);
+  });
+
+  test('while no byte arrives the rate decays and the transfer is not flowing', () async {
+    up.rate = 1 << 20;
+    up.silentNextAfter = 2 << 20;
+    final fx = fetcher(open(), silence: const Duration(seconds: 30));
+    final run = fx.run(0);
+    while (!(up.log.isNotEmpty && up.log.first.silenced)) {
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
+    final measured = fx.rate;
+    expect(measured, greaterThan(0));
+    expect(fx.flowing, isTrue);
+    await Future.delayed(const Duration(milliseconds: 2300));
+    expect(fx.flowing, isFalse);
+    expect(fx.rate, lessThanOrEqualTo(measured * 0.49 + 1), reason: 'two empty one-second windows: (1 - 0.3)²');
+    fx.stop();
+    expect(await run, FetchOutcome.stopped);
+  });
+
+  test('a server that answers every retry with a portion and falls silent stays not answering until bytes flow again', () async {
+    // What a stalled proxy does: each retry gets its portion at once, which clears failingFor, and then nothing.
+    up.silentEveryAfter = 64 << 10;
+    final fx = fetcher(open(),
+        silence: const Duration(milliseconds: 300), flowing: const Duration(milliseconds: 100), recovered: const Duration(seconds: 1));
+    final run = fx.run(0);
+    while (fx.notAnsweringFor == null) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    expect(fx.notAnsweringFor, greaterThanOrEqualTo(const Duration(milliseconds: 300)), reason: 'dated from when the bytes stopped');
+    final since = DateTime.now().subtract(fx.notAnsweringFor!);
+    var answered = false;
+    final clock = Stopwatch()..start();
+    while (clock.elapsed < const Duration(seconds: 2)) {
+      final d = fx.notAnsweringFor;
+      expect(d, isNotNull, reason: 'a portion does not end it');
+      expect(DateTime.now().subtract(d!).difference(since).inMilliseconds.abs(), lessThan(50), reason: 'nor restarts it');
+      answered |= fx.failingFor == null;
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
+    expect(answered, isTrue, reason: 'the retries were answered: failingFor alone would have cleared');
+    expect(up.log.length, greaterThanOrEqualTo(4), reason: '${up.log}');
+
+    // The server is back: the held request times out, the next one flows, and after a second of it the server answers.
+    up.silentEveryAfter = null;
+    up.rate = 1 << 20;
+    while (fx.notAnsweringFor != null) {
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
+    expect(fx.flowing, isTrue);
+    fx.stop();
+    expect(await run, FetchOutcome.stopped);
+  });
+
+  test('a slow but steady transfer is not taken for a server that does not answer', () async {
+    up.rate = 64 << 10; // a 16 KiB chunk every 250 ms
+    final fx = fetcher(open(), silence: const Duration(seconds: 1), minProgress: 16 << 10);
+    final run = fx.run(0);
+    final clock = Stopwatch()..start();
+    while (clock.elapsed < const Duration(seconds: 3)) {
+      expect(fx.notAnsweringFor, isNull, reason: 'at ${clock.elapsed}');
+      await Future.delayed(const Duration(milliseconds: 20));
+    }
+    expect(fx.failingFor, isNull);
+    fx.stop();
+    expect(await run, FetchOutcome.stopped);
+  });
+
+  test('a transfer that brings less than the least progress counts as not answering, though no request fails', () async {
+    up.rate = 32 << 10;
+    final fx = fetcher(open(), silence: const Duration(seconds: 1), minProgress: 64 << 10);
+    final run = fx.run(0);
+    final clock = Stopwatch()..start();
+    while (fx.notAnsweringFor == null && clock.elapsed < const Duration(seconds: 3)) {
+      await Future.delayed(const Duration(milliseconds: 20));
+    }
+    expect(fx.notAnsweringFor, isNotNull);
+    expect(clock.elapsed, greaterThanOrEqualTo(const Duration(seconds: 1)), reason: 'a whole window is judged');
+    expect(fx.failingFor, isNull);
+    fx.stop();
+    expect(await run, FetchOutcome.stopped);
   });
 
   test('failures are retried while a player is attached', () async {

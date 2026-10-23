@@ -909,6 +909,12 @@ abstract class AppLocalizations {
   /// **'Playback was interrupted. Press play to continue from {position}.'**
   String playbackInterrupted(String position);
 
+  /// Appended to the player's progress line while a playback download waits to retry a server that does not answer, instead of the speed and the time remaining
+  ///
+  /// In en, this message translates to:
+  /// **'— no answer from the server for {duration}'**
+  String playbackDownloadNoAnswer(String duration);
+
   /// Token input field label
   ///
   /// In en, this message translates to:

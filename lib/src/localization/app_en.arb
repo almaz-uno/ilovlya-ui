@@ -706,6 +706,16 @@
     }
   },
 
+  "playbackDownloadNoAnswer": "— no answer from the server for {duration}",
+  "@playbackDownloadNoAnswer": {
+    "description": "Appended to the player's progress line while a playback download waits to retry a server that does not answer, instead of the speed and the time remaining",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+
   "yourTokenProvidedByBot": "Your token, provided by the bot",
   "@yourTokenProvidedByBot": {
     "description": "Token input field label"

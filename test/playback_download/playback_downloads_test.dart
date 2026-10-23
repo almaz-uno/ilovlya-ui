@@ -151,6 +151,50 @@ void main() {
     expect((await fetch(player, url, range: 'bytes=0-')).status, 404);
   });
 
+  test('a download whose server fails waits to retry, with no speed and no time remaining, and runs again once it answers', () async {
+    up.rate = 512 * 1024;
+    downloads().recoveredAfter = const Duration(milliseconds: 300);
+    final url = await downloads().open(download('d1'));
+    await fetch(player, url, range: 'bytes=0-', take: 50000);
+    await until(() => task('d1')?.status == TaskStatus.running && task('d1')?.networkSpeed != null);
+
+    up.down = true;
+    up.dropConnections();
+    await until(() => task('d1')?.status == TaskStatus.waitingToRetry);
+    expect(task('d1')!.networkSpeed, isNull, reason: 'the last speed says nothing about a server that does not answer');
+    expect(task('d1')!.timeRemaining, isNull);
+    expect(downloads().notAnsweringFor('d1'), isNotNull, reason: 'what the progress line shows instead');
+
+    up.down = false;
+    await until(() => task('d1')?.status == TaskStatus.running);
+    expect(downloads().notAnsweringFor('d1'), isNull);
+    await downloads().discard('d1');
+  });
+
+  test('a server that answers every retry with a portion and falls silent keeps the download waiting to retry', () async {
+    // The case found in the simulator: every retry got its portion at once, so the line stayed "running" at 0–2 %.
+    downloads()
+      ..silenceTimeout = const Duration(milliseconds: 300)
+      ..flowingWithin = const Duration(milliseconds: 100)
+      ..recoveredAfter = const Duration(seconds: 1);
+    up.silentEveryAfter = 64 << 10;
+    final url = await downloads().open(download('d1'));
+    await fetch(player, url, range: 'bytes=0-', take: 50000);
+    await until(() => task('d1')?.status == TaskStatus.waitingToRetry);
+    final since = DateTime.now().subtract(downloads().notAnsweringFor('d1')!);
+    final clock = Stopwatch()..start();
+    while (clock.elapsed < const Duration(seconds: 2)) {
+      await Future.delayed(const Duration(milliseconds: 50));
+      expect(task('d1')!.status, TaskStatus.waitingToRetry, reason: 'at ${clock.elapsed}, after ${up.log.length} requests');
+      expect(task('d1')!.networkSpeed, isNull);
+      expect(DateTime.now().subtract(downloads().notAnsweringFor('d1')!).difference(since).inMilliseconds.abs(), lessThan(100),
+          reason: 'the time shown runs from the start, not from the last portion');
+    }
+    expect(up.log.length, greaterThanOrEqualTo(3), reason: 'two retries, each answered with its portion');
+    expect(task('d1')!.progress, greaterThan(0));
+    await downloads().discard('d1');
+  });
+
   test('in the background the endpoint listens only while the player plays, and keeps its URL across', () async {
     up.rate = 512 * 1024;
     final url = await downloads().open(download('d1'));

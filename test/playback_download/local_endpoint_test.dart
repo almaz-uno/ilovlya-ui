@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ilovlya/src/playback_download/fetcher.dart';
 import 'package:ilovlya/src/playback_download/local_endpoint.dart';
 import 'package:ilovlya/src/playback_download/partial_file.dart';
 import 'package:ilovlya/src/playback_download/partial_source.dart';
@@ -76,9 +77,10 @@ void main() {
     media.deleteSync(recursive: true);
   });
 
-  (PartialSource, Uri) serve({String id = 'd1', Duration giveUpAfter = PartialSource.defaultGiveUpAfter, Duration backoff = Duration.zero}) {
+  (PartialSource, Uri) serve(
+      {String id = 'd1', Duration giveUpAfter = PartialSource.defaultGiveUpAfter, Duration backoff = Duration.zero, Duration silence = Fetcher.defaultSilenceTimeout}) {
     final file = PartialFile.open(mediaDir: media.path, downloadId: id, filename: '$id.mp4', url: up.url.toString());
-    final source = PartialSource(file: file, url: up.url, giveUpAfter: giveUpAfter, backoff: (_, __) => backoff);
+    final source = PartialSource(file: file, url: up.url, giveUpAfter: giveUpAfter, backoff: (_, __) => backoff, silenceTimeout: silence);
     sources.add(source);
     return (source, endpoint.register(id, '$id.mp4', source));
   }
@@ -237,6 +239,59 @@ void main() {
     expect(clock.elapsed, lessThan(const Duration(seconds: 1)), reason: 'one try for it, not a second full wait');
 
     up.down = false;
+    up.rate = null;
+    final back = await fetch(player, url, range: 'bytes=${3 << 20}-');
+    expect(back.error, isNull);
+    expect(back.body, Uint8List.sublistView(src, 3 << 20));
+    expect(source.isGone, isFalse);
+  });
+
+  test('a fresh playback whose server falls silent after the first bytes recovers by itself and plays to the end', () async {
+    // #144: open the player on a file ready on the server; the first answer stops after a few KiB without closing. The
+    // player reads from 0, within the window, so nothing moves the transfer: only the silence timeout ends the request.
+    up.silentNextAfter = 4096;
+    final (source, url) = serve(silence: const Duration(milliseconds: 300));
+    final clock = Stopwatch()..start();
+    final read = await fetch(player, url, range: 'bytes=0-');
+    expect(read.error, isNull);
+    expect(read.body, src, reason: 'the whole file, through one response, with no reopening');
+    expect(clock.elapsed, lessThan(const Duration(seconds: 5)));
+    expect(up.log.first.silenced, isTrue);
+    expect(up.log[1].range, startsWith('bytes=${up.log.first.bytes}-'), reason: 'resumed at the byte it reached: ${up.log}');
+    await settle(source);
+    expect(source.state, SourceState.complete);
+  });
+
+  test('a seek while the server is silent moves the transfer at once, not after the silence timeout', () async {
+    // `abort` does not end a body that sends nothing; on develop the retarget waited for a chunk that never came.
+    up.silentNextAfter = 4096;
+    final (_, url) = serve(silence: const Duration(seconds: 30));
+    final first = fetch(player, url, range: 'bytes=0-', take: 8192);
+    while (up.log.isEmpty || !up.log.first.silenced) {
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
+    final clock = Stopwatch()..start();
+    final far = await fetch(HttpClient(), url, range: 'bytes=${3 << 20}-', take: 65536);
+    expect(far.body, Uint8List.sublistView(src, 3 << 20, (3 << 20) + 65536));
+    expect(clock.elapsed, lessThan(const Duration(seconds: 3)));
+    expect(up.log[1].range, 'bytes=${3 << 20}-${src.length - 1}');
+    first.ignore();
+  });
+
+  test('a read waiting for a server that falls silent gives up as for one that refuses, and is served once it speaks', () async {
+    // The connection neither answers nor closes, as across an iOS suspension: without a timeout nothing ever fails,
+    // and the read waits for ever (#144).
+    up.rate = 1 << 20;
+    final (source, url) = serve(giveUpAfter: const Duration(milliseconds: 600), backoff: const Duration(milliseconds: 50), silence: const Duration(milliseconds: 200));
+    await fetch(player, url, range: 'bytes=0-', take: 100000);
+    up.silent = true;
+    final clock = Stopwatch()..start();
+    final waiting = await fetch(player, url, range: 'bytes=${3 << 20}-');
+    expect(waiting.error, isNotNull, reason: 'reset, so that the player learns of it');
+    expect(clock.elapsed, lessThan(const Duration(seconds: 2)), reason: 'given up about 600 ms after the bytes stopped');
+    expect(up.log.where((r) => r.silenced), isNotEmpty);
+
+    up.silent = false;
     up.rate = null;
     final back = await fetch(player, url, range: 'bytes=${3 << 20}-');
     expect(back.error, isNull);

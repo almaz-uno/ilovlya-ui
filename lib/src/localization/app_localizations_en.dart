@@ -454,6 +454,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String playbackDownloadNoAnswer(String duration) {
+    return '— no answer from the server for $duration';
+  }
+
+  @override
   String get yourTokenProvidedByBot => 'Your token, provided by the bot';
 
   @override

@@ -610,6 +610,16 @@
     }
   },
 
+  "playbackDownloadNoAnswer": "— сервер не отвечает уже {duration}",
+  "@playbackDownloadNoAnswer": {
+    "description": "Appended to the player's progress line while a playback download waits to retry a server that does not answer, instead of the speed and the time remaining",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+
   "yourTokenProvidedByBot": "Ваш токен, предоставленный ботом",
   "@yourTokenProvidedByBot": {
     "description": "Token input field label"

@@ -29,11 +29,24 @@ class Upstream {
   /// Destroys the next response's connection after this many body bytes, once.
   int? cutNextAfter;
 
+  /// While set, the server says nothing and closes nothing: a new request gets no status line, and a body in progress
+  /// stops after the chunk it is sending — a connection that died without a FIN or an RST, as one does across an iOS
+  /// suspension. A connection held so is released when the client goes, or by [dropConnections] or [close].
+  bool silent = false;
+
+  /// Stops sending the next response's body after this many bytes, once, as [silent] does.
+  int? silentNextAfter;
+
+  /// While set, every response's body stops after this many bytes, as [silent] does: a server that answers each retry
+  /// with a portion and falls silent again.
+  int? silentEveryAfter;
+
   /// Answers `200` with the whole file and no `Content-Length`; the body ends when the connection closes.
   bool noLength = false;
 
   final List<UpstreamRequest> log = [];
   int bytesServed = 0;
+  Completer<void> _release = Completer<void>();
 
   Upstream._(this._server, this.data, this.lastModified) {
     _server.listen(_handle);
@@ -54,16 +67,23 @@ class Upstream {
 
   /// Resets every open connection, as a server that goes away does; the listening socket stays.
   void dropConnections() {
+    _releaseSilent();
     for (final s in _open.toList()) {
       s.destroy();
     }
   }
 
   Future<void> close() async {
+    _releaseSilent();
     await _server.close();
     for (final s in _open.toList()) {
       s.destroy();
     }
+  }
+
+  void _releaseSilent() {
+    _release.complete();
+    _release = Completer<void>();
   }
 
   Future<void> _handle(Socket socket) async {
@@ -71,18 +91,22 @@ class Upstream {
     final head = BytesBuilder();
     late StreamSubscription<Uint8List> sub;
     final headers = Completer<String>();
+    final gone = Completer<void>();
+    void clientGone() {
+      if (!headers.isCompleted) headers.complete('');
+      if (!gone.isCompleted) gone.complete();
+    }
+
     sub = socket.listen((bytes) {
       if (headers.isCompleted) return;
       head.add(bytes);
       final text = latin1.decode(head.toBytes());
       if (text.contains('\r\n\r\n')) headers.complete(text);
-    }, onError: (_) {}, onDone: () {
-      if (!headers.isCompleted) headers.complete('');
-    });
+    }, onError: (_) => clientGone(), onDone: clientGone);
     try {
       final text = await headers.future;
       if (text.isEmpty) return;
-      await _respond(socket, _parse(text));
+      await _respond(socket, _parse(text), gone.future);
     } on Object {
       // The client went away — an abort or a retarget. That is what several tests provoke.
     } finally {
@@ -100,9 +124,16 @@ class Upstream {
     };
   }
 
-  Future<void> _respond(Socket socket, Map<String, String> h) async {
+  Future<void> _respond(Socket socket, Map<String, String> h, Future<void> gone) async {
     final entry = UpstreamRequest(h['range'], h['if-range'], h['authorization']);
     log.add(entry);
+    // Holds the connection open with nothing sent, until the client gives up on it or the test lets it go.
+    Future<void> hold() async {
+      entry.silenced = true;
+      await Future.any([gone, _release.future]);
+    }
+
+    if (silent) return hold();
     void head(int status, Map<String, Object> fields) {
       entry.status = status;
       final b = StringBuffer('HTTP/1.1 $status ${_reason[status] ?? 'Status'}\r\n');
@@ -142,6 +173,8 @@ class Upstream {
 
     final cut = cutNextAfter;
     cutNextAfter = null;
+    final quiet = silentNextAfter ?? silentEveryAfter;
+    silentNextAfter = null;
     const chunk = 16384;
     final clock = Stopwatch()..start();
     var sent = 0;
@@ -150,6 +183,7 @@ class Upstream {
         socket.destroy();
         return;
       }
+      if (silent || (quiet != null && sent >= quiet)) return hold();
       final piece = Uint8List.sublistView(body, o, min(o + chunk, end + 1));
       socket.add(piece);
       await socket.flush();
@@ -175,10 +209,13 @@ class UpstreamRequest {
   int? status;
   int bytes = 0;
 
+  /// Whether the server fell silent on this request, before its head or in its body.
+  bool silenced = false;
+
   UpstreamRequest(this.range, this.ifRange, this.authorization);
 
   @override
-  String toString() => 'UpstreamRequest($range, ifRange: $ifRange, status: $status, bytes: $bytes)';
+  String toString() => 'UpstreamRequest($range, ifRange: $ifRange, status: $status, bytes: $bytes${silenced ? ', silenced' : ''})';
 }
 
 Uint8List randomBytes(int n, [int seed = 1]) {
