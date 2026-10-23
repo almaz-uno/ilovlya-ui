@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:universal_platform/universal_platform.dart';
 
+import 'logger_provider.dart';
+
 /// A service to prevent screen lock on Linux using D-Bus.
 /// On other platforms, this is a no-op.
 class ScreenInhibitService {
@@ -19,7 +21,7 @@ class ScreenInhibitService {
       _isInhibited = true;
     } catch (e) {
       // Ignore errors - screen lock inhibit is not critical
-      print('Failed to inhibit screen lock: $e');
+      AppLoggers.ui.w('Failed to inhibit screen lock', error: e);
     }
   }
 
@@ -35,7 +37,7 @@ class ScreenInhibitService {
       _isInhibited = false;
     } catch (e) {
       // Ignore errors
-      print('Failed to uninhibit screen lock: $e');
+      AppLoggers.ui.w('Failed to uninhibit screen lock', error: e);
     }
   }
 }
