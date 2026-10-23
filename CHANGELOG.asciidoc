@@ -16,6 +16,7 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 - With "Download while playing" on, a playback whose server stops sending without closing the connection no longer stays at 0% until the player is reopened: a request with no answer or no byte for 15 s is retried from the byte it reached, and a seek moves the download at once even while the server is silent (#144)
 - While a playback download's server does not answer, the progress line under the player says so and how long the server has not answered, instead of a frozen speed and time remaining. A server that answers each retry with a portion and falls silent again counts as not answering, from when it stopped, until bytes have flowed for 5 s; so does one that brings less than 64 KiB in 15 s. A stalled transfer's speed decays, and no time remaining is shown while no bytes arrive (#144)
 - A player whose source failed to open — the local address gave up on the server, or lost its connections while the application was in the background — opens it again at the saved position once the server answers, instead of staying at 0:00 (#144)
+- On iOS, the time the application spent suspended in the background no longer counts as the server not answering: back in front, the progress line does not report a silent server, and a failure streak is not given up for time spent away; the transfer reconnects at once, and a server that is in fact silent is still reported after 15 s in front (#156)
 
 == [3.8.0] - 2026-10-21
 

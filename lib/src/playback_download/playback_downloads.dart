@@ -175,6 +175,7 @@ class PlaybackDownloads extends _$PlaybackDownloads {
     if (_playerPlaying == playing) return;
     _playerPlaying = playing;
     _listenWhileNeeded();
+    _followSuspension();
   }
 
   /// Whether the application is in front; followed on iOS only, so that elsewhere the endpoint never stops listening.
@@ -183,6 +184,7 @@ class PlaybackDownloads extends _$PlaybackDownloads {
     if (_inFront == inFront) return;
     _inFront = inFront;
     _listenWhileNeeded();
+    _followSuspension();
     // Back in front, the network is likely back too: a transfer sleeping out a backoff tries at once.
     if (inFront) {
       for (final s in _sessions.values) {
@@ -194,6 +196,16 @@ class PlaybackDownloads extends _$PlaybackDownloads {
   /// Completes once the endpoint listens or not as the last change of [inFront] or [playerPlaying] asked.
   @visibleForTesting
   Future<void> get listeningSettled => _listening;
+
+  /// Tells the transfers whether the application is about to be suspended, by the same rule the endpoint follows: out
+  /// of the front with the player not playing, which happens on iOS only. Time spent so does not count as the server's
+  /// silence ([Fetcher.suspend]).
+  void _followSuspension() {
+    final suspended = !_inFront && !_playerPlaying;
+    for (final s in _sessions.values) {
+      suspended ? s.source.fetcher.suspend() : s.source.fetcher.resume();
+    }
+  }
 
   /// Suspends or resumes the endpoint for the state at the time the change runs; changes run one after another.
   void _listenWhileNeeded() {
