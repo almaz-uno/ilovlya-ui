@@ -20,7 +20,7 @@ class MediaAddView extends ConsumerStatefulWidget {
 
   final bool forcePaste;
 
-  static routeName(bool forcePaste) {
+  static String routeName(bool forcePaste) {
     return forcePaste ? "/$pathRecordings?add&paste" : "/$pathRecordings?add";
   }
 
@@ -138,11 +138,13 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
     }
     // _futureMediaAdd = ; // the full information about media should be acquired anew
     ref.read(addRecordingProvider(url).future).then((value) {
+      if (!mounted || !context.mounted) return;
       ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(AppLocalizations.of(context)!.successfullyAddedMessage(value.title)),
       ));
     }).catchError((err) {
+      if (!context.mounted) return;
       showDialog(
           context: context,
           barrierDismissible: true,
@@ -152,12 +154,15 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
                   child: Text(err.toString()),
                 ),
               ));
-    }).whenComplete(() => setState(() {
-          _isAdding = false;
-          if (doBack) {
-            Navigator.pop(context);
-          }
-        }));
+    }).whenComplete(() {
+      if (!mounted || !context.mounted) return;
+      setState(() {
+        _isAdding = false;
+      });
+      if (doBack) {
+        Navigator.pop(context);
+      }
+    });
   }
 
   FutureBuilder<URLInfo> buildPropositionList() {

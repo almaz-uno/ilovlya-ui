@@ -95,14 +95,16 @@ void main() {
     await interruptAfter(open(), 1 << 20);
     final had = open().ranges.stored;
     expect(had, greaterThanOrEqualTo(1 << 20));
-    final servedBefore = up.bytesServed;
     final requestsBefore = up.log.length;
 
     final again = open();
     expect(await fetcher(again).run(0), FetchOutcome.complete);
     expect(await finish(again), src);
     expect(up.log.skip(requestsBefore).every((r) => r.ifRange == up.lastModified && r.status == 206), isTrue, reason: '${up.log}');
-    expect(up.bytesServed - servedBefore, src.length - had);
+    // The aborted response can still account for an in-flight chunk after the
+    // client stopped. Count only the resume requests, not that old response.
+    final resumedBytes = up.log.skip(requestsBefore).fold<int>(0, (bytes, request) => bytes + request.bytes);
+    expect(resumedBytes, src.length - had);
   });
 
   test('a file replaced on the server is detected on resume, and its body is not drained', () async {
@@ -118,7 +120,7 @@ void main() {
     await interruptAfter(open(), 1 << 20);
     final replaced = randomBytes(src.length + 4096, 2);
     up.replace(replaced, 'Wed, 23 Sep 2026 10:00:00 GMT');
-    final servedBefore = up.bytesServed;
+    final requestsBefore = up.log.length;
     final f = open();
     var answers = 0;
     final fx = fetcher(f)
@@ -128,7 +130,9 @@ void main() {
     expect(await finish(f), replaced);
     expect(f.lastModified, 'Wed, 23 Sep 2026 10:00:00 GMT');
     expect(up.log.last.status, 200);
-    expect(up.bytesServed - servedBefore, replaced.length, reason: 'the 200 body is the new file, taken as it is');
+    // Exclude bytes the interrupted response accounts for after it was aborted.
+    final replacementBytes = up.log.skip(requestsBefore).fold<int>(0, (bytes, request) => bytes + request.bytes);
+    expect(replacementBytes, replaced.length, reason: 'the 200 body is the new file, taken as it is');
     expect(answers, greaterThan(0));
   });
 

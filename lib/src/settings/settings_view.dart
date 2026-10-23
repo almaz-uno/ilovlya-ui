@@ -266,6 +266,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         onPressed: () async {
           confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllDownloadedMediaFiles, () async {
             final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanAll();
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(AppLocalizations.of(context)!.filesCleanedMessage(number, fileSizeHumanReadable(size))),
             ));
@@ -280,6 +281,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
               context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllMetadataMessage(data.requireValue),
               () async {
             final number = await ref.read(localDataNotifierProvider.notifier).cleanMetadata();
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(AppLocalizations.of(context)!.recordingsCleanedMessage(number)),
             ));
