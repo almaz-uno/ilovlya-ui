@@ -61,13 +61,15 @@ dev_dependencies:
 
 # media_kit_video 2.0.1 renders video in software on Linux with Flutter 3.38 and later, X11 and XWayland included:
 # no EGL context is current on the platform thread (media-kit/media-kit#1404). media-kit/media-kit#1466 fixes it.
-# almaz-uno/media-kit is our fork holding a pinned copy of that PR: the commit tested on NVIDIA, Intel and AMD (#142),
-# kept alive by the tag pr1466-5c533691. Drop this once a release of media_kit_video has the fix.
+# almaz-uno/media-kit is our fork: the branch ilovlya/media_kit_video-2.0.1-pr1466 is the 2.0.1 published on pub.dev
+# plus that PR's linux/ changes only, so every other platform builds the published plugin (#153: upstream main moved
+# iOS and macOS to SwiftPM, and the plugin was not registered there). Kept alive by the tag pr1466-on-2.0.1-babde3e8.
+# Drop this once a release of media_kit_video has the fix.
 dependency_overrides:
   media_kit_video:
     git:
       url: https://github.com/almaz-uno/media-kit.git
-      ref: 5c533691f0f1d75747b5cdad2456cc09de91ec9b
+      ref: babde3e83a5a1ae1a6160a15840cbf2294d4074a
       path: media_kit_video
 
 flutter:
