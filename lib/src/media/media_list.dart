@@ -155,7 +155,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
       usageInfo = AppLocalizations.of(context)!.quotaUsageInfo(
         t.quotaStr(),
         t.usageStr(),
-        t.files.toString(),
+        t.files,
         t.freeStr(),
         storeStr,
       );

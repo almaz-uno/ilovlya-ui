@@ -207,7 +207,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       w.add(Text(AppLocalizations.of(context)!.quota(t.quotaStr())));
       w.add(Text(AppLocalizations.of(context)!.used(t.usageStr())));
       w.add(Text(AppLocalizations.of(context)!.free(t.freeStr())));
-      w.add(Text(AppLocalizations.of(context)!.files("${t.files}")));
+      w.add(Text(AppLocalizations.of(context)!.files(t.files)));
       w.add(Text(AppLocalizations.of(context)!.local(t.localUsageStr())));
       w.add(Text(AppLocalizations.of(context)!.storage(t.storeUsageStr())));
     }
@@ -231,8 +231,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
     return [
       Text(AppLocalizations.of(context)!.localMediaInfo, style: Theme.of(context).textTheme.bodyLarge),
-      Text(AppLocalizations.of(context)!.recordings("${data.requireValue}")),
-      Text(AppLocalizations.of(context)!.filesWithSize("$number", fileSizeHumanReadable(size))),
+      Text(AppLocalizations.of(context)!.recordings(data.requireValue)),
+      Text(AppLocalizations.of(context)!.filesWithSize(number, fileSizeHumanReadable(size))),
       if (!UniversalPlatform.isWeb)
         SwitchListTile(
           title: Text(AppLocalizations.of(context)!.downloadWhilePlaying),
@@ -284,7 +284,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         },
       ),
       OutlinedButton(
-        child: Text(AppLocalizations.of(context)!.cleanAllMetadataForRecordings("${data.requireValue}")),
+        child: Text(AppLocalizations.of(context)!.cleanAllMetadataForRecordings(data.requireValue)),
         onPressed: () async {
           confirmDialog(
               context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllMetadataMessage(data.requireValue),

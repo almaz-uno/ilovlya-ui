@@ -166,8 +166,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String quotaUsageInfo(
-      String quota, String usage, String files, String free, String store) {
-    return 'quote: $quota usage: $usage ($files) free: $free$store';
+      String quota, String usage, int files, String free, String store) {
+    String _temp0 = intl.Intl.pluralLogic(
+      files,
+      locale: localeName,
+      other: '$files files',
+      one: '$files file',
+    );
+    return 'quota: $quota usage: $usage ($_temp0) free: $free$store';
   }
 
   @override
@@ -473,7 +479,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String deleteAllMetadataMessage(int count) {
-    return 'This will delete ALL metadata for $count recordings,\ndownloaded media files will be retained.\nThis data can be downloaded from the server.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count recordings',
+      one: '$count recording',
+    );
+    return 'This will delete ALL metadata for $_temp0,\ndownloaded media files will be retained.\nThis data can be downloaded from the server.';
   }
 
   @override
@@ -512,7 +524,7 @@ class AppLocalizationsEn extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count formats',
-      one: '1 format',
+      one: '$count format',
     );
     return '$_temp0';
   }
@@ -606,8 +618,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String files(String files) {
-    return 'Files: $files';
+  String files(int files) {
+    String _temp0 = intl.Intl.pluralLogic(
+      files,
+      locale: localeName,
+      other: '$files files',
+      one: '$files file',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -621,13 +639,25 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String recordings(String count) {
-    return 'Recordings: $count';
+  String recordings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count recordings',
+      one: '$count recording',
+    );
+    return '$_temp0';
   }
 
   @override
-  String filesWithSize(String number, String size) {
-    return 'Files: $number, total size: $size';
+  String filesWithSize(int number, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      number,
+      locale: localeName,
+      other: '$number files',
+      one: '$number file',
+    );
+    return '$_temp0, total size: $size';
   }
 
   @override
@@ -635,15 +665,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String filesCleanedMessage(int count, String size) {
-    return '$count files, $size cleaned';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Cleaned $count files, $size',
+      one: 'Cleaned $count file, $size',
+    );
+    return '$_temp0';
   }
 
   @override
   String get cleanAllDownloadedMedia => 'Clean ALL downloaded media';
 
   @override
-  String cleanAllMetadataForRecordings(String count) {
-    return 'Clean ALL metadata for $count recordings';
+  String cleanAllMetadataForRecordings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count recordings',
+      one: '$count recording',
+    );
+    return 'Clean ALL metadata for $_temp0';
   }
 
   @override
@@ -732,7 +774,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String recordingsCleanedMessage(int count) {
-    return '$count recordings cleaned';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Cleaned $count recordings',
+      one: 'Cleaned $count recording',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -757,7 +805,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String filesLabel(int files) {
-    return 'Files: $files';
+    String _temp0 = intl.Intl.pluralLogic(
+      files,
+      locale: localeName,
+      other: '$files files',
+      one: '$files file',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -772,12 +826,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String recordingsLabel(int recordings) {
-    return 'Recordings: $recordings';
+    String _temp0 = intl.Intl.pluralLogic(
+      recordings,
+      locale: localeName,
+      other: '$recordings recordings',
+      one: '$recordings recording',
+    );
+    return '$_temp0';
   }
 
   @override
   String filesTotalSizeLabel(int count, String size) {
-    return 'Files: $count, total size: $size';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '$count file',
+    );
+    return '$_temp0, total size: $size';
   }
 
   @override
