@@ -53,7 +53,7 @@ jobs:
       # one and builds without rofiles-fuse, and so does this.
       - name: Build
         run: |
-          dbus-uuidgen --ensure
+          dbus-uuidgen --ensure=/etc/machine-id
           flatpak-builder --force-clean --user --disable-rofiles-fuse --default-branch="$BRANCH" \
             flatpak-build linux/flatpak/uno.almaz.ilovlya.yml
 
