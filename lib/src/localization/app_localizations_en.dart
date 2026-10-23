@@ -914,4 +914,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playbackDetails => 'Details';
+
+  @override
+  String cleanStaleMediaFailed(String error) {
+    return 'Cleaning stale media failed: $error';
+  }
 }
