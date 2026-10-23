@@ -49,9 +49,12 @@ jobs:
             org.freedesktop.Sdk//25.08 \
             org.freedesktop.Sdk.Extension.llvm20//25.08
 
+      # The flathub-infra image comes without a machine-id and without FUSE in the container; its own action makes the
+      # one and builds without rofiles-fuse, and so does this.
       - name: Build
         run: |
-          flatpak-builder --force-clean --user --default-branch="$BRANCH" \
+          dbus-uuidgen --ensure
+          flatpak-builder --force-clean --user --disable-rofiles-fuse --default-branch="$BRANCH" \
             flatpak-build linux/flatpak/uno.almaz.ilovlya.yml
 
       - name: Bundle
