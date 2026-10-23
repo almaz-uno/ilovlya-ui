@@ -94,6 +94,9 @@ class Fetcher {
   void Function()? onAnswer;
 
   int _position = 0;
+  /// Set while the application is suspended, or about to be ([suspend]); see [_now].
+  DateTime? _suspendedAt;
+  Duration _suspended = Duration.zero;
   DateTime? _failingSince;
   DateTime? _silentSince;
   DateTime? _troubleSince;
@@ -150,10 +153,34 @@ class Fetcher {
   /// Requests made so far; what a test or a log line counts.
   int get requests => _requests;
 
+  /// The time the transfer is measured by: wall-clock time without the time the application spent suspended, and
+  /// standing still while it is. On iOS the process is suspended in the background while nothing plays (spec 004, "On
+  /// iOS"); wall-clock time goes on, the transfer does not, and the server has no part in that. Every time below —
+  /// [failingFor], [notAnsweringFor], the window of arrivals — is taken from here.
+  DateTime _now() => (_suspendedAt ?? DateTime.now()).subtract(_suspended);
+
+  /// The application is about to be suspended: from now on time does not count, until [resume].
+  void suspend() => _suspendedAt ??= DateTime.now();
+
+  /// The application is back from a suspension. iOS reclaims a suspended application's sockets, so the request in
+  /// flight is taken for interrupted, not failed, and the transfer reconnects at once from where it was.
+  void resume() {
+    final at = _suspendedAt;
+    if (at == null) return;
+    _suspended += DateTime.now().difference(at);
+    _suspendedAt = null;
+    if (_running && _request != null) {
+      _retargetTo ??= _position;
+      _request?.abort();
+      _leave();
+    }
+    _wakeUp();
+  }
+
   /// How long every request has failed, from the first failure of the current streak; `null` while the server answers.
   Duration? get failingFor {
     final since = _failingSince;
-    return since == null ? null : DateTime.now().difference(since);
+    return since == null ? null : _now().difference(since);
   }
 
   /// How long the server has not been answering this transfer, for the user to see; `null` while it answers.
@@ -162,7 +189,7 @@ class Fetcher {
   /// streak — or from the start of a [silenceTimeout] that brought fewer than [minProgress] bytes — and it goes on
   /// through answers that bring a portion and fall silent again, until bytes have flowed for [recoveredAfter].
   Duration? get notAnsweringFor {
-    final now = DateTime.now();
+    final now = _now();
     _assess(now);
     final since = _troubleSince;
     return since == null ? null : now.difference(since);
@@ -205,7 +232,7 @@ class Fetcher {
     _running = true;
     _stopped = false;
     _position = from;
-    _runSince = DateTime.now();
+    _runSince = _now();
     _troubleSince = null;
     _flowingSince = null;
     _arrivals.clear();
@@ -237,7 +264,7 @@ class Fetcher {
             break;
           case _Attempt.failed:
             failures++;
-            _failingSince ??= _silentSince ?? DateTime.now();
+            _failingSince ??= _silentSince ?? _now();
             _troubleSince ??= _failingSince;
             if (!playerAttached && failures >= maxFailuresUnattended) return FetchOutcome.failed;
             await _sleepUnlessInterrupted(_backoff(failures, readerWaiting));
@@ -308,7 +335,9 @@ class Fetcher {
       response = await request.close().timeout(silenceTimeout);
     } on Object catch (e) {
       if (_interrupted) return _Attempt.interrupted;
-      if (e is TimeoutException || (e is SocketException && e.message.contains('timed out'))) _silent();
+      final timedOut = e is TimeoutException || (e is SocketException && e.message.contains('timed out'));
+      if (timedOut && _suspendedAt != null) return _Attempt.interrupted;
+      if (timedOut) _silent();
       AppLoggers.download.w('Playback download request for [$start, ${end ?? ''}) failed', error: e);
       return _Attempt.failed;
     }
@@ -390,6 +419,8 @@ class Fetcher {
       }
     } on Object catch (e) {
       if (_interrupted) return _Attempt.interrupted;
+      // Silence that came while the application was away says nothing about the server; the request is made again.
+      if (e is TimeoutException && _suspendedAt != null) return _Attempt.interrupted;
       if (e is TimeoutException) _silent();
       AppLoggers.download.w('Playback download broke off at $offset', error: e);
       return _Attempt.failed;
@@ -406,7 +437,7 @@ class Fetcher {
   /// moment it fell silent.
   void _silent() {
     _request?.abort();
-    _silentSince = DateTime.now().subtract(silenceTimeout);
+    _silentSince = _now().subtract(silenceTimeout);
   }
 
   _Attempt _cannotWrite(String path, FileSystemException e) {
@@ -422,7 +453,7 @@ class Fetcher {
   }
 
   void _measure(int bytes) {
-    final now = DateTime.now();
+    final now = _now();
     if (!flowing) _flowingSince = now;
     final last = _arrivals.isEmpty ? null : _arrivals.last;
     if (last != null && now.difference(last.$1) < _slice) {
