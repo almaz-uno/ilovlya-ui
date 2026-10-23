@@ -142,7 +142,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String createdAt(String date, String time) {
-    return 'Создано';
+    return 'Создано: $date ($time назад)';
   }
 
   @override
@@ -168,8 +168,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String quotaUsageInfo(
-      String quota, String usage, String files, String free, String store) {
-    return 'квота: $quota использовано: $usage ($files) свободно: $free$store';
+      String quota, String usage, int files, String free, String store) {
+    String _temp0 = intl.Intl.pluralLogic(
+      files,
+      locale: localeName,
+      other: '$files файла',
+      many: '$files файлов',
+      few: '$files файла',
+      one: '$files файл',
+    );
+    return 'квота: $quota использовано: $usage ($_temp0) свободно: $free$store';
   }
 
   @override
@@ -195,7 +203,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String updatedAt(String date, String time) {
-    return 'Обновлено';
+    return 'Обновлено: $date ($time назад)';
   }
 
   @override
@@ -421,7 +429,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String blockedAt(String date) {
-    return 'Заблокирован в';
+    return 'Заблокирован $date';
   }
 
   @override
@@ -475,7 +483,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String deleteAllMetadataMessage(int count) {
-    return 'Это удалит ВСЕ метаданные для $count записей,\nзагруженные медиафайлы будут сохранены.\nЭти данные можно загрузить с сервера.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записи',
+      many: '$count записей',
+      few: '$count записей',
+      one: '$count записи',
+    );
+    return 'Это удалит ВСЕ метаданные для $_temp0,\nзагруженные медиафайлы будут сохранены.\nЭти данные можно загрузить с сервера.';
   }
 
   @override
@@ -513,9 +529,10 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count форматов',
+      other: '$count формата',
+      many: '$count форматов',
       few: '$count формата',
-      one: '1 формат',
+      one: '$count формат',
     );
     return '$_temp0';
   }
@@ -612,8 +629,16 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String files(String files) {
-    return 'Файлов: $files';
+  String files(int files) {
+    String _temp0 = intl.Intl.pluralLogic(
+      files,
+      locale: localeName,
+      other: '$files файла',
+      many: '$files файлов',
+      few: '$files файла',
+      one: '$files файл',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -627,13 +652,29 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String recordings(String count) {
-    return 'Записей: $count';
+  String recordings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записи',
+      many: '$count записей',
+      few: '$count записи',
+      one: '$count запись',
+    );
+    return '$_temp0';
   }
 
   @override
-  String filesWithSize(String number, String size) {
-    return 'Файлов: $number, общий размер: $size';
+  String filesWithSize(int number, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      number,
+      locale: localeName,
+      other: '$number файла',
+      many: '$number файлов',
+      few: '$number файла',
+      one: '$number файл',
+    );
+    return '$_temp0, общий размер: $size';
   }
 
   @override
@@ -641,15 +682,31 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String filesCleanedMessage(int count, String size) {
-    return '$count файлов, $size очищено';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Очищено $count файла, $size',
+      many: 'Очищено $count файлов, $size',
+      few: 'Очищено $count файла, $size',
+      one: 'Очищен $count файл, $size',
+    );
+    return '$_temp0';
   }
 
   @override
   String get cleanAllDownloadedMedia => 'Очистить ВСЕ загруженные медиа';
 
   @override
-  String cleanAllMetadataForRecordings(String count) {
-    return 'Очистить ВСЕ метаданные для $count записей';
+  String cleanAllMetadataForRecordings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записи',
+      many: '$count записей',
+      few: '$count записей',
+      one: '$count записи',
+    );
+    return 'Очистить ВСЕ метаданные для $_temp0';
   }
 
   @override
@@ -738,7 +795,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String recordingsCleanedMessage(int count) {
-    return '$count записей очищено';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Очищено $count записи',
+      many: 'Очищено $count записей',
+      few: 'Очищено $count записи',
+      one: 'Очищена $count запись',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -763,7 +828,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String filesLabel(int files) {
-    return 'Файлы: $files';
+    String _temp0 = intl.Intl.pluralLogic(
+      files,
+      locale: localeName,
+      other: '$files файла',
+      many: '$files файлов',
+      few: '$files файла',
+      one: '$files файл',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -778,12 +851,28 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String recordingsLabel(int recordings) {
-    return 'Записи: $recordings';
+    String _temp0 = intl.Intl.pluralLogic(
+      recordings,
+      locale: localeName,
+      other: '$recordings записи',
+      many: '$recordings записей',
+      few: '$recordings записи',
+      one: '$recordings запись',
+    );
+    return '$_temp0';
   }
 
   @override
   String filesTotalSizeLabel(int count, String size) {
-    return 'Файлы: $count, общий размер: $size';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count файла',
+      many: '$count файлов',
+      few: '$count файла',
+      one: '$count файл',
+    );
+    return '$_temp0, общий размер: $size';
   }
 
   @override
