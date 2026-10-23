@@ -5,12 +5,12 @@
 #   flatpak-builder --force-clean --default-branch=master flatpak-build linux/flatpak/uno.almaz.ilovlya.yml
 app-id: uno.almaz.ilovlya
 runtime: org.freedesktop.Platform
-runtime-version: '24.08'
+runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 command: ilovlya
 appstream-compose: false
 sdk-extensions:
-  - org.freedesktop.Sdk.Extension.llvm19
+  - org.freedesktop.Sdk.Extension.llvm20
 finish-args:
   - --device=all
   - --device=dri
@@ -42,8 +42,8 @@ modules:
         x86_64:
           env:
             BUNDLE_PATH: /run/build/ilovlya/build/linux/x64/release/bundle
-      append-path: /usr/lib/sdk/llvm19/bin:/run/build/ilovlya/flutter/bin
-      prepend-ld-library-path: /usr/lib/sdk/llvm19/lib
+      append-path: /usr/lib/sdk/llvm20/bin:/run/build/ilovlya/flutter/bin
+      prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
       env:
         PUB_CACHE: /run/build/ilovlya/.pub-cache
 
@@ -118,26 +118,49 @@ modules:
           - type: shell
             commands:
               - ./utils/git-sync-deps
+      # mpv 0.36 aborts at start on 25.08 (`ta_dbg_check_header: Assertion 'h->canary == CANARY' failed`, #139);
+      # 0.40 is built with meson, and needs libplacebo. 0.40 asks for FFmpeg 6.1 at least, which is the one below.
       - name: libmpv
         cleanup:
           - /include
           - /lib/pkgconfig
           - /lib/*.a
           - /lib/debug
-        buildsystem: simple
-        build-commands:
-          - python3 waf configure --prefix=${FLATPAK_DEST} --enable-libmpv-shared --enable-lua --disable-alsa --disable-manpage-build --disable-debug-build --enable-sdl2 --enable-libarchive
-          - python3 waf build
-          - python3 waf install
+        buildsystem: meson
+        config-opts:
+          - --buildtype=release
+          - -Dlibmpv=true
+          - -Dgl=enabled
+          - -Dlua=luajit
+          - -Dlibarchive=enabled
+          - -Dalsa=disabled
+          - -Dmanpage-build=disabled
+          - -Dhtml-build=disabled
+          - -Dpdf-build=disabled
+          - -Dwerror=false
         sources:
-          - type: archive
-            url: https://github.com/mpv-player/mpv/archive/v0.36.0.tar.gz
-            sha256: 29abc44f8ebee013bb2f9fe14d80b30db19b534c679056e4851ceadf5a5e8bf6
-          - type: file
-            url: https://waf.io/waf-2.0.26
-            sha256: dcec3e179f9c33a66544f1b3d7d91f20f6373530510fa6a858cddb6bfdcde14b
-            dest-filename: waf
+          - type: git
+            url: https://github.com/mpv-player/mpv.git
+            tag: v0.40.0
+            commit: e48ac7ce08462f5e33af6ef9deeac6fa87eef01e
         modules:
+          # As in Flathub's io.mpv.Mpv on 25.08; shaderc is the module above.
+          - name: libplacebo
+            buildsystem: meson
+            config-opts:
+              - --buildtype=release
+              - -Dvulkan=enabled
+              - -Dshaderc=enabled
+              - -Ddemos=false
+              - -Dtests=false
+            cleanup:
+              - /include
+              - /lib/pkgconfig
+            sources:
+              - type: git
+                url: https://github.com/haasn/libplacebo.git
+                tag: v7.351.0
+                commit: 3188549fba13bbdf3a5a98de2a38c2e71f04e21e
           - name: luajit
             no-autogen: true
             cleanup:
