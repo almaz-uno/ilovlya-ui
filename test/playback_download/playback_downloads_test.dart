@@ -195,6 +195,85 @@ void main() {
     await downloads().discard('d1');
   });
 
+  group('time spent suspended is not silence', () {
+    // On iOS a paused player in the background lets the process be suspended (spec 004, "On iOS"): no byte arrives, and
+    // wall-clock time goes on. Here the process runs on, so the suspension is played by a server that falls silent at the
+    // same moment, which is what the transfer sees of it.
+    void short() => downloads()
+      ..silenceTimeout = const Duration(milliseconds: 300)
+      ..flowingWithin = const Duration(milliseconds: 100)
+      ..recoveredAfter = const Duration(seconds: 1);
+
+    Future<void> suspendFor(Duration d) async {
+      downloads().playerPlaying = false;
+      downloads().inFront = false;
+      up.silent = true;
+      await Future.delayed(d);
+    }
+
+    test('back in front, a transfer that was flowing is not shown as not answering', () async {
+      short();
+      up.rate = 256 * 1024;
+      final url = await downloads().open(download('d1'));
+      await fetch(player, url, range: 'bytes=0-', take: 50000);
+      await until(() => task('d1')?.status == TaskStatus.running && task('d1')?.networkSpeed != null);
+
+      await suspendFor(const Duration(milliseconds: 1500));
+      up.silent = false;
+      downloads().inFront = true;
+      expect(downloads().notAnsweringFor('d1'), isNull, reason: 'the server did nothing wrong; the application was away');
+      final clock = Stopwatch()..start();
+      while (clock.elapsed < const Duration(seconds: 1)) {
+        expect(task('d1')!.status, isNot(TaskStatus.waitingToRetry), reason: 'at ${clock.elapsed} after the return');
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+      await until(() => c.read(playbackDownloadsProvider)['d1'] == SourceState.complete);
+      expect(File(media('d1.mp4')).readAsBytesSync(), src);
+    });
+
+    test('a failure streak from before the suspension does not count the suspension', () async {
+      short();
+      up.rate = 256 * 1024;
+      final url = await downloads().open(download('d1'));
+      await fetch(player, url, range: 'bytes=0-', take: 50000);
+      up.down = true;
+      up.dropConnections();
+      await until(() => downloads().notAnsweringFor('d1') != null);
+      final before = downloads().notAnsweringFor('d1')!;
+
+      await suspendFor(const Duration(milliseconds: 1500));
+      downloads().inFront = true;
+      final after = downloads().notAnsweringFor('d1')!;
+      expect(after - before, lessThan(const Duration(milliseconds: 300)), reason: 'only the time in front counts: $before, then $after');
+      up
+        ..silent = false
+        ..down = false;
+      await downloads().discard('d1');
+    });
+
+    test('a server that is in fact silent after the return is still reported after the silence timeout', () async {
+      short();
+      // Well above the 64 KiB per 300 ms the window asks for, so that only the silence after the return can trip it.
+      up.rate = 512 * 1024;
+      final url = await downloads().open(download('d1'));
+      await fetch(player, url, range: 'bytes=0-', take: 50000);
+      await until(() => task('d1')?.status == TaskStatus.running && task('d1')?.networkSpeed != null);
+
+      await suspendFor(const Duration(milliseconds: 1500));
+      downloads().inFront = true; // up stays silent
+      expect(downloads().notAnsweringFor('d1'), isNull);
+      final clock = Stopwatch()..start();
+      await until(() => downloads().notAnsweringFor('d1') != null);
+      // The window still holds what came just before the suspension; it runs out 300 ms less the time 64 KiB took at
+      // 512 KiB/s, about 175 ms after the return. Before the fix the report came at once, carrying the suspension.
+      expect(clock.elapsed, greaterThanOrEqualTo(const Duration(milliseconds: 100)), reason: 'not at once');
+      expect(clock.elapsed, lessThan(const Duration(seconds: 2)));
+      expect(downloads().notAnsweringFor('d1')!, lessThan(const Duration(seconds: 1)), reason: 'counted from the return, not from the suspension');
+      up.silent = false;
+      await downloads().discard('d1');
+    });
+  });
+
   test('in the background the endpoint listens only while the player plays, and keeps its URL across', () async {
     up.rate = 512 * 1024;
     final url = await downloads().open(download('d1'));
