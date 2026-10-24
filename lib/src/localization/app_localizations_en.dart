@@ -144,16 +144,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get noRecordingsCheckFilterOrToken =>
-      'No recordings. Check you filter settings or API token value.';
+  String get noRecordingsCheckFilters => 'No recordings. Check the filters.';
 
   @override
   String get unauthorizedCheckTokenAndServer =>
       'Unauthorized: please check and specify token and server URL in settings';
 
   @override
-  String get errorCheckTokenAndServer =>
-      'please check and specify token and server URL in settings';
+  String get recordingsLoadFailed => 'Could not load recordings';
 
   @override
   String get loadingInProgress => 'Loading in progress...';
@@ -428,8 +426,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Unauthorized: please check and specify token and server URL in settings';
 
   @override
-  String get noRecordings =>
-      'No recordings. Check you filter settings or API token value.';
+  String get noRecordings => 'No recordings. Check the filters.';
 
   @override
   String get userProfile => 'User profile';

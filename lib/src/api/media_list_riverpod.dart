@@ -12,6 +12,7 @@ import '../settings/settings_provider.dart';
 import '../utils/logger_provider.dart';
 import 'api_riverpod.dart';
 import 'directories_riverpod.dart';
+import 'local_json.dart';
 
 part 'media_list_riverpod.g.dart';
 
@@ -36,23 +37,28 @@ class MediaListNotifier extends _$MediaListNotifier {
 
       final resultList = <RecordingInfo>[];
 
-      final list = recordingsDir.listSync();
+      final list = recordingsDir.existsSync() ? recordingsDir.listSync() : <FileSystemEntity>[];
 
-      final mediaEntities = mediaDir.listSync();
+      final mediaEntities = mediaDir.existsSync() ? mediaDir.listSync() : <FileSystemEntity>[];
 
       for (final entity in list) {
         if (entity is! File) continue;
 
-        final recording = RecordingInfo.fromJson(jsonDecode(entity.readAsStringSync()));
+        try {
+          final recording = RecordingInfo.fromJson(jsonDecode(entity.readAsStringSync()));
+          if (recording.id.isEmpty) throw const FormatException('Recording has no ID');
 
-        for (final df in recording.files) {
-          for (final me in mediaEntities) {
-            if (me is! File) continue;
-            recording.hasLocalFile = recording.hasLocalFile || p.basename(me.path) == df;
-            if (recording.hasLocalFile) break;
+          for (final df in recording.files) {
+            for (final me in mediaEntities) {
+              if (me is! File) continue;
+              recording.hasLocalFile = recording.hasLocalFile || p.basename(me.path) == df;
+              if (recording.hasLocalFile) break;
+            }
           }
+          resultList.add(recording);
+        } catch (e, s) {
+          AppLoggers.media.w('Skipping unreadable recording ${entity.path}', error: e, stackTrace: s);
         }
-        resultList.add(recording);
       }
       return resultList;
     } catch (e, s) {
@@ -157,12 +163,12 @@ class MediaListNotifier extends _$MediaListNotifier {
     try {
       final sp = await ref.watch(storePlacesProvider.future);
       final recordings = await ref.refresh(listRecordingsProvider(0, limit).future);
+      if (recordings.any((r) => r.id.isEmpty)) throw const FormatException('Server recording has no ID');
 
       final recordingsDir = sp.recordings();
 
       for (var recording in recordings) {
-        final r = jsonEncode(recording.toJson());
-        File(p.join(recordingsDir.path, recording.id)).writeAsStringSync(r);
+        await writeLocalJson(File(p.join(recordingsDir.path, recording.id)), recording.toJson());
       }
 
       return await _filter(_fromDisk());
@@ -176,9 +182,13 @@ class MediaListNotifier extends _$MediaListNotifier {
 
   Future<void> refreshFromServer() async {
     if (!UniversalPlatform.isWeb) {
-      final newList = await _pullFromServer();
-      // Update state directly instead of invalidateSelf()
-      state = AsyncValue.data(newList);
+      try {
+        final newList = await _pullFromServer();
+        state = AsyncValue.data(newList);
+      } catch (_) {
+        // _pullFromServer logged the failure. Keep local data and do not let a
+        // periodic or fire-and-forget refresh escape as an unhandled error.
+      }
     }
   }
 }

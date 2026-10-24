@@ -146,16 +146,15 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get noRecordingsCheckFilterOrToken =>
-      'Нет записей. Проверьте настройки фильтра или значение API токена.';
+  String get noRecordingsCheckFilters =>
+      'Нет записей. Проверьте настройки фильтра.';
 
   @override
   String get unauthorizedCheckTokenAndServer =>
       'Не авторизован: проверьте и укажите токен и URL сервера в настройках';
 
   @override
-  String get errorCheckTokenAndServer =>
-      'проверьте и укажите токен и URL сервера в настройках';
+  String get recordingsLoadFailed => 'Не удалось загрузить записи';
 
   @override
   String get loadingInProgress => 'Загрузка...';
@@ -437,8 +436,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не авторизован: проверьте и укажите токен и URL сервера в настройках';
 
   @override
-  String get noRecordings =>
-      'Нет записей. Проверьте настройки фильтра или значение API токена.';
+  String get noRecordings => 'Нет записей. Проверьте настройки фильтра.';
 
   @override
   String get userProfile => 'Профиль пользователя';
