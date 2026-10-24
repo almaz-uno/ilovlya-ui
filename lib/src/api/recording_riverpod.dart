@@ -10,6 +10,7 @@ import '../utils/logger_provider.dart';
 import 'api_riverpod.dart';
 import 'directories_riverpod.dart';
 import 'media_list_riverpod.dart';
+import 'local_json.dart';
 
 part 'recording_riverpod.g.dart';
 
@@ -63,9 +64,10 @@ class RecordingNotifier extends _$RecordingNotifier {
     try {
       final sp = await ref.watch(storePlacesProvider.future);
       final recording = await ref.refresh(getRecordingProvider(recordingId).future);
+      if (recording.id != recordingId) throw const FormatException('Server returned a different recording ID');
 
       final recordingFile = File(p.join(sp.recordings().path, recordingId));
-      recordingFile.writeAsStringSync(jsonEncode(recording.toJson()));
+      await writeLocalJson(recordingFile, recording.toJson());
 
       return recording;
     } catch (e, s) {
@@ -78,10 +80,13 @@ class RecordingNotifier extends _$RecordingNotifier {
 
   Future<void> refreshFromServer() async {
     if (!UniversalPlatform.isWeb) {
-      final newRecording = await _pullFromServer();
-      // Update state directly instead of invalidateSelf()
-      // This avoids full provider recreation and widget tree rebuild
-      state = AsyncValue.data(newRecording);
+      try {
+        final newRecording = await _pullFromServer();
+        state = AsyncValue.data(newRecording);
+      } catch (_) {
+        // The pull already logged the error. The local recording stays usable.
+        return;
+      }
     }
     // Still need to invalidate the list for synchronization
     ref.invalidate(mediaListNotifierProvider);
@@ -97,27 +102,15 @@ class RecordingNotifier extends _$RecordingNotifier {
 
       final recordingFile = File(p.join(sp.recordings().path, recordingId));
 
-      final recording = RecordingInfo.fromJson(jsonDecode(recordingFile.readAsStringSync()));
-      for (final df in recording.files) {
-        if (File(p.join(sp.media().path, df)).existsSync()) {
-          recording.hasLocalFile = true;
-          break;
-        }
-      }
-      if (position != null) {
-        recording.position = position.inSeconds;
-      }
-      if (finished) {
-        recording.seenAt = recording.seenAt ?? DateTime.now();
-      } else {
-        recording.seenAt = null;
-      }
-      recording.updatedAt = DateTime.now();
-      //save back
-      recordingFile.writeAsString(jsonEncode(recording.toJson()));
+      await updateLocalJson(recordingFile, (json) {
+        final recording = RecordingInfo.fromJson(json);
+        if (position != null) recording.position = position.inSeconds;
+        recording.seenAt = finished ? (recording.seenAt ?? DateTime.now()) : null;
+        recording.updatedAt = DateTime.now();
+        return recording.toJson();
+      });
     } catch (e, s) {
       AppLoggers.media.e('Failed to put position for recording', error: e, stackTrace: s);
-      rethrow;
     } finally {
       AppLoggers.media.d('Put position for recording $recordingId: elapsed=${stopwatch.elapsed}');
     }

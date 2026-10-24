@@ -570,7 +570,7 @@
     "description": "Сообщение об ошибке авторизации"
   },
 
-  "noRecordings": "Нет записей. Проверьте настройки фильтра или значение API токена.",
+  "noRecordings": "Нет записей. Проверьте настройки фильтра.",
   "@noRecordings": {
     "description": "Сообщение об отсутствии записей"
   },
@@ -970,9 +970,9 @@
     }
   },
 
-  "noRecordingsCheckFilterOrToken": "Нет записей. Проверьте настройки фильтра или значение API токена.",
-  "@noRecordingsCheckFilterOrToken": {
-    "description": "Message when no recordings found"
+  "noRecordingsCheckFilters": "Нет записей. Проверьте настройки фильтра.",
+  "@noRecordingsCheckFilters": {
+    "description": "Empty library message suggesting local filters, not credentials"
   },
 
   "unauthorizedCheckTokenAndServer": "Не авторизован: проверьте и укажите токен и URL сервера в настройках",
@@ -980,9 +980,9 @@
     "description": "Unauthorized error message"
   },
 
-  "errorCheckTokenAndServer": "проверьте и укажите токен и URL сервера в настройках",
-  "@errorCheckTokenAndServer": {
-    "description": "General error message for token/server issues"
+  "recordingsLoadFailed": "Не удалось загрузить записи",
+  "@recordingsLoadFailed": {
+    "description": "Generic recording list error, without an authorization hint"
   },
 
   "loadingInProgress": "Загрузка...",

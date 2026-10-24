@@ -23,6 +23,13 @@ import 'media_add.dart';
 import 'media_details.dart';
 import 'media_kit/audio_handler.dart';
 
+String mediaListErrorMessage(AppLocalizations l10n, Object? error) {
+  if (error is HttpStatusError && error.statusCode == HttpStatus.unauthorized) {
+    return l10n.unauthorizedCheckTokenAndServer;
+  }
+  return '${l10n.recordingsLoadFailed}: $error';
+}
+
 Widget createThumb(WidgetRef ref, String url, {int? cacheWidth}) {
   late Widget thumbWidget;
   if (UniversalPlatform.isWeb) {
@@ -378,10 +385,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     final setting = ref.watch(settingsNotifierProvider);
 
     if (mediaList.hasError) {
-      if (mediaList.error is HttpStatusError && (mediaList.error as HttpStatusError).statusCode == HttpStatus.unauthorized) {
-        return ErrorWidget(AppLocalizations.of(context)!.unauthorizedCheckTokenAndServer);
-      }
-      return ErrorWidget("${mediaList.error}: ${AppLocalizations.of(context)!.errorCheckTokenAndServer}");
+      return ErrorWidget(mediaListErrorMessage(AppLocalizations.of(context)!, mediaList.error));
     }
 
     if (!mediaList.hasValue) {
@@ -389,7 +393,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     }
 
     if (mediaList.requireValue.isEmpty) {
-    return Center(child: Text(AppLocalizations.of(context)!.noRecordingsCheckFilterOrToken));
+    return Center(child: Text(AppLocalizations.of(context)!.noRecordingsCheckFilters));
     }
 
     return ListView.builder(

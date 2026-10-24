@@ -13,6 +13,7 @@ import 'api_riverpod.dart';
 import 'directories_riverpod.dart';
 import 'local_download_task_riverpod.dart';
 import 'recording_riverpod.dart';
+import 'local_json.dart';
 
 part 'downloads_riverpod.g.dart';
 
@@ -37,22 +38,30 @@ class DownloadsNotifier extends _$DownloadsNotifier {
 
       for (var did in recording.downloads) {
         final f = File(p.join(sp.downloads().path, did));
-
-        final download = Download.fromJson(jsonDecode(f.readAsStringSync()));
-        final mediaFile = p.join(sp.media().path, download.filename);
-        download.fullPathMedia = File(mediaFile).existsSync() ? mediaFile : null;
-
-        resultList.add(download);
+        try {
+          final download = Download.fromJson(jsonDecode(f.readAsStringSync()));
+          if (download.id.isEmpty) throw const FormatException('Download has no ID');
+          final mediaFile = p.join(sp.media().path, download.filename);
+          download.fullPathMedia = File(mediaFile).existsSync() ? mediaFile : null;
+          resultList.add(download);
+        } catch (e, s) {
+          AppLoggers.download.w('Skipping unreadable download ${f.path}', error: e, stackTrace: s);
+        }
       }
 
       resultList.sort((a, b) => a.id.compareTo(b.id));
 
       return resultList;
     } on PathNotFoundException catch (_) {
-      return _fromWeb();
+      try {
+        return await _fromWeb();
+      } catch (_) {
+        // _fromWeb logged the failure; a missing cache must stay usable offline.
+        return [];
+      }
     } catch (e, s) {
       AppLoggers.download.e('Failed to load downloads from disk', error: e, stackTrace: s);
-      rethrow;
+      return [];
     } finally {
       AppLoggers.download.d('Load downloads for $recordingId from disk: elapsed=${stopwatch.elapsed}');
     }
@@ -75,22 +84,26 @@ class DownloadsNotifier extends _$DownloadsNotifier {
     try {
       final sp = await ref.watch(storePlacesProvider.future);
       final downloads = await ref.refresh(listDownloadsProvider(recordingId).future);
+      if (downloads.any((d) => d.id.isEmpty || d.filename.isEmpty)) throw const FormatException('Server download has no ID or filename');
 
       final recordingFile = File(p.join(sp.recordings().path, recordingId));
-      final recording = RecordingInfo.fromJson(jsonDecode(recordingFile.readAsStringSync()));
       final downloadsDir = sp.downloads();
 
-      recording.downloads = [];
-
       for (var d in downloads) {
-        recording.downloads.add(d.id);
-        File(p.join(downloadsDir.path, d.id)).writeAsStringSync(jsonEncode(d.toJson()));
+        await writeLocalJson(File(p.join(downloadsDir.path, d.id)), d.toJson());
 
         // Check if local file exists
         final mediaFile = p.join(sp.media().path, d.filename);
         d.fullPathMedia = File(mediaFile).existsSync() ? mediaFile : null;
       }
-      recordingFile.writeAsStringSync(jsonEncode(recording.toJson()));
+      // Newly opened recordings may not have reached the local library yet.
+      // Keep their downloads usable; library synchronization supplies metadata.
+      if (recordingFile.existsSync()) {
+        await updateLocalJson(recordingFile, (json) {
+          final recording = RecordingInfo.fromJson(json)..downloads = downloads.map((d) => d.id).toList();
+          return recording.toJson();
+        });
+      }
 
       return downloads;
     } catch (e, s) {
@@ -132,10 +145,12 @@ class DownloadsNotifier extends _$DownloadsNotifier {
 
   Future<void> refreshFromServer() async {
     if (!UniversalPlatform.isWeb) {
-      final newDownloads = await _pullFromServer();
-      // Update state directly instead of invalidateSelf()
-      // This avoids full provider recreation and widget tree rebuild
-      state = AsyncValue.data(newDownloads);
+      try {
+        final newDownloads = await _pullFromServer();
+        state = AsyncValue.data(newDownloads);
+      } catch (_) {
+        // The pull already logged the failure; keep the downloaded files usable.
+      }
     }
   }
 }

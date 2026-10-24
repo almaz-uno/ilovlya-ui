@@ -9,6 +9,10 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
+.Fixed
+- Downloaded recordings remain accessible without a connection or when the server returns an incomplete response; an unreadable saved recording or download no longer hides the rest of the library, and playback progress cannot leave a half-written cache file (#163)
+- Refreshing a downloaded recording offline no longer leaves an unhandled network error; the token and server URL hint is reserved for authorization errors (#162, #163)
+
 == [3.9.0] - 2026-10-24
 
 .Changed

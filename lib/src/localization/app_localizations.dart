@@ -356,11 +356,11 @@ abstract class AppLocalizations {
   /// **'Created at: {date} ({time} ago)'**
   String createdAt(String date, String time);
 
-  /// Message when no recordings found
+  /// Empty library message suggesting local filters, not credentials
   ///
   /// In en, this message translates to:
-  /// **'No recordings. Check you filter settings or API token value.'**
-  String get noRecordingsCheckFilterOrToken;
+  /// **'No recordings. Check the filters.'**
+  String get noRecordingsCheckFilters;
 
   /// Unauthorized error message
   ///
@@ -368,11 +368,11 @@ abstract class AppLocalizations {
   /// **'Unauthorized: please check and specify token and server URL in settings'**
   String get unauthorizedCheckTokenAndServer;
 
-  /// General error message for token/server issues
+  /// Generic recording list error, without an authorization hint
   ///
   /// In en, this message translates to:
-  /// **'please check and specify token and server URL in settings'**
-  String get errorCheckTokenAndServer;
+  /// **'Could not load recordings'**
+  String get recordingsLoadFailed;
 
   /// Loading indicator message
   ///
@@ -870,7 +870,7 @@ abstract class AppLocalizations {
   /// No recordings message
   ///
   /// In en, this message translates to:
-  /// **'No recordings. Check you filter settings or API token value.'**
+  /// **'No recordings. Check the filters.'**
   String get noRecordings;
 
   /// User profile tab title

@@ -227,9 +227,9 @@
     }
   },
 
-  "noRecordingsCheckFilterOrToken": "No recordings. Check you filter settings or API token value.",
-  "@noRecordingsCheckFilterOrToken": {
-    "description": "Message when no recordings found"
+  "noRecordingsCheckFilters": "No recordings. Check the filters.",
+  "@noRecordingsCheckFilters": {
+    "description": "Empty library message suggesting local filters, not credentials"
   },
 
   "unauthorizedCheckTokenAndServer": "Unauthorized: please check and specify token and server URL in settings",
@@ -237,9 +237,9 @@
     "description": "Unauthorized error message"
   },
 
-  "errorCheckTokenAndServer": "please check and specify token and server URL in settings",
-  "@errorCheckTokenAndServer": {
-    "description": "General error message for token/server issues"
+  "recordingsLoadFailed": "Could not load recordings",
+  "@recordingsLoadFailed": {
+    "description": "Generic recording list error, without an authorization hint"
   },
 
   "loadingInProgress": "Loading in progress...",
@@ -666,7 +666,7 @@
     "description": "Unauthorized error message"
   },
 
-  "noRecordings": "No recordings. Check you filter settings or API token value.",
+  "noRecordings": "No recordings. Check the filters.",
   "@noRecordings": {
     "description": "No recordings message"
   },
