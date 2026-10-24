@@ -9,9 +9,14 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
+== [3.9.1] - 2026-10-25
+
 .Fixed
-- Downloaded recordings remain accessible without a connection or when the server returns an incomplete response; an unreadable saved recording or download no longer hides the rest of the library, and playback progress cannot leave a half-written cache file (#163)
-- Refreshing a downloaded recording offline no longer leaves an unhandled network error; the token and server URL hint is reserved for authorization errors (#162, #163)
+- Downloaded recordings can be opened and played offline even when the server cannot be reached or returns an empty or incomplete response (#163)
+- An unreadable saved recording or download no longer hides the rest of the library, and saving playback progress no longer causes recordings to disappear while browsing (#163)
+- Newly added or shared recordings show their available downloads even before the library finishes updating (#163)
+- Refreshing a downloaded recording offline no longer produces repeated unexpected network errors (#162)
+- The suggestion to check the token and server URL appears only when authorization fails (#163)
 
 == [3.9.0] - 2026-10-24
 
