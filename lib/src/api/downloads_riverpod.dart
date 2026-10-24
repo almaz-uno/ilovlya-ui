@@ -52,6 +52,13 @@ class DownloadsNotifier extends _$DownloadsNotifier {
       resultList.sort((a, b) => a.id.compareTo(b.id));
 
       return resultList;
+    } on PathNotFoundException catch (_) {
+      try {
+        return await _fromWeb();
+      } catch (_) {
+        // _fromWeb logged the failure; a missing cache must stay usable offline.
+        return [];
+      }
     } catch (e, s) {
       AppLoggers.download.e('Failed to load downloads from disk', error: e, stackTrace: s);
       return [];
@@ -89,10 +96,14 @@ class DownloadsNotifier extends _$DownloadsNotifier {
         final mediaFile = p.join(sp.media().path, d.filename);
         d.fullPathMedia = File(mediaFile).existsSync() ? mediaFile : null;
       }
-      await updateLocalJson(recordingFile, (json) {
-        final recording = RecordingInfo.fromJson(json)..downloads = downloads.map((d) => d.id).toList();
-        return recording.toJson();
-      });
+      // Newly opened recordings may not have reached the local library yet.
+      // Keep their downloads usable; library synchronization supplies metadata.
+      if (recordingFile.existsSync()) {
+        await updateLocalJson(recordingFile, (json) {
+          final recording = RecordingInfo.fromJson(json)..downloads = downloads.map((d) => d.id).toList();
+          return recording.toJson();
+        });
+      }
 
       return downloads;
     } catch (e, s) {

@@ -189,6 +189,58 @@ void main() {
     });
   }
 
+  test(
+      'a missing recording uses server downloads and can refresh before library sync',
+      () async {
+    recordFile().deleteSync();
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    var requests = 0;
+    server.listen((request) async {
+      requests++;
+      expect(request.uri.path, '/api/recordings/r1/downloads');
+      request.response.write(jsonEncode([
+        Download(
+                id: 'd1',
+                recordingId: 'r1',
+                filename: 'local.mp4',
+                url: '/content',
+                status: 'ready',
+                title: 'Server download $requests')
+            .toJson()
+      ]));
+      await request.response.close();
+    });
+    final c = createContainer(server: 'http://127.0.0.1:${server.port}');
+    c.listen(downloadsNotifierProvider('r1'), (_, __) {});
+    final downloads = await c.read(downloadsNotifierProvider('r1').future);
+    expect(downloads.single.title, 'Server download 1');
+    await c.read(downloadsNotifierProvider('r1').notifier).refreshFromServer();
+    expect(c.read(downloadsNotifierProvider('r1')).requireValue.single.title,
+        'Server download 2');
+    expect(
+        jsonDecode(File(p.join(places.downloads().path, 'd1'))
+            .readAsStringSync())['title'],
+        'Server download 2');
+    expect(recordFile().existsSync(), isFalse,
+        reason: 'library synchronization supplies the missing recording');
+    expect(requests, 2);
+  });
+
+  test(
+      'a missing recording and an unavailable server yield an empty download list',
+      () async {
+    recordFile().deleteSync();
+    var requests = 0;
+    final c = createContainer(
+        serverFailure: http.ClientException('offline'),
+        onServerRequest: () => requests++);
+    c.listen(downloadsNotifierProvider('r1'), (_, __) {});
+    expect(await c.read(downloadsNotifierProvider('r1').future), isEmpty);
+    expect(requests, 1);
+    expect(c.read(downloadsNotifierProvider('r1')).hasError, isFalse);
+  });
+
   test('a missing or broken download is skipped without a network fallback',
       () async {
     final r = RecordingInfo.fromJson(recording.toJson())
