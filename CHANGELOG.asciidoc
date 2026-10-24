@@ -9,6 +9,11 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
+== [3.9.0] - 2026-10-24
+
+.Changed
+- The Flatpak uses the supported org.freedesktop.Platform 25.08 runtime instead of the end-of-life 24.08, with libmpv 0.40 (#139)
+
 .Fixed
 - Video plays smoothly on Linux under X11 and XWayland: the player draws it on the GPU again instead of in software, which showed only about every other frame on NVIDIA machines (#142)
 - The Flatpak draws on the GPU on NVIDIA machines instead of in software: it no longer pins the EGL driver to Mesa nor lists Vulkan drivers without NVIDIA (#141)
@@ -17,6 +22,10 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 - While a playback download's server does not answer, the progress line under the player says so and how long the server has not answered, instead of a frozen speed and time remaining. A server that answers each retry with a portion and falls silent again counts as not answering, from when it stopped, until bytes have flowed for 5 s; so does one that brings less than 64 KiB in 15 s. A stalled transfer's speed decays, and no time remaining is shown while no bytes arrive (#144)
 - A player whose source failed to open — the local address gave up on the server, or lost its connections while the application was in the background — opens it again at the saved position once the server answers, instead of staying at 0:00 (#144)
 - On iOS, the time the application spent suspended in the background no longer counts as the server not answering: back in front, the progress line does not report a silent server, and a failure streak is not given up for time spent away; the transfer reconnects at once, and a server that is in fact silent is still reported after 15 s in front (#156)
+- Count messages use the correct singular and plural forms in English and Russian, including cleanup results and file and recording totals (#151)
+- On the server, adding a recording again keeps its saved duration and thumbnail when the new information is empty (ilovlya#47)
+- Parallel additions that resolve to the same server download no longer start duplicate downloads or race over a shared temporary file (ilovlya#47)
+- The Telegram bot no longer asks to choose media after successfully adding the only attachment or link (ilovlya#47)
 
 == [3.8.0] - 2026-10-21
 
