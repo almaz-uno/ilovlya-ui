@@ -23,7 +23,7 @@ jobs:
     name: Build the bundle
     runs-on: ubuntu-latest
     container:
-      image: bilelmoussaoui/flatpak-github-actions:freedesktop-24.08
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
       options: --privileged
 
     steps:
@@ -45,13 +45,16 @@ jobs:
         run: |
           flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak install -y flathub \
-            org.freedesktop.Platform//24.08 \
-            org.freedesktop.Sdk//24.08 \
-            org.freedesktop.Sdk.Extension.llvm19//24.08
+            org.freedesktop.Platform//25.08 \
+            org.freedesktop.Sdk//25.08 \
+            org.freedesktop.Sdk.Extension.llvm20//25.08
 
+      # The flathub-infra image comes without a machine-id and without FUSE in the container; its own action makes the
+      # one and builds without rofiles-fuse, and so does this.
       - name: Build
         run: |
-          flatpak-builder --force-clean --user --default-branch="$BRANCH" \
+          dbus-uuidgen --ensure=/etc/machine-id
+          flatpak-builder --force-clean --user --disable-rofiles-fuse --default-branch="$BRANCH" \
             flatpak-build linux/flatpak/uno.almaz.ilovlya.yml
 
       - name: Bundle
@@ -59,10 +62,10 @@ jobs:
           flatpak build-export repo "flatpak-build" "$BRANCH"
           flatpak build-bundle repo "ilovlya-${TAG}.flatpak" "$FLATPAK_ID" "$BRANCH"
 
-      - name: Keep the bundle for the release job
-        if: inputs.tag != ''
+      # Kept for the release job, and for a pull request so that its bundle can be installed and tried.
+      - name: Keep the bundle
         uses: actions/upload-artifact@v4
         with:
           name: flatpak-bundle
           path: ilovlya-${{ env.TAG }}.flatpak
-          retention-days: 7
+          retention-days: ${{ inputs.tag != '' && 7 || 3 }}
