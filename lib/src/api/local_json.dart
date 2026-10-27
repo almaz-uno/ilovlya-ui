@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:path/path.dart' as p;
 
@@ -20,26 +21,53 @@ Future<void> _serialize(File file, Future<void> Function() operation) {
   return result;
 }
 
-Future<void> _replace(File file, Map<String, dynamic> json) async {
-  // A directory beside the target keeps rename on the same filesystem, and
-  // prevents cache scans from mistaking a pending JSON file for a recording.
-  final staging = await file.parent.createTemp('.json-write-');
+bool _sameBytes(List<int> left, List<int> right) {
+  if (left.length != right.length) return false;
+  for (var i = 0; i < left.length; i++) {
+    if (left[i] != right[i]) return false;
+  }
+  return true;
+}
+
+final _random = Random.secure();
+
+Future<void> _replace(File file, Map<String, dynamic> json,
+    {required bool flush}) async {
+  final encoded = utf8.encode(jsonEncode(json));
   try {
-    final temporary = File(p.join(staging.path, 'entry.json'));
-    await temporary.writeAsString(jsonEncode(json), flush: true);
+    if (_sameBytes(await file.readAsBytes(), encoded)) return;
+  } on PathNotFoundException {
+    // First server refresh of this entry.
+  }
+
+  // A single directory beside the targets keeps rename on the same filesystem
+  // and lets library scans ignore unfinished writes. Random names also isolate
+  // concurrent writers in different processes or isolates.
+  final staging = Directory(p.join(file.parent.path, '.json-write'));
+  await staging.create();
+  final name = List.generate(
+          4, (_) => _random.nextInt(1 << 32).toRadixString(16).padLeft(8, '0'))
+      .join();
+  final temporary = File(p.join(staging.path, '$name.json'));
+  try {
+    await temporary.writeAsBytes(encoded, flush: flush);
     await temporary.rename(file.path);
   } finally {
-    await staging.delete(recursive: true);
+    if (temporary.existsSync()) await temporary.delete();
   }
 }
 
-Future<void> writeLocalJson(File file, Map<String, dynamic> json) =>
-    _serialize(file, () => _replace(file, json));
+// Server cache entries can be fetched again after power loss; playback progress
+// retains the flush default. Comparison runs inside the per-file queue.
+Future<void> writeLocalJson(File file, Map<String, dynamic> json,
+        {bool flush = true}) =>
+    _serialize(file, () => _replace(file, json, flush: flush));
 
-Future<void> updateLocalJson(File file,
-        Map<String, dynamic> Function(Map<String, dynamic>) update) =>
+Future<void> updateLocalJson(
+        File file, Map<String, dynamic> Function(Map<String, dynamic>) update,
+        {bool flush = true}) =>
     _serialize(file, () async {
       final current =
           jsonDecode(await file.readAsString()) as Map<String, dynamic>;
-      await _replace(file, update(current));
+      await _replace(file, update(current), flush: flush);
     });

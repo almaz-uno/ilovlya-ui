@@ -9,6 +9,9 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
+.Fixed
+- Refreshing a large recording library is faster: unchanged entries are no longer saved again, while downloaded recordings remain accessible offline (#167)
+
 == [3.9.1] - 2026-10-25
 
 .Fixed

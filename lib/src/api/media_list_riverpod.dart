@@ -168,7 +168,7 @@ class MediaListNotifier extends _$MediaListNotifier {
       final recordingsDir = sp.recordings();
 
       for (var recording in recordings) {
-        await writeLocalJson(File(p.join(recordingsDir.path, recording.id)), recording.toJson());
+        await writeLocalJson(File(p.join(recordingsDir.path, recording.id)), recording.toJson(), flush: false);
       }
 
       return await _filter(_fromDisk());
