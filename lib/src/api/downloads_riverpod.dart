@@ -90,7 +90,7 @@ class DownloadsNotifier extends _$DownloadsNotifier {
       final downloadsDir = sp.downloads();
 
       for (var d in downloads) {
-        await writeLocalJson(File(p.join(downloadsDir.path, d.id)), d.toJson());
+        await writeLocalJson(File(p.join(downloadsDir.path, d.id)), d.toJson(), flush: false);
 
         // Check if local file exists
         final mediaFile = p.join(sp.media().path, d.filename);
@@ -102,7 +102,7 @@ class DownloadsNotifier extends _$DownloadsNotifier {
         await updateLocalJson(recordingFile, (json) {
           final recording = RecordingInfo.fromJson(json)..downloads = downloads.map((d) => d.id).toList();
           return recording.toJson();
-        });
+        }, flush: false);
       }
 
       return downloads;

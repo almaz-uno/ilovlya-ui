@@ -38,8 +38,16 @@ void main() {
   ProviderContainer createContainer(
       {String server = 'http://127.0.0.1:1',
       Object? serverFailure,
-      void Function()? onServerRequest}) {
+      void Function()? onServerRequest,
+      List<RecordingInfo>? serverRecordings,
+      List<Download>? serverDownloads}) {
     final c = container = ProviderContainer(overrides: [
+      if (serverRecordings != null)
+        listRecordingsProvider(0, MediaListNotifier.limit)
+            .overrideWith((ref) async => serverRecordings),
+      if (serverDownloads != null)
+        listDownloadsProvider('r1')
+            .overrideWith((ref) async => serverDownloads),
       if (serverFailure != null) ...[
         listRecordingsProvider(0, MediaListNotifier.limit)
             .overrideWith((ref) async {
@@ -100,6 +108,58 @@ void main() {
       expect(list.single.hasLocalFile, isTrue);
     });
   }
+
+  test('unchanged server recordings keep their cache mtime', () async {
+    final epoch = DateTime.utc(2020);
+    recordFile().setLastModifiedSync(epoch);
+    final c = createContainer(serverRecordings: [recording]);
+    await c.read(mediaListNotifierProvider.future);
+    await c.read(mediaListNotifierProvider.notifier).refreshFromServer();
+    expect(recordFile().lastModifiedSync().toUtc(), epoch);
+    expect(c.read(mediaListNotifierProvider).requireValue.single.id, 'r1');
+    expect(places.recordings().listSync().whereType<Directory>(), isEmpty);
+  });
+
+  test('changed and new server recordings are saved and staging is ignored',
+      () async {
+    final changed = RecordingInfo.fromJson(recording.toJson())
+      ..title = 'Changed';
+    final added = RecordingInfo(id: 'r2', title: 'New');
+    final staging = Directory(p.join(places.recordings().path, '.json-write'))
+      ..createSync();
+    File(p.join(staging.path, 'interrupted.json')).writeAsStringSync('');
+    final c = createContainer(serverRecordings: [changed, added]);
+    await c.read(mediaListNotifierProvider.future);
+    await c.read(mediaListNotifierProvider.notifier).refreshFromServer();
+    expect(jsonDecode(recordFile().readAsStringSync())['title'], 'Changed');
+    expect(
+        jsonDecode(File(p.join(places.recordings().path, 'r2'))
+            .readAsStringSync())['title'],
+        'New');
+    expect(c.read(mediaListNotifierProvider).requireValue.map((r) => r.id),
+        unorderedEquals(['r1', 'r2']));
+    expect(places.recordings().listSync().whereType<Directory>().length, 1);
+    expect(staging.listSync().map((f) => p.basename(f.path)),
+        ['interrupted.json']);
+  });
+
+  test('unchanged downloads and their recording are not rewritten', () async {
+    final file = File(p.join(places.downloads().path, 'd1'));
+    final download = Download.fromJson(jsonDecode(file.readAsStringSync()));
+    final epoch = DateTime.utc(2020);
+    file.setLastModifiedSync(epoch);
+    recordFile().setLastModifiedSync(epoch);
+    final c = createContainer(serverDownloads: [download]);
+    c.listen(downloadsNotifierProvider('r1'), (_, __) {});
+    await c.read(downloadsNotifierProvider('r1').future);
+    await c.read(downloadsNotifierProvider('r1').notifier).refreshFromServer();
+    expect(file.lastModifiedSync().toUtc(), epoch);
+    expect(recordFile().lastModifiedSync().toUtc(), epoch);
+    download.title = 'Changed download';
+    await c.read(downloadsNotifierProvider('r1').notifier).refreshFromServer();
+    expect(jsonDecode(file.readAsStringSync())['title'], 'Changed download');
+    expect(recordFile().lastModifiedSync().toUtc(), epoch);
+  });
 
   test('a refused connection does not fail a background list refresh',
       () async {
