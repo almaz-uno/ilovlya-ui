@@ -11,6 +11,7 @@ import '../api/api_riverpod.dart';
 import '../api/exceptions.dart';
 import '../api/local_download_task_riverpod.dart';
 import '../api/media_list_riverpod.dart';
+import '../api/recording_mutation_riverpod.dart';
 import '../api/thumbnail_riverpod.dart';
 import '../localization/app_localizations.dart';
 import '../keyboard_shortcuts.dart';
@@ -567,6 +568,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         }
 
         right += [
+          RecordingMutationIndicator(recordingId: item.id),
           if (item.hiddenAt != null) const Icon(Icons.visibility_off_outlined),
           if (item.hasLocalFile) const Icon(Icons.download_done),
           if (item.hasFile) const Icon(Icons.flag_circle_outlined),

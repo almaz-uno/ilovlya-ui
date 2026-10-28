@@ -22,6 +22,7 @@ import '../api/downloads_riverpod.dart';
 import '../api/local_download_task_riverpod.dart';
 import '../api/directories_riverpod.dart';
 import '../api/recording_riverpod.dart';
+import '../api/recording_mutation_riverpod.dart';
 import '../model/download.dart';
 import '../model/local_download.dart';
 import '../model/recording_info.dart';
@@ -171,38 +172,42 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   void _toggleSeen(RecordingInfo recording) async {
+    if (settingSeen) return;
     try {
       setState(() {
         settingSeen = true;
       });
-      if (recording.seenAt == null) {
-        await ref.read(setSeenProvider(recording.id).future);
-      } else {
-        await ref.read(unsetSeenProvider(recording.id).future);
-      }
-      await _pullRefresh();
-    } finally {
-      setState(() {
-        settingSeen = false;
+      await runRecordingMutation(ref, recording.id, RecordingMutation.seen,
+          () async {
+        if (recording.seenAt == null) {
+          await ref.read(setSeenProvider(recording.id).future);
+        } else {
+          await ref.read(unsetSeenProvider(recording.id).future);
+        }
+        await _pullRefresh();
       });
+    } finally {
+      if (mounted) setState(() => settingSeen = false);
     }
   }
 
   void _toggleHidden(RecordingInfo recording) async {
+    if (settingHidden) return;
     try {
       setState(() {
         settingHidden = true;
       });
-      if (recording.hiddenAt == null) {
-        await ref.read(setHiddenProvider(recording.id).future);
-      } else {
-        await ref.read(unsetHiddenProvider(recording.id).future);
-      }
-      await _pullRefresh();
-    } finally {
-      setState(() {
-        settingHidden = false;
+      await runRecordingMutation(ref, recording.id, RecordingMutation.hidden,
+          () async {
+        if (recording.hiddenAt == null) {
+          await ref.read(setHiddenProvider(recording.id).future);
+        } else {
+          await ref.read(unsetHiddenProvider(recording.id).future);
+        }
+        await _pullRefresh();
       });
+    } finally {
+      if (mounted) setState(() => settingHidden = false);
     }
   }
 
