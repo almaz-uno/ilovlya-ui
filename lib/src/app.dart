@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:ilovlya/src/localization/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
 import 'api/api.dart';
 import 'media/media_add.dart';
@@ -91,6 +92,14 @@ class MyApp extends ConsumerWidget {
       darkTheme: WarmTheme.darkTheme,
 
       themeMode: settings.value?.theme,
+
+      // The desktop video controls keep the mouse pointer over the video unless asked otherwise; hide it with them,
+      // in a window and in fullscreen (#172). The other settings are the defaults of media_kit_video.
+      builder: (BuildContext context, Widget? child) => MaterialDesktopVideoControlsTheme(
+        normal: const MaterialDesktopVideoControlsThemeData(hideMouseOnControlsRemoval: true),
+        fullscreen: const MaterialDesktopVideoControlsThemeData(hideMouseOnControlsRemoval: true),
+        child: child!,
+      ),
 
       // Define a function to handle named routes in order to support
       // Flutter web url navigation and deep linking.
