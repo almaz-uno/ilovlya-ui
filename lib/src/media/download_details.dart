@@ -19,8 +19,7 @@ class DownloadDetailsView extends ConsumerStatefulWidget {
   final String downloadId;
 
   @override
-  ConsumerState<DownloadDetailsView> createState() =>
-      _DownloadDetailsViewState();
+  ConsumerState<DownloadDetailsView> createState() => _DownloadDetailsViewState();
 }
 
 class _DownloadDetailsViewState extends ConsumerState<DownloadDetailsView> {
@@ -55,20 +54,13 @@ class _DownloadDetailsViewState extends ConsumerState<DownloadDetailsView> {
           : const {},
       actions: {
         BackIntent: CallbackAction<BackIntent>(onInvoke: (_) {
-          if (!isTextInputFocused()) Navigator.of(context).maybePop();
+          Navigator.of(context).maybePop();
           return null;
         }),
       },
-      help: [
-        ShortcutHelpEntry(
-            'Esc / Backspace', AppLocalizations.of(context)!.cancel)
-      ],
+      help: [ShortcutHelpEntry('Esc / Backspace', AppLocalizations.of(context)!.goBackOrClose)],
       child: Scaffold(
-        appBar: AppBar(
-            title: download.hasValue
-                ? Text(
-                    "${download.requireValue.title} ${AppLocalizations.of(context)!.preparingEllipsis}")
-                : Text(AppLocalizations.of(context)!.acquiringInfo)),
+        appBar: AppBar(title: download.hasValue ? Text("${download.requireValue.title} ${AppLocalizations.of(context)!.preparingEllipsis}") : Text(AppLocalizations.of(context)!.acquiringInfo)),
         body: _buildOutput(download),
       ),
     );

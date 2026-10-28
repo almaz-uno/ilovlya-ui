@@ -62,6 +62,10 @@ class OpenSettingsIntent extends Intent {
   const OpenSettingsIntent();
 }
 
+class FocusMediaListIntent extends Intent {
+  const FocusMediaListIntent();
+}
+
 class PlayRecordingIntent extends Intent {
   const PlayRecordingIntent();
 }

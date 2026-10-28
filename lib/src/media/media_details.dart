@@ -51,9 +51,7 @@ String _formatDuration(Duration duration) {
     positive = false;
     duration = -duration;
   }
-  return (positive ? "" : "⏴⏴ ") +
-      formatDuration(duration) +
-      (positive ? " ⏵⏵" : "");
+  return (positive ? "" : "⏴⏴ ") + formatDuration(duration) + (positive ? " ⏵⏵" : "");
 }
 
 String _formatTimePosition(Duration duration) {
@@ -103,8 +101,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   Duration? _currentPosition; // Local position override
   bool _formatsExpanded = false; // Tracks if formats section is expanded
   bool _showTables = false; // Delay tables rendering until animation completes
-  Animation<double>?
-      _routeAnimation; // Page transition animation, used to defer heavy work
+  Animation<double>? _routeAnimation; // Page transition animation, used to defer heavy work
   // The television this recording is cast to. While it is set, the playback
   // controls of this screen act on the television instead of on this device.
   String? _castSessionId;
@@ -128,9 +125,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final anim = _routeAnimation = ModalRoute.of(context)?.animation;
-      if (anim == null ||
-          anim.status == AnimationStatus.completed ||
-          anim.status == AnimationStatus.dismissed) {
+      if (anim == null || anim.status == AnimationStatus.completed || anim.status == AnimationStatus.dismissed) {
         _onTransitionFinished();
       } else {
         anim.addStatusListener(_onRouteAnimStatus);
@@ -177,8 +172,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       setState(() {
         settingSeen = true;
       });
-      await runRecordingMutation(ref, recording.id, RecordingMutation.seen,
-          () async {
+      await runRecordingMutation(ref, recording.id, RecordingMutation.seen, () async {
         if (recording.seenAt == null) {
           await ref.read(setSeenProvider(recording.id).future);
         } else {
@@ -197,8 +191,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       setState(() {
         settingHidden = true;
       });
-      await runRecordingMutation(ref, recording.id, RecordingMutation.hidden,
-          () async {
+      await runRecordingMutation(ref, recording.id, RecordingMutation.hidden, () async {
         if (recording.hiddenAt == null) {
           await ref.read(setHiddenProvider(recording.id).future);
         } else {
@@ -223,15 +216,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
     // Try to open local file with MIME type
     final mimeType = FileOpener.getMimeType(filePath);
-    final success = mimeType != null
-        ? await FileOpener.openFileWithType(filePath, mimeType)
-        : await FileOpener.openFile(filePath);
+    final success = mimeType != null ? await FileOpener.openFileWithType(filePath, mimeType) : await FileOpener.openFile(filePath);
 
     if (!success && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-              '${AppLocalizations.of(context)!.couldNotOpenFile}: ${d.filename}'),
+          content: Text('${AppLocalizations.of(context)!.couldNotOpenFile}: ${d.filename}'),
           action: SnackBarAction(
             label: 'OK',
             onPressed: () {},
@@ -250,8 +240,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text(AppLocalizations.of(context)!.couldNotOpenFileLocation),
+            content: Text(AppLocalizations.of(context)!.couldNotOpenFileLocation),
             action: SnackBarAction(
               label: 'OK',
               onPressed: () {},
@@ -298,8 +287,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       // Sanitize title to remove forbidden characters and limit length
       final safeTitle = sanitizeForFilename(d.title, maxLength: 180);
       final fileName = '$safeTitle-${d.formatId}.${d.ext}';
-      final downloadsPath =
-          await ExternalPath.getExternalStoragePublicDirectory(
+      final downloadsPath = await ExternalPath.getExternalStoragePublicDirectory(
         ExternalPath.DIRECTORY_DOWNLOAD,
       );
       final destPath = '$downloadsPath/$fileName';
@@ -308,8 +296,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text(AppLocalizations.of(context)!.copiedToDownloads(fileName)),
+            content: Text(AppLocalizations.of(context)!.copiedToDownloads(fileName)),
             action: SnackBarAction(label: 'OK', onPressed: () {}),
           ),
         );
@@ -327,9 +314,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   void _sendPosition(String recordingId, Duration position, bool autoFinished) {
-    if (ref.watch(
-            settingsNotifierProvider.select((s) => s.value?.autoViewed)) ==
-        false) {
+    if (ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)) == false) {
       autoFinished = false;
     }
     ref.read(putPositionProvider(recordingId, position, autoFinished));
@@ -337,9 +322,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
   /// Sets playback position in mpv player and updates server
   void _seekToPosition(Duration position) {
-    ref
-        .read(recordingNotifierProvider(widget.id).notifier)
-        .putPosition(position, false);
+    ref.read(recordingNotifierProvider(widget.id).notifier).putPosition(position, false);
     scheduleMicrotask(() {
       ref.read(putPositionProvider(widget.id, position, false));
     });
@@ -418,8 +401,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   static const _castReportInterval = Duration(seconds: 5);
 
   /// Remembers when the reported position last changed, for interpolation.
-  void _onCastSession(
-      AsyncValue<TvSession>? previous, AsyncValue<TvSession> next) {
+  void _onCastSession(AsyncValue<TvSession>? previous, AsyncValue<TvSession> next) {
     final session = next.valueOrNull;
     if (session != null && session.position != _castReported) {
       _castReported = session.position;
@@ -452,8 +434,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                      '${AppLocalizations.of(context)!.duration}: ${_formatTimePosition(maxDuration)}'),
+                  Text('${AppLocalizations.of(context)!.duration}: ${_formatTimePosition(maxDuration)}'),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -466,8 +447,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                             height: 120,
                             width: 80,
                             child: WheelChooser.integer(
-                              onValueChanged: (value) =>
-                                  setDialogState(() => hours = value),
+                              onValueChanged: (value) => setDialogState(() => hours = value),
                               initValue: hours,
                               minValue: 0,
                               maxValue: 23,
@@ -484,8 +464,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                             height: 120,
                             width: 80,
                             child: WheelChooser.integer(
-                              onValueChanged: (value) =>
-                                  setDialogState(() => minutes = value),
+                              onValueChanged: (value) => setDialogState(() => minutes = value),
                               initValue: minutes,
                               minValue: 0,
                               maxValue: 59,
@@ -502,8 +481,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                             height: 120,
                             width: 80,
                             child: WheelChooser.integer(
-                              onValueChanged: (value) =>
-                                  setDialogState(() => seconds = value),
+                              onValueChanged: (value) => setDialogState(() => seconds = value),
                               initValue: seconds,
                               minValue: 0,
                               maxValue: 59,
@@ -516,9 +494,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    AppLocalizations.of(context)!.selectedPosition(
-                        _formatTimePosition(Duration(
-                            hours: hours, minutes: minutes, seconds: seconds))),
+                    AppLocalizations.of(context)!.selectedPosition(_formatTimePosition(Duration(hours: hours, minutes: minutes, seconds: seconds))),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
@@ -531,16 +507,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 TextButton(
                   autofocus: isDesktopKeyboardPlatform,
                   onPressed: () {
-                    final targetPosition = Duration(
-                        hours: hours, minutes: minutes, seconds: seconds);
+                    final targetPosition = Duration(hours: hours, minutes: minutes, seconds: seconds);
                     if (targetPosition <= maxDuration) {
                       _seek(targetPosition);
                       Navigator.of(context).pop();
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(AppLocalizations.of(context)!
-                                .positionExceedsVideoDuration)),
+                        SnackBar(content: Text(AppLocalizations.of(context)!.positionExceedsVideoDuration)),
                       );
                     }
                   },
@@ -554,8 +527,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     );
   }
 
-  (Download? local, Download? ready, Download? stale) _findAppropriateDownloads(
-      List<Download> downloads) {
+  (Download? local, Download? ready, Download? stale) _findAppropriateDownloads(List<Download> downloads) {
     Download? local;
     Download? ready;
     Download? stale;
@@ -566,12 +538,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       if ((local == null || d.size > local.size) && d.fullPathMedia != null) {
         local = d;
       }
-      if ((ready == null || d.updatedAt!.isAfter(ready.updatedAt!)) &&
-          d.status == "ready") {
+      if ((ready == null || d.updatedAt!.isAfter(ready.updatedAt!)) && d.status == "ready") {
         ready = d;
       }
-      if ((stale == null || d.updatedAt!.isAfter(stale.updatedAt!)) &&
-          d.status == "stale") {
+      if ((stale == null || d.updatedAt!.isAfter(stale.updatedAt!)) && d.status == "stale") {
         stale = d;
       }
     }
@@ -586,12 +556,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         _sendPosition(widget.id, Duration(seconds: pos.toInt()), false);
       }
     });
-    await ref
-        .read(recordingNotifierProvider(widget.id).notifier)
-        .refreshFromServer();
-    await ref
-        .read(downloadsNotifierProvider(widget.id).notifier)
-        .refreshFromServer();
+    await ref.read(recordingNotifierProvider(widget.id).notifier).refreshFromServer();
+    await ref.read(downloadsNotifierProvider(widget.id).notifier).refreshFromServer();
 
     // The refreshes above are async; the page may have been popped meanwhile.
     if (!mounted) return;
@@ -605,14 +571,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   /// that lives on this device. A paired session is remembered by the server,
   /// so pairing is asked for only when none is live.
   Future<void> _castToTv(RecordingInfo recording) async {
-    final downloads =
-        ref.read(downloadsNotifierProvider(recording.id)).valueOrNull;
+    final downloads = ref.read(downloadsNotifierProvider(recording.id)).valueOrNull;
     final (_, ready, _) = _findAppropriateDownloads(downloads ?? <Download>[]);
 
     if (ready == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(AppLocalizations.of(context)!.tvNoReadyDownload)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.tvNoReadyDownload)));
       }
       return;
     }
@@ -648,8 +612,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
     // The television continues from what this screen shows, so switching to it
     // does not jump.
-    await _castCommand(TvCommand.play(ready.id,
-        position: _getCurrentPosition(recording).inSeconds));
+    await _castCommand(TvCommand.play(ready.id, position: _getCurrentPosition(recording).inSeconds));
   }
 
   /// A television already casting this recording — the screen was left and
@@ -681,11 +644,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     try {
       await ref.read(tvSessionStateProvider(id).notifier).command(cmd);
     } catch (e, st) {
-      AppLoggers.api
-          .w('The television refused a command', error: e, stackTrace: st);
+      AppLoggers.api.w('The television refused a command', error: e, stackTrace: st);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(AppLocalizations.of(context)!.tvCommandFailed)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.tvCommandFailed)));
       }
     }
   }
@@ -700,15 +661,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     if (session.isIdle || session.recordingId != widget.id) {
       if (ready != null) {
         final recording = ref.read(recordingNotifierProvider(widget.id)).value;
-        await _castCommand(TvCommand.play(ready.id,
-            position: recording == null
-                ? null
-                : _getCurrentPosition(recording).inSeconds));
+        await _castCommand(TvCommand.play(ready.id, position: recording == null ? null : _getCurrentPosition(recording).inSeconds));
       }
       return;
     }
-    await _castCommand(TvCommand(
-        type: session.isPlaying ? TvCommandType.pause : TvCommandType.resume));
+    await _castCommand(TvCommand(type: session.isPlaying ? TvCommandType.pause : TvCommandType.resume));
   }
 
   /// Hands playback back to this device at the frame the television shows: the
@@ -725,9 +682,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
     try {
       final session = _castSession;
-      if (session != null &&
-          session.isLive &&
-          session.recordingId == widget.id) {
+      if (session != null && session.isLive && session.recordingId == widget.id) {
         var current = session;
         if (current.isPlaying) {
           await notifier.command(TvCommand(type: TvCommandType.pause));
@@ -750,8 +705,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       }
     } catch (e, st) {
       // The television may be gone; control returns to this device regardless.
-      AppLoggers.api
-          .w('Failed to stop casting cleanly', error: e, stackTrace: st);
+      AppLoggers.api.w('Failed to stop casting cleanly', error: e, stackTrace: st);
     }
 
     ref.invalidate(tvSessionsProvider);
@@ -800,16 +754,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             children: [
               const Icon(Icons.cast_connected, size: 18),
               const SizedBox(width: 8),
-              Text(_castStatus(l10n, session),
-                  style: Theme.of(context).textTheme.bodySmall),
+              Text(_castStatus(l10n, session), style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
-          if (error != null)
-            Text(
-                error.code == TvErrorCode.unsupportedMedia
-                    ? l10n.tvErrorUnsupportedMedia
-                    : l10n.tvErrorPlayback,
-                style: errorStyle),
+          if (error != null) Text(error.code == TvErrorCode.unsupportedMedia ? l10n.tvErrorUnsupportedMedia : l10n.tvErrorPlayback, style: errorStyle),
         ],
       ),
     );
@@ -848,38 +796,38 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     // }
     return ScreenShortcuts(
       shortcuts: <ShortcutActivator, Intent>{
-        SingleActivator(LogicalKeyboardKey.backspace): BackIntent(),
-        SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
+        SingleActivator(LogicalKeyboardKey.backspace, includeRepeats: false): BackIntent(),
+        SingleActivator(LogicalKeyboardKey.escape, includeRepeats: false): BackIntent(),
         SingleActivator(LogicalKeyboardKey.keyR): RefreshIntent(),
         SingleActivator(LogicalKeyboardKey.f5): RefreshIntent(),
         SingleActivator(LogicalKeyboardKey.keyV): ToggleSeenIntent(),
         SingleActivator(LogicalKeyboardKey.keyH): ToggleHiddenIntent(),
         if (isDesktopKeyboardPlatform) ...{
-          SingleActivator(LogicalKeyboardKey.enter): PlayRecordingIntent(),
-          SingleActivator(LogicalKeyboardKey.space): PlayRecordingIntent(),
-          SingleActivator(LogicalKeyboardKey.keyD): DownloadRecordingIntent(),
-          SingleActivator(LogicalKeyboardKey.delete):
-              DeleteLocalRecordingIntent(),
+          SingleActivator(LogicalKeyboardKey.enter, includeRepeats: false): PlayRecordingIntent(),
+          SingleActivator(LogicalKeyboardKey.space, includeRepeats: false): PlayRecordingIntent(),
+          SingleActivator(LogicalKeyboardKey.keyD, includeRepeats: false): DownloadRecordingIntent(),
+          SingleActivator(LogicalKeyboardKey.delete, includeRepeats: false): DeleteLocalRecordingIntent(),
           SingleActivator(LogicalKeyboardKey.keyO): OpenInBrowserIntent(),
           SingleActivator(LogicalKeyboardKey.keyC): CastRecordingIntent(),
         },
       },
+      ignoreWhenActivateFocused: const {PlayRecordingIntent},
       actions: <Type, Action<Intent>>{
         BackIntent: CallbackAction<BackIntent>(
           onInvoke: (BackIntent intent) {
-            if (!isTextInputFocused()) Navigator.of(context).pop(true);
+            Navigator.of(context).pop(true);
             return null;
           },
         ),
         RefreshIntent: CallbackAction<RefreshIntent>(
           onInvoke: (RefreshIntent intent) {
-            if (!isTextInputFocused()) _pullRefresh();
+            _pullRefresh();
             return null;
           },
         ),
         ToggleSeenIntent: CallbackAction<ToggleSeenIntent>(
           onInvoke: (ToggleSeenIntent intent) async {
-            if (!isTextInputFocused() && recording.hasValue) {
+            if (recording.hasValue) {
               _toggleSeen(recording.requireValue);
             }
             return null;
@@ -887,14 +835,14 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         ),
         ToggleHiddenIntent: CallbackAction<ToggleHiddenIntent>(
           onInvoke: (ToggleHiddenIntent intent) async {
-            if (!isTextInputFocused() && recording.hasValue) {
+            if (recording.hasValue) {
               _toggleHidden(recording.requireValue);
             }
             return null;
           },
         ),
         PlayRecordingIntent: CallbackAction<PlayRecordingIntent>(onInvoke: (_) {
-          if (!isTextInputFocused() && recording.hasValue) {
+          if (recording.hasValue) {
             final downloads = ref.read(downloadsNotifierProvider(widget.id));
             if (downloads.hasValue) {
               _play(context, recording.requireValue, downloads);
@@ -902,149 +850,109 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           }
           return null;
         }),
-        DownloadRecordingIntent:
-            CallbackAction<DownloadRecordingIntent>(onInvoke: (_) {
-          if (!isTextInputFocused() && recording.hasValue) {
+        DownloadRecordingIntent: CallbackAction<DownloadRecordingIntent>(onInvoke: (_) {
+          if (!UniversalPlatform.isWeb && recording.hasValue) {
             final downloads = ref.read(downloadsNotifierProvider(widget.id));
             if (downloads.hasValue && downloads.requireValue.isNotEmpty) {
-              final candidate = downloads.requireValue.firstWhere(
-                (d) => d.status == 'ready' && d.fullPathMedia == null,
-                orElse: () => downloads.requireValue.first,
-              );
-              if (candidate.status == 'new' || candidate.status == 'stale') {
-                _startPreparation(context, candidate.formatId);
+              final (_, ready, stale) = _findAppropriateDownloads(downloads.requireValue);
+              if (ready != null && ready.fullPathMedia == null) {
+                downloadFile(context, ready);
+              } else if (stale != null) {
+                _startPreparation(context, stale.formatId);
               } else {
-                downloadFile(context, candidate);
+                final fresh = downloads.requireValue.where((d) => d.status == 'new').toList();
+                if (fresh.isNotEmpty) _startPreparation(context, fresh.first.formatId);
               }
             }
           }
           return null;
         }),
-        DeleteLocalRecordingIntent:
-            CallbackAction<DeleteLocalRecordingIntent>(onInvoke: (_) {
-          if (!isTextInputFocused() && recording.hasValue) {
+        DeleteLocalRecordingIntent: CallbackAction<DeleteLocalRecordingIntent>(onInvoke: (_) {
+          if (recording.hasValue) {
             final downloads = ref.read(downloadsNotifierProvider(widget.id));
             if (downloads.hasValue) {
-              final localFiles = downloads.requireValue
-                  .where((d) => d.fullPathMedia != null)
-                  .toList();
+              final localFiles = downloads.requireValue.where((d) => d.fullPathMedia != null).toList();
               if (localFiles.isNotEmpty) {
-                final local = localFiles.first;
-                confirmDialog(
-                    context,
-                    AppLocalizations.of(context)!.areYouSure,
-                    AppLocalizations.of(context)!
-                        .deleteLocalDownloadedMediaFile, () {
-                  ref
-                      .read(downloadsNotifierProvider(widget.id).notifier)
-                      .clean(local.id);
-                  Navigator.of(context).pop();
-                });
+                _confirmLocalDownloadDelete(context, localFiles);
               }
             }
           }
           return null;
         }),
         OpenInBrowserIntent: CallbackAction<OpenInBrowserIntent>(onInvoke: (_) {
-          if (!isTextInputFocused() && recording.hasValue) {
+          if (recording.hasValue) {
             launchUrlString(recording.requireValue.webpageUrl);
           }
           return null;
         }),
         CastRecordingIntent: CallbackAction<CastRecordingIntent>(onInvoke: (_) {
-          if (!isTextInputFocused() && recording.hasValue) {
+          if (recording.hasValue) {
             _castToTv(recording.requireValue);
           }
           return null;
         }),
       },
       help: [
-        ShortcutHelpEntry(
-            'Esc / Backspace', AppLocalizations.of(context)!.cancel),
-        ShortcutHelpEntry(
-            'Enter / Space', AppLocalizations.of(context)!.tvPlay),
-        ShortcutHelpEntry(
-            'd', AppLocalizations.of(context)!.downloadToLocalStorage),
-        ShortcutHelpEntry(
-            'Delete', AppLocalizations.of(context)!.deleteLocalFile),
-        ShortcutHelpEntry(
-            'o', AppLocalizations.of(context)!.openRecordingInBrowser),
+        ShortcutHelpEntry('Esc / Backspace', AppLocalizations.of(context)!.goBackOrClose),
+        ShortcutHelpEntry('Enter / Space', AppLocalizations.of(context)!.playOrPause),
+        ShortcutHelpEntry('d', AppLocalizations.of(context)!.downloadToLocalStorage),
+        ShortcutHelpEntry('Delete', AppLocalizations.of(context)!.deleteLocalFile),
+        ShortcutHelpEntry('o', AppLocalizations.of(context)!.openRecordingInBrowser),
         ShortcutHelpEntry('c', AppLocalizations.of(context)!.tvCast),
-        ShortcutHelpEntry(
-            'r / F5', AppLocalizations.of(context)!.refreshRecord),
-        ShortcutHelpEntry('v / h',
-            '${AppLocalizations.of(context)!.markAsSeen} / ${AppLocalizations.of(context)!.hideRecording}'),
+        ShortcutHelpEntry('r / F5', AppLocalizations.of(context)!.refreshRecord),
+        ShortcutHelpEntry('v / h', '${AppLocalizations.of(context)!.markAsSeen} / ${AppLocalizations.of(context)!.hideRecording}'),
       ],
-      child: Focus(
-        autofocus: true,
-        child: Scaffold(
-          appBar: AppBar(
-            title: recording.hasValue
-                ? Text(recording.requireValue.title)
-                : Text(AppLocalizations.of(context)!.loadingInfo),
-            actions: [
-              if (recording.hasValue) _castButton(recording.requireValue),
-              IconButton(
-                icon: _cleanServerMediaIcon,
-                tooltip: AppLocalizations.of(context)!
-                    .cleanAllDownloadedContentOnServer,
-                onPressed: () {
-                  if (recording.hasValue) {
-                    confirmDialog(
-                        context,
-                        AppLocalizations.of(context)!.areYouSure,
-                        AppLocalizations.of(context)!.deleteAllFilesOnServer,
-                        () {
-                      ref.read(deleteRecordingDownloadsContentProvider(
-                          recording.requireValue.id));
-                      _pullRefresh();
-                      Navigator.pop(context);
-                    });
-                  }
-                },
-              ),
-              IconButton(
-                icon: _cleanDownloadedMediaIcon,
-                tooltip: AppLocalizations.of(context)!
-                    .cleanAllDownloadedMediaFromDevice,
-                onPressed: () {
-                  confirmDialog(
-                      context,
-                      AppLocalizations.of(context)!.areYouSure,
-                      AppLocalizations.of(context)!.deleteAllLocalFilesOnDevice,
-                      () {
-                    ref
-                        .read(downloadsNotifierProvider(widget.id).notifier)
-                        .cleanAll();
+      child: Scaffold(
+        appBar: AppBar(
+          title: recording.hasValue ? Text(recording.requireValue.title) : Text(AppLocalizations.of(context)!.loadingInfo),
+          actions: [
+            if (recording.hasValue) _castButton(recording.requireValue),
+            IconButton(
+              icon: _cleanServerMediaIcon,
+              tooltip: AppLocalizations.of(context)!.cleanAllDownloadedContentOnServer,
+              onPressed: () {
+                if (recording.hasValue) {
+                  confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllFilesOnServer, () {
+                    ref.read(deleteRecordingDownloadsContentProvider(recording.requireValue.id));
+                    _pullRefresh();
                     Navigator.pop(context);
                   });
-                },
-              ),
-              _addSeenButton(recording),
-              _addHiddenButton(recording),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                tooltip: AppLocalizations.of(context)!.refreshRecord,
-                onPressed: _pullRefresh,
-              ),
-              IconButton(
-                icon: const Icon(Icons.settings),
-                tooltip: AppLocalizations.of(context)!.settings,
-                onPressed: () {
-                  Navigator.restorablePushNamed(
-                      context, SettingsView.routeName);
-                },
-              ),
-            ],
-          ),
-          body: Stack(
-            children: [
-              // Visibility(visible: recording.isLoading, child: const LinearProgressIndicator()),
-              SingleChildScrollView(
-                child: _buildRecording(recording),
-              ),
-            ],
-          ),
+                }
+              },
+            ),
+            IconButton(
+              icon: _cleanDownloadedMediaIcon,
+              tooltip: AppLocalizations.of(context)!.cleanAllDownloadedMediaFromDevice,
+              onPressed: () {
+                confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllLocalFilesOnDevice, () {
+                  ref.read(downloadsNotifierProvider(widget.id).notifier).cleanAll();
+                  Navigator.pop(context);
+                });
+              },
+            ),
+            _addSeenButton(recording),
+            _addHiddenButton(recording),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: AppLocalizations.of(context)!.refreshRecord,
+              onPressed: _pullRefresh,
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings),
+              tooltip: AppLocalizations.of(context)!.settings,
+              onPressed: () {
+                Navigator.restorablePushNamed(context, SettingsView.routeName);
+              },
+            ),
+          ],
+        ),
+        body: Stack(
+          children: [
+            // Visibility(visible: recording.isLoading, child: const LinearProgressIndicator()),
+            SingleChildScrollView(
+              child: _buildRecording(recording),
+            ),
+          ],
         ),
       ),
     );
@@ -1084,23 +992,19 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           Text(AppLocalizations.of(context)!.downloadsInfoIsLoading)
         else
           const SizedBox(height: 100), // Placeholder during animation
-        if (_showTables &&
-            recording.formats != null &&
-            recording.formats!.isNotEmpty)
+        if (_showTables && recording.formats != null && recording.formats!.isNotEmpty)
           Align(
             alignment: Alignment.center,
             child: IntrinsicWidth(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: ExpansionTile(
                   title: Text(
                     AppLocalizations.of(context)!.availableFormats,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   subtitle: Text(
-                    AppLocalizations.of(context)!
-                        .formatsCount(recording.formats!.length),
+                    AppLocalizations.of(context)!.formatsCount(recording.formats!.length),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   initiallyExpanded: false,
@@ -1144,30 +1048,17 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("${recording.id}: ${recording.title}",
-                    style: Theme.of(context).textTheme.bodyLarge),
+                Text("${recording.id}: ${recording.title}", style: Theme.of(context).textTheme.bodyLarge),
                 Text("${recording.uploader} • ${recording.extractor}"),
-                Text(AppLocalizations.of(context)!.createdAtWithDate(
-                    formatDateLong(recording.createdAt),
-                    since(recording.createdAt, false,
-                        Localizations.localeOf(context).languageCode))),
-                Text(AppLocalizations.of(context)!.updatedAtWithDate(
-                    formatDateLong(recording.updatedAt),
-                    since(recording.updatedAt, false,
-                        Localizations.localeOf(context).languageCode))),
+                Text(AppLocalizations.of(context)!.createdAtWithDate(formatDateLong(recording.createdAt), since(recording.createdAt, false, Localizations.localeOf(context).languageCode))),
+                Text(AppLocalizations.of(context)!.updatedAtWithDate(formatDateLong(recording.updatedAt), since(recording.updatedAt, false, Localizations.localeOf(context).languageCode))),
                 Row(
                   children: [
-                    Text(recording.webpageUrl,
-                        style: const TextStyle(
-                            overflow: TextOverflow.fade,
-                            decoration: TextDecoration.underline,
-                            color: Colors.blue)),
+                    Text(recording.webpageUrl, style: const TextStyle(overflow: TextOverflow.fade, decoration: TextDecoration.underline, color: Colors.blue)),
                     IconButton(
                       icon: copyURLIcon,
-                      tooltip:
-                          AppLocalizations.of(context)!.copyVideoUrlToClipboard,
-                      onPressed: () =>
-                          copyToClipboard(context, recording.webpageUrl),
+                      tooltip: AppLocalizations.of(context)!.copyVideoUrlToClipboard,
+                      onPressed: () => copyToClipboard(context, recording.webpageUrl),
                     ),
                   ],
                 ),
@@ -1180,11 +1071,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   /// Play on this device, or — while casting — play or pause the television.
-  void _play(BuildContext context, RecordingInfo recording,
-      AsyncValue<List<Download>> downloads) {
-    var (local, ready, stale) = downloads.hasValue
-        ? _findAppropriateDownloads(downloads.requireValue)
-        : (null, null, null);
+  void _play(BuildContext context, RecordingInfo recording, AsyncValue<List<Download>> downloads) {
+    var (local, ready, stale) = downloads.hasValue ? _findAppropriateDownloads(downloads.requireValue) : (null, null, null);
     if (_castSessionId != null) {
       _castPlayPause(ready);
     } else if (local != null) {
@@ -1196,13 +1084,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     }
   }
 
-  Widget _buildPreview(BuildContext context, RecordingInfo recording,
-      AsyncValue<List<Download>> downloads) {
+  Widget _buildPreview(BuildContext context, RecordingInfo recording, AsyncValue<List<Download>> downloads) {
     final castId = _castSessionId;
     // Watched so the screen follows the television; the value is read through
     // _castSession where the position is needed.
-    final cast =
-        castId == null ? null : ref.watch(tvSessionStateProvider(castId));
+    final cast = castId == null ? null : ref.watch(tvSessionStateProvider(castId));
     if (castId != null) {
       ref.listen(tvSessionStateProvider(castId), _onCastSession);
     }
@@ -1227,9 +1113,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       // Decode to screen width in physical pixels instead of the
                       // full source resolution — avoids a decode spike on the
                       // first detail frame during the transition.
-                      cacheWidth: (MediaQuery.of(context).size.width *
-                              MediaQuery.of(context).devicePixelRatio)
-                          .round(),
+                      cacheWidth: (MediaQuery.of(context).size.width * MediaQuery.of(context).devicePixelRatio).round(),
                     ),
                     // Current position display (top center)
                     Positioned(
@@ -1238,22 +1122,16 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                       right: 0,
                       child: Center(
                         child: GestureDetector(
-                          onTap: () =>
-                              _showManualSeekDialog(context, recording),
+                          onTap: () => _showManualSeekDialog(context, recording),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: Colors.black54,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              _formatTimePosition(
-                                  _getCurrentPosition(recording)),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(color: Colors.white),
+                              _formatTimePosition(_getCurrentPosition(recording)),
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
                             ),
                           ),
                         ),
@@ -1263,13 +1141,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 500),
                       child: Text(
-                        _rewinding != Duration.zero
-                            ? _formatDuration(_rewinding)
-                            : "",
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge
-                            ?.copyWith(color: Colors.white),
+                        _rewinding != Duration.zero ? _formatDuration(_rewinding) : "",
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
                         key: ValueKey(_rewinding),
                       ),
                     ),
@@ -1281,9 +1154,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                 progressBarColor: MediaPlayerTheme.getProgressBarColor(context),
                 timeLabelLocation: TimeLabelLocation.sides,
                 progress: _getCurrentPosition(recording),
-                total: Duration(
-                    seconds:
-                        castDuration > 0 ? castDuration : recording.duration),
+                total: Duration(seconds: castDuration > 0 ? castDuration : recording.duration),
                 timeLabelType: TimeLabelType.remainingTime,
                 onSeek: (position) {
                   _seek(position);
@@ -1353,16 +1224,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     // Use localized status if available, otherwise fallback to cleaned enum name
     String localizedStatus;
     if (dt.status != null) {
-      localizedStatus = TaskStatusLocalization.getLocalizedStatusWithFallback(
-          dt.status!, l10n);
+      localizedStatus = TaskStatusLocalization.getLocalizedStatusWithFallback(dt.status!, l10n);
     } else {
       localizedStatus = "";
     }
 
     var eta = dt.timeRemaining == null ? "" : formatDuration(dt.timeRemaining!);
-    var est = dt.networkSpeed == null || dt.networkSpeed! < 0
-        ? ""
-        : " ≈ ${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta";
+    var est = dt.networkSpeed == null || dt.networkSpeed! < 0 ? "" : " ≈ ${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1389,8 +1257,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     );
   }
 
-  Widget _localDownloadsTable(
-      BuildContext context, RecordingInfo recording, List<Download> downloads) {
+  Widget _localDownloadsTable(BuildContext context, RecordingInfo recording, List<Download> downloads) {
     final downloadTasks = ref.watch(localDTNotifierProvider.select((value) {
       return <String, LocalDownloadTask>{
         for (final d in downloads)
@@ -1410,41 +1277,66 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     );
   }
 
+  Future<void> _confirmLocalDownloadDelete(BuildContext context, List<Download> files) async {
+    final l10n = AppLocalizations.of(context)!;
+    Download? selected;
+    if (files.length == 1) {
+      selected = files.single;
+    } else {
+      selected = await showDialog<Download>(
+        context: context,
+        builder: (dialogContext) {
+          Download? choice;
+          return StatefulBuilder(
+            builder: (context, setDialogState) => DialogShortcuts(
+              child: AlertDialog(
+                title: Text(l10n.deleteLocalFile),
+                content: RadioGroup<Download>(
+                  groupValue: choice,
+                  onChanged: (value) => setDialogState(() => choice = value),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [for (final file in files) RadioListTile<Download>(value: file, title: Text(file.filename))],
+                  ),
+                ),
+                actions: [
+                  TextButton(autofocus: isDesktopKeyboardPlatform, onPressed: () => Navigator.pop(dialogContext), child: Text(l10n.cancel)),
+                  TextButton(onPressed: choice == null ? null : () => Navigator.pop(dialogContext, choice), child: Text(l10n.continueButton)),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
+    if (selected == null || !context.mounted) return;
+
+    confirmDialog(context, l10n.areYouSure, l10n.deleteLocalFileConfirmation(selected.filename), () {
+      ref.read(downloadsNotifierProvider(widget.id).notifier).clean(selected!.id);
+      Navigator.of(context).pop();
+    });
+  }
+
   Future<void> _startPreparation(BuildContext context, String format) async {
     ref.read(newDownloadProvider(widget.id, format).future).then((d) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content:
-            Text(AppLocalizations.of(context)!.preparationStarting(d.formatId)),
+        content: Text(AppLocalizations.of(context)!.preparationStarting(d.formatId)),
       ));
     }).catchError((err) {
       if (!context.mounted) return;
       showDialog(
           context: context,
           barrierDismissible: true,
-          builder: (BuildContext context) => DialogShortcuts(
-                child: AlertDialog(
-                  content: Text(err.toString()),
-                  actions: [
-                    TextButton(
-                      autofocus: isDesktopKeyboardPlatform,
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(AppLocalizations.of(context)!.cancel),
-                    ),
-                  ],
-                ),
-              ));
+          builder: (BuildContext context) => DialogShortcuts(child: Dialog(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(err.toString())))));
     });
   }
 
-  Future<void> _recordView(
-      BuildContext context, RecordingInfo recording, Download d) async {
+  Future<void> _recordView(BuildContext context, RecordingInfo recording, Download d) async {
     final source = await _playbackSource(d);
     if (!context.mounted) return;
     Navigator.of(context).push(
-      MaterialPageRoute(
-          builder: (BuildContext context) => RecordingViewMediaKitHandler(
-              recording: recording, download: d, source: source)),
+      MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d, source: source)),
     );
   }
 
@@ -1457,19 +1349,13 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     if (!settings.downloadWhilePlaying) return null;
     final playback = ref.read(playbackDownloadsProvider.notifier);
     final task = ref.read(localDTNotifierProvider)[d.id];
-    final explicitRunning = task != null &&
-        task.status != null &&
-        !task.status!.isFinalState &&
-        !playback.owns(d.id);
+    final explicitRunning = task != null && task.status != null && !task.status!.isFinalState && !playback.owns(d.id);
     if (explicitRunning) return null;
     try {
       final url = await playback.open(d);
       return url.toString() == d.url ? null : url;
     } catch (e, s) {
-      AppLoggers.download.e(
-          'Playback download of ${d.id} could not start; streaming instead',
-          error: e,
-          stackTrace: s);
+      AppLoggers.download.e('Playback download of ${d.id} could not start; streaming instead', error: e, stackTrace: s);
       return null;
     }
   }
@@ -1484,8 +1370,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
     final actions = <Widget>[];
 
-    AppLoggers.media.d(
-        'Building actions for download with status: ${d.status}, hasLocalFile: $hasLocalFile');
+    AppLoggers.media.d('Building actions for download with status: ${d.status}, hasLocalFile: $hasLocalFile');
 
     // 1. Кнопка подготовки/прогресса/просмотра серверного файла
     switch (d.status) {
@@ -1499,31 +1384,19 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           icon: downloadFormatIcon,
         ));
       case "in_progress":
-        actions.add(Center(
-            child: CircularProgressIndicator(value: d.progressByLastLine())));
+        actions.add(Center(child: CircularProgressIndicator(value: d.progressByLastLine())));
       case "ready":
         // Показываем play для серверного файла всегда
         actions.add(
           IconButton(
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(
-                    builder: (BuildContext context) =>
-                        RecordingViewMediaKitHandler(
-                            recording: recording, download: d)),
+                MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
               );
             },
             onLongPress: () async {
               if (UniversalPlatform.isLinux) {
-                await Process.start(
-                    "/usr/bin/flatpak-spawn",
-                    <String>[
-                      _mpvPlayer,
-                      "--title=${recording.title}",
-                      "--start=${recording.position}",
-                      "--input-ipc-server=$_mpvSocketPath",
-                      d.url
-                    ],
+                await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.url],
                     mode: ProcessStartMode.detached);
               }
             },
@@ -1546,26 +1419,11 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               copyToClipboard(context, "curl '${d.url}' -o '${d.filename}'");
             case "mpv-play":
               await Process.start(
-                  "/usr/bin/flatpak-spawn",
-                  <String>[
-                    _mpvPlayer,
-                    "--start=${recording.position}",
-                    "--title=${recording.title}",
-                    "--input-ipc-server=$_mpvSocketPath",
-                    d.fullPathMedia ?? d.url
-                  ],
+                  "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
                   mode: ProcessStartMode.detached);
             case "mpv-play-horizontal-flip":
-              await Process.start(
-                  "/usr/bin/flatpak-spawn",
-                  <String>[
-                    _mpvPlayer,
-                    "--vf=hflip",
-                    "--start=${recording.position}",
-                    "--title=${recording.title}",
-                    "--input-ipc-server=$_mpvSocketPath",
-                    d.fullPathMedia ?? d.url
-                  ],
+              await Process.start("/usr/bin/flatpak-spawn",
+                  <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
                   mode: ProcessStartMode.detached);
             case "default":
               await _openInExternalApp(context, d);
@@ -1580,31 +1438,23 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   final box = context.findRenderObject() as RenderBox?;
                   await SharePlus.instance.share(ShareParams(
                     files: [XFile(d.fullPathMedia!)],
-                    sharePositionOrigin: box != null
-                        ? box.localToGlobal(Offset.zero) & box.size
-                        : null,
+                    sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
                   ));
                 }
               }
             case "server-delete":
-              confirmDialog(context, AppLocalizations.of(context)!.areYouSure,
-                  AppLocalizations.of(context)!.deleteServerMediaFile, () {
+              confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteServerMediaFile, () {
                 ref.read(deleteDownloadContentProvider(d.id));
                 _pullRefresh();
                 Navigator.pop(context);
               });
             case "local-delete":
-              confirmDialog(context, AppLocalizations.of(context)!.areYouSure,
-                  AppLocalizations.of(context)!.deleteLocalDownloadedMediaFile,
-                  () {
-                ref
-                    .read(downloadsNotifierProvider(recording.id).notifier)
-                    .clean(d.id);
+              confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteLocalDownloadedMediaFile, () {
+                ref.read(downloadsNotifierProvider(recording.id).notifier).clean(d.id);
                 Navigator.pop(context);
               });
             case "share-url":
-              await SharePlus.instance
-                  .share(ShareParams(uri: Uri.parse(d.url)));
+              await SharePlus.instance.share(ShareParams(uri: Uri.parse(d.url)));
             case "download":
               if (UniversalPlatform.isWeb) {
                 return;
@@ -1615,19 +1465,14 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         },
         itemBuilder: (BuildContext context) {
           final l10n = AppLocalizations.of(context)!;
-          final isDesktop = !UniversalPlatform.isAndroid &&
-              !UniversalPlatform.isIOS &&
-              !UniversalPlatform.isWeb;
+          final isDesktop = !UniversalPlatform.isAndroid && !UniversalPlatform.isIOS && !UniversalPlatform.isWeb;
           var menuItems = <PopupMenuItem<String>>[];
 
           // Copy file link — isReady
           if (isReady) {
             menuItems.add(PopupMenuItem<String>(
               value: "copy",
-              child: Row(children: [
-                copyURLIcon,
-                Expanded(child: Text(l10n.copyFileLinkToClipboard))
-              ]),
+              child: Row(children: [copyURLIcon, Expanded(child: Text(l10n.copyFileLinkToClipboard))]),
             ));
           }
 
@@ -1635,10 +1480,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           if (isReady) {
             menuItems.add(PopupMenuItem<String>(
               value: "copy-curl",
-              child: Row(children: [
-                _copyCURLIcon,
-                Expanded(child: Text(l10n.copyCurlCommandToClipboard))
-              ]),
+              child: Row(children: [_copyCURLIcon, Expanded(child: Text(l10n.copyCurlCommandToClipboard))]),
             ));
           }
 
@@ -1646,10 +1488,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           if (UniversalPlatform.isLinux && (isReady || hasLocalFile)) {
             menuItems.add(PopupMenuItem<String>(
               value: "mpv-play",
-              child: Row(children: [
-                _playMpvIcon,
-                Expanded(child: Text(l10n.playWithEmbeddedMpvPlayer))
-              ]),
+              child: Row(children: [_playMpvIcon, Expanded(child: Text(l10n.playWithEmbeddedMpvPlayer))]),
             ));
           }
 
@@ -1657,12 +1496,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           if (UniversalPlatform.isLinux && (isReady || hasLocalFile)) {
             menuItems.add(PopupMenuItem<String>(
               value: "mpv-play-horizontal-flip",
-              child: Row(children: [
-                _playMpvIcon,
-                _hFlipIcon,
-                Expanded(
-                    child: Text(l10n.playWithEmbeddedMpvPlayerHorizontalFlip))
-              ]),
+              child: Row(children: [_playMpvIcon, _hFlipIcon, Expanded(child: Text(l10n.playWithEmbeddedMpvPlayerHorizontalFlip))]),
             ));
           }
 
@@ -1681,10 +1515,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           if (hasLocalFile && UniversalPlatform.isAndroid) {
             menuItems.add(PopupMenuItem<String>(
               value: "copy-to-downloads",
-              child: Row(children: [
-                const Icon(Icons.download),
-                Expanded(child: Text(l10n.copyToDownloads))
-              ]),
+              child: Row(children: [const Icon(Icons.download), Expanded(child: Text(l10n.copyToDownloads))]),
             ));
           }
 
@@ -1692,10 +1523,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           if (hasLocalFile && UniversalPlatform.isIOS) {
             menuItems.add(PopupMenuItem<String>(
               value: "share-file",
-              child: Row(children: [
-                const Icon(Icons.ios_share),
-                Expanded(child: Text(l10n.shareFile))
-              ]),
+              child: Row(children: [const Icon(Icons.ios_share), Expanded(child: Text(l10n.shareFile))]),
             ));
           }
 
@@ -1703,10 +1531,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           if (hasLocalFile && isDesktop) {
             menuItems.add(PopupMenuItem<String>(
               value: "open-location",
-              child: Row(children: [
-                const Icon(Icons.folder_open),
-                Expanded(child: Text(l10n.openFileLocation))
-              ]),
+              child: Row(children: [const Icon(Icons.folder_open), Expanded(child: Text(l10n.openFileLocation))]),
             ));
           }
 
@@ -1714,10 +1539,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           if (isReady) {
             menuItems.add(PopupMenuItem<String>(
               value: "server-delete",
-              child: Row(children: [
-                _cleanServerMediaIcon,
-                Expanded(child: Text(l10n.deleteFileOnServerAndFreeQuota))
-              ]),
+              child: Row(children: [_cleanServerMediaIcon, Expanded(child: Text(l10n.deleteFileOnServerAndFreeQuota))]),
             ));
           }
 
@@ -1725,10 +1547,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           if (!UniversalPlatform.isWeb && hasLocalFile) {
             menuItems.add(PopupMenuItem<String>(
               value: "local-delete",
-              child: Row(children: [
-                _cleanDownloadedMediaIcon,
-                Expanded(child: Text(l10n.deleteLocalFile))
-              ]),
+              child: Row(children: [_cleanDownloadedMediaIcon, Expanded(child: Text(l10n.deleteLocalFile))]),
             ));
           }
 
@@ -1736,10 +1555,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           if (!UniversalPlatform.isWeb && isReady && !hasLocalFile) {
             menuItems.add(PopupMenuItem<String>(
               value: "download",
-              child: Row(children: [
-                const Icon(Icons.download),
-                Expanded(child: Text(l10n.downloadLocalFile))
-              ]),
+              child: Row(children: [const Icon(Icons.download), Expanded(child: Text(l10n.downloadLocalFile))]),
             ));
           }
 
@@ -1765,23 +1581,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         IconButton(
           onPressed: () {
             Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (BuildContext context) =>
-                      RecordingViewMediaKitHandler(
-                          recording: recording, download: d)),
+              MaterialPageRoute(builder: (BuildContext context) => RecordingViewMediaKitHandler(recording: recording, download: d)),
             );
           },
           onLongPress: () async {
             if (UniversalPlatform.isLinux) {
-              await Process.start(
-                  "/usr/bin/flatpak-spawn",
-                  <String>[
-                    _mpvPlayer,
-                    "--title=${recording.title}",
-                    "--start=${recording.position}",
-                    "--input-ipc-server=$_mpvSocketPath",
-                    d.fullPathMedia!
-                  ],
+              await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!],
                   mode: ProcessStartMode.detached);
             }
           },
@@ -1863,8 +1668,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     }
 
     // Check if download is not already in progress
-    final task =
-        ref.read(localDTNotifierProvider.select((tasks) => tasks[download.id]));
+    final task = ref.read(localDTNotifierProvider.select((tasks) => tasks[download.id]));
 
     // Start download only if task doesn't exist or is in final state
     if (task != null && task.status != null && !task.status!.isFinalState) {

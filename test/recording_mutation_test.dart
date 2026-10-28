@@ -6,8 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ilovlya/src/api/recording_mutation_riverpod.dart';
 
 void main() {
-  testWidgets('recording mutation shows pending indicator and rejects repeats',
-      (tester) async {
+  testWidgets('recording mutation shows pending indicator and rejects repeats', (tester) async {
     final requestCompleter = Completer<void>();
     final results = <Future<bool>>[];
     var requestCount = 0;

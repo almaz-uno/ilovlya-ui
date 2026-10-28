@@ -16,8 +16,7 @@ class TvPairingView extends ConsumerStatefulWidget {
   const TvPairingView({super.key});
 
   static Future<TvSession?> show(BuildContext context) {
-    return showDialog<TvSession>(
-        context: context, builder: (context) => const TvPairingView());
+    return showDialog<TvSession>(context: context, builder: (context) => const TvPairingView());
   }
 
   @override
@@ -92,18 +91,13 @@ class _TvPairingViewState extends ConsumerState<TvPairingView> {
           const SizedBox(height: 16),
           TextField(
             controller: _controller,
-            autofocus: !isDesktopKeyboardPlatform,
+            autofocus: true,
             enabled: !_pairing,
             textCapitalization: TextCapitalization.none,
             autocorrect: false,
             maxLength: _codeLength + 2, // room for a dash or a space
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9 \-]'))
-            ],
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(letterSpacing: 4),
+            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9 \-]'))],
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(letterSpacing: 4),
             decoration: InputDecoration(
               labelText: l10n.tvPairCodeLabel,
               errorText: _failure,
@@ -112,29 +106,16 @@ class _TvPairingViewState extends ConsumerState<TvPairingView> {
               counterText: '',
               // Scanning fills this very field, so it lives in it rather than
               // among the dialog actions, which do not fit three on a phone.
-              suffixIcon: _canScan
-                  ? IconButton(
-                      tooltip: l10n.tvPairScan,
-                      icon: const Icon(Icons.qr_code_scanner),
-                      onPressed: _pairing ? null : _scan)
-                  : null,
+              suffixIcon: _canScan ? IconButton(tooltip: l10n.tvPairScan, icon: const Icon(Icons.qr_code_scanner), onPressed: _pairing ? null : _scan) : null,
             ),
             onSubmitted: _pair,
           ),
-          if (_pairing)
-            const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: LinearProgressIndicator()),
+          if (_pairing) const Padding(padding: EdgeInsets.only(top: 8), child: LinearProgressIndicator()),
         ],
       ),
       actions: [
-        TextButton(
-            onPressed: _pairing ? null : () => Navigator.of(context).pop(),
-            child: Text(l10n.cancel)),
-        FilledButton(
-            autofocus: isDesktopKeyboardPlatform,
-            onPressed: _pairing ? null : () => _pair(_controller.text),
-            child: Text(l10n.tvPairConnect)),
+        TextButton(onPressed: _pairing ? null : () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
+        FilledButton(onPressed: _pairing ? null : () => _pair(_controller.text), child: Text(l10n.tvPairConnect)),
       ],
     ));
   }

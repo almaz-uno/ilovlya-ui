@@ -1492,7 +1492,17 @@
   "seekByMinute": "Seek by 1 minute",
   "seekByFiveMinutes": "Seek by 5 minutes",
   "changeVolumeByFivePercent": "Change volume by 5%",
+  "selectFirstLastRecording": "Select the first or last recording",
+  "goBackOrClose": "Go back or close this screen",
+  "playOrPause": "Play or pause recording",
+  "deleteLocalFileConfirmation": "Delete the local file {filename}?",
+  "@deleteLocalFileConfirmation": {
+    "description": "Confirmation naming the local media file to delete",
+    "placeholders": {
+      "filename": { "type": "String" }
+    }
+  },
   "confirmWithEnter": "Enter — confirm",
   "cancelWithEscape": "Esc — cancel",
-  "showDialogShortcutHelp": "Shift+/ — show dialog help"
+  "showDialogShortcutHelp": "? — show dialog help"
 }

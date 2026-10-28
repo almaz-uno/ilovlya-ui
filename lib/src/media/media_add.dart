@@ -35,6 +35,7 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
   Future<URLInfo>? _futurePropositions;
   bool _isLoading = false;
   bool _isAdding = false;
+  bool _autoAddScheduled = false;
 
   @override
   void dispose() {
@@ -83,13 +84,13 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
     return ScreenShortcuts(
       shortcuts: isDesktopKeyboardPlatform
           ? const {
-              SingleActivator(LogicalKeyboardKey.enter): SubmitMediaIntent(),
-              SingleActivator(LogicalKeyboardKey.numpadEnter):
-                  SubmitMediaIntent(),
-              SingleActivator(LogicalKeyboardKey.escape): CancelMediaIntent(),
+              SingleActivator(LogicalKeyboardKey.enter, includeRepeats: false): SubmitMediaIntent(),
+              SingleActivator(LogicalKeyboardKey.numpadEnter, includeRepeats: false): SubmitMediaIntent(),
+              SingleActivator(LogicalKeyboardKey.escape, includeRepeats: false): CancelMediaIntent(),
             }
           : const {},
       allowedWhenTextInputFocused: const {SubmitMediaIntent, CancelMediaIntent},
+      ignoreWhenActivateFocused: const {SubmitMediaIntent},
       actions: {
         SubmitMediaIntent: CallbackAction<SubmitMediaIntent>(onInvoke: (_) {
           final url = _urlController.text.trim();
@@ -102,8 +103,7 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
         }),
       },
       help: [
-        ShortcutHelpEntry(
-            'Enter', AppLocalizations.of(context)!.submitMediaUrl),
+        ShortcutHelpEntry('Enter', AppLocalizations.of(context)!.submitMediaUrl),
         ShortcutHelpEntry('Esc', AppLocalizations.of(context)!.cancel),
       ],
       child: Scaffold(
@@ -132,16 +132,14 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
                       IconButton(
                         onPressed: fromClipboard,
                         icon: const Icon(Icons.paste),
-                        tooltip:
-                            AppLocalizations.of(context)!.pasteFromClipboard,
+                        tooltip: AppLocalizations.of(context)!.pasteFromClipboard,
                       ),
                       IconButton(
                         icon: const Icon(Icons.youtube_searched_for),
                         tooltip: AppLocalizations.of(context)!.lookupMediaInfo,
                         onPressed: () {
                           setState(() {
-                            _futurePropositions =
-                                _getURLInfo(_urlController.text);
+                            _futurePropositions = _getURLInfo(_urlController.text);
                           });
                         },
                       ),
@@ -153,9 +151,7 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
                   ),
                 ),
               ),
-              (_futurePropositions == null)
-                  ? Text(AppLocalizations.of(context)!.toViewInfoPressLookup)
-                  : buildPropositionList(),
+              (_futurePropositions == null) ? Text(AppLocalizations.of(context)!.toViewInfoPressLookup) : buildPropositionList(),
               Visibility(
                   visible: _isLoading || _isAdding,
                   child: const Padding(
@@ -170,18 +166,15 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
   }
 
   void _addMedia(BuildContext context, String url, bool doBack) async {
-    if (!widget.forcePaste) {
-      setState(() {
-        _isAdding = true;
-      });
-    }
+    if (_isAdding) return;
+    final route = ModalRoute.of(context);
+    setState(() => _isAdding = true);
     // _futureMediaAdd = ; // the full information about media should be acquired anew
     ref.read(addRecordingProvider(url).future).then((value) {
       if (!mounted || !context.mounted) return;
       ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(AppLocalizations.of(context)!
-            .successfullyAddedMessage(value.title)),
+        content: Text(AppLocalizations.of(context)!.successfullyAddedMessage(value.title)),
       ));
     }).catchError((err) {
       if (!context.mounted) return;
@@ -189,23 +182,14 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
           context: context,
           barrierDismissible: true,
           builder: (BuildContext context) => DialogShortcuts(
-                child: AlertDialog(
-                  content: Text(err.toString()),
-                  actions: [
-                    TextButton(
-                      autofocus: isDesktopKeyboardPlatform,
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(AppLocalizations.of(context)!.cancel),
-                    ),
-                  ],
-                ),
+                child: Dialog(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(err.toString()))),
               ));
     }).whenComplete(() {
       if (!mounted || !context.mounted) return;
       setState(() {
         _isAdding = false;
       });
-      if (doBack) {
+      if (doBack && route?.isCurrent == true) {
         Navigator.pop(context);
       }
     });
@@ -216,11 +200,14 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
       future: _futurePropositions,
       builder: (BuildContext context, AsyncSnapshot<URLInfo> snapshot) {
         if (snapshot.hasData) {
-          if (snapshot.data!.infos != null &&
-              widget.forcePaste &&
-              snapshot.data!.infos!.length == 1) {
+          if (snapshot.data!.infos != null && widget.forcePaste && snapshot.data!.infos!.length == 1) {
             var u = snapshot.data!.infos![0].webpageUrl;
-            _addMedia(context, u, true);
+            if (!_autoAddScheduled && !_isAdding) {
+              _autoAddScheduled = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && !_isAdding) _addMedia(context, u, true);
+              });
+            }
             return Column(
               children: [
                 Text(AppLocalizations.of(context)!.addingUrlWithVariable(u)),

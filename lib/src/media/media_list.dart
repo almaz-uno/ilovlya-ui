@@ -71,17 +71,7 @@ class _ThumbnailPlaceholder extends StatelessWidget {
       height: 180,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDark
-              ? [
-                  Colors.grey.shade800,
-                  Colors.grey.shade700,
-                  Colors.grey.shade800
-                ]
-              : [
-                  Colors.grey.shade300,
-                  Colors.grey.shade200,
-                  Colors.grey.shade300
-                ],
+          colors: isDark ? [Colors.grey.shade800, Colors.grey.shade700, Colors.grey.shade800] : [Colors.grey.shade300, Colors.grey.shade200, Colors.grey.shade300],
           stops: const [0.0, 0.5, 1.0],
         ),
         borderRadius: BorderRadius.circular(8),
@@ -99,16 +89,16 @@ class MediaListViewRiverpod extends ConsumerStatefulWidget {
   const MediaListViewRiverpod({super.key});
 
   @override
-  ConsumerState<MediaListViewRiverpod> createState() =>
-      _MediaListViewRiverpodState();
+  ConsumerState<MediaListViewRiverpod> createState() => _MediaListViewRiverpodState();
 }
 
 class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   StreamSubscription? _updatePullSubs;
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
-  int _selectedIndex = 0;
-  final Map<int, GlobalKey> _rowKeys = {};
+  final FocusNode _screenFocusNode = FocusNode(debugLabel: 'recordings list');
+  String? _selectedRecordingId;
+  final Map<String, GlobalKey> _rowKeys = {};
 
   static const _updatePullPeriod = Duration(seconds: 30);
 
@@ -145,6 +135,25 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     super.deactivate();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _screenFocusNode.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _focusScreenWhenPointerLeavesSearch(PointerDownEvent event) {
+    final focusedContext = FocusManager.instance.primaryFocus?.context;
+    if (focusedContext == null || !isTextInputFocused()) return;
+    final renderObject = focusedContext.findRenderObject();
+    if (renderObject is RenderBox && renderObject.hasSize) {
+      final rect = renderObject.localToGlobal(Offset.zero) & renderObject.size;
+      if (rect.contains(event.position)) return;
+    }
+    _screenFocusNode.requestFocus();
+  }
+
   void _scrollDown() {
     if (!_scrollController.hasClients) return;
     _scrollController.animateTo(
@@ -163,53 +172,41 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     );
   }
 
-  void _moveSelection(int delta, int itemCount) {
-    if (itemCount == 0) return;
-    setState(() {
-      _selectedIndex = (_selectedIndex + delta).clamp(0, itemCount - 1);
-    });
+  void _moveSelection(int delta, List<RecordingInfo> recordings) {
+    if (recordings.isEmpty) return;
+    final currentIndex = recordings.indexWhere((r) => r.id == _selectedRecordingId);
+    final nextIndex = currentIndex < 0 ? 0 : (currentIndex + delta).clamp(0, recordings.length - 1);
+    setState(() => _selectedRecordingId = recordings[nextIndex].id);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final rowContext = _rowKeys[_selectedIndex]?.currentContext;
+      final rowContext = _rowKeys[_selectedRecordingId]?.currentContext;
       if (rowContext != null) {
-        Scrollable.ensureVisible(rowContext,
-            duration: const Duration(milliseconds: 150), alignment: 0.5);
-      } else if (_scrollController.hasClients && itemCount > 1) {
-        final estimatedOffset = _scrollController.position.maxScrollExtent *
-            _selectedIndex /
-            (itemCount - 1);
-        _scrollController
-            .animateTo(estimatedOffset,
-                duration: const Duration(milliseconds: 150),
-                curve: Curves.easeOut)
-            .then((_) {
-          final rowContext = _rowKeys[_selectedIndex]?.currentContext;
-          if (mounted && rowContext != null && rowContext.mounted) {
-            Scrollable.ensureVisible(rowContext,
-                duration: const Duration(milliseconds: 100), alignment: 0.5);
-          }
-        });
+        Scrollable.ensureVisible(rowContext, duration: const Duration(milliseconds: 150), alignment: 0.5);
+      } else if (_scrollController.hasClients && recordings.length > 1) {
+        final index = recordings.indexWhere((r) => r.id == _selectedRecordingId);
+        final estimatedOffset = _scrollController.position.maxScrollExtent * index / (recordings.length - 1);
+        _scrollController.animateTo(estimatedOffset, duration: const Duration(milliseconds: 150), curve: Curves.easeOut);
       }
     });
   }
 
-  void _selectEnd(int itemCount) {
-    if (itemCount == 0) return;
-    setState(() => _selectedIndex = itemCount - 1);
+  void _selectEnd(List<RecordingInfo> recordings) {
+    if (recordings.isEmpty) return;
+    setState(() => _selectedRecordingId = recordings.last.id);
     _scrollDown();
   }
 
-  void _selectHome() {
-    setState(() => _selectedIndex = 0);
+  void _selectHome(List<RecordingInfo> recordings) {
+    if (recordings.isEmpty) return;
+    setState(() => _selectedRecordingId = recordings.first.id);
     _scrollUp();
   }
 
-  void _openSelected(
-      BuildContext context, AsyncValue<List<RecordingInfo>> mediaList) {
+  void _openSelected(BuildContext context, AsyncValue<List<RecordingInfo>> mediaList) {
     if (!mediaList.hasValue || mediaList.requireValue.isEmpty) return;
-    final index = _selectedIndex.clamp(0, mediaList.requireValue.length - 1);
-    final item = mediaList.requireValue[index];
-    Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id),
-        arguments: item.id);
+    final selected = mediaList.requireValue.where((r) => r.id == _selectedRecordingId);
+    if (selected.isEmpty) return;
+    final item = selected.first;
+    Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);
   }
 
   @override
@@ -221,9 +218,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     String usageInfo = "";
     if (tenant.hasValue) {
       final t = tenant.requireValue;
-      final storeStr = t.storeUsage > 0
-          ? " 🏠${t.localUsageStr()}/☁️${t.storeUsageStr()} "
-          : "";
+      final storeStr = t.storeUsage > 0 ? " 🏠${t.localUsageStr()}/☁️${t.storeUsageStr()} " : "";
 
       usageInfo = AppLocalizations.of(context)!.quotaUsageInfo(
         t.quotaStr(),
@@ -241,273 +236,196 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         SingleActivator(LogicalKeyboardKey.home): NavigateHomeIntent(),
         SingleActivator(LogicalKeyboardKey.end): NavigateEndIntent(),
         if (isDesktopKeyboardPlatform) ...{
-          SingleActivator(LogicalKeyboardKey.arrowUp): SelectPreviousIntent(),
-          SingleActivator(LogicalKeyboardKey.arrowDown): SelectNextIntent(),
-          SingleActivator(LogicalKeyboardKey.keyK): SelectPreviousIntent(),
-          SingleActivator(LogicalKeyboardKey.keyJ): SelectNextIntent(),
-          SingleActivator(LogicalKeyboardKey.enter): OpenSelectedIntent(),
-          SingleActivator(LogicalKeyboardKey.numpadEnter): OpenSelectedIntent(),
-          SingleActivator(LogicalKeyboardKey.equal, shift: true):
-              AddMediaIntent(),
+          SingleActivator(LogicalKeyboardKey.arrowUp, includeRepeats: false): SelectPreviousIntent(),
+          SingleActivator(LogicalKeyboardKey.arrowDown, includeRepeats: false): SelectNextIntent(),
+          SingleActivator(LogicalKeyboardKey.keyK, includeRepeats: false): SelectPreviousIntent(),
+          SingleActivator(LogicalKeyboardKey.keyJ, includeRepeats: false): SelectNextIntent(),
+          SingleActivator(LogicalKeyboardKey.enter, includeRepeats: false): OpenSelectedIntent(),
+          SingleActivator(LogicalKeyboardKey.numpadEnter, includeRepeats: false): OpenSelectedIntent(),
+          const CharacterActivator('+'): AddMediaIntent(),
           SingleActivator(LogicalKeyboardKey.add): AddMediaIntent(),
           SingleActivator(LogicalKeyboardKey.insert): PasteMediaIntent(),
-          SingleActivator(LogicalKeyboardKey.comma, control: true):
-              OpenSettingsIntent(),
+          SingleActivator(LogicalKeyboardKey.keyV, control: true): PasteMediaIntent(),
+          if (isMacKeyboardPlatform) SingleActivator(LogicalKeyboardKey.keyV, meta: true): PasteMediaIntent(),
+          if (isMacKeyboardPlatform) SingleActivator(LogicalKeyboardKey.comma, meta: true): OpenSettingsIntent(),
+          if (!isMacKeyboardPlatform) SingleActivator(LogicalKeyboardKey.comma, control: true): OpenSettingsIntent(),
+          SingleActivator(LogicalKeyboardKey.escape, includeRepeats: false): FocusMediaListIntent(),
         },
       },
+      ignoreWhenActivateFocused: const {OpenSelectedIntent},
+      allowedWhenTextInputFocused: const {FocusMediaListIntent},
       actions: <Type, Action<Intent>>{
         RefreshIntent: CallbackAction<RefreshIntent>(
           onInvoke: (intent) {
-            if (!isTextInputFocused()) _refreshList();
+            _refreshList();
             return null;
           },
         ),
         NavigateHomeIntent: CallbackAction<NavigateHomeIntent>(
           onInvoke: (intent) {
-            if (!isTextInputFocused()) _selectHome();
+            _selectHome(mediaList.valueOrNull ?? const []);
             return null;
           },
         ),
         NavigateEndIntent: CallbackAction<NavigateEndIntent>(
           onInvoke: (intent) {
-            if (!isTextInputFocused()) {
-              _selectEnd(mediaList.valueOrNull?.length ?? 0);
-            }
+            _selectEnd(mediaList.valueOrNull ?? const []);
             return null;
           },
         ),
-        SelectPreviousIntent:
-            CallbackAction<SelectPreviousIntent>(onInvoke: (_) {
-          if (!isTextInputFocused()) {
-            _moveSelection(-1, mediaList.valueOrNull?.length ?? 0);
-          }
+        SelectPreviousIntent: CallbackAction<SelectPreviousIntent>(onInvoke: (_) {
+          _moveSelection(-1, mediaList.valueOrNull ?? const []);
           return null;
         }),
         SelectNextIntent: CallbackAction<SelectNextIntent>(onInvoke: (_) {
-          if (!isTextInputFocused()) {
-            _moveSelection(1, mediaList.valueOrNull?.length ?? 0);
-          }
+          _moveSelection(1, mediaList.valueOrNull ?? const []);
           return null;
         }),
         OpenSelectedIntent: CallbackAction<OpenSelectedIntent>(onInvoke: (_) {
-          if (!isTextInputFocused()) _openSelected(context, mediaList);
+          _openSelected(context, mediaList);
           return null;
         }),
         AddMediaIntent: CallbackAction<AddMediaIntent>(onInvoke: (_) {
-          if (!isTextInputFocused()) {
-            Navigator.restorablePushNamed(
-                context, MediaAddView.routeName(false));
-          }
+          Navigator.restorablePushNamed(context, MediaAddView.routeName(false));
           return null;
         }),
         PasteMediaIntent: CallbackAction<PasteMediaIntent>(onInvoke: (_) {
-          if (!isTextInputFocused()) {
-            Navigator.restorablePushNamed(
-                context, MediaAddView.routeName(true));
-          }
+          Navigator.restorablePushNamed(context, MediaAddView.routeName(true));
           return null;
         }),
         OpenSettingsIntent: CallbackAction<OpenSettingsIntent>(onInvoke: (_) {
-          if (!isTextInputFocused()) {
-            Navigator.restorablePushNamed(context, SettingsView.routeName);
-          }
+          Navigator.restorablePushNamed(context, SettingsView.routeName);
+          return null;
+        }),
+        FocusMediaListIntent: CallbackAction<FocusMediaListIntent>(onInvoke: (_) {
+          _screenFocusNode.requestFocus();
           return null;
         }),
       },
       help: [
-        ShortcutHelpEntry(
-            '↑ / k', AppLocalizations.of(context)!.selectPreviousRecording),
-        ShortcutHelpEntry(
-            '↓ / j', AppLocalizations.of(context)!.selectNextRecording),
-        ShortcutHelpEntry(
-            'Enter', AppLocalizations.of(context)!.openSelectedRecording),
+        ShortcutHelpEntry('↑ / k', AppLocalizations.of(context)!.selectPreviousRecording),
+        ShortcutHelpEntry('↓ / j', AppLocalizations.of(context)!.selectNextRecording),
+        ShortcutHelpEntry('Enter', AppLocalizations.of(context)!.openSelectedRecording),
         ShortcutHelpEntry('+', AppLocalizations.of(context)!.addArbitraryMedia),
-        ShortcutHelpEntry(
-            'Insert', AppLocalizations.of(context)!.addFromClipboard),
+        ShortcutHelpEntry('Insert', AppLocalizations.of(context)!.addFromClipboard),
         ShortcutHelpEntry('r / F5', AppLocalizations.of(context)!.refreshList),
-        ShortcutHelpEntry('Home / End', AppLocalizations.of(context)!.scrollUp),
-        ShortcutHelpEntry('Ctrl+,', AppLocalizations.of(context)!.settings),
+        ShortcutHelpEntry('Home / End', AppLocalizations.of(context)!.selectFirstLastRecording),
+        ShortcutHelpEntry('Insert / Ctrl+V', AppLocalizations.of(context)!.addFromClipboard),
+        ShortcutHelpEntry(isMacKeyboardPlatform ? 'Cmd+,' : 'Ctrl+,', AppLocalizations.of(context)!.settings),
       ],
       child: Focus(
-        child: SafeArea(
-          top: false,
-          child: Scaffold(
-            appBar: AppBar(
-              title: AnimatedSearchBar(
-                label: AppLocalizations.of(context)!.search,
-                controller: _searchController,
-                labelAlignment: Alignment.centerLeft,
-                searchStyle:
-                    TextStyle(color: Theme.of(context).colorScheme.onSurface),
-                cursorColor: Theme.of(context).colorScheme.primary,
-                onChanged: (String value) {
-                  ref
-                      .read(searchPhraseNotifierProvider.notifier)
-                      .setPhrase(value);
-                },
+        focusNode: _screenFocusNode,
+        autofocus: true,
+        onKeyEvent: (_, event) {
+          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape && isTextInputFocused()) {
+            _screenFocusNode.requestFocus();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: Listener(
+          onPointerDown: _focusScreenWhenPointerLeavesSearch,
+          child: SafeArea(
+            top: false,
+            child: Scaffold(
+              appBar: AppBar(
+                title: AnimatedSearchBar(
+                  label: AppLocalizations.of(context)!.search,
+                  controller: _searchController,
+                  labelAlignment: Alignment.centerLeft,
+                  onClose: _screenFocusNode.requestFocus,
+                  searchStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                  cursorColor: Theme.of(context).colorScheme.primary,
+                  onChanged: (String value) {
+                    ref.read(searchPhraseNotifierProvider.notifier).setPhrase(value);
+                  },
+                ),
+                actions: [
+                  IconButton(icon: const Icon(Icons.refresh), tooltip: AppLocalizations.of(context)!.refreshList, onPressed: _refreshList),
+                  PopupMenuButton(
+                      tooltip: AppLocalizations.of(context)!.moreOptions,
+                      icon: const Icon(Icons.more_vert),
+                      onSelected: (String choice) {
+                        switch (choice) {
+                          case "seen":
+                            ref.read(settingsNotifierProvider.notifier).toggleShowSeen();
+                          case "hidden":
+                            ref.read(settingsNotifierProvider.notifier).toggleShowHidden();
+                          case "sort_by_created_at":
+                            ref.read(settingsNotifierProvider.notifier).updateSortBy("created_at");
+                          case "sort_by_updated_at":
+                            ref.read(settingsNotifierProvider.notifier).updateSortBy("updated_at");
+                          case "with_server_file":
+                            ref.read(settingsNotifierProvider.notifier).toggleWithServerFile();
+                          case "with_local_file":
+                            ref.read(settingsNotifierProvider.notifier).toggleWithLocalFile();
+                        }
+                      },
+                      itemBuilder: (BuildContext context) {
+                        var menuItems = <PopupMenuItem<String>>[];
+                        menuItems.add(PopupMenuItem<String>(
+                            value: "seen",
+                            child: Row(children: [
+                              Icon(settings.requireValue.showSeen ? Icons.check : null, color: primary),
+                              Flexible(child: Text(AppLocalizations.of(context)!.showSeen, style: TextStyle(color: primary)))
+                            ])));
+                        menuItems.add(PopupMenuItem<String>(
+                            value: "hidden",
+                            child: Row(children: [
+                              Icon(settings.requireValue.showHidden ? Icons.check : null, color: primary),
+                              Flexible(child: Text(AppLocalizations.of(context)!.showHidden, style: TextStyle(color: primary)))
+                            ])));
+                        menuItems.add(PopupMenuItem<String>(
+                            value: "sort_by_created_at",
+                            child: Row(children: [
+                              Icon(settings.requireValue.sortBy == "created_at" ? Icons.check : null, color: primary),
+                              Flexible(child: Text(AppLocalizations.of(context)!.sortByCreated, style: TextStyle(color: primary)))
+                            ])));
+                        menuItems.add(PopupMenuItem<String>(
+                            value: "sort_by_updated_at",
+                            child: Row(children: [
+                              Icon(settings.requireValue.sortBy == "updated_at" ? Icons.check : null, color: primary),
+                              Flexible(child: Text(AppLocalizations.of(context)!.sortByUpdated, style: TextStyle(color: primary)))
+                            ])));
+                        menuItems.add(PopupMenuItem<String>(
+                            value: "with_server_file",
+                            child: Row(children: [
+                              Icon(settings.requireValue.withServerFile ? Icons.flag_circle_outlined : null, color: primary),
+                              Flexible(child: Text(AppLocalizations.of(context)!.showOnlyWithServerFile, style: TextStyle(color: primary)))
+                            ])));
+                        menuItems.add(PopupMenuItem<String>(
+                            value: "with_local_file",
+                            child: Row(children: [
+                              Icon(settings.requireValue.withLocalFile ? Icons.download_done : null, color: primary),
+                              Flexible(child: Text(AppLocalizations.of(context)!.showOnlyWithLocalFile, style: TextStyle(color: primary)))
+                            ])));
+                        return menuItems;
+                      }),
+                  IconButton(icon: const Icon(Icons.settings), tooltip: AppLocalizations.of(context)!.settings, onPressed: () => Navigator.restorablePushNamed(context, SettingsView.routeName)),
+                ],
               ),
-              actions: [
-                IconButton(
-                    icon: const Icon(Icons.refresh),
-                    tooltip: AppLocalizations.of(context)!.refreshList,
-                    onPressed: _refreshList),
-                PopupMenuButton(
-                    tooltip: AppLocalizations.of(context)!.moreOptions,
-                    icon: const Icon(Icons.more_vert),
-                    onSelected: (String choice) {
-                      switch (choice) {
-                        case "seen":
-                          ref
-                              .read(settingsNotifierProvider.notifier)
-                              .toggleShowSeen();
-                        case "hidden":
-                          ref
-                              .read(settingsNotifierProvider.notifier)
-                              .toggleShowHidden();
-                        case "sort_by_created_at":
-                          ref
-                              .read(settingsNotifierProvider.notifier)
-                              .updateSortBy("created_at");
-                        case "sort_by_updated_at":
-                          ref
-                              .read(settingsNotifierProvider.notifier)
-                              .updateSortBy("updated_at");
-                        case "with_server_file":
-                          ref
-                              .read(settingsNotifierProvider.notifier)
-                              .toggleWithServerFile();
-                        case "with_local_file":
-                          ref
-                              .read(settingsNotifierProvider.notifier)
-                              .toggleWithLocalFile();
-                      }
-                    },
-                    itemBuilder: (BuildContext context) {
-                      var menuItems = <PopupMenuItem<String>>[];
-                      menuItems.add(PopupMenuItem<String>(
-                          value: "seen",
-                          child: Row(children: [
-                            Icon(
-                                settings.requireValue.showSeen
-                                    ? Icons.check
-                                    : null,
-                                color: primary),
-                            Flexible(
-                                child: Text(
-                                    AppLocalizations.of(context)!.showSeen,
-                                    style: TextStyle(color: primary)))
-                          ])));
-                      menuItems.add(PopupMenuItem<String>(
-                          value: "hidden",
-                          child: Row(children: [
-                            Icon(
-                                settings.requireValue.showHidden
-                                    ? Icons.check
-                                    : null,
-                                color: primary),
-                            Flexible(
-                                child: Text(
-                                    AppLocalizations.of(context)!.showHidden,
-                                    style: TextStyle(color: primary)))
-                          ])));
-                      menuItems.add(PopupMenuItem<String>(
-                          value: "sort_by_created_at",
-                          child: Row(children: [
-                            Icon(
-                                settings.requireValue.sortBy == "created_at"
-                                    ? Icons.check
-                                    : null,
-                                color: primary),
-                            Flexible(
-                                child: Text(
-                                    AppLocalizations.of(context)!.sortByCreated,
-                                    style: TextStyle(color: primary)))
-                          ])));
-                      menuItems.add(PopupMenuItem<String>(
-                          value: "sort_by_updated_at",
-                          child: Row(children: [
-                            Icon(
-                                settings.requireValue.sortBy == "updated_at"
-                                    ? Icons.check
-                                    : null,
-                                color: primary),
-                            Flexible(
-                                child: Text(
-                                    AppLocalizations.of(context)!.sortByUpdated,
-                                    style: TextStyle(color: primary)))
-                          ])));
-                      menuItems.add(PopupMenuItem<String>(
-                          value: "with_server_file",
-                          child: Row(children: [
-                            Icon(
-                                settings.requireValue.withServerFile
-                                    ? Icons.flag_circle_outlined
-                                    : null,
-                                color: primary),
-                            Flexible(
-                                child: Text(
-                                    AppLocalizations.of(context)!
-                                        .showOnlyWithServerFile,
-                                    style: TextStyle(color: primary)))
-                          ])));
-                      menuItems.add(PopupMenuItem<String>(
-                          value: "with_local_file",
-                          child: Row(children: [
-                            Icon(
-                                settings.requireValue.withLocalFile
-                                    ? Icons.download_done
-                                    : null,
-                                color: primary),
-                            Flexible(
-                                child: Text(
-                                    AppLocalizations.of(context)!
-                                        .showOnlyWithLocalFile,
-                                    style: TextStyle(color: primary)))
-                          ])));
-                      return menuItems;
-                    }),
-                IconButton(
-                    icon: const Icon(Icons.settings),
-                    tooltip: AppLocalizations.of(context)!.settings,
-                    onPressed: () => Navigator.restorablePushNamed(
-                        context, SettingsView.routeName)),
-              ],
-            ),
-            floatingActionButton: Wrap(
-              spacing: 8.0,
-              children: [
-                FloatingActionButton.small(
-                    heroTag: "add_media",
-                    tooltip: AppLocalizations.of(context)!.addArbitraryMedia,
-                    onPressed: () => Navigator.restorablePushNamed(
-                        context, MediaAddView.routeName(false)),
-                    child: const Icon(Icons.add)),
-                FloatingActionButton.small(
-                    heroTag: "add_from_clipboard",
-                    tooltip: AppLocalizations.of(context)!.addFromClipboard,
-                    onPressed: () => Navigator.restorablePushNamed(
-                        context, MediaAddView.routeName(true)),
-                    child: const Icon(Icons.content_paste_go_rounded)),
-                FloatingActionButton.small(
-                    heroTag: "scroll_up",
-                    tooltip: AppLocalizations.of(context)!.scrollUp,
-                    onPressed: _scrollUp,
-                    child: const Icon(Icons.arrow_upward)),
-                FloatingActionButton.small(
-                    heroTag: "scroll_down",
-                    tooltip: AppLocalizations.of(context)!.scrollDown,
-                    onPressed: _scrollDown,
-                    child: const Icon(Icons.arrow_downward)),
-              ],
-            ),
-            bottomNavigationBar:
-                SafeArea(child: Text(usageInfo, textAlign: TextAlign.center)),
-            body: RefreshIndicator(
-              onRefresh: _refreshList,
-              child: Stack(children: [
-                if (mediaList.isLoading) const LinearProgressIndicator(),
-                _buildRecordingsList(context, mediaList)
-              ]),
+              floatingActionButton: Wrap(
+                spacing: 8.0,
+                children: [
+                  FloatingActionButton.small(
+                      heroTag: "add_media",
+                      tooltip: AppLocalizations.of(context)!.addArbitraryMedia,
+                      onPressed: () => Navigator.restorablePushNamed(context, MediaAddView.routeName(false)),
+                      child: const Icon(Icons.add)),
+                  FloatingActionButton.small(
+                      heroTag: "add_from_clipboard",
+                      tooltip: AppLocalizations.of(context)!.addFromClipboard,
+                      onPressed: () => Navigator.restorablePushNamed(context, MediaAddView.routeName(true)),
+                      child: const Icon(Icons.content_paste_go_rounded)),
+                  FloatingActionButton.small(heroTag: "scroll_up", tooltip: AppLocalizations.of(context)!.scrollUp, onPressed: _scrollUp, child: const Icon(Icons.arrow_upward)),
+                  FloatingActionButton.small(heroTag: "scroll_down", tooltip: AppLocalizations.of(context)!.scrollDown, onPressed: _scrollDown, child: const Icon(Icons.arrow_downward)),
+                ],
+              ),
+              bottomNavigationBar: SafeArea(child: Text(usageInfo, textAlign: TextAlign.center)),
+              body: RefreshIndicator(
+                onRefresh: _refreshList,
+                child: Stack(children: [if (mediaList.isLoading) const LinearProgressIndicator(), _buildRecordingsList(context, mediaList)]),
+              ),
             ),
           ),
         ),
@@ -515,28 +433,23 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     );
   }
 
-  Widget _buildRecordingsList(
-      BuildContext context, AsyncValue<List<RecordingInfo>> mediaList) {
+  Widget _buildRecordingsList(BuildContext context, AsyncValue<List<RecordingInfo>> mediaList) {
     final setting = ref.watch(settingsNotifierProvider);
 
     if (mediaList.hasError) {
-      return ErrorWidget(mediaListErrorMessage(
-          AppLocalizations.of(context)!, mediaList.error));
+      return ErrorWidget(mediaListErrorMessage(AppLocalizations.of(context)!, mediaList.error));
     }
 
     if (!mediaList.hasValue) {
-      return Center(
-          child: Text(AppLocalizations.of(context)!.loadingInProgress));
+      return Center(child: Text(AppLocalizations.of(context)!.loadingInProgress));
     }
 
     if (mediaList.requireValue.isEmpty) {
-      return Center(
-          child: Text(AppLocalizations.of(context)!.noRecordingsCheckFilters));
+      return Center(child: Text(AppLocalizations.of(context)!.noRecordingsCheckFilters));
     }
 
-    if (_selectedIndex >= mediaList.requireValue.length) {
-      _selectedIndex = mediaList.requireValue.length - 1;
-    }
+    final visibleIds = mediaList.requireValue.map((recording) => recording.id).toSet();
+    _rowKeys.removeWhere((id, _) => !visibleIds.contains(id));
 
     return ListView.builder(
       controller: _scrollController,
@@ -544,15 +457,14 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
       itemCount: mediaList.requireValue.length,
       itemBuilder: (BuildContext context, int index) {
         var item = mediaList.requireValue[index];
+        final selected = isDesktopKeyboardPlatform && item.id == _selectedRecordingId;
         var dur = Duration(seconds: item.duration);
         var opacity = item.seenAt == null ? 1.0 : 0.5;
         if (item.hiddenAt != null) {
           opacity = 0.25;
         }
         // final TextStyle? textStyle = item.hiddenAt != null ? const TextStyle(decoration: TextDecoration.lineThrough) : null;
-        var viewedSrt = item.position == 0
-            ? ""
-            : " (${formatDuration(Duration(seconds: item.position))})";
+        var viewedSrt = item.position == 0 ? "" : " (${formatDuration(Duration(seconds: item.position))})";
 
         List<Widget> right = [];
 
@@ -574,27 +486,18 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
           if (item.hasFile) const Icon(Icons.flag_circle_outlined),
         ];
 
-        final dt = setting.requireValue.sortBy == "updated_at"
-            ? item.updatedAt
-            : item.createdAt;
+        final dt = setting.requireValue.sortBy == "updated_at" ? item.updatedAt : item.createdAt;
 
         // Use ColorFiltered or alpha in text styles instead of Opacity widget for better performance
-        final textColor = Theme.of(context)
-            .textTheme
-            .bodyMedium
-            ?.color
-            ?.withValues(alpha: opacity);
-        final subtitleColor = Theme.of(context)
-            .textTheme
-            .bodySmall
-            ?.color
-            ?.withValues(alpha: opacity);
+        final textColor = Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: opacity);
+        final subtitleColor = Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: opacity);
 
         return Column(
-          key: _rowKeys.putIfAbsent(index, GlobalKey.new),
+          key: _rowKeys.putIfAbsent(item.id, GlobalKey.new),
           children: [
             ListTile(
-              selected: index == _selectedIndex,
+              selected: selected,
+              selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
               leading: SizedBox(
                 width: 100, // alignment
                 child: Center(
@@ -611,7 +514,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
               ),
               title: Text(
                 "${item.title} ∙ ${formatDuration(dur)}$viewedSrt",
-                style: TextStyle(color: textColor),
+                style: TextStyle(color: selected ? Theme.of(context).colorScheme.primary : textColor),
               ),
               subtitle: Text(
                 "${item.uploader} ∙ ${item.extractor} • ${formatDate(dt)} (${since(dt, true, Localizations.localeOf(context).languageCode)})",
@@ -619,10 +522,9 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
               ),
               trailing: right.isEmpty ? null : Wrap(children: right),
               onTap: () {
-                setState(() => _selectedIndex = index);
-                Navigator.restorablePushNamed(
-                    context, MediaDetailsView.routeName(item.id),
-                    arguments: item.id);
+                _screenFocusNode.requestFocus();
+                setState(() => _selectedRecordingId = item.id);
+                Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);
               },
             ),
             LinearProgressIndicator(

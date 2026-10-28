@@ -1744,6 +1744,30 @@ abstract class AppLocalizations {
   /// **'Change volume by 5%'**
   String get changeVolumeByFivePercent;
 
+  /// No description provided for @selectFirstLastRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the first or last recording'**
+  String get selectFirstLastRecording;
+
+  /// No description provided for @goBackOrClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back or close this screen'**
+  String get goBackOrClose;
+
+  /// No description provided for @playOrPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Play or pause recording'**
+  String get playOrPause;
+
+  /// Confirmation naming the local media file to delete
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the local file {filename}?'**
+  String deleteLocalFileConfirmation(String filename);
+
   /// No description provided for @confirmWithEnter.
   ///
   /// In en, this message translates to:
@@ -1759,7 +1783,7 @@ abstract class AppLocalizations {
   /// No description provided for @showDialogShortcutHelp.
   ///
   /// In en, this message translates to:
-  /// **'Shift+/ — show dialog help'**
+  /// **'? — show dialog help'**
   String get showDialogShortcutHelp;
 }
 

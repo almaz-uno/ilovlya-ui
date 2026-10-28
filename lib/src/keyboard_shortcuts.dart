@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:universal_platform/universal_platform.dart';
 
@@ -19,6 +20,7 @@ class ScreenShortcuts extends StatelessWidget {
     required this.help,
     required this.child,
     this.allowedWhenTextInputFocused = const {},
+    this.ignoreWhenActivateFocused = const {},
     super.key,
   });
 
@@ -27,13 +29,7 @@ class ScreenShortcuts extends StatelessWidget {
   final List<ShortcutHelpEntry> help;
   final Widget child;
   final Set<Type> allowedWhenTextInputFocused;
-
-  bool get _textInputFocused {
-    final context = FocusManager.instance.primaryFocus?.context;
-    return context?.widget is EditableText ||
-        context?.findAncestorWidgetOfExactType<EditableText>() != null ||
-        context?.findAncestorWidgetOfExactType<TextField>() != null;
-  }
+  final Set<Type> ignoreWhenActivateFocused;
 
   @override
   Widget build(BuildContext context) {
@@ -42,27 +38,25 @@ class ScreenShortcuts extends StatelessWidget {
         entry.key: _TextInputGuardAction<Intent>(
           entry.value,
           allowWhenFocused: allowedWhenTextInputFocused.contains(entry.key),
+          ignoreWhenActivateFocused: ignoreWhenActivateFocused.contains(entry.key),
         ),
     };
     return Shortcuts(
       shortcuts: {
         ...shortcuts,
-        if (isDesktopKeyboardPlatform)
-          const SingleActivator(LogicalKeyboardKey.slash, shift: true):
-              const ShowShortcutHelpIntent(),
+        if (isDesktopKeyboardPlatform) const CharacterActivator('?'): const ShowShortcutHelpIntent(),
       },
       child: Actions(
         actions: {
           ...guardedActions,
           ShowShortcutHelpIntent: CallbackAction<ShowShortcutHelpIntent>(
             onInvoke: (_) {
-              if (_textInputFocused) return null;
+              if (isTextInputFocused()) return null;
               showDialog<void>(
                 context: context,
                 builder: (context) => DialogShortcuts(
                   child: AlertDialog(
-                    title:
-                        Text(AppLocalizations.of(context)!.keyboardShortcuts),
+                    title: Text(AppLocalizations.of(context)!.keyboardShortcuts),
                     content: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -71,32 +65,20 @@ class ScreenShortcuts extends StatelessWidget {
                             ListTile(
                               dense: true,
                               contentPadding: EdgeInsets.zero,
-                              leading: SizedBox(
-                                  width: 88,
-                                  child: Text(entry.keys,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold))),
+                              leading: SizedBox(width: 88, child: Text(entry.keys, style: const TextStyle(fontWeight: FontWeight.bold))),
                               title: Text(entry.description),
                             ),
                           ListTile(
                             dense: true,
                             contentPadding: EdgeInsets.zero,
-                            leading: const SizedBox(
-                                width: 88,
-                                child: Text("?",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold))),
-                            title: Text(
-                                AppLocalizations.of(context)!.showShortcutHelp),
+                            leading: const SizedBox(width: 88, child: Text("?", style: TextStyle(fontWeight: FontWeight.bold))),
+                            title: Text(AppLocalizations.of(context)!.showShortcutHelp),
                           ),
                         ],
                       ),
                     ),
                     actions: [
-                      TextButton(
-                          autofocus: true,
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: Text(AppLocalizations.of(context)!.cancel)),
+                      TextButton(autofocus: true, onPressed: () => Navigator.of(context).pop(), child: Text(AppLocalizations.of(context)!.cancel)),
                     ],
                   ),
                 ),
@@ -105,9 +87,7 @@ class ScreenShortcuts extends StatelessWidget {
             },
           ),
         },
-        child: isDesktopKeyboardPlatform
-            ? Focus(autofocus: true, child: child)
-            : child,
+        child: isDesktopKeyboardPlatform ? Focus(autofocus: true, child: child) : child,
       ),
     );
   }
@@ -118,22 +98,33 @@ class ShowShortcutHelpIntent extends Intent {
 }
 
 class _TextInputGuardAction<T extends Intent> extends Action<T> {
-  _TextInputGuardAction(this.delegate, {required this.allowWhenFocused});
+  _TextInputGuardAction(this.delegate, {required this.allowWhenFocused, required this.ignoreWhenActivateFocused});
 
   final Action<T> delegate;
   final bool allowWhenFocused;
+  final bool ignoreWhenActivateFocused;
+
+  bool get _activateTargetFocused {
+    final context = FocusManager.instance.primaryFocus?.context;
+    return context != null &&
+        (context.widget is ButtonStyleButton ||
+            context.widget is InkWell ||
+            context.widget is ListTile ||
+            context.findAncestorWidgetOfExactType<ButtonStyleButton>() != null ||
+            context.findAncestorWidgetOfExactType<InkWell>() != null ||
+            context.findAncestorWidgetOfExactType<ListTile>() != null ||
+            context.findAncestorWidgetOfExactType<FocusableActionDetector>() != null);
+  }
 
   @override
-  bool isEnabled(T intent) => delegate.isEnabled(intent);
+  bool isEnabled(T intent) => delegate.isEnabled(intent) && !(ignoreWhenActivateFocused && _activateTargetFocused) && (allowWhenFocused || !isTextInputFocused());
 
   @override
-  bool consumesKey(T intent) => (!allowWhenFocused && isTextInputFocused())
-      ? false
-      : delegate.consumesKey(intent);
+  bool consumesKey(T intent) => !isEnabled(intent) ? false : delegate.consumesKey(intent);
 
   @override
   Object? invoke(T intent) {
-    if (!allowWhenFocused && isTextInputFocused()) return null;
+    if (!isEnabled(intent)) return null;
     return delegate.invoke(intent);
   }
 }
@@ -148,11 +139,10 @@ class DialogShortcuts extends StatelessWidget {
     if (!isDesktopKeyboardPlatform) return child;
     return Shortcuts(
       shortcuts: const {
-        SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
-        SingleActivator(LogicalKeyboardKey.numpadEnter): ActivateIntent(),
-        SingleActivator(LogicalKeyboardKey.escape): CancelDialogIntent(),
-        SingleActivator(LogicalKeyboardKey.slash, shift: true):
-            ShowDialogShortcutHelpIntent(),
+        SingleActivator(LogicalKeyboardKey.enter, includeRepeats: false): ActivateIntent(),
+        SingleActivator(LogicalKeyboardKey.numpadEnter, includeRepeats: false): ActivateIntent(),
+        SingleActivator(LogicalKeyboardKey.escape, includeRepeats: false): CancelDialogIntent(),
+        CharacterActivator('?'): ShowDialogShortcutHelpIntent(),
       },
       child: Actions(
         actions: {
@@ -160,19 +150,14 @@ class DialogShortcuts extends StatelessWidget {
             Navigator.of(context).maybePop();
             return null;
           }),
-          ShowDialogShortcutHelpIntent:
-              CallbackAction<ShowDialogShortcutHelpIntent>(onInvoke: (_) {
+          ShowDialogShortcutHelpIntent: CallbackAction<ShowDialogShortcutHelpIntent>(onInvoke: (_) {
             showDialog<void>(
               context: context,
               builder: (context) => AlertDialog(
                 title: Text(AppLocalizations.of(context)!.keyboardShortcuts),
-                content: Text(
-                    '${AppLocalizations.of(context)!.confirmWithEnter}\n${AppLocalizations.of(context)!.cancelWithEscape}\n${AppLocalizations.of(context)!.showDialogShortcutHelp}'),
+                content: Text('${AppLocalizations.of(context)!.confirmWithEnter}\n${AppLocalizations.of(context)!.cancelWithEscape}\n${AppLocalizations.of(context)!.showDialogShortcutHelp}'),
                 actions: [
-                  TextButton(
-                      autofocus: true,
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(AppLocalizations.of(context)!.cancel)),
+                  TextButton(autofocus: true, onPressed: () => Navigator.of(context).pop(), child: Text(AppLocalizations.of(context)!.cancel)),
                 ],
               ),
             );
@@ -195,10 +180,9 @@ class ShowDialogShortcutHelpIntent extends Intent {
 
 bool isTextInputFocused() {
   final context = FocusManager.instance.primaryFocus?.context;
-  return context?.widget is EditableText ||
-      context?.findAncestorWidgetOfExactType<EditableText>() != null ||
-      context?.findAncestorWidgetOfExactType<TextField>() != null;
+  return context?.widget is EditableText || context?.findAncestorWidgetOfExactType<EditableText>() != null || context?.findAncestorWidgetOfExactType<TextField>() != null;
 }
 
-bool get isDesktopKeyboardPlatform =>
-    !UniversalPlatform.isAndroid && !UniversalPlatform.isIOS;
+bool get isDesktopKeyboardPlatform => !UniversalPlatform.isAndroid && !UniversalPlatform.isIOS;
+
+bool get isMacKeyboardPlatform => UniversalPlatform.isMacOS || (UniversalPlatform.isWeb && defaultTargetPlatform == TargetPlatform.macOS);

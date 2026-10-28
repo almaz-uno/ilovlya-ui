@@ -1386,7 +1386,17 @@
   "seekByMinute": "Перемотать на 1 минуту",
   "seekByFiveMinutes": "Перемотать на 5 минут",
   "changeVolumeByFivePercent": "Изменить громкость на 5%",
+  "selectFirstLastRecording": "Выбрать первую или последнюю запись",
+  "goBackOrClose": "Вернуться назад или закрыть экран",
+  "playOrPause": "Воспроизвести или приостановить запись",
+  "deleteLocalFileConfirmation": "Удалить локальный файл {filename}?",
+  "@deleteLocalFileConfirmation": {
+    "description": "Confirmation naming the local media file to delete",
+    "placeholders": {
+      "filename": { "type": "String" }
+    }
+  },
   "confirmWithEnter": "Enter — подтвердить",
   "cancelWithEscape": "Esc — отменить",
-  "showDialogShortcutHelp": "Shift+/ — показать справку по окну"
+  "showDialogShortcutHelp": "? — показать справку по окну"
 }

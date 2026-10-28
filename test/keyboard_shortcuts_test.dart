@@ -6,8 +6,7 @@ import 'package:ilovlya/src/media/intents.dart';
 import 'package:ilovlya/src/localization/app_localizations.dart';
 
 void main() {
-  testWidgets('list navigation keys work outside text fields and help opens',
-      (tester) async {
+  testWidgets('list navigation keys work outside text fields and help opens', (tester) async {
     var moves = 0;
     final controller = TextEditingController();
     await tester.pumpWidget(MaterialApp(
@@ -36,8 +35,9 @@ void main() {
     ));
 
     await tester.tap(find.byType(TextField));
-    await tester.sendKeyEvent(LogicalKeyboardKey.keyJ, character: 'j');
+    await tester.enterText(find.byType(TextField), 'j');
     await tester.pump();
+    expect(controller.text, 'j');
     expect(moves, 0);
 
     final listFocus = FocusNode(debugLabel: 'recordings list');
@@ -56,8 +56,7 @@ void main() {
             }),
           },
           help: const [ShortcutHelpEntry('j / ↓', 'Select next recording')],
-          child: Focus(
-              focusNode: listFocus, autofocus: true, child: const Text('List')),
+          child: Focus(focusNode: listFocus, autofocus: true, child: const Text('List')),
         ),
       ),
     ));
@@ -67,7 +66,7 @@ void main() {
     expect(moves, 1);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
-    await tester.sendKeyEvent(LogicalKeyboardKey.slash, character: '?');
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit7, character: '?');
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
     await tester.pumpAndSettle();
     expect(find.text('Keyboard shortcuts'), findsOneWidget);
@@ -109,15 +108,19 @@ void main() {
 
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
-    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit7, character: '?');
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
     await tester.pumpAndSettle();
-    expect(confirmations, 1);
+    expect(confirmations, 0);
+    expect(find.textContaining('Esc — cancel'), findsOneWidget);
 
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
-    expect(confirmations, 1);
+    expect(find.text('Confirm'), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(confirmations, 0);
     expect(find.text('Confirm'), findsNothing);
   });
 }

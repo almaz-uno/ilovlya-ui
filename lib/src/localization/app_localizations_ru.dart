@@ -1060,11 +1060,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get changeVolumeByFivePercent => 'Изменить громкость на 5%';
 
   @override
+  String get selectFirstLastRecording => 'Выбрать первую или последнюю запись';
+
+  @override
+  String get goBackOrClose => 'Вернуться назад или закрыть экран';
+
+  @override
+  String get playOrPause => 'Воспроизвести или приостановить запись';
+
+  @override
+  String deleteLocalFileConfirmation(String filename) {
+    return 'Удалить локальный файл $filename?';
+  }
+
+  @override
   String get confirmWithEnter => 'Enter — подтвердить';
 
   @override
   String get cancelWithEscape => 'Esc — отменить';
 
   @override
-  String get showDialogShortcutHelp => 'Shift+/ — показать справку по окну';
+  String get showDialogShortcutHelp => '? — показать справку по окну';
 }

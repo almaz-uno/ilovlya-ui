@@ -11,8 +11,7 @@ class TvQrScanView extends StatefulWidget {
   const TvQrScanView({super.key});
 
   static Future<String?> show(BuildContext context) {
-    return Navigator.of(context).push<String>(
-        MaterialPageRoute(builder: (context) => const TvQrScanView()));
+    return Navigator.of(context).push<String>(MaterialPageRoute(builder: (context) => const TvQrScanView()));
   }
 
   @override
@@ -61,10 +60,7 @@ class _TvQrScanViewState extends State<TvQrScanView> {
           return null;
         }),
       },
-      help: [
-        ShortcutHelpEntry(
-            'Esc / Backspace', AppLocalizations.of(context)!.cancel)
-      ],
+      help: [ShortcutHelpEntry('Esc / Backspace', AppLocalizations.of(context)!.cancel)],
       child: Scaffold(
         appBar: AppBar(title: Text(l10n.tvScanTitle)),
         body: Stack(
@@ -76,10 +72,7 @@ class _TvQrScanViewState extends State<TvQrScanView> {
               child: Text(
                 l10n.tvScanHint,
                 textAlign: TextAlign.center,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(color: Colors.white),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
               ),
             ),
           ],

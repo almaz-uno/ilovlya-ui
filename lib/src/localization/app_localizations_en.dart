@@ -1025,11 +1025,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get changeVolumeByFivePercent => 'Change volume by 5%';
 
   @override
+  String get selectFirstLastRecording => 'Select the first or last recording';
+
+  @override
+  String get goBackOrClose => 'Go back or close this screen';
+
+  @override
+  String get playOrPause => 'Play or pause recording';
+
+  @override
+  String deleteLocalFileConfirmation(String filename) {
+    return 'Delete the local file $filename?';
+  }
+
+  @override
   String get confirmWithEnter => 'Enter — confirm';
 
   @override
   String get cancelWithEscape => 'Esc — cancel';
 
   @override
-  String get showDialogShortcutHelp => 'Shift+/ — show dialog help';
+  String get showDialogShortcutHelp => '? — show dialog help';
 }

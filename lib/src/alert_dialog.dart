@@ -8,8 +8,7 @@ class BlurryDialog extends StatelessWidget {
   final String content;
   final VoidCallback _commitCallback;
 
-  const BlurryDialog(this.title, this.content, this._commitCallback,
-      {super.key});
+  const BlurryDialog(this.title, this.content, this._commitCallback, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,11 +20,12 @@ class BlurryDialog extends StatelessWidget {
           content: Text(content),
           actions: <Widget>[
             TextButton(
-              autofocus: isDesktopKeyboardPlatform,
+              autofocus: false,
               onPressed: _commitCallback,
               child: Text(AppLocalizations.of(context)!.continueButton),
             ),
             TextButton(
+              autofocus: isDesktopKeyboardPlatform,
               onPressed: () => Navigator.of(context).pop(),
               child: Text(AppLocalizations.of(context)!.cancel),
             ),
@@ -36,8 +36,7 @@ class BlurryDialog extends StatelessWidget {
   }
 }
 
-void confirmDialog(BuildContext context, String title, String message,
-    void Function() commitCallback) async {
+void confirmDialog(BuildContext context, String title, String message, void Function() commitCallback) async {
   showDialog(
     context: context,
     builder: (BuildContext context) {
