@@ -8,6 +8,7 @@ import '../api/api.dart';
 import '../api/api_riverpod.dart';
 import '../api/media_list_riverpod.dart';
 import '../localization/app_localizations.dart';
+import '../keyboard_shortcuts.dart';
 import '../model/url_info.dart';
 import '../utils/logger_provider.dart';
 import 'format.dart';
@@ -30,17 +31,43 @@ class MediaAddView extends ConsumerStatefulWidget {
 
 class _MediaAddViewState extends ConsumerState<MediaAddView> {
   final TextEditingController _urlController = TextEditingController();
+  final FocusNode _urlFocusNode = FocusNode(debugLabel: 'media URL');
+  Animation<double>? _routeAnimation;
 
   Future<URLInfo>? _futurePropositions;
   bool _isLoading = false;
   bool _isAdding = false;
+  bool _autoAddScheduled = false;
+
+  @override
+  void dispose() {
+    _routeAnimation?.removeStatusListener(_focusUrlAfterTransition);
+    _urlFocusNode.dispose();
+    _urlController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
     if (widget.forcePaste) {
       fromClipboard();
+    } else if (isDesktopKeyboardPlatform) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final animation = _routeAnimation = ModalRoute.of(context)?.animation;
+        _urlFocusNode.requestFocus();
+        if (animation != null && animation.status != AnimationStatus.completed && animation.status != AnimationStatus.dismissed) {
+          animation.addStatusListener(_focusUrlAfterTransition);
+        }
+      });
     }
+  }
+
+  void _focusUrlAfterTransition(AnimationStatus status) {
+    if (status != AnimationStatus.completed) return;
+    _routeAnimation?.removeStatusListener(_focusUrlAfterTransition);
+    if (mounted) _urlFocusNode.requestFocus();
   }
 
   void fromClipboard() async {
@@ -73,7 +100,32 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ScreenShortcuts(
+      shortcuts: isDesktopKeyboardPlatform
+          ? const {
+              SingleActivator(LogicalKeyboardKey.enter, includeRepeats: false): SubmitMediaIntent(),
+              SingleActivator(LogicalKeyboardKey.numpadEnter, includeRepeats: false): SubmitMediaIntent(),
+              SingleActivator(LogicalKeyboardKey.escape, includeRepeats: false): CancelMediaIntent(),
+            }
+          : const {},
+      allowedWhenTextInputFocused: const {SubmitMediaIntent, CancelMediaIntent},
+      ignoreWhenActivateFocused: const {SubmitMediaIntent},
+      actions: {
+        SubmitMediaIntent: CallbackAction<SubmitMediaIntent>(onInvoke: (_) {
+          final url = _urlController.text.trim();
+          if (url.isNotEmpty && !_isAdding) _addMedia(context, url, true);
+          return null;
+        }),
+        CancelMediaIntent: CallbackAction<CancelMediaIntent>(onInvoke: (_) {
+          Navigator.of(context).maybePop();
+          return null;
+        }),
+      },
+      help: [
+        ShortcutHelpEntry('Enter', AppLocalizations.of(context)!.submitMediaUrl),
+        ShortcutHelpEntry('Esc', AppLocalizations.of(context)!.cancel),
+      ],
+      child: Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.addNewMedia),
         actions: [
@@ -88,7 +140,9 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
         child: Column(
           children: [
             TextField(
-              controller: _urlController,
+                autofocus: isDesktopKeyboardPlatform,
+                focusNode: _urlFocusNode,
+                controller: _urlController,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 hintText: AppLocalizations.of(context)!.enterMediaUrl,
@@ -127,15 +181,14 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
           ],
         ),
       ),
+    ),
     );
   }
 
   void _addMedia(BuildContext context, String url, bool doBack) async {
-    if (!widget.forcePaste) {
-      setState(() {
-        _isAdding = true;
-      });
-    }
+    if (_isAdding) return;
+    final route = ModalRoute.of(context);
+    setState(() => _isAdding = true);
     // _futureMediaAdd = ; // the full information about media should be acquired anew
     ref.read(addRecordingProvider(url).future).then((value) {
       if (!mounted || !context.mounted) return;
@@ -148,18 +201,18 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
       showDialog(
           context: context,
           barrierDismissible: true,
-          builder: (BuildContext context) => Dialog(
+          builder: (BuildContext context) => DialogShortcuts(
+                child: Dialog(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(err.toString()),
-                ),
+                  child: Text(err.toString()))),
               ));
     }).whenComplete(() {
       if (!mounted || !context.mounted) return;
       setState(() {
         _isAdding = false;
       });
-      if (doBack) {
+      if (doBack && route?.isCurrent == true) {
         Navigator.pop(context);
       }
     });
@@ -172,7 +225,12 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
         if (snapshot.hasData) {
           if (snapshot.data!.infos != null && widget.forcePaste && snapshot.data!.infos!.length == 1) {
             var u = snapshot.data!.infos![0].webpageUrl;
-            _addMedia(context, u, true);
+            if (!_autoAddScheduled && !_isAdding) {
+              _autoAddScheduled = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && !_isAdding) _addMedia(context, u, true);
+              });
+            }
             return Column(
               children: [
                 Text(AppLocalizations.of(context)!.addingUrlWithVariable(u)),
@@ -221,4 +279,12 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
       },
     );
   }
+}
+
+class SubmitMediaIntent extends Intent {
+  const SubmitMediaIntent();
+}
+
+class CancelMediaIntent extends Intent {
+  const CancelMediaIntent();
 }

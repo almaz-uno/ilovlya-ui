@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../localization/app_localizations.dart';
+import '../keyboard_shortcuts.dart';
 import 'package:external_path/external_path.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -21,6 +22,7 @@ import '../api/downloads_riverpod.dart';
 import '../api/local_download_task_riverpod.dart';
 import '../api/directories_riverpod.dart';
 import '../api/recording_riverpod.dart';
+import '../api/recording_mutation_riverpod.dart';
 import '../model/download.dart';
 import '../model/local_download.dart';
 import '../model/recording_info.dart';
@@ -165,38 +167,42 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   void _toggleSeen(RecordingInfo recording) async {
+    if (settingSeen) return;
     try {
       setState(() {
         settingSeen = true;
       });
-      if (recording.seenAt == null) {
+      await runRecordingMutation(ref, recording.id, RecordingMutation.seen, () async {
+        if (recording.seenAt == null) {
         await ref.read(setSeenProvider(recording.id).future);
       } else {
         await ref.read(unsetSeenProvider(recording.id).future);
       }
+      if (!mounted) return;
       await _pullRefresh();
+    });
     } finally {
-      setState(() {
-        settingSeen = false;
-      });
+      if (mounted) setState(() => settingSeen = false);
     }
   }
 
   void _toggleHidden(RecordingInfo recording) async {
+    if (settingHidden) return;
     try {
       setState(() {
         settingHidden = true;
       });
-      if (recording.hiddenAt == null) {
+      await runRecordingMutation(ref, recording.id, RecordingMutation.hidden, () async {
+        if (recording.hiddenAt == null) {
         await ref.read(setHiddenProvider(recording.id).future);
       } else {
         await ref.read(unsetHiddenProvider(recording.id).future);
       }
+      if (!mounted) return;
       await _pullRefresh();
+    });
     } finally {
-      setState(() {
-        settingHidden = false;
-      });
+      if (mounted) setState(() => settingHidden = false);
     }
   }
 
@@ -310,7 +316,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   void _sendPosition(String recordingId, Duration position, bool autoFinished) {
-    if (ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)) == false) autoFinished = false;
+    if (!mounted) return;
+    if (ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)) == false) {
+      autoFinished = false;
+    }
     ref.read(putPositionProvider(recordingId, position, autoFinished));
   }
 
@@ -421,7 +430,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
+        return DialogShortcuts(child: StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Text(AppLocalizations.of(context)!.seekToPosition),
@@ -499,6 +508,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   child: Text(AppLocalizations.of(context)!.cancel),
                 ),
                 TextButton(
+                  autofocus: isDesktopKeyboardPlatform,
                   onPressed: () {
                     final targetPosition = Duration(hours: hours, minutes: minutes, seconds: seconds);
                     if (targetPosition <= maxDuration) {
@@ -515,7 +525,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               ],
             );
           },
-        );
+        ));
       },
     );
   }
@@ -543,15 +553,18 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Future<void> _pullRefresh() async {
+    if (!mounted) return;
     getMpvPlaybackPosition(_mpvSocketPath, (double? pos) {
       AppLoggers.player.d('MPV current position: $pos');
-      if (pos != null) _sendPosition(widget.id, Duration(seconds: pos.toInt()), false);
+      if (pos != null) {
+        _sendPosition(widget.id, Duration(seconds: pos.toInt()), false);
+      }
     });
     await ref.read(recordingNotifierProvider(widget.id).notifier).refreshFromServer();
-    await ref.read(downloadsNotifierProvider(widget.id).notifier).refreshFromServer();
-
-    // The refreshes above are async; the page may have been popped meanwhile.
     if (!mounted) return;
+    await ref.read(downloadsNotifierProvider(widget.id).notifier).refreshFromServer();
+    if (!mounted) return;
+
     // Reset local position after server refresh
     setState(() {
       _currentPosition = null;
@@ -785,17 +798,25 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     //     _shouldPlay = false;
     //   }
     // }
-    return Shortcuts(
-      shortcuts: const <ShortcutActivator, Intent>{
-        SingleActivator(LogicalKeyboardKey.backspace): BackIntent(),
-        SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
+    return ScreenShortcuts(
+      shortcuts: <ShortcutActivator, Intent>{
+        SingleActivator(LogicalKeyboardKey.backspace, includeRepeats: false): BackIntent(),
+        SingleActivator(LogicalKeyboardKey.escape, includeRepeats: false): BackIntent(),
         SingleActivator(LogicalKeyboardKey.keyR): RefreshIntent(),
         SingleActivator(LogicalKeyboardKey.f5): RefreshIntent(),
         SingleActivator(LogicalKeyboardKey.keyV): ToggleSeenIntent(),
         SingleActivator(LogicalKeyboardKey.keyH): ToggleHiddenIntent(),
+        if (isDesktopKeyboardPlatform) ...{
+          SingleActivator(LogicalKeyboardKey.enter, includeRepeats: false): PlayRecordingIntent(),
+          SingleActivator(LogicalKeyboardKey.space, includeRepeats: false): PlayRecordingIntent(),
+          SingleActivator(LogicalKeyboardKey.keyD, includeRepeats: false): DownloadRecordingIntent(),
+          SingleActivator(LogicalKeyboardKey.delete, includeRepeats: false): DeleteLocalRecordingIntent(),
+          SingleActivator(LogicalKeyboardKey.keyO): OpenInBrowserIntent(),
+          SingleActivator(LogicalKeyboardKey.keyC): CastRecordingIntent(),
+        },
       },
-      child: Actions(
-        actions: <Type, Action<Intent>>{
+      ignoreWhenActivateFocused: const {PlayRecordingIntent},
+      actions: <Type, Action<Intent>>{
           BackIntent: CallbackAction<BackIntent>(
             onInvoke: (BackIntent intent) {
               Navigator.of(context).pop(true);
@@ -824,9 +845,67 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               return null;
             },
           ),
-        },
-        child: Focus(
-          autofocus: true,
+        PlayRecordingIntent: CallbackAction<PlayRecordingIntent>(onInvoke: (_) {
+          if (recording.hasValue) {
+            final downloads = ref.read(downloadsNotifierProvider(widget.id));
+            if (downloads.hasValue) {
+              _play(context, recording.requireValue, downloads);
+            }
+          }
+          return null;
+        }),
+        DownloadRecordingIntent: CallbackAction<DownloadRecordingIntent>(onInvoke: (_) {
+          if (!UniversalPlatform.isWeb && recording.hasValue) {
+            final downloads = ref.read(downloadsNotifierProvider(widget.id));
+            if (downloads.hasValue && downloads.requireValue.isNotEmpty) {
+              final (_, ready, stale) = _findAppropriateDownloads(downloads.requireValue);
+              if (ready != null && ready.fullPathMedia == null) {
+                downloadFile(context, ready);
+              } else if (stale != null) {
+                _startPreparation(context, stale.formatId);
+              } else {
+                final fresh = downloads.requireValue.where((d) => d.status == 'new').toList();
+                if (fresh.isNotEmpty) _startPreparation(context, fresh.first.formatId);
+              }
+            }
+          }
+          return null;
+        }),
+        DeleteLocalRecordingIntent: CallbackAction<DeleteLocalRecordingIntent>(onInvoke: (_) {
+          if (recording.hasValue) {
+            final downloads = ref.read(downloadsNotifierProvider(widget.id));
+            if (downloads.hasValue) {
+              final localFiles = downloads.requireValue.where((d) => d.fullPathMedia != null).toList();
+              if (localFiles.isNotEmpty) {
+                _confirmLocalDownloadDelete(context, localFiles);
+              }
+            }
+          }
+          return null;
+        }),
+        OpenInBrowserIntent: CallbackAction<OpenInBrowserIntent>(onInvoke: (_) {
+          if (recording.hasValue) {
+            launchUrlString(recording.requireValue.webpageUrl);
+          }
+          return null;
+        }),
+        CastRecordingIntent: CallbackAction<CastRecordingIntent>(onInvoke: (_) {
+          if (recording.hasValue) {
+            _castToTv(recording.requireValue);
+          }
+          return null;
+        }),
+      },
+      help: [
+        ShortcutHelpEntry('Esc / Backspace', AppLocalizations.of(context)!.goBackOrClose),
+        ShortcutHelpEntry('Enter / Space', AppLocalizations.of(context)!.playOrPause),
+        ShortcutHelpEntry('d', AppLocalizations.of(context)!.downloadToLocalStorage),
+        ShortcutHelpEntry('Delete', AppLocalizations.of(context)!.deleteLocalFile),
+        ShortcutHelpEntry('o', AppLocalizations.of(context)!.openRecordingInBrowser),
+        ShortcutHelpEntry('c', AppLocalizations.of(context)!.tvCast),
+        ShortcutHelpEntry('r / F5', AppLocalizations.of(context)!.refreshRecord),
+        ShortcutHelpEntry('v / h', '${AppLocalizations.of(context)!.markAsSeen} / ${AppLocalizations.of(context)!.hideRecording}'),
+      ],
           child: Scaffold(
             appBar: AppBar(
               title: recording.hasValue ? Text(recording.requireValue.title) : Text(AppLocalizations.of(context)!.loadingInfo),
@@ -878,8 +957,6 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   child: _buildRecording(recording),
                 ),
               ],
-            ),
-          ),
         ),
       ),
     );
@@ -1206,6 +1283,46 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     );
   }
 
+  Future<void> _confirmLocalDownloadDelete(BuildContext context, List<Download> files) async {
+    final l10n = AppLocalizations.of(context)!;
+    Download? selected;
+    if (files.length == 1) {
+      selected = files.single;
+    } else {
+      selected = await showDialog<Download>(
+        context: context,
+        builder: (dialogContext) {
+          Download? choice;
+          return StatefulBuilder(
+            builder: (context, setDialogState) => DialogShortcuts(
+              child: AlertDialog(
+                title: Text(l10n.deleteLocalFile),
+                content: RadioGroup<Download>(
+                  groupValue: choice,
+                  onChanged: (value) => setDialogState(() => choice = value),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [for (final file in files) RadioListTile<Download>(value: file, title: Text(file.filename))],
+                  ),
+                ),
+                actions: [
+                  TextButton(autofocus: isDesktopKeyboardPlatform, onPressed: () => Navigator.pop(dialogContext), child: Text(l10n.cancel)),
+                  TextButton(onPressed: choice == null ? null : () => Navigator.pop(dialogContext, choice), child: Text(l10n.continueButton)),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
+    if (selected == null || !context.mounted) return;
+
+    confirmDialog(context, l10n.areYouSure, l10n.deleteLocalFileConfirmation(selected.filename), () {
+      ref.read(downloadsNotifierProvider(widget.id).notifier).clean(selected!.id);
+      Navigator.of(context).pop();
+    });
+  }
+
   Future<void> _startPreparation(BuildContext context, String format) async {
     ref.read(newDownloadProvider(widget.id, format).future).then((d) {
       if (!context.mounted) return;
@@ -1217,12 +1334,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       showDialog(
           context: context,
           barrierDismissible: true,
-          builder: (BuildContext context) => Dialog(
+          builder: (BuildContext context) => DialogShortcuts(child: Dialog(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(err.toString()),
-                ),
-              ));
+                  child: Text(err.toString())))));
     });
   }
 
@@ -1574,7 +1689,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     // A paused playback download yields to the explicit one: two downloaders do not share a partial file. An active one
     // is caught by the guard below and shows its progress instead.
     final playback = ref.read(playbackDownloadsProvider.notifier);
-    if (playback.owns(download.id) && !playback.isActive(download.id)) await playback.discard(download.id);
+    if (playback.owns(download.id) && !playback.isActive(download.id)) {
+      await playback.discard(download.id);
+    }
 
     // Check if download is not already in progress
     final task = ref.read(localDTNotifierProvider.select((tasks) => tasks[download.id]));

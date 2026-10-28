@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ilovlya/src/localization/app_localizations.dart';
+import 'package:ilovlya/src/keyboard_shortcuts.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import 'tv_api.dart';
@@ -76,7 +77,8 @@ class _TvPairingViewState extends ConsumerState<TvPairingView> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return AlertDialog(
+    return DialogShortcuts(
+        child: AlertDialog(
       // The keyboard leaves little height on a phone: the content scrolls
       // instead of running under the buttons.
       scrollable: true,
@@ -117,6 +119,6 @@ class _TvPairingViewState extends ConsumerState<TvPairingView> {
         TextButton(onPressed: _pairing ? null : () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
         FilledButton(onPressed: _pairing ? null : () => _pair(_controller.text), child: Text(l10n.tvPairConnect)),
       ],
-    );
+    ));
   }
 }

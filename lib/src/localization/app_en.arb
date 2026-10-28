@@ -1477,5 +1477,32 @@
         "type": "String"
       }
     }
-  }
+  },
+  "keyboardShortcuts": "Keyboard shortcuts",
+  "@keyboardShortcuts": { "description": "Title of the screen shortcuts help dialog" },
+  "showShortcutHelp": "Show this help",
+  "@showShortcutHelp": { "description": "Help entry for opening the keyboard shortcuts dialog" },
+  "selectPreviousRecording": "Select previous recording",
+  "selectNextRecording": "Select next recording",
+  "openSelectedRecording": "Open selected recording",
+  "openRecordingInBrowser": "Open recording in browser",
+  "submitMediaUrl": "Add media from the entered URL",
+  "seekByTenSeconds": "Seek by 10 seconds",
+  "seekByThirtySeconds": "Seek by 30 seconds",
+  "seekByMinute": "Seek by 1 minute",
+  "seekByFiveMinutes": "Seek by 5 minutes",
+  "changeVolumeByFivePercent": "Change volume by 5%",
+  "selectFirstLastRecording": "Select the first or last recording",
+  "goBackOrClose": "Go back or close this screen",
+  "playOrPause": "Play or pause recording",
+  "deleteLocalFileConfirmation": "Delete the local file {filename}?",
+  "@deleteLocalFileConfirmation": {
+    "description": "Confirmation naming the local media file to delete",
+    "placeholders": {
+      "filename": { "type": "String" }
+    }
+  },
+  "confirmWithEnter": "Enter — confirm",
+  "cancelWithEscape": "Esc — cancel",
+  "showDialogShortcutHelp": "? — show dialog help"
 }

@@ -11,8 +11,10 @@ import '../api/api_riverpod.dart';
 import '../api/exceptions.dart';
 import '../api/local_download_task_riverpod.dart';
 import '../api/media_list_riverpod.dart';
+import '../api/recording_mutation_riverpod.dart';
 import '../api/thumbnail_riverpod.dart';
 import '../localization/app_localizations.dart';
+import '../keyboard_shortcuts.dart';
 import '../model/recording_info.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_view.dart';
@@ -96,6 +98,10 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   StreamSubscription? _updatePullSubs;
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _screenFocusNode = FocusNode(debugLabel: 'recordings list');
+  String? _selectedRecordingId;
+  final Map<String, GlobalKey> _rowKeys = {};
+  final Map<String, FocusNode> _rowFocusNodes = {};
 
   static const _updatePullPeriod = Duration(seconds: 30);
 
@@ -132,7 +138,30 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     super.deactivate();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _screenFocusNode.dispose();
+    for (final node in _rowFocusNodes.values) {
+      node.dispose();
+    }
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _focusScreenWhenPointerLeavesSearch(PointerDownEvent event) {
+    final focusedContext = FocusManager.instance.primaryFocus?.context;
+    if (focusedContext == null || !isTextInputFocused()) return;
+    final renderObject = focusedContext.findRenderObject();
+    if (renderObject is RenderBox && renderObject.hasSize) {
+      final rect = renderObject.localToGlobal(Offset.zero) & renderObject.size;
+      if (rect.contains(event.position)) return;
+    }
+    _screenFocusNode.requestFocus();
+  }
+
   void _scrollDown() {
+    if (!_scrollController.hasClients) return;
     _scrollController.animateTo(
       _scrollController.position.maxScrollExtent,
       duration: const Duration(seconds: 2),
@@ -141,11 +170,56 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   }
 
   void _scrollUp() {
+    if (!_scrollController.hasClients) return;
     _scrollController.animateTo(
       _scrollController.position.minScrollExtent,
       duration: const Duration(seconds: 2),
       curve: Curves.fastOutSlowIn,
     );
+  }
+
+  void _selectRecording(String recordingId, List<RecordingInfo> recordings) {
+    if (_selectedRecordingId != recordingId) {
+      setState(() => _selectedRecordingId = recordingId);
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final rowContext = _rowKeys[recordingId]?.currentContext;
+      if (rowContext != null) {
+        Scrollable.ensureVisible(rowContext, duration: const Duration(milliseconds: 150), alignment: 0.5);
+        _rowFocusNodes[recordingId]?.requestFocus();
+      } else if (_scrollController.hasClients && recordings.length > 1) {
+        final index = recordings.indexWhere((r) => r.id == recordingId);
+        final estimatedOffset = _scrollController.position.maxScrollExtent * index / (recordings.length - 1);
+        _scrollController.animateTo(estimatedOffset, duration: const Duration(milliseconds: 150), curve: Curves.easeOut).then((_) {
+          if (mounted) _rowFocusNodes[recordingId]?.requestFocus();
+        });
+      }
+    });
+  }
+
+  void _moveSelection(int delta, List<RecordingInfo> recordings) {
+    if (recordings.isEmpty) return;
+    final currentIndex = recordings.indexWhere((r) => r.id == _selectedRecordingId);
+    final nextIndex = currentIndex < 0 ? 0 : (currentIndex + delta).clamp(0, recordings.length - 1);
+    _selectRecording(recordings[nextIndex].id, recordings);
+  }
+
+  void _selectEnd(List<RecordingInfo> recordings) {
+    if (recordings.isEmpty) return;
+    _selectRecording(recordings.last.id, recordings);
+  }
+
+  void _selectHome(List<RecordingInfo> recordings) {
+    if (recordings.isEmpty) return;
+    _selectRecording(recordings.first.id, recordings);
+  }
+
+  void _openSelected(BuildContext context, AsyncValue<List<RecordingInfo>> mediaList) {
+    if (!mediaList.hasValue || mediaList.requireValue.isEmpty) return;
+    final selected = mediaList.requireValue.where((r) => r.id == _selectedRecordingId);
+    if (selected.isEmpty) return;
+    final item = selected.first;
+    Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);
   }
 
   @override
@@ -168,15 +242,33 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
       );
     }
 
-    return Shortcuts(
-      shortcuts: const <ShortcutActivator, Intent>{
+    return ScreenShortcuts(
+      shortcuts: <ShortcutActivator, Intent>{
         SingleActivator(LogicalKeyboardKey.keyR): RefreshIntent(),
         SingleActivator(LogicalKeyboardKey.f5): RefreshIntent(),
         SingleActivator(LogicalKeyboardKey.home): NavigateHomeIntent(),
         SingleActivator(LogicalKeyboardKey.end): NavigateEndIntent(),
+        if (isDesktopKeyboardPlatform) ...{
+          SingleActivator(LogicalKeyboardKey.arrowUp, includeRepeats: false): SelectPreviousIntent(),
+          SingleActivator(LogicalKeyboardKey.arrowDown, includeRepeats: false): SelectNextIntent(),
+          SingleActivator(LogicalKeyboardKey.keyK, includeRepeats: false): SelectPreviousIntent(),
+          SingleActivator(LogicalKeyboardKey.keyJ, includeRepeats: false): SelectNextIntent(),
+          SingleActivator(LogicalKeyboardKey.enter, includeRepeats: false): OpenSelectedIntent(),
+          SingleActivator(LogicalKeyboardKey.numpadEnter, includeRepeats: false): OpenSelectedIntent(),
+          const CharacterActivator('+'): AddMediaIntent(),
+          SingleActivator(LogicalKeyboardKey.add): AddMediaIntent(),
+          SingleActivator(LogicalKeyboardKey.numpadAdd): AddMediaIntent(),
+          SingleActivator(LogicalKeyboardKey.insert): PasteMediaIntent(),
+          SingleActivator(LogicalKeyboardKey.keyV, control: true): PasteMediaIntent(),
+          if (isMacKeyboardPlatform) SingleActivator(LogicalKeyboardKey.keyV, meta: true): PasteMediaIntent(),
+          if (isMacKeyboardPlatform) SingleActivator(LogicalKeyboardKey.comma, meta: true): OpenSettingsIntent(),
+          if (!isMacKeyboardPlatform) SingleActivator(LogicalKeyboardKey.comma, control: true): OpenSettingsIntent(),
+          SingleActivator(LogicalKeyboardKey.escape, includeRepeats: false): FocusMediaListIntent(),
+        },
       },
-      child: Actions(
-        actions: <Type, Action<Intent>>{
+      ignoreWhenActivateFocused: const {OpenSelectedIntent},
+      allowedWhenTextInputFocused: const {FocusMediaListIntent},
+      actions: <Type, Action<Intent>>{
           RefreshIntent: CallbackAction<RefreshIntent>(
             onInvoke: (intent) {
               _refreshList();
@@ -185,26 +277,67 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
           ),
           NavigateHomeIntent: CallbackAction<NavigateHomeIntent>(
             onInvoke: (intent) {
-              _scrollController.animateTo(
-                _scrollController.position.minScrollExtent,
-                duration: const Duration(seconds: 2),
-                curve: Curves.fastOutSlowIn,
-              );
+            _selectHome(mediaList.valueOrNull ?? const []);
               return null;
             },
           ),
           NavigateEndIntent: CallbackAction<NavigateEndIntent>(
             onInvoke: (intent) {
-              _scrollController.animateTo(
-                _scrollController.position.maxScrollExtent,
-                duration: const Duration(seconds: 2),
-                curve: Curves.fastOutSlowIn,
-              );
+            _selectEnd(mediaList.valueOrNull ?? const []);
               return null;
             },
           ),
-        },
+        SelectPreviousIntent: CallbackAction<SelectPreviousIntent>(onInvoke: (_) {
+          _moveSelection(-1, mediaList.valueOrNull ?? const []);
+          return null;
+        }),
+        SelectNextIntent: CallbackAction<SelectNextIntent>(onInvoke: (_) {
+          _moveSelection(1, mediaList.valueOrNull ?? const []);
+          return null;
+        }),
+        OpenSelectedIntent: CallbackAction<OpenSelectedIntent>(onInvoke: (_) {
+          _openSelected(context, mediaList);
+          return null;
+        }),
+        AddMediaIntent: CallbackAction<AddMediaIntent>(onInvoke: (_) {
+          Navigator.restorablePushNamed(context, MediaAddView.routeName(false));
+          return null;
+        }),
+        PasteMediaIntent: CallbackAction<PasteMediaIntent>(onInvoke: (_) {
+          Navigator.restorablePushNamed(context, MediaAddView.routeName(true));
+          return null;
+        }),
+        OpenSettingsIntent: CallbackAction<OpenSettingsIntent>(onInvoke: (_) {
+          Navigator.restorablePushNamed(context, SettingsView.routeName);
+          return null;
+        }),
+        FocusMediaListIntent: CallbackAction<FocusMediaListIntent>(onInvoke: (_) {
+          _screenFocusNode.requestFocus();
+          return null;
+        }),
+      },
+      help: [
+        ShortcutHelpEntry('↑ / k', AppLocalizations.of(context)!.selectPreviousRecording),
+        ShortcutHelpEntry('↓ / j', AppLocalizations.of(context)!.selectNextRecording),
+        ShortcutHelpEntry('Enter', AppLocalizations.of(context)!.openSelectedRecording),
+        ShortcutHelpEntry('+', AppLocalizations.of(context)!.addArbitraryMedia),
+        ShortcutHelpEntry('r / F5', AppLocalizations.of(context)!.refreshList),
+        ShortcutHelpEntry('Home / End', AppLocalizations.of(context)!.selectFirstLastRecording),
+        ShortcutHelpEntry(isMacKeyboardPlatform ? 'Insert / Cmd+V' : 'Insert / Ctrl+V', AppLocalizations.of(context)!.addFromClipboard),
+        ShortcutHelpEntry(isMacKeyboardPlatform ? 'Cmd+,' : 'Ctrl+,', AppLocalizations.of(context)!.settings),
+      ],
         child: Focus(
+        focusNode: _screenFocusNode,
+        autofocus: true,
+        onKeyEvent: (_, event) {
+          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape && isTextInputFocused()) {
+            _screenFocusNode.requestFocus();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: Listener(
+          onPointerDown: _focusScreenWhenPointerLeavesSearch,
           child: SafeArea(
             top: false,
             child: Scaffold(
@@ -213,9 +346,9 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                   label: AppLocalizations.of(context)!.search,
                   controller: _searchController,
                   labelAlignment: Alignment.centerLeft,
+                  onClose: _screenFocusNode.requestFocus,
                   searchStyle: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                    color: Theme.of(context).colorScheme.onSurface),
                   cursorColor: Theme.of(context).colorScheme.primary,
                   onChanged: (String value) {
                     ref.read(searchPhraseNotifierProvider.notifier).setPhrase(value);
@@ -225,9 +358,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                   IconButton(
                       icon: const Icon(Icons.refresh),
                       tooltip: AppLocalizations.of(context)!.refreshList,
-                      onPressed: () {
-                        _refreshList();
-                      }),
+                      onPressed: _refreshList),
                   PopupMenuButton(
                       tooltip: AppLocalizations.of(context)!.moreOptions,
                       icon: const Icon(Icons.more_vert),
@@ -246,7 +377,6 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                           case "with_local_file":
                             ref.read(settingsNotifierProvider.notifier).toggleWithLocalFile();
                         }
-                        //setState(() {});
                       },
                       itemBuilder: (BuildContext context) {
                         var menuItems = <PopupMenuItem<String>>[];
@@ -256,75 +386,54 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.showSeen ? Icons.check : null, color: primary),
-                                Flexible(child: Text(AppLocalizations.of(context)!.showSeen, style: TextStyle(color: primary))),
-                              ],
-                            ),
-                          ),
-                        );
+                                Flexible(child: Text(AppLocalizations.of(context)!.showSeen, style: TextStyle(color: primary)))
+                            ])));
                         menuItems.add(
                           PopupMenuItem<String>(
                             value: "hidden",
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.showHidden ? Icons.check : null, color: primary),
-                                Flexible(child: Text(AppLocalizations.of(context)!.showHidden, style: TextStyle(color: primary))),
-                              ],
-                            ),
-                          ),
-                        );
+                                Flexible(child: Text(AppLocalizations.of(context)!.showHidden, style: TextStyle(color: primary)))
+                            ])));
                         menuItems.add(
                           PopupMenuItem<String>(
                             value: "sort_by_created_at",
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.sortBy == "created_at" ? Icons.check : null, color: primary),
-                                Flexible(child: Text(AppLocalizations.of(context)!.sortByCreated, style: TextStyle(color: primary))),
-                              ],
-                            ),
-                          ),
-                        );
+                                Flexible(child: Text(AppLocalizations.of(context)!.sortByCreated, style: TextStyle(color: primary)))
+                            ])));
                         menuItems.add(
                           PopupMenuItem<String>(
                             value: "sort_by_updated_at",
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.sortBy == "updated_at" ? Icons.check : null, color: primary),
-                                Flexible(child: Text(AppLocalizations.of(context)!.sortByUpdated, style: TextStyle(color: primary))),
-                              ],
-                            ),
-                          ),
-                        );
+                                Flexible(child: Text(AppLocalizations.of(context)!.sortByUpdated, style: TextStyle(color: primary)))
+                            ])));
                         menuItems.add(
                           PopupMenuItem<String>(
                             value: "with_server_file",
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.withServerFile ? Icons.flag_circle_outlined : null, color: primary),
-                                Flexible(child: Text(AppLocalizations.of(context)!.showOnlyWithServerFile, style: TextStyle(color: primary))),
-                              ],
-                            ),
-                          ),
-                        );
+                                Flexible(child: Text(AppLocalizations.of(context)!.showOnlyWithServerFile, style: TextStyle(color: primary)))
+                            ])));
                         menuItems.add(
                           PopupMenuItem<String>(
                             value: "with_local_file",
                             child: Row(
                               children: [
                                 Icon(settings.requireValue.withLocalFile ? Icons.download_done : null, color: primary),
-                                Flexible(child: Text(AppLocalizations.of(context)!.showOnlyWithLocalFile, style: TextStyle(color: primary))),
-                              ],
-                            ),
-                          ),
-                        );
+                                Flexible(child: Text(AppLocalizations.of(context)!.showOnlyWithLocalFile, style: TextStyle(color: primary)))
+                            ])));
                         return menuItems;
                       }),
                   IconButton(
                     icon: const Icon(Icons.settings),
                     tooltip: AppLocalizations.of(context)!.settings,
-                    onPressed: () {
-                      Navigator.restorablePushNamed(context, SettingsView.routeName);
-                    },
-                  ),
+                    onPressed: () => Navigator.restorablePushNamed(context, SettingsView.routeName)),
                 ],
               ),
               floatingActionButton: Wrap(
@@ -333,46 +442,33 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                   FloatingActionButton.small(
                     heroTag: "add_media",
                     tooltip: AppLocalizations.of(context)!.addArbitraryMedia,
-                    onPressed: () {
-                      Navigator.restorablePushNamed(context, MediaAddView.routeName(false));
-                    },
-                    child: const Icon(Icons.add),
-                  ),
+                    onPressed: () => Navigator.restorablePushNamed(context, MediaAddView.routeName(false)),
+                    child: const Icon(Icons.add)),
                   FloatingActionButton.small(
                     heroTag: "add_from_clipboard",
                     tooltip: AppLocalizations.of(context)!.addFromClipboard,
-                    onPressed: () {
-                      Navigator.restorablePushNamed(context, MediaAddView.routeName(true));
-                    },
-                    child: const Icon(Icons.content_paste_go_rounded),
-                  ),
+                    onPressed: () => Navigator.restorablePushNamed(context, MediaAddView.routeName(true)),
+                    child: const Icon(Icons.content_paste_go_rounded)),
                   FloatingActionButton.small(
                     heroTag: "scroll_up",
                     tooltip: AppLocalizations.of(context)!.scrollUp,
                     onPressed: _scrollUp,
-                    child: const Icon(Icons.arrow_upward),
-                  ),
+                    child: const Icon(Icons.arrow_upward)),
                   FloatingActionButton.small(
                     heroTag: "scroll_down",
                     tooltip: AppLocalizations.of(context)!.scrollDown,
                     onPressed: _scrollDown,
-                    child: const Icon(Icons.arrow_downward),
-                  ),
+                    child: const Icon(Icons.arrow_downward)),
                 ],
               ),
-              // Not in a Row: there the text gets unbounded width and runs off
-              // the screen instead of wrapping.
               bottomNavigationBar: SafeArea(
-                child: Text(usageInfo, textAlign: TextAlign.center),
-              ),
+                child: Text(usageInfo, textAlign: TextAlign.center)),
               body: RefreshIndicator(
                 onRefresh: _refreshList,
                 child: Stack(
                   children: [
                     if (mediaList.isLoading) const LinearProgressIndicator(),
-                    _buildRecordingsList(context, mediaList),
-                  ],
-                ),
+                    _buildRecordingsList(context, mediaList)]),
               ),
             ),
           ),
@@ -396,12 +492,21 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     return Center(child: Text(AppLocalizations.of(context)!.noRecordingsCheckFilters));
     }
 
+    final visibleIds = mediaList.requireValue.map((recording) => recording.id).toSet();
+    _rowKeys.removeWhere((id, _) => !visibleIds.contains(id));
+    final staleFocusIds = _rowFocusNodes.keys.where((id) => !visibleIds.contains(id)).toList();
+    for (final id in staleFocusIds) {
+      final node = _rowFocusNodes.remove(id)!;
+      WidgetsBinding.instance.addPostFrameCallback((_) => node.dispose());
+    }
+
     return ListView.builder(
       controller: _scrollController,
       scrollDirection: Axis.vertical,
       itemCount: mediaList.requireValue.length,
       itemBuilder: (BuildContext context, int index) {
         var item = mediaList.requireValue[index];
+        final selected = isDesktopKeyboardPlatform && item.id == _selectedRecordingId;
         var dur = Duration(seconds: item.duration);
         var opacity = item.seenAt == null ? 1.0 : 0.5;
         if (item.hiddenAt != null) {
@@ -414,7 +519,9 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
 
         final tt = ref.watch(localDTNotifierProvider);
         for (final did in item.downloads) {
-          if (!tt.containsKey(did) || tt[did]?.status?.isFinalState == true) continue;
+          if (!tt.containsKey(did) || tt[did]?.status?.isFinalState == true) {
+            continue;
+          }
           right.add(Padding(
             padding: const EdgeInsets.all(8.0),
             child: CircularProgressIndicator(value: tt[did]?.progress),
@@ -422,6 +529,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         }
 
         right += [
+          RecordingMutationIndicator(recordingId: item.id),
           if (item.hiddenAt != null) const Icon(Icons.visibility_off_outlined),
           if (item.hasLocalFile) const Icon(Icons.download_done),
           if (item.hasFile) const Icon(Icons.flag_circle_outlined),
@@ -433,9 +541,20 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         final textColor = Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: opacity);
         final subtitleColor = Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: opacity);
 
-        return Column(
+        return Focus(
+          focusNode: _rowFocusNodes.putIfAbsent(item.id, () => FocusNode(debugLabel: 'recording row ${item.id}')),
+          skipTraversal: true,
+          onFocusChange: (hasFocus) {
+            if (hasFocus && _selectedRecordingId != item.id) {
+              setState(() => _selectedRecordingId = item.id);
+            }
+          },
+          child: Column(
+          key: _rowKeys.putIfAbsent(item.id, GlobalKey.new),
           children: [
             ListTile(
+              selected: selected,
+              selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
               leading: SizedBox(
                 width: 100, // alignment
                 child: Center(
@@ -452,7 +571,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
               ),
               title: Text(
                 "${item.title} ∙ ${formatDuration(dur)}$viewedSrt",
-                style: TextStyle(color: textColor),
+                style: TextStyle(color: selected ? Theme.of(context).colorScheme.primary : textColor),
               ),
               subtitle: Text(
                 "${item.uploader} ∙ ${item.extractor} • ${formatDate(dt)} (${since(dt, true, Localizations.localeOf(context).languageCode)})",
@@ -460,6 +579,8 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
               ),
               trailing: right.isEmpty ? null : Wrap(children: right),
               onTap: () {
+                _screenFocusNode.requestFocus();
+                setState(() => _selectedRecordingId = item.id);
                 Navigator.restorablePushNamed(context, MediaDetailsView.routeName(item.id), arguments: item.id);
               },
             ),
@@ -468,6 +589,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
               value: item.duration == 0 ? null : item.position / item.duration,
             ),
           ],
+          ),
         );
       },
     );

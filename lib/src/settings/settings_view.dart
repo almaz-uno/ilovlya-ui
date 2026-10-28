@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:universal_platform/universal_platform.dart';
 
@@ -8,7 +9,9 @@ import '../api/api_riverpod.dart';
 import '../api/directories_riverpod.dart';
 import '../api/housekeeper_riverpod.dart';
 import '../localization/app_localizations.dart';
+import '../keyboard_shortcuts.dart';
 import '../media/format.dart';
+import '../media/intents.dart';
 import '../utils/logger_provider.dart';
 import 'app_version_provider.dart';
 import 'settings_provider.dart';
@@ -38,7 +41,27 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     // on web the tab would only wait for directories that do not exist there.
     final withHousekeeping = !UniversalPlatform.isWeb;
 
-    return DefaultTabController(
+    return ScreenShortcuts(
+      shortcuts: isDesktopKeyboardPlatform
+          ? const {
+              SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
+              SingleActivator(LogicalKeyboardKey.backspace): BackFromSettingsIntent(),
+            }
+          : const {},
+      allowedWhenTextInputFocused: const {BackIntent},
+      actions: {
+        BackIntent: CallbackAction<BackIntent>(onInvoke: (_) {
+          Navigator.of(context).maybePop();
+          return null;
+        }),
+        BackFromSettingsIntent: CallbackAction<BackFromSettingsIntent>(onInvoke: (_) {
+          Navigator.of(context).maybePop();
+          return null;
+        }),
+      },
+      help: [ShortcutHelpEntry('Esc / Backspace', AppLocalizations.of(context)!.goBackOrClose)],
+      child: FocusTraversalGroup(
+        child: DefaultTabController(
       length: withHousekeeping ? 3 : 2,
       initialIndex: withHousekeeping ? 2 : 1,
       child: Scaffold(
@@ -100,6 +123,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 ..._housekeeping(context),
               ]),
           ],
+            ),
+          ),
         ),
       ),
     );
@@ -325,4 +350,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         ),
     ];
   }
+}
+
+class BackFromSettingsIntent extends Intent {
+  const BackFromSettingsIntent();
 }

@@ -31,6 +31,7 @@ import '../../utils/logger_provider.dart';
 import '../../utils/task_status_localization.dart';
 import '../format.dart';
 import '../intents.dart';
+import '../../keyboard_shortcuts.dart';
 import '../media_details.dart';
 import '../media_list.dart';
 import 'audio_handler.dart';
@@ -192,7 +193,9 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       if (!event) return;
       if (_reachedEnd()) {
         _sendPosition(widget.recording.id, _player.state.position, true);
-        if (widget.source != null) unawaited(ref.read(playbackDownloadsProvider.notifier).ended(widget.download.id));
+        if (widget.source != null) {
+          unawaited(ref.read(playbackDownloadsProvider.notifier).ended(widget.download.id));
+        }
       } else {
         _onInterrupted();
       }
@@ -288,7 +291,9 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
           await container.read(provider.future);
           return;
         } on Object catch (e) {
-          if (attempt == 1) AppLoggers.player.w('The server did not take the position ${position.inSeconds}s of $id; trying again every 5 s', error: e);
+          if (attempt == 1) {
+            AppLoggers.player.w('The server did not take the position ${position.inSeconds}s of $id; trying again every 5 s', error: e);
+          }
         } finally {
           keepAlive.close();
         }
@@ -524,7 +529,9 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
   void _sendPosition(String recordingId, Duration position, bool autoFinished) {
     _positionWrites[recordingId] = (_positionWrites[recordingId] ?? 0) + 1;
-    if (ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)) == false) autoFinished = false;
+    if (ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)) == false) {
+      autoFinished = false;
+    }
     ref.read(recordingNotifierProvider(recordingId).notifier).putPosition(position, autoFinished);
     ref.read(putPositionProvider(recordingId, position, autoFinished));
   }
@@ -608,7 +615,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
         //   // ],
         // ),
         body: SafeArea(
-          child: Shortcuts(
+          child: ScreenShortcuts(
             shortcuts: const <ShortcutActivator, Intent>{
               SingleActivator(LogicalKeyboardKey.backspace): BackIntent(),
               SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
@@ -628,8 +635,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
               SingleActivator(LogicalKeyboardKey.arrowDown, control: false, shift: false): ChangeVolumeIntent(-5),
               SingleActivator(LogicalKeyboardKey.arrowUp, control: false, shift: false): ChangeVolumeIntent(5),
             },
-            child: Actions(
-              actions: <Type, Action<Intent>>{
+            actions: <Type, Action<Intent>>{
                 BackIntent: CallbackAction<BackIntent>(
                   onInvoke: (BackIntent intent) {
                     Navigator.of(context).pop(true);
@@ -657,6 +663,15 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                   return null;
                 }),
               },
+            help: [
+              ShortcutHelpEntry('Space', AppLocalizations.of(context)!.playOrPause),
+              ShortcutHelpEntry('← / →', AppLocalizations.of(context)!.seekByTenSeconds),
+              ShortcutHelpEntry('Ctrl + ← / →', AppLocalizations.of(context)!.seekByThirtySeconds),
+              ShortcutHelpEntry('Shift + ← / →', AppLocalizations.of(context)!.seekByMinute),
+              ShortcutHelpEntry('Ctrl + Shift + ← / →', AppLocalizations.of(context)!.seekByFiveMinutes),
+              ShortcutHelpEntry('↑ / ↓', AppLocalizations.of(context)!.changeVolumeByFivePercent),
+              ShortcutHelpEntry('Esc / Backspace', AppLocalizations.of(context)!.goBackOrClose),
+            ],
               child: Focus(
                 autofocus: true,
                 child: SingleChildScrollView(
@@ -849,8 +864,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _onEnterFullscreen() async {
