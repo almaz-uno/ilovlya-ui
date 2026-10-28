@@ -4,6 +4,7 @@ import 'localization/app_localizations.dart';
 import 'keyboard_shortcuts.dart';
 
 class BlurryDialog extends StatelessWidget {
+
   final String title;
   final String content;
   final VoidCallback _commitCallback;
@@ -15,11 +16,11 @@ class BlurryDialog extends StatelessWidget {
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
       child: DialogShortcuts(
-        child: AlertDialog(
-          title: Text(title),
-          content: Text(content),
-          actions: <Widget>[
-            TextButton(
+        child:  AlertDialog(
+      title: Text(title),
+      content: Text(content),
+      actions: <Widget>[
+        TextButton(
               autofocus: false,
               onPressed: _commitCallback,
               child: Text(AppLocalizations.of(context)!.continueButton),
@@ -29,8 +30,8 @@ class BlurryDialog extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
               child: Text(AppLocalizations.of(context)!.cancel),
             ),
-          ],
-        ),
+      ],
+      ),
       ),
     );
   }

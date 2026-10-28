@@ -636,33 +636,33 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
               SingleActivator(LogicalKeyboardKey.arrowUp, control: false, shift: false): ChangeVolumeIntent(5),
             },
             actions: <Type, Action<Intent>>{
-              BackIntent: CallbackAction<BackIntent>(
-                onInvoke: (BackIntent intent) {
-                  Navigator.of(context).pop(true);
+                BackIntent: CallbackAction<BackIntent>(
+                  onInvoke: (BackIntent intent) {
+                    Navigator.of(context).pop(true);
+                    return null;
+                  },
+                ),
+                PlayPauseIntent: CallbackAction<PlayPauseIntent>(onInvoke: (PlayPauseIntent intent) {
+                  _player.playOrPause();
                   return null;
-                },
-              ),
-              PlayPauseIntent: CallbackAction<PlayPauseIntent>(onInvoke: (PlayPauseIntent intent) {
-                _player.playOrPause();
-                return null;
-              }),
-              ChangePositionIntent: CallbackAction<ChangePositionIntent>(onInvoke: (ChangePositionIntent intent) {
-                _rewind(intent.duration);
-                return null;
-              }),
-              ChangeVolumeIntent: CallbackAction<ChangeVolumeIntent>(onInvoke: (ChangeVolumeIntent intent) {
-                var nv = (_player.state.volume).toInt() + intent.change;
-                if (nv < 0) {
-                  nv = 0;
-                }
-                if (nv > 100) {
-                  nv = 100;
-                }
+                }),
+                ChangePositionIntent: CallbackAction<ChangePositionIntent>(onInvoke: (ChangePositionIntent intent) {
+                  _rewind(intent.duration);
+                  return null;
+                }),
+                ChangeVolumeIntent: CallbackAction<ChangeVolumeIntent>(onInvoke: (ChangeVolumeIntent intent) {
+                  var nv = (_player.state.volume).toInt() + intent.change;
+                  if (nv < 0) {
+                    nv = 0;
+                  }
+                  if (nv > 100) {
+                    nv = 100;
+                  }
 
-                _player.setVolume(nv.toDouble());
-                return null;
-              }),
-            },
+                  _player.setVolume(nv.toDouble());
+                  return null;
+                }),
+              },
             help: [
               ShortcutHelpEntry('Space', AppLocalizations.of(context)!.playOrPause),
               ShortcutHelpEntry('← / →', AppLocalizations.of(context)!.seekByTenSeconds),
@@ -672,199 +672,199 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
               ShortcutHelpEntry('↑ / ↓', AppLocalizations.of(context)!.changeVolumeByFivePercent),
               ShortcutHelpEntry('Esc / Backspace', AppLocalizations.of(context)!.goBackOrClose),
             ],
-            child: Focus(
-              autofocus: true,
-              child: SingleChildScrollView(
-                child: Column(
-                  children: <Widget>[
-                    Row(
-                      children: [
-                        const BackButton(),
-                        Expanded(child: Text("${widget.recording.title} • ${formatDuration(_player.state.duration)}")),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                      child: SizedBox(
-                        width: playerW,
-                        height: playerH,
-                        child: Stack(
-                          alignment: Alignment.topCenter,
-                          children: <Widget>[
-                            Video(
-                              controller: _controller,
-                              pauseUponEnteringBackgroundMode: false,
-                              resumeUponEnteringForegroundMode: true,
-                              onEnterFullscreen: _onEnterFullscreen,
-                            ),
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 500),
-                              child: Text(
-                                _rewinding != Duration.zero ? _formatDuration(_rewinding) : "",
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
-                                key: ValueKey(_rewinding),
-                              ),
-                            ),
-                            if (!widget.download.hasVideo)
-                              SizedBox(
-                                width: playerW,
-                                height: playerH,
-                                child: createThumb(ref, widget.recording.thumbnailUrl),
-                              ),
-                          ],
-                        ),
+              child: Focus(
+                autofocus: true,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: <Widget>[
+                      Row(
+                        children: [
+                          const BackButton(),
+                          Expanded(child: Text("${widget.recording.title} • ${formatDuration(_player.state.duration)}")),
+                        ],
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                      child: PlayerControls(
-                        player: _player,
-                        onSeek: (duration) => _seek(duration),
-                        onRewind: (interval) => _rewind(interval),
-                        ref: ref,
-                      ),
-                    ),
-                    // Download progress indicator
-                    Consumer(
-                      builder: (context, ref, child) {
-                        // Find task for current download using selector
-                        final task = ref.watch(localDTNotifierProvider.select((tasks) => tasks[widget.download.id]));
-
-                        // Check if download completed and file exists, then switch to local
-                        // Only a playback that reads the server's URL switches; a playback download is the file already.
-                        if (widget.source == null && task != null && task.status == TaskStatus.complete && !_hasAttemptedSwitch) {
-                          final settings = ref.read(settingsNotifierProvider).requireValue;
-                          final localFilePath = p.join(settings.mediaStorageDirectory, task.filename);
-                          final localFile = File(localFilePath);
-
-                          if (localFile.existsSync()) {
-                            // Schedule switch after this frame to avoid calling setState during build
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (!_hasAttemptedSwitch && mounted) {
-                                _hasAttemptedSwitch = true;
-                                _switchToLocalFile(task);
-                              }
-                            });
-                          }
-                        }
-
-                        // Show progress only if task exists, is not complete, and has progress
-                        if (task != null && task.status != null) {
-                          final l10n = AppLocalizations.of(context)!;
-
-                          // Localize status
-                          final localizedStatus = TaskStatusLocalization.getLocalizedStatusWithFallback(task.status!, l10n);
-
-                          // Format estimate (speed and ETA); a playback download waiting to retry tells how long its server has not answered
-                          final eta = task.timeRemaining == null ? "" : formatDuration(task.timeRemaining!);
-                          final failing = widget.source != null && task.status == TaskStatus.waitingToRetry ? ref.read(playbackDownloadsProvider.notifier).notAnsweringFor(widget.download.id) : null;
-                          final est = failing != null
-                              ? " ${l10n.playbackDownloadNoAnswer(formatDuration(failing))}"
-                              : task.networkSpeed == null || task.networkSpeed! < 0
-                                  ? ""
-                                  : " ≈ ${task.networkSpeed!.toStringAsFixed(2)} MB/s${eta.isEmpty ? '' : ', ETA: $eta'}";
-
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        l10n.localDownloadingStatus(localizedStatus, task.filename, est),
-                                        style: Theme.of(context).textTheme.bodySmall,
-                                      ),
-                                    ),
-                                    if (task.progress != null)
-                                      Text(
-                                        '${(task.progress! * 100).round()}%',
-                                        style: Theme.of(context).textTheme.bodySmall,
-                                      ),
-                                  ],
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                        child: SizedBox(
+                          width: playerW,
+                          height: playerH,
+                          child: Stack(
+                            alignment: Alignment.topCenter,
+                            children: <Widget>[
+                              Video(
+                                controller: _controller,
+                                pauseUponEnteringBackgroundMode: false,
+                                resumeUponEnteringForegroundMode: true,
+                                onEnterFullscreen: _onEnterFullscreen,
+                              ),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 500),
+                                child: Text(
+                                  _rewinding != Duration.zero ? _formatDuration(_rewinding) : "",
+                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+                                  key: ValueKey(_rewinding),
                                 ),
-                                const SizedBox(height: 4),
-                                LinearProgressIndicator(value: task.progress, minHeight: 2),
-                              ],
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
-                    // The details, collapsed as "Available formats" on the recording's screen, but to the left: the arrow
-                    // before the title rather than at the far end of the row.
-                    ExpansionTile(
-                      title: Text(AppLocalizations.of(context)!.playbackDetails, style: Theme.of(context).textTheme.titleMedium),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      initiallyExpanded: false,
-                      expandedAlignment: Alignment.centerLeft,
-                      expandedCrossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          alignment: Alignment.centerLeft,
-                          padding: const EdgeInsets.all(8),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(AppLocalizations.of(context)!
-                                    .createdAtWithDate(formatDateLong(widget.recording.createdAt), since(widget.recording.createdAt, false, Localizations.localeOf(context).languageCode))),
-                                if (_player.state.playlist.medias.isNotEmpty)
-                                  Row(
-                                    children: [
-                                      Text("${AppLocalizations.of(context)!.playingFrom}: ${_shownSource()}"),
-                                      IconButton(
-                                        onPressed: () {
-                                          copyToClipboard(context, _shownSource());
-                                        },
-                                        icon: const Icon(Icons.copy),
-                                      )
-                                    ],
-                                  ),
-                                Text("${AppLocalizations.of(context)!.sizeLabel}: ${fileSizeHumanReadable(widget.download.size)}"),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Container(
-                          alignment: Alignment.topLeft,
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(AppLocalizations.of(context)!.withAudioHandler, style: techInfoStyle),
-                              if (widget.recording.seenAt != null)
-                                Text("${AppLocalizations.of(context)!.seenAt}: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugCreatedAt}: ${widget.download.createdAt}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugUpdatedAt}: ${widget.download.updatedAt}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugDuration}: ${formatDuration(_player.state.duration)}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugPosition}: ${formatDuration(_player.state.position)}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugBuffered}: ${formatDuration(_player.state.buffer)}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugBuffering}: ${_player.state.buffering ? '>>' : '__'}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugVolume}: ${_player.state.volume}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugAudioBitrate}: ${_player.state.audioBitrate}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugAudioDevice}: ${_player.state.audioDevice}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugSize}: ${_player.state.width}x${_player.state.height}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugVideoParams}: ${_player.state.videoParams}", style: techInfoStyle),
-                              Text("${AppLocalizations.of(context)!.debugAudioParams}: ${_player.state.audioParams}", style: techInfoStyle),
-                              // Text("${_controller.value}"),
+                              ),
+                              if (!widget.download.hasVideo)
+                                SizedBox(
+                                  width: playerW,
+                                  height: playerH,
+                                  child: createThumb(ref, widget.recording.thumbnailUrl),
+                                ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                        child: PlayerControls(
+                          player: _player,
+                          onSeek: (duration) => _seek(duration),
+                          onRewind: (interval) => _rewind(interval),
+                          ref: ref,
+                        ),
+                      ),
+                      // Download progress indicator
+                      Consumer(
+                        builder: (context, ref, child) {
+                          // Find task for current download using selector
+                          final task = ref.watch(localDTNotifierProvider.select((tasks) => tasks[widget.download.id]));
+
+                          // Check if download completed and file exists, then switch to local
+                          // Only a playback that reads the server's URL switches; a playback download is the file already.
+                          if (widget.source == null && task != null && task.status == TaskStatus.complete && !_hasAttemptedSwitch) {
+                            final settings = ref.read(settingsNotifierProvider).requireValue;
+                            final localFilePath = p.join(settings.mediaStorageDirectory, task.filename);
+                            final localFile = File(localFilePath);
+
+                            if (localFile.existsSync()) {
+                              // Schedule switch after this frame to avoid calling setState during build
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!_hasAttemptedSwitch && mounted) {
+                                  _hasAttemptedSwitch = true;
+                                  _switchToLocalFile(task);
+                                }
+                              });
+                            }
+                          }
+
+                          // Show progress only if task exists, is not complete, and has progress
+                          if (task != null && task.status != null) {
+                            final l10n = AppLocalizations.of(context)!;
+
+                            // Localize status
+                            final localizedStatus = TaskStatusLocalization.getLocalizedStatusWithFallback(task.status!, l10n);
+
+                            // Format estimate (speed and ETA); a playback download waiting to retry tells how long its server has not answered
+                            final eta = task.timeRemaining == null ? "" : formatDuration(task.timeRemaining!);
+                            final failing = widget.source != null && task.status == TaskStatus.waitingToRetry ? ref.read(playbackDownloadsProvider.notifier).notAnsweringFor(widget.download.id) : null;
+                            final est = failing != null
+                                ? " ${l10n.playbackDownloadNoAnswer(formatDuration(failing))}"
+                                : task.networkSpeed == null || task.networkSpeed! < 0
+                                    ? ""
+                                    : " ≈ ${task.networkSpeed!.toStringAsFixed(2)} MB/s${eta.isEmpty ? '' : ', ETA: $eta'}";
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          l10n.localDownloadingStatus(localizedStatus, task.filename, est),
+                                          style: Theme.of(context).textTheme.bodySmall,
+                                        ),
+                                      ),
+                                      if (task.progress != null)
+                                        Text(
+                                          '${(task.progress! * 100).round()}%',
+                                          style: Theme.of(context).textTheme.bodySmall,
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  LinearProgressIndicator(value: task.progress, minHeight: 2),
+                                ],
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                      // The details, collapsed as "Available formats" on the recording's screen, but to the left: the arrow
+                      // before the title rather than at the far end of the row.
+                      ExpansionTile(
+                        title: Text(AppLocalizations.of(context)!.playbackDetails, style: Theme.of(context).textTheme.titleMedium),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        initiallyExpanded: false,
+                        expandedAlignment: Alignment.centerLeft,
+                        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            alignment: Alignment.centerLeft,
+                            padding: const EdgeInsets.all(8),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(AppLocalizations.of(context)!
+                                      .createdAtWithDate(formatDateLong(widget.recording.createdAt), since(widget.recording.createdAt, false, Localizations.localeOf(context).languageCode))),
+                                  if (_player.state.playlist.medias.isNotEmpty)
+                                    Row(
+                                      children: [
+                                        Text("${AppLocalizations.of(context)!.playingFrom}: ${_shownSource()}"),
+                                        IconButton(
+                                          onPressed: () {
+                                            copyToClipboard(context, _shownSource());
+                                          },
+                                          icon: const Icon(Icons.copy),
+                                        )
+                                      ],
+                                    ),
+                                  Text("${AppLocalizations.of(context)!.sizeLabel}: ${fileSizeHumanReadable(widget.download.size)}"),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Container(
+                            alignment: Alignment.topLeft,
+                            padding: const EdgeInsets.all(8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(AppLocalizations.of(context)!.withAudioHandler, style: techInfoStyle),
+                                if (widget.recording.seenAt != null)
+                                  Text("${AppLocalizations.of(context)!.seenAt}: ${widget.recording.seenAt} (${DateTime.now().difference(widget.recording.seenAt!)} ago)", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugCreatedAt}: ${widget.download.createdAt}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugUpdatedAt}: ${widget.download.updatedAt}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugDuration}: ${formatDuration(_player.state.duration)}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugPosition}: ${formatDuration(_player.state.position)}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugBuffered}: ${formatDuration(_player.state.buffer)}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugBuffering}: ${_player.state.buffering ? '>>' : '__'}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugVolume}: ${_player.state.volume}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugAudioBitrate}: ${_player.state.audioBitrate}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugAudioDevice}: ${_player.state.audioDevice}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugSize}: ${_player.state.width}x${_player.state.height}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugVideoParams}: ${_player.state.videoParams}", style: techInfoStyle),
+                                Text("${AppLocalizations.of(context)!.debugAudioParams}: ${_player.state.audioParams}", style: techInfoStyle),
+                                // Text("${_controller.value}"),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _onEnterFullscreen() async {

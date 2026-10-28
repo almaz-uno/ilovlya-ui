@@ -62,22 +62,22 @@ class _TvQrScanViewState extends State<TvQrScanView> {
       },
       help: [ShortcutHelpEntry('Esc / Backspace', AppLocalizations.of(context)!.cancel)],
       child: Scaffold(
-        appBar: AppBar(title: Text(l10n.tvScanTitle)),
-        body: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            MobileScanner(controller: _controller, onDetect: _onDetect),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                l10n.tvScanHint,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
-              ),
+      appBar: AppBar(title: Text(l10n.tvScanTitle)),
+      body: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          MobileScanner(controller: _controller, onDetect: _onDetect),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              l10n.tvScanHint,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    ),
     );
   }
 }

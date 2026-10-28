@@ -71,7 +71,9 @@ class _ThumbnailPlaceholder extends StatelessWidget {
       height: 180,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDark ? [Colors.grey.shade800, Colors.grey.shade700, Colors.grey.shade800] : [Colors.grey.shade300, Colors.grey.shade200, Colors.grey.shade300],
+          colors: isDark
+              ? [Colors.grey.shade800, Colors.grey.shade700, Colors.grey.shade800]
+              : [Colors.grey.shade300, Colors.grey.shade200, Colors.grey.shade300],
           stops: const [0.0, 0.5, 1.0],
         ),
         borderRadius: BorderRadius.circular(8),
@@ -255,24 +257,24 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
       ignoreWhenActivateFocused: const {OpenSelectedIntent},
       allowedWhenTextInputFocused: const {FocusMediaListIntent},
       actions: <Type, Action<Intent>>{
-        RefreshIntent: CallbackAction<RefreshIntent>(
-          onInvoke: (intent) {
-            _refreshList();
-            return null;
-          },
-        ),
-        NavigateHomeIntent: CallbackAction<NavigateHomeIntent>(
-          onInvoke: (intent) {
+          RefreshIntent: CallbackAction<RefreshIntent>(
+            onInvoke: (intent) {
+              _refreshList();
+              return null;
+            },
+          ),
+          NavigateHomeIntent: CallbackAction<NavigateHomeIntent>(
+            onInvoke: (intent) {
             _selectHome(mediaList.valueOrNull ?? const []);
-            return null;
-          },
-        ),
-        NavigateEndIntent: CallbackAction<NavigateEndIntent>(
-          onInvoke: (intent) {
+              return null;
+            },
+          ),
+          NavigateEndIntent: CallbackAction<NavigateEndIntent>(
+            onInvoke: (intent) {
             _selectEnd(mediaList.valueOrNull ?? const []);
-            return null;
-          },
-        ),
+              return null;
+            },
+          ),
         SelectPreviousIntent: CallbackAction<SelectPreviousIntent>(onInvoke: (_) {
           _moveSelection(-1, mediaList.valueOrNull ?? const []);
           return null;
@@ -313,7 +315,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         ShortcutHelpEntry('Insert / Ctrl+V', AppLocalizations.of(context)!.addFromClipboard),
         ShortcutHelpEntry(isMacKeyboardPlatform ? 'Cmd+,' : 'Ctrl+,', AppLocalizations.of(context)!.settings),
       ],
-      child: Focus(
+        child: Focus(
         focusNode: _screenFocusNode,
         autofocus: true,
         onKeyEvent: (_, event) {
@@ -334,14 +336,18 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                   controller: _searchController,
                   labelAlignment: Alignment.centerLeft,
                   onClose: _screenFocusNode.requestFocus,
-                  searchStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                  searchStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface),
                   cursorColor: Theme.of(context).colorScheme.primary,
                   onChanged: (String value) {
                     ref.read(searchPhraseNotifierProvider.notifier).setPhrase(value);
                   },
                 ),
                 actions: [
-                  IconButton(icon: const Icon(Icons.refresh), tooltip: AppLocalizations.of(context)!.refreshList, onPressed: _refreshList),
+                  IconButton(
+                      icon: const Icon(Icons.refresh),
+                      tooltip: AppLocalizations.of(context)!.refreshList,
+                      onPressed: _refreshList),
                   PopupMenuButton(
                       tooltip: AppLocalizations.of(context)!.moreOptions,
                       icon: const Icon(Icons.more_vert),
@@ -363,68 +369,95 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                       },
                       itemBuilder: (BuildContext context) {
                         var menuItems = <PopupMenuItem<String>>[];
-                        menuItems.add(PopupMenuItem<String>(
+                        menuItems.add(
+                          PopupMenuItem<String>(
                             value: "seen",
-                            child: Row(children: [
-                              Icon(settings.requireValue.showSeen ? Icons.check : null, color: primary),
-                              Flexible(child: Text(AppLocalizations.of(context)!.showSeen, style: TextStyle(color: primary)))
+                            child: Row(
+                              children: [
+                                Icon(settings.requireValue.showSeen ? Icons.check : null, color: primary),
+                                Flexible(child: Text(AppLocalizations.of(context)!.showSeen, style: TextStyle(color: primary)))
                             ])));
-                        menuItems.add(PopupMenuItem<String>(
+                        menuItems.add(
+                          PopupMenuItem<String>(
                             value: "hidden",
-                            child: Row(children: [
-                              Icon(settings.requireValue.showHidden ? Icons.check : null, color: primary),
-                              Flexible(child: Text(AppLocalizations.of(context)!.showHidden, style: TextStyle(color: primary)))
+                            child: Row(
+                              children: [
+                                Icon(settings.requireValue.showHidden ? Icons.check : null, color: primary),
+                                Flexible(child: Text(AppLocalizations.of(context)!.showHidden, style: TextStyle(color: primary)))
                             ])));
-                        menuItems.add(PopupMenuItem<String>(
+                        menuItems.add(
+                          PopupMenuItem<String>(
                             value: "sort_by_created_at",
-                            child: Row(children: [
-                              Icon(settings.requireValue.sortBy == "created_at" ? Icons.check : null, color: primary),
-                              Flexible(child: Text(AppLocalizations.of(context)!.sortByCreated, style: TextStyle(color: primary)))
+                            child: Row(
+                              children: [
+                                Icon(settings.requireValue.sortBy == "created_at" ? Icons.check : null, color: primary),
+                                Flexible(child: Text(AppLocalizations.of(context)!.sortByCreated, style: TextStyle(color: primary)))
                             ])));
-                        menuItems.add(PopupMenuItem<String>(
+                        menuItems.add(
+                          PopupMenuItem<String>(
                             value: "sort_by_updated_at",
-                            child: Row(children: [
-                              Icon(settings.requireValue.sortBy == "updated_at" ? Icons.check : null, color: primary),
-                              Flexible(child: Text(AppLocalizations.of(context)!.sortByUpdated, style: TextStyle(color: primary)))
+                            child: Row(
+                              children: [
+                                Icon(settings.requireValue.sortBy == "updated_at" ? Icons.check : null, color: primary),
+                                Flexible(child: Text(AppLocalizations.of(context)!.sortByUpdated, style: TextStyle(color: primary)))
                             ])));
-                        menuItems.add(PopupMenuItem<String>(
+                        menuItems.add(
+                          PopupMenuItem<String>(
                             value: "with_server_file",
-                            child: Row(children: [
-                              Icon(settings.requireValue.withServerFile ? Icons.flag_circle_outlined : null, color: primary),
-                              Flexible(child: Text(AppLocalizations.of(context)!.showOnlyWithServerFile, style: TextStyle(color: primary)))
+                            child: Row(
+                              children: [
+                                Icon(settings.requireValue.withServerFile ? Icons.flag_circle_outlined : null, color: primary),
+                                Flexible(child: Text(AppLocalizations.of(context)!.showOnlyWithServerFile, style: TextStyle(color: primary)))
                             ])));
-                        menuItems.add(PopupMenuItem<String>(
+                        menuItems.add(
+                          PopupMenuItem<String>(
                             value: "with_local_file",
-                            child: Row(children: [
-                              Icon(settings.requireValue.withLocalFile ? Icons.download_done : null, color: primary),
-                              Flexible(child: Text(AppLocalizations.of(context)!.showOnlyWithLocalFile, style: TextStyle(color: primary)))
+                            child: Row(
+                              children: [
+                                Icon(settings.requireValue.withLocalFile ? Icons.download_done : null, color: primary),
+                                Flexible(child: Text(AppLocalizations.of(context)!.showOnlyWithLocalFile, style: TextStyle(color: primary)))
                             ])));
                         return menuItems;
                       }),
-                  IconButton(icon: const Icon(Icons.settings), tooltip: AppLocalizations.of(context)!.settings, onPressed: () => Navigator.restorablePushNamed(context, SettingsView.routeName)),
+                  IconButton(
+                    icon: const Icon(Icons.settings),
+                    tooltip: AppLocalizations.of(context)!.settings,
+                    onPressed: () => Navigator.restorablePushNamed(context, SettingsView.routeName)),
                 ],
               ),
               floatingActionButton: Wrap(
                 spacing: 8.0,
                 children: [
                   FloatingActionButton.small(
-                      heroTag: "add_media",
-                      tooltip: AppLocalizations.of(context)!.addArbitraryMedia,
-                      onPressed: () => Navigator.restorablePushNamed(context, MediaAddView.routeName(false)),
-                      child: const Icon(Icons.add)),
+                    heroTag: "add_media",
+                    tooltip: AppLocalizations.of(context)!.addArbitraryMedia,
+                    onPressed: () => Navigator.restorablePushNamed(context, MediaAddView.routeName(false)),
+                    child: const Icon(Icons.add)),
                   FloatingActionButton.small(
-                      heroTag: "add_from_clipboard",
-                      tooltip: AppLocalizations.of(context)!.addFromClipboard,
-                      onPressed: () => Navigator.restorablePushNamed(context, MediaAddView.routeName(true)),
-                      child: const Icon(Icons.content_paste_go_rounded)),
-                  FloatingActionButton.small(heroTag: "scroll_up", tooltip: AppLocalizations.of(context)!.scrollUp, onPressed: _scrollUp, child: const Icon(Icons.arrow_upward)),
-                  FloatingActionButton.small(heroTag: "scroll_down", tooltip: AppLocalizations.of(context)!.scrollDown, onPressed: _scrollDown, child: const Icon(Icons.arrow_downward)),
+                    heroTag: "add_from_clipboard",
+                    tooltip: AppLocalizations.of(context)!.addFromClipboard,
+                    onPressed: () => Navigator.restorablePushNamed(context, MediaAddView.routeName(true)),
+                    child: const Icon(Icons.content_paste_go_rounded)),
+                  FloatingActionButton.small(
+                    heroTag: "scroll_up",
+                    tooltip: AppLocalizations.of(context)!.scrollUp,
+                    onPressed: _scrollUp,
+                    child: const Icon(Icons.arrow_upward)),
+                  FloatingActionButton.small(
+                    heroTag: "scroll_down",
+                    tooltip: AppLocalizations.of(context)!.scrollDown,
+                    onPressed: _scrollDown,
+                    child: const Icon(Icons.arrow_downward)),
                 ],
               ),
-              bottomNavigationBar: SafeArea(child: Text(usageInfo, textAlign: TextAlign.center)),
+              bottomNavigationBar: SafeArea(
+                child: Text(usageInfo, textAlign: TextAlign.center)),
               body: RefreshIndicator(
                 onRefresh: _refreshList,
-                child: Stack(children: [if (mediaList.isLoading) const LinearProgressIndicator(), _buildRecordingsList(context, mediaList)]),
+                child: Stack(
+                  children: [
+                    if (mediaList.isLoading) const LinearProgressIndicator(),
+                    _buildRecordingsList(context, mediaList)]),
               ),
             ),
           ),
@@ -445,7 +478,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     }
 
     if (mediaList.requireValue.isEmpty) {
-      return Center(child: Text(AppLocalizations.of(context)!.noRecordingsCheckFilters));
+    return Center(child: Text(AppLocalizations.of(context)!.noRecordingsCheckFilters));
     }
 
     final visibleIds = mediaList.requireValue.map((recording) => recording.id).toSet();

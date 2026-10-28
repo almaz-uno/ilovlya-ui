@@ -62,23 +62,24 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       help: [ShortcutHelpEntry('Esc / Backspace', AppLocalizations.of(context)!.goBackOrClose)],
       child: FocusTraversalGroup(
         child: DefaultTabController(
-          length: withHousekeeping ? 3 : 2,
-          initialIndex: withHousekeeping ? 2 : 1,
-          child: Scaffold(
-            appBar: AppBar(
-              bottom: TabBar(
-                tabs: [
-                  Tab(icon: const Icon(Icons.person), text: AppLocalizations.of(context)!.userProfile),
-                  Tab(icon: const Icon(Icons.settings), text: AppLocalizations.of(context)!.settings),
-                  if (withHousekeeping) Tab(icon: const Icon(Icons.cleaning_services), text: AppLocalizations.of(context)!.housekeeping),
-                ],
-              ),
-              title: Text(AppLocalizations.of(context)!.settings),
-            ),
-            body: TabBarView(
-              children: [
-                _tab(<Widget>[
-                      const SizedBox(height: 0),
+      length: withHousekeeping ? 3 : 2,
+      initialIndex: withHousekeeping ? 2 : 1,
+      child: Scaffold(
+        appBar: AppBar(
+          bottom: TabBar(
+            tabs: [
+              Tab(icon: const Icon(Icons.person), text: AppLocalizations.of(context)!.userProfile),
+              Tab(icon: const Icon(Icons.settings), text: AppLocalizations.of(context)!.settings),
+              if (withHousekeeping)
+                Tab(icon: const Icon(Icons.cleaning_services), text: AppLocalizations.of(context)!.housekeeping),
+            ],
+          ),
+          title: Text(AppLocalizations.of(context)!.settings),
+        ),
+        body: TabBarView(
+          children: [
+            _tab(<Widget>[
+                      const SizedBox(height:0),
                       Consumer(
                         builder: (context, ref, child) {
                           final appVersionAsync = ref.watch(appVersionProvider);
@@ -86,8 +87,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                             data: (version) => Text(
                               AppLocalizations.of(context)!.appVersion(version),
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                             loading: () => const SizedBox.shrink(),
                             error: (_, __) => const SizedBox.shrink(),
@@ -112,16 +113,16 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       ),
                     ] +
                     tenantInfo(ref)),
-                _tab([
-                  const SizedBox(height: 0),
-                  ..._commonSettings(),
-                ]),
-                if (withHousekeeping)
-                  _tab([
-                    const SizedBox(height: 0),
-                    ..._housekeeping(context),
-                  ]),
-              ],
+            _tab([
+              const SizedBox(height: 0),
+              ..._commonSettings(),
+            ]),
+            if (withHousekeeping)
+              _tab([
+                const SizedBox(height: 0),
+                ..._housekeeping(context),
+              ]),
+          ],
             ),
           ),
         ),
@@ -194,7 +195,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           ref.read(settingsNotifierProvider.notifier).updatePlayerSpeed(value ?? 1.0);
         },
         items: [
-          for (final e in getSpeedRates(AppLocalizations.of(context)!).entries) DropdownMenuItem(value: e.key, child: Text(e.value)),
+          for (final e in getSpeedRates(AppLocalizations.of(context)!).entries)
+            DropdownMenuItem(value: e.key, child: Text(e.value)),
         ],
       ),
       SwitchListTile(
@@ -309,7 +311,9 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       OutlinedButton(
         child: Text(AppLocalizations.of(context)!.cleanAllMetadataForRecordings(data.requireValue)),
         onPressed: () async {
-          confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllMetadataMessage(data.requireValue), () async {
+          confirmDialog(
+              context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllMetadataMessage(data.requireValue),
+              () async {
             final number = await ref.read(localDataNotifierProvider.notifier).cleanMetadata();
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(

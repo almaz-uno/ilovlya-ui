@@ -107,61 +107,61 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
         ShortcutHelpEntry('Esc', AppLocalizations.of(context)!.cancel),
       ],
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(AppLocalizations.of(context)!.addNewMedia),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.paste),
-              tooltip: AppLocalizations.of(context)!.pasteFromClipboard,
-              onPressed: fromClipboard,
-            ),
-          ],
-        ),
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextField(
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.addNewMedia),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.paste),
+            tooltip: AppLocalizations.of(context)!.pasteFromClipboard,
+            onPressed: fromClipboard,
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            TextField(
                 autofocus: isDesktopKeyboardPlatform,
                 controller: _urlController,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  hintText: AppLocalizations.of(context)!.enterMediaUrl,
-                  prefixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      IconButton(
-                        onPressed: fromClipboard,
-                        icon: const Icon(Icons.paste),
-                        tooltip: AppLocalizations.of(context)!.pasteFromClipboard,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.youtube_searched_for),
-                        tooltip: AppLocalizations.of(context)!.lookupMediaInfo,
-                        onPressed: () {
-                          setState(() {
-                            _futurePropositions = _getURLInfo(_urlController.text);
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: _urlController.clear,
-                  ),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: AppLocalizations.of(context)!.enterMediaUrl,
+                prefixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    IconButton(
+                      onPressed: fromClipboard,
+                      icon: const Icon(Icons.paste),
+                      tooltip: AppLocalizations.of(context)!.pasteFromClipboard,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.youtube_searched_for),
+                      tooltip: AppLocalizations.of(context)!.lookupMediaInfo,
+                      onPressed: () {
+                        setState(() {
+                          _futurePropositions = _getURLInfo(_urlController.text);
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: _urlController.clear,
                 ),
               ),
-              (_futurePropositions == null) ? Text(AppLocalizations.of(context)!.toViewInfoPressLookup) : buildPropositionList(),
-              Visibility(
-                  visible: _isLoading || _isAdding,
-                  child: const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: CircularProgressIndicator(),
-                  )),
-            ],
-          ),
+            ),
+            (_futurePropositions == null) ? Text(AppLocalizations.of(context)!.toViewInfoPressLookup) : buildPropositionList(),
+            Visibility(
+                visible: _isLoading || _isAdding,
+                child: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: CircularProgressIndicator(),
+                )),
+          ],
         ),
       ),
+    ),
     );
   }
 
@@ -182,7 +182,10 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
           context: context,
           barrierDismissible: true,
           builder: (BuildContext context) => DialogShortcuts(
-                child: Dialog(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(err.toString()))),
+                child: Dialog(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(err.toString()))),
               ));
     }).whenComplete(() {
       if (!mounted || !context.mounted) return;

@@ -174,12 +174,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       });
       await runRecordingMutation(ref, recording.id, RecordingMutation.seen, () async {
         if (recording.seenAt == null) {
-          await ref.read(setSeenProvider(recording.id).future);
-        } else {
-          await ref.read(unsetSeenProvider(recording.id).future);
-        }
-        await _pullRefresh();
-      });
+        await ref.read(setSeenProvider(recording.id).future);
+      } else {
+        await ref.read(unsetSeenProvider(recording.id).future);
+      }
+      await _pullRefresh();
+    });
     } finally {
       if (mounted) setState(() => settingSeen = false);
     }
@@ -193,12 +193,12 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       });
       await runRecordingMutation(ref, recording.id, RecordingMutation.hidden, () async {
         if (recording.hiddenAt == null) {
-          await ref.read(setHiddenProvider(recording.id).future);
-        } else {
-          await ref.read(unsetHiddenProvider(recording.id).future);
-        }
-        await _pullRefresh();
-      });
+        await ref.read(setHiddenProvider(recording.id).future);
+      } else {
+        await ref.read(unsetHiddenProvider(recording.id).future);
+      }
+      await _pullRefresh();
+    });
     } finally {
       if (mounted) setState(() => settingHidden = false);
     }
@@ -813,34 +813,34 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       },
       ignoreWhenActivateFocused: const {PlayRecordingIntent},
       actions: <Type, Action<Intent>>{
-        BackIntent: CallbackAction<BackIntent>(
-          onInvoke: (BackIntent intent) {
-            Navigator.of(context).pop(true);
-            return null;
-          },
-        ),
-        RefreshIntent: CallbackAction<RefreshIntent>(
-          onInvoke: (RefreshIntent intent) {
-            _pullRefresh();
-            return null;
-          },
-        ),
-        ToggleSeenIntent: CallbackAction<ToggleSeenIntent>(
-          onInvoke: (ToggleSeenIntent intent) async {
-            if (recording.hasValue) {
-              _toggleSeen(recording.requireValue);
-            }
-            return null;
-          },
-        ),
-        ToggleHiddenIntent: CallbackAction<ToggleHiddenIntent>(
-          onInvoke: (ToggleHiddenIntent intent) async {
-            if (recording.hasValue) {
-              _toggleHidden(recording.requireValue);
-            }
-            return null;
-          },
-        ),
+          BackIntent: CallbackAction<BackIntent>(
+            onInvoke: (BackIntent intent) {
+              Navigator.of(context).pop(true);
+              return null;
+            },
+          ),
+          RefreshIntent: CallbackAction<RefreshIntent>(
+            onInvoke: (RefreshIntent intent) {
+              _pullRefresh();
+              return null;
+            },
+          ),
+          ToggleSeenIntent: CallbackAction<ToggleSeenIntent>(
+            onInvoke: (ToggleSeenIntent intent) async {
+              if (recording.hasValue) {
+                _toggleSeen(recording.requireValue);
+              }
+              return null;
+            },
+          ),
+          ToggleHiddenIntent: CallbackAction<ToggleHiddenIntent>(
+            onInvoke: (ToggleHiddenIntent intent) async {
+              if (recording.hasValue) {
+                _toggleHidden(recording.requireValue);
+              }
+              return null;
+            },
+          ),
         PlayRecordingIntent: CallbackAction<PlayRecordingIntent>(onInvoke: (_) {
           if (recording.hasValue) {
             final downloads = ref.read(downloadsNotifierProvider(widget.id));
@@ -902,57 +902,57 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         ShortcutHelpEntry('r / F5', AppLocalizations.of(context)!.refreshRecord),
         ShortcutHelpEntry('v / h', '${AppLocalizations.of(context)!.markAsSeen} / ${AppLocalizations.of(context)!.hideRecording}'),
       ],
-      child: Scaffold(
-        appBar: AppBar(
-          title: recording.hasValue ? Text(recording.requireValue.title) : Text(AppLocalizations.of(context)!.loadingInfo),
-          actions: [
-            if (recording.hasValue) _castButton(recording.requireValue),
-            IconButton(
-              icon: _cleanServerMediaIcon,
-              tooltip: AppLocalizations.of(context)!.cleanAllDownloadedContentOnServer,
-              onPressed: () {
-                if (recording.hasValue) {
-                  confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllFilesOnServer, () {
-                    ref.read(deleteRecordingDownloadsContentProvider(recording.requireValue.id));
-                    _pullRefresh();
-                    Navigator.pop(context);
-                  });
-                }
-              },
+          child: Scaffold(
+            appBar: AppBar(
+              title: recording.hasValue ? Text(recording.requireValue.title) : Text(AppLocalizations.of(context)!.loadingInfo),
+              actions: [
+                if (recording.hasValue) _castButton(recording.requireValue),
+                IconButton(
+                  icon: _cleanServerMediaIcon,
+                  tooltip: AppLocalizations.of(context)!.cleanAllDownloadedContentOnServer,
+                  onPressed: () {
+                    if (recording.hasValue) {
+                      confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllFilesOnServer, () {
+                        ref.read(deleteRecordingDownloadsContentProvider(recording.requireValue.id));
+                        _pullRefresh();
+                        Navigator.pop(context);
+                      });
+                    }
+                  },
+                ),
+                IconButton(
+                  icon: _cleanDownloadedMediaIcon,
+                  tooltip: AppLocalizations.of(context)!.cleanAllDownloadedMediaFromDevice,
+                  onPressed: () {
+                    confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllLocalFilesOnDevice, () {
+                      ref.read(downloadsNotifierProvider(widget.id).notifier).cleanAll();
+                      Navigator.pop(context);
+                    });
+                  },
+                ),
+                _addSeenButton(recording),
+                _addHiddenButton(recording),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  tooltip: AppLocalizations.of(context)!.refreshRecord,
+                  onPressed: _pullRefresh,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  tooltip: AppLocalizations.of(context)!.settings,
+                  onPressed: () {
+                    Navigator.restorablePushNamed(context, SettingsView.routeName);
+                  },
+                ),
+              ],
             ),
-            IconButton(
-              icon: _cleanDownloadedMediaIcon,
-              tooltip: AppLocalizations.of(context)!.cleanAllDownloadedMediaFromDevice,
-              onPressed: () {
-                confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllLocalFilesOnDevice, () {
-                  ref.read(downloadsNotifierProvider(widget.id).notifier).cleanAll();
-                  Navigator.pop(context);
-                });
-              },
-            ),
-            _addSeenButton(recording),
-            _addHiddenButton(recording),
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: AppLocalizations.of(context)!.refreshRecord,
-              onPressed: _pullRefresh,
-            ),
-            IconButton(
-              icon: const Icon(Icons.settings),
-              tooltip: AppLocalizations.of(context)!.settings,
-              onPressed: () {
-                Navigator.restorablePushNamed(context, SettingsView.routeName);
-              },
-            ),
-          ],
-        ),
-        body: Stack(
-          children: [
-            // Visibility(visible: recording.isLoading, child: const LinearProgressIndicator()),
-            SingleChildScrollView(
-              child: _buildRecording(recording),
-            ),
-          ],
+            body: Stack(
+              children: [
+                // Visibility(visible: recording.isLoading, child: const LinearProgressIndicator()),
+                SingleChildScrollView(
+                  child: _buildRecording(recording),
+                ),
+              ],
         ),
       ),
     );
@@ -1050,8 +1050,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               children: [
                 Text("${recording.id}: ${recording.title}", style: Theme.of(context).textTheme.bodyLarge),
                 Text("${recording.uploader} • ${recording.extractor}"),
-                Text(AppLocalizations.of(context)!.createdAtWithDate(formatDateLong(recording.createdAt), since(recording.createdAt, false, Localizations.localeOf(context).languageCode))),
-                Text(AppLocalizations.of(context)!.updatedAtWithDate(formatDateLong(recording.updatedAt), since(recording.updatedAt, false, Localizations.localeOf(context).languageCode))),
+                Text(AppLocalizations.of(context)!
+                    .createdAtWithDate(formatDateLong(recording.createdAt), since(recording.createdAt, false, Localizations.localeOf(context).languageCode))),
+                Text(AppLocalizations.of(context)!
+                    .updatedAtWithDate(formatDateLong(recording.updatedAt), since(recording.updatedAt, false, Localizations.localeOf(context).languageCode))),
                 Row(
                   children: [
                     Text(recording.webpageUrl, style: const TextStyle(overflow: TextOverflow.fade, decoration: TextDecoration.underline, color: Colors.blue)),
@@ -1328,7 +1330,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       showDialog(
           context: context,
           barrierDismissible: true,
-          builder: (BuildContext context) => DialogShortcuts(child: Dialog(child: Padding(padding: const EdgeInsets.all(8.0), child: Text(err.toString())))));
+          builder: (BuildContext context) => DialogShortcuts(child: Dialog(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(err.toString())))));
     });
   }
 
@@ -1396,7 +1401,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
             },
             onLongPress: () async {
               if (UniversalPlatform.isLinux) {
-                await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.url],
+                await Process.start("/usr/bin/flatpak-spawn",
+                    <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.url],
                     mode: ProcessStartMode.detached);
               }
             },
@@ -1419,11 +1425,26 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               copyToClipboard(context, "curl '${d.url}' -o '${d.filename}'");
             case "mpv-play":
               await Process.start(
-                  "/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
+                  "/usr/bin/flatpak-spawn",
+                  <String>[
+                    _mpvPlayer,
+                    "--start=${recording.position}",
+                    "--title=${recording.title}",
+                    "--input-ipc-server=$_mpvSocketPath",
+                    d.fullPathMedia ?? d.url
+                  ],
                   mode: ProcessStartMode.detached);
             case "mpv-play-horizontal-flip":
-              await Process.start("/usr/bin/flatpak-spawn",
-                  <String>[_mpvPlayer, "--vf=hflip", "--start=${recording.position}", "--title=${recording.title}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia ?? d.url],
+              await Process.start(
+                  "/usr/bin/flatpak-spawn",
+                  <String>[
+                    _mpvPlayer,
+                    "--vf=hflip",
+                    "--start=${recording.position}",
+                    "--title=${recording.title}",
+                    "--input-ipc-server=$_mpvSocketPath",
+                    d.fullPathMedia ?? d.url
+                  ],
                   mode: ProcessStartMode.detached);
             case "default":
               await _openInExternalApp(context, d);
@@ -1586,7 +1607,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           },
           onLongPress: () async {
             if (UniversalPlatform.isLinux) {
-              await Process.start("/usr/bin/flatpak-spawn", <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!],
+              await Process.start("/usr/bin/flatpak-spawn",
+                  <String>[_mpvPlayer, "--title=${recording.title}", "--start=${recording.position}", "--input-ipc-server=$_mpvSocketPath", d.fullPathMedia!],
                   mode: ProcessStartMode.detached);
             }
           },

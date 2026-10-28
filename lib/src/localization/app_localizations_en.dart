@@ -1046,4 +1046,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get showDialogShortcutHelp => '? — show dialog help';
-}
+  }

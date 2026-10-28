@@ -1081,4 +1081,4 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get showDialogShortcutHelp => '? — показать справку по окну';
-}
+  }

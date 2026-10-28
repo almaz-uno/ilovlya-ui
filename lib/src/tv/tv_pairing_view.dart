@@ -106,7 +106,9 @@ class _TvPairingViewState extends ConsumerState<TvPairingView> {
               counterText: '',
               // Scanning fills this very field, so it lives in it rather than
               // among the dialog actions, which do not fit three on a phone.
-              suffixIcon: _canScan ? IconButton(tooltip: l10n.tvPairScan, icon: const Icon(Icons.qr_code_scanner), onPressed: _pairing ? null : _scan) : null,
+              suffixIcon: _canScan
+                  ? IconButton(tooltip: l10n.tvPairScan, icon: const Icon(Icons.qr_code_scanner), onPressed: _pairing ? null : _scan)
+                  : null,
             ),
             onSubmitted: _pair,
           ),
