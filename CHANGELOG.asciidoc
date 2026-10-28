@@ -9,8 +9,19 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
+== [3.10.0] - 2026-10-28
+
+.Added
+- On a computer and on the web, every screen and dialog can be used from the keyboard: arrows or `j`/`k` select a recording and `Enter` opens it, `+` adds one and `Insert` or `Ctrl+V` (`Cmd+V` on a Mac) adds the link from the clipboard, `Ctrl+,` (`Cmd+,`) opens the settings, `Esc` or `Backspace` goes back, and dialogs confirm with `Enter` and cancel with `Esc` (#170, #61, #68)
+- The recording screen has keys for its actions: `Enter` or `Space` plays, `d` downloads, `Delete` removes the local copy after a confirmation that names the file, `o` opens the recording in the browser, `c` casts to a TV (#170)
+- `?` shows the keys of the current screen or dialog, in any keyboard layout (#170)
+- The recording list shows a progress indicator while a recording is being marked as seen or hidden, and ignores a second press meanwhile (#68)
+
 .Fixed
 - On a computer, the mouse pointer over a playing video hides together with the player controls, in a window and in fullscreen, and comes back when the mouse moves (#172)
+- On the TV page, the mouse pointer over a playing video hides after a moment without movement, in a window and in fullscreen (ilovlya#79)
+- A TV paired right after it connected no longer stays on the pairing code screen (ilovlya#81)
+- A TV keeps its session through a temporary server error and reconnects with a growing pause instead of asking for a new pairing code; a TV page opened in more than three tabs no longer makes them push each other out, the oldest one shows "Open elsewhere" (ilovlya#83)
 
 == [3.9.2] - 2026-10-28
 
