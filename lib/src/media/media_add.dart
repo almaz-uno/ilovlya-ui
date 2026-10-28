@@ -31,6 +31,8 @@ class MediaAddView extends ConsumerStatefulWidget {
 
 class _MediaAddViewState extends ConsumerState<MediaAddView> {
   final TextEditingController _urlController = TextEditingController();
+  final FocusNode _urlFocusNode = FocusNode(debugLabel: 'media URL');
+  Animation<double>? _routeAnimation;
 
   Future<URLInfo>? _futurePropositions;
   bool _isLoading = false;
@@ -39,6 +41,8 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
 
   @override
   void dispose() {
+    _routeAnimation?.removeStatusListener(_focusUrlAfterTransition);
+    _urlFocusNode.dispose();
     _urlController.dispose();
     super.dispose();
   }
@@ -48,7 +52,22 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
     super.initState();
     if (widget.forcePaste) {
       fromClipboard();
+    } else if (isDesktopKeyboardPlatform) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final animation = _routeAnimation = ModalRoute.of(context)?.animation;
+        _urlFocusNode.requestFocus();
+        if (animation != null && animation.status != AnimationStatus.completed && animation.status != AnimationStatus.dismissed) {
+          animation.addStatusListener(_focusUrlAfterTransition);
+        }
+      });
     }
+  }
+
+  void _focusUrlAfterTransition(AnimationStatus status) {
+    if (status != AnimationStatus.completed) return;
+    _routeAnimation?.removeStatusListener(_focusUrlAfterTransition);
+    if (mounted) _urlFocusNode.requestFocus();
   }
 
   void fromClipboard() async {
@@ -122,6 +141,7 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
           children: [
             TextField(
                 autofocus: isDesktopKeyboardPlatform,
+                focusNode: _urlFocusNode,
                 controller: _urlController,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),

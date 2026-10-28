@@ -55,14 +55,17 @@ class _TestThumbnailNotifier extends ThumbnailDataNotifier {
 }
 
 class _TestRecordingNotifier extends RecordingNotifier {
-  _TestRecordingNotifier(this.recording);
+  _TestRecordingNotifier(this.recording, {this.onRefresh});
   final RecordingInfo recording;
+  final Future<void> Function()? onRefresh;
 
   @override
   Future<RecordingInfo> build(String recordingId) async => recording;
 
   @override
-  Future<void> refreshFromServer() async {}
+  Future<void> refreshFromServer() async {
+    await onRefresh?.call();
+  }
 }
 
 class _TestDownloadsNotifier extends DownloadsNotifier {
@@ -187,6 +190,35 @@ Widget _app({Future<RecordingInfo> Function(String url)? addRecording}) => Provi
       ),
     );
 
+
+Widget _detailsHarness({
+  required RecordingInfo recording,
+  Future<void> Function()? onRefresh,
+  Future<void> Function()? setSeen,
+}) => ProviderScope(
+      overrides: [
+        settingsNotifierProvider.overrideWith(_TestSettingsNotifier.new),
+        localDTNotifierProvider.overrideWith(_TestLocalDTNotifier.new),
+        recordingNotifierProvider(recording.id).overrideWith(() => _TestRecordingNotifier(recording, onRefresh: onRefresh)),
+        downloadsNotifierProvider(recording.id).overrideWith(() => _TestDownloadsNotifier([])),
+        thumbnailDataNotifierProvider(recording.thumbnailUrl).overrideWith(_TestThumbnailNotifier.new),
+        if (setSeen != null) setSeenProvider(recording.id).overrideWith((ref) => setSeen()),
+      ],
+      child: MaterialApp(
+        restorationScopeId: 'details-safety-test',
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => MediaDetailsView(id: recording.id))),
+              child: const Text('Open recording'),
+            ),
+          ),
+        ),
+      ),
+    );
+
 Future<void> _pumpUi(WidgetTester tester) async {
   for (var i = 0; i < 5; i++) {
     await tester.pump(const Duration(milliseconds: 100));
@@ -219,6 +251,29 @@ void main() {
     expect(find.text('Route: /$pathRecordings/two'), findsOneWidget);
   });
 
+  testWidgets('tab focus and arrow selection stay on the same recording', (tester) async {
+    await tester.pumpWidget(_app());
+    await _pumpUi(tester);
+
+    ListTile? focusedTile;
+    for (var i = 0; i < 20 && focusedTile == null; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      final context = FocusManager.instance.primaryFocus?.context;
+      focusedTile = context?.findAncestorWidgetOfExactType<ListTile>();
+    }
+    expect(focusedTile, isNotNull);
+    expect(focusedTile!.selected, isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'recording row two');
+    expect(tester.widgetList<ListTile>(find.byType(ListTile)).last.selected, isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await _pumpUi(tester);
+    expect(find.text('Route: /$pathRecordings/two'), findsOneWidget);
+  });
+
   testWidgets('real media list add, paste, and settings shortcuts navigate', (tester) async {
     await tester.pumpWidget(_app());
     await _pumpUi(tester);
@@ -244,6 +299,31 @@ void main() {
     expect(find.text('Route: ${SettingsView.routeName}'), findsOneWidget);
   });
 
+  testWidgets('plus shortcuts focus URL field and preserve question marks', (tester) async {
+    await tester.pumpWidget(_app());
+    await _pumpUi(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.equal, character: '+');
+    await _pumpUi(tester);
+    var field = find.byType(TextField);
+    expect(field, findsOneWidget);
+    expect(tester.widget<TextField>(field).focusNode!.hasFocus, isTrue);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.slash, character: '?');
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(find.text('Keyboard shortcuts'), findsNothing);
+    await tester.enterText(field, 'x?y');
+    expect(tester.widget<TextField>(field).controller!.text, 'x?y');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await _pumpUi(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.numpadAdd, physicalKey: PhysicalKeyboardKey.numpadAdd);
+    await _pumpUi(tester);
+    field = find.byType(TextField);
+    expect(field, findsOneWidget);
+    expect(isTextInputFocused(), isTrue);
+  });
+
   testWidgets('search receives typed characters and Escape restores list shortcuts', (tester) async {
     await tester.pumpWidget(_app());
     await _pumpUi(tester);
@@ -259,6 +339,13 @@ void main() {
     await tester.enterText(field, 'j');
     await tester.pump();
     expect(tester.widget<TextFormField>(field).controller!.text, 'j');
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.slash, character: '?');
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(find.text('Keyboard shortcuts'), findsNothing);
+    await tester.enterText(field, 'j?');
+    expect(tester.widget<TextFormField>(field).controller!.text, 'j?');
+    await tester.enterText(field, 'j');
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.textContaining('Jazz recording'), findsOneWidget);
 
@@ -300,6 +387,47 @@ void main() {
     expect(find.text('Added recording successfully added'), findsOneWidget);
     expect(ModalRoute.of(tester.element(find.byType(MediaAddView)))?.isCurrent, isFalse);
     expect(find.byType(MediaListViewRiverpod), findsOneWidget);
+  });
+
+  testWidgets('seen request completion after leaving recording does not use disposed ref', (tester) async {
+    final request = Completer<void>();
+    final recording = RecordingInfo(id: 'one', title: 'Jazz recording', thumbnailUrl: 'thumb:seen');
+    await tester.pumpWidget(_detailsHarness(recording: recording, setSeen: () => request.future));
+    await tester.tap(find.text('Open recording'));
+    await _pumpUi(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await _pumpUi(tester);
+    request.complete();
+    await _pumpUi(tester);
+    expect(find.text('Open recording'), findsOneWidget);
+  });
+
+  testWidgets('refreshes that complete after leaving recording do not use disposed ref', (tester) async {
+    final pendingRefresh = Completer<void>();
+    var refreshCalls = 0;
+    final recording = RecordingInfo(id: 'one', title: 'Jazz recording', thumbnailUrl: 'thumb:periodic');
+    await tester.pumpWidget(_detailsHarness(
+      recording: recording,
+      onRefresh: () async {
+        refreshCalls++;
+        await pendingRefresh.future;
+      },
+    ));
+    await tester.tap(find.text('Open recording'));
+    await tester.pumpAndSettle();
+    expect(find.byType(MediaDetailsView), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
+    await tester.pump();
+    expect(refreshCalls, greaterThan(0));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    pendingRefresh.complete();
+    await _pumpUi(tester);
+    expect(find.text('Open recording'), findsOneWidget);
   });
 
   testWidgets('real recording screen Delete asks which local copy to remove', (tester) async {

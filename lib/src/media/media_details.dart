@@ -178,6 +178,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       } else {
         await ref.read(unsetSeenProvider(recording.id).future);
       }
+      if (!mounted) return;
       await _pullRefresh();
     });
     } finally {
@@ -197,6 +198,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       } else {
         await ref.read(unsetHiddenProvider(recording.id).future);
       }
+      if (!mounted) return;
       await _pullRefresh();
     });
     } finally {
@@ -314,6 +316,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   void _sendPosition(String recordingId, Duration position, bool autoFinished) {
+    if (!mounted) return;
     if (ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)) == false) {
       autoFinished = false;
     }
@@ -550,6 +553,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Future<void> _pullRefresh() async {
+    if (!mounted) return;
     getMpvPlaybackPosition(_mpvSocketPath, (double? pos) {
       AppLoggers.player.d('MPV current position: $pos');
       if (pos != null) {
@@ -557,10 +561,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
       }
     });
     await ref.read(recordingNotifierProvider(widget.id).notifier).refreshFromServer();
-    await ref.read(downloadsNotifierProvider(widget.id).notifier).refreshFromServer();
-
-    // The refreshes above are async; the page may have been popped meanwhile.
     if (!mounted) return;
+    await ref.read(downloadsNotifierProvider(widget.id).notifier).refreshFromServer();
+    if (!mounted) return;
+
     // Reset local position after server refresh
     setState(() {
       _currentPosition = null;

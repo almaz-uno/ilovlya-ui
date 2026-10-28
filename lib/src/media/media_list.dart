@@ -101,6 +101,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   final FocusNode _screenFocusNode = FocusNode(debugLabel: 'recordings list');
   String? _selectedRecordingId;
   final Map<String, GlobalKey> _rowKeys = {};
+  final Map<String, FocusNode> _rowFocusNodes = {};
 
   static const _updatePullPeriod = Duration(seconds: 30);
 
@@ -141,6 +142,9 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   void dispose() {
     _searchController.dispose();
     _screenFocusNode.dispose();
+    for (final node in _rowFocusNodes.values) {
+      node.dispose();
+    }
     _scrollController.dispose();
     super.dispose();
   }
@@ -174,33 +178,40 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     );
   }
 
-  void _moveSelection(int delta, List<RecordingInfo> recordings) {
-    if (recordings.isEmpty) return;
-    final currentIndex = recordings.indexWhere((r) => r.id == _selectedRecordingId);
-    final nextIndex = currentIndex < 0 ? 0 : (currentIndex + delta).clamp(0, recordings.length - 1);
-    setState(() => _selectedRecordingId = recordings[nextIndex].id);
+  void _selectRecording(String recordingId, List<RecordingInfo> recordings) {
+    if (_selectedRecordingId != recordingId) {
+      setState(() => _selectedRecordingId = recordingId);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final rowContext = _rowKeys[_selectedRecordingId]?.currentContext;
+      final rowContext = _rowKeys[recordingId]?.currentContext;
       if (rowContext != null) {
         Scrollable.ensureVisible(rowContext, duration: const Duration(milliseconds: 150), alignment: 0.5);
+        _rowFocusNodes[recordingId]?.requestFocus();
       } else if (_scrollController.hasClients && recordings.length > 1) {
-        final index = recordings.indexWhere((r) => r.id == _selectedRecordingId);
+        final index = recordings.indexWhere((r) => r.id == recordingId);
         final estimatedOffset = _scrollController.position.maxScrollExtent * index / (recordings.length - 1);
-        _scrollController.animateTo(estimatedOffset, duration: const Duration(milliseconds: 150), curve: Curves.easeOut);
+        _scrollController.animateTo(estimatedOffset, duration: const Duration(milliseconds: 150), curve: Curves.easeOut).then((_) {
+          if (mounted) _rowFocusNodes[recordingId]?.requestFocus();
+        });
       }
     });
   }
 
+  void _moveSelection(int delta, List<RecordingInfo> recordings) {
+    if (recordings.isEmpty) return;
+    final currentIndex = recordings.indexWhere((r) => r.id == _selectedRecordingId);
+    final nextIndex = currentIndex < 0 ? 0 : (currentIndex + delta).clamp(0, recordings.length - 1);
+    _selectRecording(recordings[nextIndex].id, recordings);
+  }
+
   void _selectEnd(List<RecordingInfo> recordings) {
     if (recordings.isEmpty) return;
-    setState(() => _selectedRecordingId = recordings.last.id);
-    _scrollDown();
+    _selectRecording(recordings.last.id, recordings);
   }
 
   void _selectHome(List<RecordingInfo> recordings) {
     if (recordings.isEmpty) return;
-    setState(() => _selectedRecordingId = recordings.first.id);
-    _scrollUp();
+    _selectRecording(recordings.first.id, recordings);
   }
 
   void _openSelected(BuildContext context, AsyncValue<List<RecordingInfo>> mediaList) {
@@ -246,6 +257,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
           SingleActivator(LogicalKeyboardKey.numpadEnter, includeRepeats: false): OpenSelectedIntent(),
           const CharacterActivator('+'): AddMediaIntent(),
           SingleActivator(LogicalKeyboardKey.add): AddMediaIntent(),
+          SingleActivator(LogicalKeyboardKey.numpadAdd): AddMediaIntent(),
           SingleActivator(LogicalKeyboardKey.insert): PasteMediaIntent(),
           SingleActivator(LogicalKeyboardKey.keyV, control: true): PasteMediaIntent(),
           if (isMacKeyboardPlatform) SingleActivator(LogicalKeyboardKey.keyV, meta: true): PasteMediaIntent(),
@@ -309,10 +321,9 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         ShortcutHelpEntry('↓ / j', AppLocalizations.of(context)!.selectNextRecording),
         ShortcutHelpEntry('Enter', AppLocalizations.of(context)!.openSelectedRecording),
         ShortcutHelpEntry('+', AppLocalizations.of(context)!.addArbitraryMedia),
-        ShortcutHelpEntry('Insert', AppLocalizations.of(context)!.addFromClipboard),
         ShortcutHelpEntry('r / F5', AppLocalizations.of(context)!.refreshList),
         ShortcutHelpEntry('Home / End', AppLocalizations.of(context)!.selectFirstLastRecording),
-        ShortcutHelpEntry('Insert / Ctrl+V', AppLocalizations.of(context)!.addFromClipboard),
+        ShortcutHelpEntry(isMacKeyboardPlatform ? 'Insert / Cmd+V' : 'Insert / Ctrl+V', AppLocalizations.of(context)!.addFromClipboard),
         ShortcutHelpEntry(isMacKeyboardPlatform ? 'Cmd+,' : 'Ctrl+,', AppLocalizations.of(context)!.settings),
       ],
         child: Focus(
@@ -483,6 +494,11 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
 
     final visibleIds = mediaList.requireValue.map((recording) => recording.id).toSet();
     _rowKeys.removeWhere((id, _) => !visibleIds.contains(id));
+    final staleFocusIds = _rowFocusNodes.keys.where((id) => !visibleIds.contains(id)).toList();
+    for (final id in staleFocusIds) {
+      final node = _rowFocusNodes.remove(id)!;
+      WidgetsBinding.instance.addPostFrameCallback((_) => node.dispose());
+    }
 
     return ListView.builder(
       controller: _scrollController,
@@ -525,7 +541,15 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
         final textColor = Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: opacity);
         final subtitleColor = Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: opacity);
 
-        return Column(
+        return Focus(
+          focusNode: _rowFocusNodes.putIfAbsent(item.id, () => FocusNode(debugLabel: 'recording row ${item.id}')),
+          skipTraversal: true,
+          onFocusChange: (hasFocus) {
+            if (hasFocus && _selectedRecordingId != item.id) {
+              setState(() => _selectedRecordingId = item.id);
+            }
+          },
+          child: Column(
           key: _rowKeys.putIfAbsent(item.id, GlobalKey.new),
           children: [
             ListTile(
@@ -565,6 +589,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
               value: item.duration == 0 ? null : item.position / item.duration,
             ),
           ],
+          ),
         );
       },
     );

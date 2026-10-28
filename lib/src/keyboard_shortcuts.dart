@@ -49,7 +49,8 @@ class ScreenShortcuts extends StatelessWidget {
       child: Actions(
         actions: {
           ...guardedActions,
-          ShowShortcutHelpIntent: CallbackAction<ShowShortcutHelpIntent>(
+          ShowShortcutHelpIntent: _TextInputGuardAction<ShowShortcutHelpIntent>(
+            CallbackAction<ShowShortcutHelpIntent>(
             onInvoke: (_) {
               if (isTextInputFocused()) return null;
               showDialog<void>(
@@ -86,6 +87,9 @@ class ScreenShortcuts extends StatelessWidget {
               return null;
             },
           ),
+          allowWhenFocused: false,
+          ignoreWhenActivateFocused: false,
+        ),
         },
         child: isDesktopKeyboardPlatform ? Focus(autofocus: true, child: child) : child,
       ),
