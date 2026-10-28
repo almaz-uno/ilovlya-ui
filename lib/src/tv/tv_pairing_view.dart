@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ilovlya/src/localization/app_localizations.dart';
+import 'package:ilovlya/src/keyboard_shortcuts.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import 'tv_api.dart';
@@ -15,7 +16,8 @@ class TvPairingView extends ConsumerStatefulWidget {
   const TvPairingView({super.key});
 
   static Future<TvSession?> show(BuildContext context) {
-    return showDialog<TvSession>(context: context, builder: (context) => const TvPairingView());
+    return showDialog<TvSession>(
+        context: context, builder: (context) => const TvPairingView());
   }
 
   @override
@@ -76,7 +78,8 @@ class _TvPairingViewState extends ConsumerState<TvPairingView> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return AlertDialog(
+    return DialogShortcuts(
+        child: AlertDialog(
       // The keyboard leaves little height on a phone: the content scrolls
       // instead of running under the buttons.
       scrollable: true,
@@ -89,13 +92,18 @@ class _TvPairingViewState extends ConsumerState<TvPairingView> {
           const SizedBox(height: 16),
           TextField(
             controller: _controller,
-            autofocus: true,
+            autofocus: !isDesktopKeyboardPlatform,
             enabled: !_pairing,
             textCapitalization: TextCapitalization.none,
             autocorrect: false,
             maxLength: _codeLength + 2, // room for a dash or a space
-            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9 \-]'))],
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(letterSpacing: 4),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9 \-]'))
+            ],
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall
+                ?.copyWith(letterSpacing: 4),
             decoration: InputDecoration(
               labelText: l10n.tvPairCodeLabel,
               errorText: _failure,
@@ -105,18 +113,29 @@ class _TvPairingViewState extends ConsumerState<TvPairingView> {
               // Scanning fills this very field, so it lives in it rather than
               // among the dialog actions, which do not fit three on a phone.
               suffixIcon: _canScan
-                  ? IconButton(tooltip: l10n.tvPairScan, icon: const Icon(Icons.qr_code_scanner), onPressed: _pairing ? null : _scan)
+                  ? IconButton(
+                      tooltip: l10n.tvPairScan,
+                      icon: const Icon(Icons.qr_code_scanner),
+                      onPressed: _pairing ? null : _scan)
                   : null,
             ),
             onSubmitted: _pair,
           ),
-          if (_pairing) const Padding(padding: EdgeInsets.only(top: 8), child: LinearProgressIndicator()),
+          if (_pairing)
+            const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: LinearProgressIndicator()),
         ],
       ),
       actions: [
-        TextButton(onPressed: _pairing ? null : () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
-        FilledButton(onPressed: _pairing ? null : () => _pair(_controller.text), child: Text(l10n.tvPairConnect)),
+        TextButton(
+            onPressed: _pairing ? null : () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel)),
+        FilledButton(
+            autofocus: isDesktopKeyboardPlatform,
+            onPressed: _pairing ? null : () => _pair(_controller.text),
+            child: Text(l10n.tvPairConnect)),
       ],
-    );
+    ));
   }
 }

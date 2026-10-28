@@ -1022,4 +1022,49 @@ class AppLocalizationsRu extends AppLocalizations {
   String cleanStaleMediaFailed(String error) {
     return 'Не удалось очистить старые медиа: $error';
   }
+
+  @override
+  String get keyboardShortcuts => 'Горячие клавиши';
+
+  @override
+  String get showShortcutHelp => 'Показать эту справку';
+
+  @override
+  String get selectPreviousRecording => 'Выбрать предыдущую запись';
+
+  @override
+  String get selectNextRecording => 'Выбрать следующую запись';
+
+  @override
+  String get openSelectedRecording => 'Открыть выбранную запись';
+
+  @override
+  String get openRecordingInBrowser => 'Открыть запись в браузере';
+
+  @override
+  String get submitMediaUrl => 'Добавить медиа по введённой ссылке';
+
+  @override
+  String get seekByTenSeconds => 'Перемотать на 10 секунд';
+
+  @override
+  String get seekByThirtySeconds => 'Перемотать на 30 секунд';
+
+  @override
+  String get seekByMinute => 'Перемотать на 1 минуту';
+
+  @override
+  String get seekByFiveMinutes => 'Перемотать на 5 минут';
+
+  @override
+  String get changeVolumeByFivePercent => 'Изменить громкость на 5%';
+
+  @override
+  String get confirmWithEnter => 'Enter — подтвердить';
+
+  @override
+  String get cancelWithEscape => 'Esc — отменить';
+
+  @override
+  String get showDialogShortcutHelp => 'Shift+/ — показать справку по окну';
 }

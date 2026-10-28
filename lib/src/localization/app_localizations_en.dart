@@ -987,4 +987,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String cleanStaleMediaFailed(String error) {
     return 'Cleaning stale media failed: $error';
   }
+
+  @override
+  String get keyboardShortcuts => 'Keyboard shortcuts';
+
+  @override
+  String get showShortcutHelp => 'Show this help';
+
+  @override
+  String get selectPreviousRecording => 'Select previous recording';
+
+  @override
+  String get selectNextRecording => 'Select next recording';
+
+  @override
+  String get openSelectedRecording => 'Open selected recording';
+
+  @override
+  String get openRecordingInBrowser => 'Open recording in browser';
+
+  @override
+  String get submitMediaUrl => 'Add media from the entered URL';
+
+  @override
+  String get seekByTenSeconds => 'Seek by 10 seconds';
+
+  @override
+  String get seekByThirtySeconds => 'Seek by 30 seconds';
+
+  @override
+  String get seekByMinute => 'Seek by 1 minute';
+
+  @override
+  String get seekByFiveMinutes => 'Seek by 5 minutes';
+
+  @override
+  String get changeVolumeByFivePercent => 'Change volume by 5%';
+
+  @override
+  String get confirmWithEnter => 'Enter — confirm';
+
+  @override
+  String get cancelWithEscape => 'Esc — cancel';
+
+  @override
+  String get showDialogShortcutHelp => 'Shift+/ — show dialog help';
 }

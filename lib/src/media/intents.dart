@@ -37,3 +37,47 @@ class ChangeVolumeIntent extends Intent {
   const ChangeVolumeIntent(this.change);
   final int change;
 }
+
+class SelectPreviousIntent extends Intent {
+  const SelectPreviousIntent();
+}
+
+class SelectNextIntent extends Intent {
+  const SelectNextIntent();
+}
+
+class OpenSelectedIntent extends Intent {
+  const OpenSelectedIntent();
+}
+
+class AddMediaIntent extends Intent {
+  const AddMediaIntent();
+}
+
+class PasteMediaIntent extends Intent {
+  const PasteMediaIntent();
+}
+
+class OpenSettingsIntent extends Intent {
+  const OpenSettingsIntent();
+}
+
+class PlayRecordingIntent extends Intent {
+  const PlayRecordingIntent();
+}
+
+class DownloadRecordingIntent extends Intent {
+  const DownloadRecordingIntent();
+}
+
+class DeleteLocalRecordingIntent extends Intent {
+  const DeleteLocalRecordingIntent();
+}
+
+class OpenInBrowserIntent extends Intent {
+  const OpenInBrowserIntent();
+}
+
+class CastRecordingIntent extends Intent {
+  const CastRecordingIntent();
+}

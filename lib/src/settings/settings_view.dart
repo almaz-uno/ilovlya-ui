@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:universal_platform/universal_platform.dart';
 
@@ -8,7 +9,9 @@ import '../api/api_riverpod.dart';
 import '../api/directories_riverpod.dart';
 import '../api/housekeeper_riverpod.dart';
 import '../localization/app_localizations.dart';
+import '../keyboard_shortcuts.dart';
 import '../media/format.dart';
+import '../media/intents.dart';
 import '../utils/logger_provider.dart';
 import 'app_version_provider.dart';
 import 'settings_provider.dart';
@@ -31,41 +34,77 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsNotifierProvider);
 
-    final tokenController = TextEditingController(text: settings.requireValue.token);
-    final serverUrlController = TextEditingController(text: settings.requireValue.serverUrl);
+    final tokenController =
+        TextEditingController(text: settings.requireValue.token);
+    final serverUrlController =
+        TextEditingController(text: settings.requireValue.serverUrl);
 
     // File management is about files on the device, and a browser keeps none:
     // on web the tab would only wait for directories that do not exist there.
     final withHousekeeping = !UniversalPlatform.isWeb;
 
-    return DefaultTabController(
-      length: withHousekeeping ? 3 : 2,
-      initialIndex: withHousekeeping ? 2 : 1,
-      child: Scaffold(
-        appBar: AppBar(
-          bottom: TabBar(
-            tabs: [
-              Tab(icon: const Icon(Icons.person), text: AppLocalizations.of(context)!.userProfile),
-              Tab(icon: const Icon(Icons.settings), text: AppLocalizations.of(context)!.settings),
-              if (withHousekeeping)
-                Tab(icon: const Icon(Icons.cleaning_services), text: AppLocalizations.of(context)!.housekeeping),
-            ],
-          ),
-          title: Text(AppLocalizations.of(context)!.settings),
-        ),
-        body: TabBarView(
-          children: [
-            _tab(<Widget>[
-                      const SizedBox(height:0),
+    return ScreenShortcuts(
+      shortcuts: isDesktopKeyboardPlatform
+          ? const {
+              SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
+              SingleActivator(LogicalKeyboardKey.backspace):
+                  BackFromSettingsIntent(),
+            }
+          : const {},
+      allowedWhenTextInputFocused: const {BackIntent},
+      actions: {
+        BackIntent: CallbackAction<BackIntent>(onInvoke: (_) {
+          Navigator.of(context).maybePop();
+          return null;
+        }),
+        BackFromSettingsIntent:
+            CallbackAction<BackFromSettingsIntent>(onInvoke: (_) {
+          if (!isTextInputFocused()) Navigator.of(context).maybePop();
+          return null;
+        }),
+      },
+      help: [
+        ShortcutHelpEntry(
+            'Esc / Backspace', AppLocalizations.of(context)!.cancel)
+      ],
+      child: FocusTraversalGroup(
+        child: DefaultTabController(
+          length: withHousekeeping ? 3 : 2,
+          initialIndex: withHousekeeping ? 2 : 1,
+          child: Scaffold(
+            appBar: AppBar(
+              bottom: TabBar(
+                tabs: [
+                  Tab(
+                      icon: const Icon(Icons.person),
+                      text: AppLocalizations.of(context)!.userProfile),
+                  Tab(
+                      icon: const Icon(Icons.settings),
+                      text: AppLocalizations.of(context)!.settings),
+                  if (withHousekeeping)
+                    Tab(
+                        icon: const Icon(Icons.cleaning_services),
+                        text: AppLocalizations.of(context)!.housekeeping),
+                ],
+              ),
+              title: Text(AppLocalizations.of(context)!.settings),
+            ),
+            body: TabBarView(
+              children: [
+                _tab(<Widget>[
+                      const SizedBox(height: 0),
                       Consumer(
                         builder: (context, ref, child) {
                           final appVersionAsync = ref.watch(appVersionProvider);
                           return appVersionAsync.when(
                             data: (version) => Text(
                               AppLocalizations.of(context)!.appVersion(version),
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
                             ),
                             loading: () => const SizedBox.shrink(),
                             error: (_, __) => const SizedBox.shrink(),
@@ -74,32 +113,42 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       ),
                       TextField(
                         controller: tokenController,
-                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.yourTokenProvidedByBot),
+                        decoration: InputDecoration(
+                            labelText: AppLocalizations.of(context)!
+                                .yourTokenProvidedByBot),
                         textInputAction: TextInputAction.next,
                         onSubmitted: (String value) {
-                          ref.read(settingsNotifierProvider.notifier).updateToken(value);
+                          ref
+                              .read(settingsNotifierProvider.notifier)
+                              .updateToken(value);
                         },
                       ),
                       TextField(
                         controller: serverUrlController,
-                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.serverUrlProvidedByBot),
+                        decoration: InputDecoration(
+                            labelText: AppLocalizations.of(context)!
+                                .serverUrlProvidedByBot),
                         textInputAction: TextInputAction.next,
                         onSubmitted: (String value) {
-                          ref.read(settingsNotifierProvider.notifier).updateServerUrl(value);
+                          ref
+                              .read(settingsNotifierProvider.notifier)
+                              .updateServerUrl(value);
                         },
                       ),
                     ] +
                     tenantInfo(ref)),
-            _tab([
-              const SizedBox(height: 0),
-              ..._commonSettings(),
-            ]),
-            if (withHousekeeping)
-              _tab([
-                const SizedBox(height: 0),
-                ..._housekeeping(context),
-              ]),
-          ],
+                _tab([
+                  const SizedBox(height: 0),
+                  ..._commonSettings(),
+                ]),
+                if (withHousekeeping)
+                  _tab([
+                    const SizedBox(height: 0),
+                    ..._housekeeping(context),
+                  ]),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -120,11 +169,15 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   List<Widget> _commonSettings() {
     return [
       DropdownButtonFormField<ThemeMode>(
-        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.applicationColorTheme),
-        initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.theme)),
+        decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.applicationColorTheme),
+        initialValue:
+            ref.watch(settingsNotifierProvider.select((s) => s.value?.theme)),
         alignment: AlignmentDirectional.topStart,
         onChanged: (ThemeMode? theme) {
-          ref.read(settingsNotifierProvider.notifier).updateTheme(theme ?? ThemeMode.system);
+          ref
+              .read(settingsNotifierProvider.notifier)
+              .updateTheme(theme ?? ThemeMode.system);
         },
         items: [
           DropdownMenuItem(
@@ -142,11 +195,15 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         ],
       ),
       DropdownButtonFormField<String>(
-        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.language),
-        initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.locale)),
+        decoration:
+            InputDecoration(labelText: AppLocalizations.of(context)!.language),
+        initialValue:
+            ref.watch(settingsNotifierProvider.select((s) => s.value?.locale)),
         alignment: AlignmentDirectional.topStart,
         onChanged: (String? locale) {
-          ref.read(settingsNotifierProvider.notifier).updateLocale(locale ?? "");
+          ref
+              .read(settingsNotifierProvider.notifier)
+              .updateLocale(locale ?? "");
         },
         items: [
           DropdownMenuItem<String>(
@@ -164,10 +221,14 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         ],
       ),
       DropdownButtonFormField<double>(
-        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.playerSpeedRate),
-        initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.playerSpeed)),
+        decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.playerSpeedRate),
+        initialValue: ref.watch(
+            settingsNotifierProvider.select((s) => s.value?.playerSpeed)),
         onChanged: (value) {
-          ref.read(settingsNotifierProvider.notifier).updatePlayerSpeed(value ?? 1.0);
+          ref
+              .read(settingsNotifierProvider.notifier)
+              .updatePlayerSpeed(value ?? 1.0);
         },
         items: [
           for (final e in getSpeedRates(AppLocalizations.of(context)!).entries)
@@ -176,17 +237,23 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       ),
       SwitchListTile(
         title: Text(AppLocalizations.of(context)!.autoMarkViewedWhenPlayed),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed ?? false)),
+        value: ref.watch(settingsNotifierProvider
+            .select((s) => s.value?.autoViewed ?? false)),
         onChanged: (bool? autoViewed) {
-          ref.read(settingsNotifierProvider.notifier).updateAutoViewed(autoViewed);
+          ref
+              .read(settingsNotifierProvider.notifier)
+              .updateAutoViewed(autoViewed);
         },
         controlAffinity: ListTileControlAffinity.leading,
       ),
       SwitchListTile(
         title: Text(AppLocalizations.of(context)!.updateThumbnailProgress),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.updateThumbnails ?? false)),
+        value: ref.watch(settingsNotifierProvider
+            .select((s) => s.value?.updateThumbnails ?? false)),
         onChanged: (bool? updateThumbnails) {
-          ref.read(settingsNotifierProvider.notifier).updateUpdateThumbnails(updateThumbnails);
+          ref
+              .read(settingsNotifierProvider.notifier)
+              .updateUpdateThumbnails(updateThumbnails);
         },
         controlAffinity: ListTileControlAffinity.leading,
       ),
@@ -202,7 +269,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       final t = tenant.requireValue;
       w.add(Text("${t.firstName} ${t.lastName} (${t.username})"));
       if (t.blockedAt != null) {
-        w.add(Text(AppLocalizations.of(context)!.blockedAt("${tenant.requireValue.blockedAt}")));
+        w.add(Text(AppLocalizations.of(context)!
+            .blockedAt("${tenant.requireValue.blockedAt}")));
       }
       w.add(Text(AppLocalizations.of(context)!.quota(t.quotaStr())));
       w.add(Text(AppLocalizations.of(context)!.used(t.usageStr())));
@@ -227,19 +295,26 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final (number, size) = media.requireValue;
 
     final mediaDirs = ref.watch(mediaDirsProvider);
-    final mediaDir = ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory));
+    final mediaDir = ref.watch(
+        settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory));
 
     return [
-      Text(AppLocalizations.of(context)!.localMediaInfo, style: Theme.of(context).textTheme.bodyLarge),
+      Text(AppLocalizations.of(context)!.localMediaInfo,
+          style: Theme.of(context).textTheme.bodyLarge),
       Text(AppLocalizations.of(context)!.recordings(data.requireValue)),
-      Text(AppLocalizations.of(context)!.filesWithSize(number, fileSizeHumanReadable(size))),
+      Text(AppLocalizations.of(context)!
+          .filesWithSize(number, fileSizeHumanReadable(size))),
       if (!UniversalPlatform.isWeb)
         SwitchListTile(
           title: Text(AppLocalizations.of(context)!.downloadWhilePlaying),
-          subtitle: Text(AppLocalizations.of(context)!.downloadWhilePlayingDescription),
-          value: ref.watch(settingsNotifierProvider.select((s) => s.value?.downloadWhilePlaying ?? false)),
+          subtitle: Text(
+              AppLocalizations.of(context)!.downloadWhilePlayingDescription),
+          value: ref.watch(settingsNotifierProvider
+              .select((s) => s.value?.downloadWhilePlaying ?? false)),
           onChanged: (bool? value) {
-            ref.read(settingsNotifierProvider.notifier).updateDownloadWhilePlaying(value);
+            ref
+                .read(settingsNotifierProvider.notifier)
+                .updateDownloadWhilePlaying(value);
           },
           controlAffinity: ListTileControlAffinity.leading,
         ),
@@ -255,10 +330,14 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           });
           String message;
           try {
-            final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanStale();
-            message = l10n.filesCleanedMessage(number, fileSizeHumanReadable(size));
+            final (number, size) = await ref
+                .read(localMediaHousekeeperProvider.notifier)
+                .cleanStale();
+            message =
+                l10n.filesCleanedMessage(number, fileSizeHumanReadable(size));
           } on Object catch (err, st) {
-            AppLoggers.media.e('Cleaning stale downloaded media failed', error: err, stackTrace: st);
+            AppLoggers.media.e('Cleaning stale downloaded media failed',
+                error: err, stackTrace: st);
             message = l10n.cleanStaleMediaFailed('$err');
           } finally {
             if (mounted) {
@@ -273,26 +352,37 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       OutlinedButton(
         child: Text(AppLocalizations.of(context)!.cleanAllDownloadedMedia),
         onPressed: () async {
-          confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllDownloadedMediaFiles, () async {
-            final (number, size) = await ref.read(localMediaHousekeeperProvider.notifier).cleanAll();
+          confirmDialog(context, AppLocalizations.of(context)!.areYouSure,
+              AppLocalizations.of(context)!.deleteAllDownloadedMediaFiles,
+              () async {
+            final (number, size) = await ref
+                .read(localMediaHousekeeperProvider.notifier)
+                .cleanAll();
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(AppLocalizations.of(context)!.filesCleanedMessage(number, fileSizeHumanReadable(size))),
+              content: Text(AppLocalizations.of(context)!
+                  .filesCleanedMessage(number, fileSizeHumanReadable(size))),
             ));
             Navigator.pop(context);
           });
         },
       ),
       OutlinedButton(
-        child: Text(AppLocalizations.of(context)!.cleanAllMetadataForRecordings(data.requireValue)),
+        child: Text(AppLocalizations.of(context)!
+            .cleanAllMetadataForRecordings(data.requireValue)),
         onPressed: () async {
           confirmDialog(
-              context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllMetadataMessage(data.requireValue),
-              () async {
-            final number = await ref.read(localDataNotifierProvider.notifier).cleanMetadata();
+              context,
+              AppLocalizations.of(context)!.areYouSure,
+              AppLocalizations.of(context)!
+                  .deleteAllMetadataMessage(data.requireValue), () async {
+            final number = await ref
+                .read(localDataNotifierProvider.notifier)
+                .cleanMetadata();
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(AppLocalizations.of(context)!.recordingsCleanedMessage(number)),
+              content: Text(AppLocalizations.of(context)!
+                  .recordingsCleanedMessage(number)),
             ));
             Navigator.pop(context);
           });
@@ -300,29 +390,47 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       ),
       if (mediaDirs.hasValue)
         DropdownButtonFormField<String>(
-          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.mediaDirectory),
+          decoration: InputDecoration(
+              labelText: AppLocalizations.of(context)!.mediaDirectory),
           // A value outside the items fails an assertion; the settings already
           // fall back to an offered directory, so this only guards the screen.
-          initialValue: mediaDirs.requireValue.contains(mediaDir) ? mediaDir : null,
+          initialValue:
+              mediaDirs.requireValue.contains(mediaDir) ? mediaDir : null,
           alignment: AlignmentDirectional.topStart,
           isExpanded: true,
           onChanged: (String? directory) {
-            ref.read(settingsNotifierProvider.notifier).updateMediaStorageDirectory(directory ?? "");
+            ref
+                .read(settingsNotifierProvider.notifier)
+                .updateMediaStorageDirectory(directory ?? "");
           },
           items: [
-            for (final d in mediaDirs.requireValue) DropdownMenuItem(value: d, child: Text(d, overflow: TextOverflow.ellipsis)),
+            for (final d in mediaDirs.requireValue)
+              DropdownMenuItem(
+                  value: d, child: Text(d, overflow: TextOverflow.ellipsis)),
           ],
         ),
-      if (sp.hasValue) Text(AppLocalizations.of(context)!.dataLocalPath(sp.requireValue.data().path)),
-      if (sp.hasValue) Text(AppLocalizations.of(context)!.downloadedLocalMediaPath(sp.requireValue.media().path)),
+      if (sp.hasValue)
+        Text(AppLocalizations.of(context)!
+            .dataLocalPath(sp.requireValue.data().path)),
+      if (sp.hasValue)
+        Text(AppLocalizations.of(context)!
+            .downloadedLocalMediaPath(sp.requireValue.media().path)),
       if (_cleaningStaleMedia)
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Wrap(spacing: 8.0, crossAxisAlignment: WrapCrossAlignment.center, children: [
-            const CircularProgressIndicator(),
-            Text(AppLocalizations.of(context)!.cleaningStaleMediaLocalFiles),
-          ]),
+          child: Wrap(
+              spacing: 8.0,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                Text(
+                    AppLocalizations.of(context)!.cleaningStaleMediaLocalFiles),
+              ]),
         ),
     ];
   }
+}
+
+class BackFromSettingsIntent extends Intent {
+  const BackFromSettingsIntent();
 }

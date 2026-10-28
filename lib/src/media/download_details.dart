@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_riverpod.dart';
 import '../localization/app_localizations.dart';
+import '../keyboard_shortcuts.dart';
+import 'intents.dart';
 import '../model/download.dart';
 
 class DownloadDetailsView extends ConsumerStatefulWidget {
@@ -16,7 +19,8 @@ class DownloadDetailsView extends ConsumerStatefulWidget {
   final String downloadId;
 
   @override
-  ConsumerState<DownloadDetailsView> createState() => _DownloadDetailsViewState();
+  ConsumerState<DownloadDetailsView> createState() =>
+      _DownloadDetailsViewState();
 }
 
 class _DownloadDetailsViewState extends ConsumerState<DownloadDetailsView> {
@@ -42,9 +46,31 @@ class _DownloadDetailsViewState extends ConsumerState<DownloadDetailsView> {
   @override
   Widget build(BuildContext context) {
     final download = ref.watch(getDownloadProvider(widget.downloadId));
-    return Scaffold(
-      appBar: AppBar(title: download.hasValue ? Text("${download.requireValue.title} ${AppLocalizations.of(context)!.preparingEllipsis}") : Text(AppLocalizations.of(context)!.acquiringInfo)),
-      body: _buildOutput(download),
+    return ScreenShortcuts(
+      shortcuts: isDesktopKeyboardPlatform
+          ? const {
+              SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
+              SingleActivator(LogicalKeyboardKey.backspace): BackIntent(),
+            }
+          : const {},
+      actions: {
+        BackIntent: CallbackAction<BackIntent>(onInvoke: (_) {
+          if (!isTextInputFocused()) Navigator.of(context).maybePop();
+          return null;
+        }),
+      },
+      help: [
+        ShortcutHelpEntry(
+            'Esc / Backspace', AppLocalizations.of(context)!.cancel)
+      ],
+      child: Scaffold(
+        appBar: AppBar(
+            title: download.hasValue
+                ? Text(
+                    "${download.requireValue.title} ${AppLocalizations.of(context)!.preparingEllipsis}")
+                : Text(AppLocalizations.of(context)!.acquiringInfo)),
+        body: _buildOutput(download),
+      ),
     );
   }
 

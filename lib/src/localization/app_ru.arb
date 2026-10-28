@@ -1373,5 +1373,20 @@
         "type": "int"
       }
     }
-  }
+  },
+  "keyboardShortcuts": "Горячие клавиши",
+  "showShortcutHelp": "Показать эту справку",
+  "selectPreviousRecording": "Выбрать предыдущую запись",
+  "selectNextRecording": "Выбрать следующую запись",
+  "openSelectedRecording": "Открыть выбранную запись",
+  "openRecordingInBrowser": "Открыть запись в браузере",
+  "submitMediaUrl": "Добавить медиа по введённой ссылке",
+  "seekByTenSeconds": "Перемотать на 10 секунд",
+  "seekByThirtySeconds": "Перемотать на 30 секунд",
+  "seekByMinute": "Перемотать на 1 минуту",
+  "seekByFiveMinutes": "Перемотать на 5 минут",
+  "changeVolumeByFivePercent": "Изменить громкость на 5%",
+  "confirmWithEnter": "Enter — подтвердить",
+  "cancelWithEscape": "Esc — отменить",
+  "showDialogShortcutHelp": "Shift+/ — показать справку по окну"
 }

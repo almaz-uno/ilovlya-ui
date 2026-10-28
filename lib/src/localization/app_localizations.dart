@@ -1671,6 +1671,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cleaning stale media failed: {error}'**
   String cleanStaleMediaFailed(String error);
+
+  /// Title of the screen shortcuts help dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard shortcuts'**
+  String get keyboardShortcuts;
+
+  /// Help entry for opening the keyboard shortcuts dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Show this help'**
+  String get showShortcutHelp;
+
+  /// No description provided for @selectPreviousRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Select previous recording'**
+  String get selectPreviousRecording;
+
+  /// No description provided for @selectNextRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Select next recording'**
+  String get selectNextRecording;
+
+  /// No description provided for @openSelectedRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Open selected recording'**
+  String get openSelectedRecording;
+
+  /// No description provided for @openRecordingInBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Open recording in browser'**
+  String get openRecordingInBrowser;
+
+  /// No description provided for @submitMediaUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Add media from the entered URL'**
+  String get submitMediaUrl;
+
+  /// No description provided for @seekByTenSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'Seek by 10 seconds'**
+  String get seekByTenSeconds;
+
+  /// No description provided for @seekByThirtySeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'Seek by 30 seconds'**
+  String get seekByThirtySeconds;
+
+  /// No description provided for @seekByMinute.
+  ///
+  /// In en, this message translates to:
+  /// **'Seek by 1 minute'**
+  String get seekByMinute;
+
+  /// No description provided for @seekByFiveMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Seek by 5 minutes'**
+  String get seekByFiveMinutes;
+
+  /// No description provided for @changeVolumeByFivePercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Change volume by 5%'**
+  String get changeVolumeByFivePercent;
+
+  /// No description provided for @confirmWithEnter.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter — confirm'**
+  String get confirmWithEnter;
+
+  /// No description provided for @cancelWithEscape.
+  ///
+  /// In en, this message translates to:
+  /// **'Esc — cancel'**
+  String get cancelWithEscape;
+
+  /// No description provided for @showDialogShortcutHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Shift+/ — show dialog help'**
+  String get showDialogShortcutHelp;
 }
 
 class _AppLocalizationsDelegate

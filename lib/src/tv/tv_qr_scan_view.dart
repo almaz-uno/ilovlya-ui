@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ilovlya/src/localization/app_localizations.dart';
+import 'package:ilovlya/src/keyboard_shortcuts.dart';
+import 'package:ilovlya/src/media/intents.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 /// Reads the pairing code from the QR image on the television. The image
@@ -8,7 +11,8 @@ class TvQrScanView extends StatefulWidget {
   const TvQrScanView({super.key});
 
   static Future<String?> show(BuildContext context) {
-    return Navigator.of(context).push<String>(MaterialPageRoute(builder: (context) => const TvQrScanView()));
+    return Navigator.of(context).push<String>(
+        MaterialPageRoute(builder: (context) => const TvQrScanView()));
   }
 
   @override
@@ -44,21 +48,42 @@ class _TvQrScanViewState extends State<TvQrScanView> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.tvScanTitle)),
-      body: Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          MobileScanner(controller: _controller, onDetect: _onDetect),
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              l10n.tvScanHint,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
+    return ScreenShortcuts(
+      shortcuts: isDesktopKeyboardPlatform
+          ? const {
+              SingleActivator(LogicalKeyboardKey.escape): BackIntent(),
+              SingleActivator(LogicalKeyboardKey.backspace): BackIntent(),
+            }
+          : const {},
+      actions: {
+        BackIntent: CallbackAction<BackIntent>(onInvoke: (_) {
+          Navigator.of(context).maybePop();
+          return null;
+        }),
+      },
+      help: [
+        ShortcutHelpEntry(
+            'Esc / Backspace', AppLocalizations.of(context)!.cancel)
+      ],
+      child: Scaffold(
+        appBar: AppBar(title: Text(l10n.tvScanTitle)),
+        body: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            MobileScanner(controller: _controller, onDetect: _onDetect),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                l10n.tvScanHint,
+                textAlign: TextAlign.center,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(color: Colors.white),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -8,6 +8,7 @@ import '../api/api.dart';
 import '../api/api_riverpod.dart';
 import '../api/media_list_riverpod.dart';
 import '../localization/app_localizations.dart';
+import '../keyboard_shortcuts.dart';
 import '../model/url_info.dart';
 import '../utils/logger_provider.dart';
 import 'format.dart';
@@ -34,6 +35,12 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
   Future<URLInfo>? _futurePropositions;
   bool _isLoading = false;
   bool _isAdding = false;
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -73,58 +80,90 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.addNewMedia),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.paste),
-            tooltip: AppLocalizations.of(context)!.pasteFromClipboard,
-            onPressed: fromClipboard,
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            TextField(
-              controller: _urlController,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                hintText: AppLocalizations.of(context)!.enterMediaUrl,
-                prefixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    IconButton(
-                      onPressed: fromClipboard,
-                      icon: const Icon(Icons.paste),
-                      tooltip: AppLocalizations.of(context)!.pasteFromClipboard,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.youtube_searched_for),
-                      tooltip: AppLocalizations.of(context)!.lookupMediaInfo,
-                      onPressed: () {
-                        setState(() {
-                          _futurePropositions = _getURLInfo(_urlController.text);
-                        });
-                      },
-                    ),
-                  ],
-                ),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: _urlController.clear,
+    return ScreenShortcuts(
+      shortcuts: isDesktopKeyboardPlatform
+          ? const {
+              SingleActivator(LogicalKeyboardKey.enter): SubmitMediaIntent(),
+              SingleActivator(LogicalKeyboardKey.numpadEnter):
+                  SubmitMediaIntent(),
+              SingleActivator(LogicalKeyboardKey.escape): CancelMediaIntent(),
+            }
+          : const {},
+      allowedWhenTextInputFocused: const {SubmitMediaIntent, CancelMediaIntent},
+      actions: {
+        SubmitMediaIntent: CallbackAction<SubmitMediaIntent>(onInvoke: (_) {
+          final url = _urlController.text.trim();
+          if (url.isNotEmpty && !_isAdding) _addMedia(context, url, true);
+          return null;
+        }),
+        CancelMediaIntent: CallbackAction<CancelMediaIntent>(onInvoke: (_) {
+          Navigator.of(context).maybePop();
+          return null;
+        }),
+      },
+      help: [
+        ShortcutHelpEntry(
+            'Enter', AppLocalizations.of(context)!.submitMediaUrl),
+        ShortcutHelpEntry('Esc', AppLocalizations.of(context)!.cancel),
+      ],
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(AppLocalizations.of(context)!.addNewMedia),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.paste),
+              tooltip: AppLocalizations.of(context)!.pasteFromClipboard,
+              onPressed: fromClipboard,
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                autofocus: isDesktopKeyboardPlatform,
+                controller: _urlController,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  hintText: AppLocalizations.of(context)!.enterMediaUrl,
+                  prefixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      IconButton(
+                        onPressed: fromClipboard,
+                        icon: const Icon(Icons.paste),
+                        tooltip:
+                            AppLocalizations.of(context)!.pasteFromClipboard,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.youtube_searched_for),
+                        tooltip: AppLocalizations.of(context)!.lookupMediaInfo,
+                        onPressed: () {
+                          setState(() {
+                            _futurePropositions =
+                                _getURLInfo(_urlController.text);
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: _urlController.clear,
+                  ),
                 ),
               ),
-            ),
-            (_futurePropositions == null) ? Text(AppLocalizations.of(context)!.toViewInfoPressLookup) : buildPropositionList(),
-            Visibility(
-                visible: _isLoading || _isAdding,
-                child: const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator(),
-                )),
-          ],
+              (_futurePropositions == null)
+                  ? Text(AppLocalizations.of(context)!.toViewInfoPressLookup)
+                  : buildPropositionList(),
+              Visibility(
+                  visible: _isLoading || _isAdding,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(),
+                  )),
+            ],
+          ),
         ),
       ),
     );
@@ -141,17 +180,24 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
       if (!mounted || !context.mounted) return;
       ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(AppLocalizations.of(context)!.successfullyAddedMessage(value.title)),
+        content: Text(AppLocalizations.of(context)!
+            .successfullyAddedMessage(value.title)),
       ));
     }).catchError((err) {
       if (!context.mounted) return;
       showDialog(
           context: context,
           barrierDismissible: true,
-          builder: (BuildContext context) => Dialog(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(err.toString()),
+          builder: (BuildContext context) => DialogShortcuts(
+                child: AlertDialog(
+                  content: Text(err.toString()),
+                  actions: [
+                    TextButton(
+                      autofocus: isDesktopKeyboardPlatform,
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(AppLocalizations.of(context)!.cancel),
+                    ),
+                  ],
                 ),
               ));
     }).whenComplete(() {
@@ -170,7 +216,9 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
       future: _futurePropositions,
       builder: (BuildContext context, AsyncSnapshot<URLInfo> snapshot) {
         if (snapshot.hasData) {
-          if (snapshot.data!.infos != null && widget.forcePaste && snapshot.data!.infos!.length == 1) {
+          if (snapshot.data!.infos != null &&
+              widget.forcePaste &&
+              snapshot.data!.infos!.length == 1) {
             var u = snapshot.data!.infos![0].webpageUrl;
             _addMedia(context, u, true);
             return Column(
@@ -221,4 +269,12 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
       },
     );
   }
+}
+
+class SubmitMediaIntent extends Intent {
+  const SubmitMediaIntent();
+}
+
+class CancelMediaIntent extends Intent {
+  const CancelMediaIntent();
 }
