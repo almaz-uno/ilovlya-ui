@@ -9,6 +9,9 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
+.Fixed
+- On a computer, the mouse pointer over a playing video hides together with the player controls, in a window and in fullscreen, and comes back when the mouse moves (#172)
+
 == [3.9.2] - 2026-10-28
 
 .Fixed
