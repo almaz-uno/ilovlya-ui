@@ -196,6 +196,20 @@ void main() {
     await downloads().discard('d1');
   });
 
+  test('opening a download whose server is away from the start hands the player a URL that answers unavailable', () async {
+    // #195: the length is not known, and the server has been away for longer than the give-up time. The wait for the
+    // length fails rather than waits, and the endpoint tells the player at once instead of keeping its request.
+    downloads()
+      ..silenceTimeout = const Duration(milliseconds: 300)
+      ..giveUpAfter = const Duration(milliseconds: 600);
+    up.silent = true;
+    final url = await downloads().open(download('d1')).timeout(PlaybackDownloads.lengthWait);
+    final r = await fetch(player, url, range: 'bytes=0-').timeout(const Duration(seconds: 5));
+    expect(r.status, HttpStatus.serviceUnavailable);
+    up.silent = false;
+    await downloads().discard('d1');
+  });
+
   group('time spent suspended is not silence', () {
     // On iOS a paused player in the background lets the process be suspended (spec 004, "On iOS"): no byte arrives, and
     // wall-clock time goes on. Here the process runs on, so the suspension is played by a server that falls silent at the

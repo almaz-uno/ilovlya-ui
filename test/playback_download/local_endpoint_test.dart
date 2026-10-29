@@ -431,6 +431,25 @@ void main() {
     expect(source.serverAway, isTrue);
   });
 
+  test('a server silent from the start is given up before the length is known, and the URL is served once it speaks', () async {
+    // No answer yet, so no length: the endpoint waited for it with no bound, and the player's first request hung for as
+    // long as the server said nothing (#195).
+    up.silent = true;
+    final (source, url) = serve(giveUpAfter: const Duration(milliseconds: 600), backoff: const Duration(milliseconds: 50), silence: const Duration(seconds: 1));
+    final clock = Stopwatch()..start();
+    final first = await fetch(player, url, range: 'bytes=0-').timeout(const Duration(seconds: 10));
+    expect(first.status, HttpStatus.serviceUnavailable, reason: 'unavailable, not missing: ${first.status}');
+    expect(source.serverAway, isTrue);
+    expect(source.isGone, isFalse);
+    expect(clock.elapsed, lessThan(const Duration(seconds: 5)), reason: 'a safety net; given up one silence timeout after the first request');
+
+    up.silent = false;
+    up.dropConnections();
+    final back = await fetch(player, url, range: 'bytes=0-').timeout(const Duration(seconds: 10));
+    expect(back.status, HttpStatus.partialContent);
+    expect(back.body, src);
+  });
+
   test('a file replaced on the server during playback ends the playback rather than splicing two files', () async {
     up.rate = 1 << 20;
     final (source, url) = serve();

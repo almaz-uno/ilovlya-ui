@@ -22,7 +22,8 @@ abstract interface class EndpointSource {
 
   bool get isGone;
 
-  /// The file's length, waiting for the server's first answer if it is not known yet. Throws [SourceGone].
+  /// The file's length, waiting for the server's first answer if it is not known yet. Throws [SourceGone], or
+  /// [UpstreamUnavailable] when the server has not answered for too long.
   Future<int> length();
 
   /// How many bytes are readable at [offset] right now, waiting for them if there are none. [isCancelled] is consulted
@@ -168,6 +169,11 @@ class LocalMediaEndpoint {
     final int length;
     try {
       length = await source.length();
+    } on UpstreamUnavailable catch (e) {
+      // The server has not answered for too long: unavailable, not missing. The player gives up and says so; the URL
+      // is served again once the server answers.
+      AppLoggers.download.w('Local endpoint: no length for $id', error: e);
+      return _status(res, HttpStatus.serviceUnavailable);
     } on Object catch (e) {
       AppLoggers.download.w('Local endpoint: no length for $id', error: e);
       return _status(res, HttpStatus.notFound);

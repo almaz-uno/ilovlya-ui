@@ -152,15 +152,33 @@ class PartialSource implements EndpointSource {
   /// Whether the stored bytes are known to be the server's file: nothing was stored, or the server has answered.
   bool get confirmed => _confirmed;
 
+  /// The file's length once the server has confirmed it. Waits as a read does ([available]): a server that has failed
+  /// for [giveUpAfter] is given up with [UpstreamUnavailable], after the try the wait prompts, rather than waited for
+  /// as long as it says nothing.
   @override
-  Future<int> length() {
+  Future<int> length() async {
     final known = file.length;
-    if (known != null && _confirmed) return Future.value(known);
-    if (isGone) return Future.error(SourceGone(_goneReason!));
+    if (known != null && _confirmed) return known;
+    if (isGone) throw SourceGone(_goneReason!);
     final c = _length ??= Completer<int>();
     _lengthWatch ??= file.changes.listen((_) => _deliverLength());
     resume(0);
-    return c.future;
+    _readers++;
+    fetcher.readerWaiting = true;
+    if (fetcher.failingFor != null) fetcher.wake();
+    final arrived = DateTime.now();
+    final grace = giveUpAfter < retryGrace ? giveUpAfter : retryGrace;
+    try {
+      while (!c.isCompleted) {
+        final failing = fetcher.failingFor;
+        if (failing != null && failing >= giveUpAfter && DateTime.now().difference(arrived) >= grace) throw UpstreamUnavailable(failing);
+        await Future.any([c.future, Future<void>.delayed(const Duration(milliseconds: 250))]);
+      }
+      return await c.future;
+    } finally {
+      _readers--;
+      fetcher.readerWaiting = _readers > 0;
+    }
   }
 
   /// Completes a pending [length] once the fetcher has learnt it, and the server has confirmed it. Called on every
