@@ -60,13 +60,14 @@ SIMULATOR_UDID='<dedicated simulator UDID>'
 ```
 
 Wait for three result JSON lines and `CACHE_BENCH complete`, then press `q` to
-stop the first app. Next run:
+stop the first app, or Ctrl-C when `flutter run` has no terminal on stdin and `q`
+does nothing. Next run:
 
 ```sh
 (cd "$CACHE_BENCH_AFTER" && flutter run --debug -d "$SIMULATOR_UDID" --target tool/benchmark_cache_refresh_app.dart) | tee "$CACHE_BENCH_WORK/after-ios.log"
 ```
 
-Again wait for `CACHE_BENCH complete` and press `q`. Extract the result lines:
+Again wait for `CACHE_BENCH complete` and press `q` (or Ctrl-C). Extract the result lines:
 
 ```sh
 grep CACHE_BENCH "$CACHE_BENCH_WORK/"*-ios.log
