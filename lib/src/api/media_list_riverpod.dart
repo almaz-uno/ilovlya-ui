@@ -72,12 +72,18 @@ class MediaListNotifier extends _$MediaListNotifier {
   Future<List<RecordingInfo>> _fromDisk() async {
     final stopwatch = Stopwatch()..start();
     try {
-      final sortBy = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.sortBy));
-      final showHidden = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.showHidden));
-      final showSeen = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.showSeen));
+      final sortByFuture = ref.watch(settingsProvider.selectAsync((final s) => s.sortBy));
+      final showHiddenFuture = ref.watch(settingsProvider.selectAsync((final s) => s.showHidden));
+      final showSeenFuture = ref.watch(settingsProvider.selectAsync((final s) => s.showSeen));
+      final withServerFileFuture = ref.watch(settingsProvider.selectAsync((final s) => s.withServerFile));
+      final withLocalFileFuture = ref.watch(settingsProvider.selectAsync((final s) => s.withLocalFile));
 
-      final withServerFile = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.withServerFile));
-      final withLocalFile = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.withLocalFile));
+      final sortBy = await sortByFuture;
+      final showHidden = await showHiddenFuture;
+      final showSeen = await showSeenFuture;
+      final withServerFile = await withServerFileFuture;
+      final withLocalFile = await withLocalFileFuture;
+      if (!ref.mounted) return const [];
 
       final resultList = <RecordingInfo>[];
 
@@ -117,7 +123,7 @@ class MediaListNotifier extends _$MediaListNotifier {
   }
 
   Future<List<RecordingInfo>> _filter(Future<List<RecordingInfo>> list) async {
-    final phrase = ref.watch(searchPhraseNotifierProvider).trim();
+    final phrase = ref.watch(searchPhraseProvider).trim();
 
     if (phrase == '') {
       return list;
@@ -134,7 +140,9 @@ class MediaListNotifier extends _$MediaListNotifier {
   Future<List<RecordingInfo>> _fromWeb() async {
     final stopwatch = Stopwatch()..start();
     try {
-      final settings = await ref.watch(settingsNotifierProvider.future);
+      final settingsFuture = ref.watch(settingsProvider.future);
+      final settings = await settingsFuture;
+      if (!ref.mounted) return const [];
       final showHidden = settings.showHidden;
       final showSeen = settings.showSeen;
 
@@ -162,7 +170,9 @@ class MediaListNotifier extends _$MediaListNotifier {
     final stopwatch = Stopwatch()..start();
     try {
       final sp = await ref.watch(storePlacesProvider.future);
+      if (!ref.mounted) return const [];
       final recordings = await ref.refresh(listRecordingsProvider(0, limit).future);
+      if (!ref.mounted) return const [];
       if (recordings.any((r) => r.id.isEmpty)) throw const FormatException('Server recording has no ID');
 
       final recordingsDir = sp.recordings();
@@ -171,6 +181,7 @@ class MediaListNotifier extends _$MediaListNotifier {
         await writeLocalJson(File(p.join(recordingsDir.path, recording.id)), recording.toJson(), flush: false);
       }
 
+      if (!ref.mounted) return const [];
       return await _filter(_fromDisk());
     } catch (e, s) {
       AppLoggers.media.e('Failed to pull recordings from server', error: e, stackTrace: s);
@@ -184,6 +195,7 @@ class MediaListNotifier extends _$MediaListNotifier {
     if (!UniversalPlatform.isWeb) {
       try {
         final newList = await _pullFromServer();
+        if (!ref.mounted) return;
         state = AsyncValue.data(newList);
       } catch (_) {
         // _pullFromServer logged the failure. Keep local data and do not let a

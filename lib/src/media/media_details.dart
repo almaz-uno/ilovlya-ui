@@ -317,7 +317,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
   void _sendPosition(String recordingId, Duration position, bool autoFinished) {
     if (!mounted) return;
-    if (ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)) == false) {
+    if (ref.watch(settingsProvider.select((s) => s.value?.autoViewed)) == false) {
       autoFinished = false;
     }
     ref.read(putPositionProvider(recordingId, position, autoFinished));
@@ -325,7 +325,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
   /// Sets playback position in mpv player and updates server
   void _seekToPosition(Duration position) {
-    ref.read(recordingNotifierProvider(widget.id).notifier).putPosition(position, false);
+    ref.read(recordingProvider(widget.id).notifier).putPosition(position, false);
     scheduleMicrotask(() {
       ref.read(putPositionProvider(widget.id, position, false));
     });
@@ -338,7 +338,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     if (position.isNegative) {
       position = Duration.zero;
     }
-    final recording = ref.read(recordingNotifierProvider(widget.id)).value;
+    final recording = ref.read(recordingProvider(widget.id)).value;
     if (recording != null && position > Duration(seconds: recording.duration)) {
       position = Duration(seconds: recording.duration);
     }
@@ -357,7 +357,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   void _rewind(Duration interval) {
-    final recording = ref.read(recordingNotifierProvider(widget.id)).value;
+    final recording = ref.read(recordingProvider(widget.id)).value;
     if (recording == null) return;
 
     final currentPosition = _getCurrentPosition(recording);
@@ -405,7 +405,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
   /// Remembers when the reported position last changed, for interpolation.
   void _onCastSession(AsyncValue<TvSession>? previous, AsyncValue<TvSession> next) {
-    final session = next.valueOrNull;
+    final session = next.value;
     if (session != null && session.position != _castReported) {
       _castReported = session.position;
       _castReportedAt = DateTime.now();
@@ -415,7 +415,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   /// The session of the television this screen casts to, as last polled.
   TvSession? get _castSession {
     final id = _castSessionId;
-    return id == null ? null : ref.read(tvSessionStateProvider(id)).valueOrNull;
+    return id == null ? null : ref.read(tvSessionStateProvider(id)).value;
   }
 
   /// Shows manual seek dialog with hour, minute, second inputs
@@ -560,9 +560,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         _sendPosition(widget.id, Duration(seconds: pos.toInt()), false);
       }
     });
-    await ref.read(recordingNotifierProvider(widget.id).notifier).refreshFromServer();
+    await ref.read(recordingProvider(widget.id).notifier).refreshFromServer();
     if (!mounted) return;
-    await ref.read(downloadsNotifierProvider(widget.id).notifier).refreshFromServer();
+    await ref.read(downloadsProvider(widget.id).notifier).refreshFromServer();
     if (!mounted) return;
 
     // Reset local position after server refresh
@@ -575,7 +575,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   /// that lives on this device. A paired session is remembered by the server,
   /// so pairing is asked for only when none is live.
   Future<void> _castToTv(RecordingInfo recording) async {
-    final downloads = ref.read(downloadsNotifierProvider(recording.id)).valueOrNull;
+    final downloads = ref.read(downloadsProvider(recording.id)).value;
     final (_, ready, _) = _findAppropriateDownloads(downloads ?? <Download>[]);
 
     if (ready == null) {
@@ -664,7 +664,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     }
     if (session.isIdle || session.recordingId != widget.id) {
       if (ready != null) {
-        final recording = ref.read(recordingNotifierProvider(widget.id)).value;
+        final recording = ref.read(recordingProvider(widget.id)).value;
         await _castCommand(TvCommand.play(ready.id, position: recording == null ? null : _getCurrentPosition(recording).inSeconds));
       }
       return;
@@ -726,7 +726,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   String _castStatus(AppLocalizations l10n, AsyncValue<TvSession> session) {
-    final s = session.valueOrNull;
+    final s = session.value;
     if (s == null) {
       return session.hasError ? l10n.tvSessionLost : l10n.tvStatusLoading;
     }
@@ -747,7 +747,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
   Widget _castStatusLine(BuildContext context, AsyncValue<TvSession> session) {
     final l10n = AppLocalizations.of(context)!;
-    final error = session.valueOrNull?.error;
+    final error = session.value?.error;
     final errorStyle = TextStyle(color: Theme.of(context).colorScheme.error);
     return Padding(
       padding: const EdgeInsets.only(top: 4),
@@ -789,7 +789,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
   @override
   Widget build(BuildContext context) {
-    final recording = ref.watch(recordingNotifierProvider(widget.id));
+    final recording = ref.watch(recordingProvider(widget.id));
     // final downloads = ref.watch(listDownloadsProvider(widget.id));
     // if (downloads.hasValue && recording.hasValue) {
     //   var (ready, _) = _findAppropriateDownloads(downloads.requireValue);
@@ -847,7 +847,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
           ),
         PlayRecordingIntent: CallbackAction<PlayRecordingIntent>(onInvoke: (_) {
           if (recording.hasValue) {
-            final downloads = ref.read(downloadsNotifierProvider(widget.id));
+            final downloads = ref.read(downloadsProvider(widget.id));
             if (downloads.hasValue) {
               _play(context, recording.requireValue, downloads);
             }
@@ -856,7 +856,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         }),
         DownloadRecordingIntent: CallbackAction<DownloadRecordingIntent>(onInvoke: (_) {
           if (!UniversalPlatform.isWeb && recording.hasValue) {
-            final downloads = ref.read(downloadsNotifierProvider(widget.id));
+            final downloads = ref.read(downloadsProvider(widget.id));
             if (downloads.hasValue && downloads.requireValue.isNotEmpty) {
               final (_, ready, stale) = _findAppropriateDownloads(downloads.requireValue);
               if (ready != null && ready.fullPathMedia == null) {
@@ -873,7 +873,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         }),
         DeleteLocalRecordingIntent: CallbackAction<DeleteLocalRecordingIntent>(onInvoke: (_) {
           if (recording.hasValue) {
-            final downloads = ref.read(downloadsNotifierProvider(widget.id));
+            final downloads = ref.read(downloadsProvider(widget.id));
             if (downloads.hasValue) {
               final localFiles = downloads.requireValue.where((d) => d.fullPathMedia != null).toList();
               if (localFiles.isNotEmpty) {
@@ -929,7 +929,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
                   tooltip: AppLocalizations.of(context)!.cleanAllDownloadedMediaFromDevice,
                   onPressed: () {
                     confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllLocalFilesOnDevice, () {
-                      ref.read(downloadsNotifierProvider(widget.id).notifier).cleanAll();
+                      ref.read(downloadsProvider(widget.id).notifier).cleanAll();
                       Navigator.pop(context);
                     });
                   },
@@ -975,7 +975,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Widget _buildForm(BuildContext context, RecordingInfo recording) {
-    final downloads = ref.watch(downloadsNotifierProvider(recording.id));
+    final downloads = ref.watch(downloadsProvider(recording.id));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1098,8 +1098,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     if (castId != null) {
       ref.listen(tvSessionStateProvider(castId), _onCastSession);
     }
-    final castPlaying = cast?.valueOrNull?.isPlaying ?? false;
-    final castDuration = cast?.valueOrNull?.duration ?? 0;
+    final castPlaying = cast?.value?.isPlaying ?? false;
+    final castDuration = cast?.value?.duration ?? 0;
     final l10n = AppLocalizations.of(context)!;
 
     return Center(
@@ -1264,7 +1264,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   }
 
   Widget _localDownloadsTable(BuildContext context, RecordingInfo recording, List<Download> downloads) {
-    final downloadTasks = ref.watch(localDTNotifierProvider.select((value) {
+    final downloadTasks = ref.watch(localDTProvider.select((value) {
       return <String, LocalDownloadTask>{
         for (final d in downloads)
           if (value.containsKey(d.id)) d.id: value[d.id]!
@@ -1318,7 +1318,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     if (selected == null || !context.mounted) return;
 
     confirmDialog(context, l10n.areYouSure, l10n.deleteLocalFileConfirmation(selected.filename), () {
-      ref.read(downloadsNotifierProvider(widget.id).notifier).clean(selected!.id);
+      ref.read(downloadsProvider(widget.id).notifier).clean(selected!.id);
       Navigator.of(context).pop();
     });
   }
@@ -1354,10 +1354,10 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   /// with the setting off or on the web, and the stream-then-switch while an explicit download of the file runs.
   Future<Uri?> _playbackSource(Download d) async {
     if (UniversalPlatform.isWeb || d.fullPathMedia != null) return null;
-    final settings = await ref.read(settingsNotifierProvider.future);
+    final settings = await ref.read(settingsProvider.future);
     if (!settings.downloadWhilePlaying) return null;
     final playback = ref.read(playbackDownloadsProvider.notifier);
-    final task = ref.read(localDTNotifierProvider)[d.id];
+    final task = ref.read(localDTProvider)[d.id];
     final explicitRunning = task != null && task.status != null && !task.status!.isFinalState && !playback.owns(d.id);
     if (explicitRunning) return null;
     try {
@@ -1475,7 +1475,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
               });
             case "local-delete":
               confirmDialog(context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteLocalDownloadedMediaFile, () {
-                ref.read(downloadsNotifierProvider(recording.id).notifier).clean(d.id);
+                ref.read(downloadsProvider(recording.id).notifier).clean(d.id);
                 Navigator.pop(context);
               });
             case "share-url":
@@ -1694,7 +1694,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     }
 
     // Check if download is not already in progress
-    final task = ref.read(localDTNotifierProvider.select((tasks) => tasks[download.id]));
+    final task = ref.read(localDTProvider.select((tasks) => tasks[download.id]));
 
     // Start download only if task doesn't exist or is in final state
     if (task != null && task.status != null && !task.status!.isFinalState) {

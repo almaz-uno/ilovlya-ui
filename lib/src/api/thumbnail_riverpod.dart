@@ -42,6 +42,7 @@ class ThumbnailDataNotifier extends _$ThumbnailDataNotifier {
       return;
     }
     final fullpath = await _fullPath();
+    if (!ref.mounted) return;
     fullpath.writeAsBytesSync(thumbnailImg, flush: true);
 
     // Update state directly instead of invalidateSelf()

@@ -83,6 +83,7 @@ class DownloadsNotifier extends _$DownloadsNotifier {
     final stopwatch = Stopwatch()..start();
     try {
       final sp = await ref.watch(storePlacesProvider.future);
+      if (!ref.mounted) return [];
       final downloads = await ref.refresh(listDownloadsProvider(recordingId).future);
       if (downloads.any((d) => d.id.isEmpty || d.filename.isEmpty)) throw const FormatException('Server download has no ID or filename');
 
@@ -124,29 +125,33 @@ class DownloadsNotifier extends _$DownloadsNotifier {
 
   Future<void> _clean({String downloadId = ""}) async {
     final sp = await ref.read(storePlacesProvider.future);
+    if (!ref.mounted) return;
     final playback = ref.read(playbackDownloadsProvider.notifier);
-    final tasks = ref.read(localDTNotifierProvider.notifier);
+    final tasks = ref.read(localDTProvider.notifier);
     for (final dp in state.requireValue) {
       if (downloadId != "" && dp.id != downloadId) continue;
       // The partial file belongs to the download as much as the final one does.
       await playback.discard(dp.id);
+      if (!ref.mounted) return;
       PartialFile.deleteFor(sp.media().path, dp.filename);
       // So does its task: a complete one would still be shown as complete. One still running is left to finish.
-      if (ref.read(localDTNotifierProvider)[dp.id]?.status?.isFinalState ?? false) tasks.forget(dp.id);
+      if (ref.read(localDTProvider)[dp.id]?.status?.isFinalState ?? false) tasks.forget(dp.id);
       if (dp.fullPathMedia == null) continue;
       final f = File(dp.fullPathMedia!);
       if (f.existsSync()) f.deleteSync();
     }
     // Re-read data from disk and update state directly
     final newDownloads = await _fromDisk();
+    if (!ref.mounted) return;
     state = AsyncValue.data(newDownloads);
-    ref.invalidate(recordingNotifierProvider(recordingId));
+    ref.invalidate(recordingProvider(recordingId));
   }
 
   Future<void> refreshFromServer() async {
     if (!UniversalPlatform.isWeb) {
       try {
         final newDownloads = await _pullFromServer();
+        if (!ref.mounted) return;
         state = AsyncValue.data(newDownloads);
       } catch (_) {
         // The pull already logged the failure; keep the downloaded files usable.

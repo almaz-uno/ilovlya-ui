@@ -43,8 +43,8 @@ void main() {
     player = HttpClient();
     c = ProviderContainer(overrides: [
       storePlacesProvider.overrideWith((ref) async => StorePlaces(dataDir: p.join(root.path, 'data'), mediaDir: p.join(root.path, 'media'))),
-      settingsNotifierProvider.overrideWith(() => _Settings()),
-      localDTNotifierProvider.overrideWith(() => _LocalDT()),
+      settingsProvider.overrideWith(() => _Settings()),
+      localDTProvider.overrideWith(() => _LocalDT()),
     ]);
     Directory(p.join(root.path, 'media')).createSync(recursive: true);
   });
@@ -65,7 +65,7 @@ void main() {
       );
 
   PlaybackDownloads downloads() => c.read(playbackDownloadsProvider.notifier);
-  LocalDownloadTask? task(String id) => c.read(localDTNotifierProvider)[id];
+  LocalDownloadTask? task(String id) => c.read(localDTProvider)[id];
   String media(String name) => p.join(root.path, 'media', name);
 
   Future<void> until(bool Function() condition) async {

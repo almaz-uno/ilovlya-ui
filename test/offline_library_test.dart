@@ -65,12 +65,12 @@ void main() {
           throw serverFailure ?? StateError('Unexpected network fallback');
         }),
       storePlacesProvider.overrideWith((ref) async => places),
-      settingsNotifierProvider.overrideWith(() => OfflineTestSettings(Settings(
+      settingsProvider.overrideWith(() => OfflineTestSettings(Settings(
           serverUrl: server,
           dataStorageDirectory: places.dataDir,
           mediaStorageDirectory: places.mediaDir))),
     ]);
-    c.listen(mediaListNotifierProvider, (_, __) {});
+    c.listen(mediaListProvider, (_, _) {});
     return c;
   }
 
@@ -103,7 +103,7 @@ void main() {
         () async {
       File(p.join(places.recordings().path, 'broken')).writeAsStringSync(body);
       final c = createContainer();
-      final list = await c.read(mediaListNotifierProvider.future);
+      final list = await c.read(mediaListProvider.future);
       expect(list.map((r) => r.id), ['r1']);
       expect(list.single.hasLocalFile, isTrue);
     });
@@ -113,10 +113,10 @@ void main() {
     final epoch = DateTime.utc(2020);
     recordFile().setLastModifiedSync(epoch);
     final c = createContainer(serverRecordings: [recording]);
-    await c.read(mediaListNotifierProvider.future);
-    await c.read(mediaListNotifierProvider.notifier).refreshFromServer();
+    await c.read(mediaListProvider.future);
+    await c.read(mediaListProvider.notifier).refreshFromServer();
     expect(recordFile().lastModifiedSync().toUtc(), epoch);
-    expect(c.read(mediaListNotifierProvider).requireValue.single.id, 'r1');
+    expect(c.read(mediaListProvider).requireValue.single.id, 'r1');
     expect(places.recordings().listSync().whereType<Directory>(), isEmpty);
   });
 
@@ -129,14 +129,14 @@ void main() {
       ..createSync();
     File(p.join(staging.path, 'interrupted.json')).writeAsStringSync('');
     final c = createContainer(serverRecordings: [changed, added]);
-    await c.read(mediaListNotifierProvider.future);
-    await c.read(mediaListNotifierProvider.notifier).refreshFromServer();
+    await c.read(mediaListProvider.future);
+    await c.read(mediaListProvider.notifier).refreshFromServer();
     expect(jsonDecode(recordFile().readAsStringSync())['title'], 'Changed');
     expect(
         jsonDecode(File(p.join(places.recordings().path, 'r2'))
             .readAsStringSync())['title'],
         'New');
-    expect(c.read(mediaListNotifierProvider).requireValue.map((r) => r.id),
+    expect(c.read(mediaListProvider).requireValue.map((r) => r.id),
         unorderedEquals(['r1', 'r2']));
     expect(places.recordings().listSync().whereType<Directory>().length, 1);
     expect(staging.listSync().map((f) => p.basename(f.path)),
@@ -150,13 +150,13 @@ void main() {
     file.setLastModifiedSync(epoch);
     recordFile().setLastModifiedSync(epoch);
     final c = createContainer(serverDownloads: [download]);
-    c.listen(downloadsNotifierProvider('r1'), (_, __) {});
-    await c.read(downloadsNotifierProvider('r1').future);
-    await c.read(downloadsNotifierProvider('r1').notifier).refreshFromServer();
+    c.listen(downloadsProvider('r1'), (_, _) {});
+    await c.read(downloadsProvider('r1').future);
+    await c.read(downloadsProvider('r1').notifier).refreshFromServer();
     expect(file.lastModifiedSync().toUtc(), epoch);
     expect(recordFile().lastModifiedSync().toUtc(), epoch);
     download.title = 'Changed download';
-    await c.read(downloadsNotifierProvider('r1').notifier).refreshFromServer();
+    await c.read(downloadsProvider('r1').notifier).refreshFromServer();
     expect(jsonDecode(file.readAsStringSync())['title'], 'Changed download');
     expect(recordFile().lastModifiedSync().toUtc(), epoch);
   });
@@ -167,14 +167,14 @@ void main() {
     final address = 'http://127.0.0.1:${port.port}';
     await port.close();
     final c = createContainer(server: address);
-    expect((await c.read(mediaListNotifierProvider.future)).single.id, 'r1');
+    expect((await c.read(mediaListProvider.future)).single.id, 'r1');
     Object? failure;
     try {
-      await c.read(mediaListNotifierProvider.notifier).refreshFromServer();
+      await c.read(mediaListProvider.notifier).refreshFromServer();
     } catch (e) {
       failure = e;
     }
-    expect(c.read(mediaListNotifierProvider).hasValue, isTrue,
+    expect(c.read(mediaListProvider).hasValue, isTrue,
         reason: 'native list data is local, not the HTTP provider');
     expect(failure, isNull);
   });
@@ -200,14 +200,14 @@ void main() {
         }
       });
       final c = createContainer(server: 'http://127.0.0.1:${server.port}');
-      await c.read(mediaListNotifierProvider.future);
+      await c.read(mediaListProvider.future);
       Object? failure;
       try {
-        await c.read(mediaListNotifierProvider.notifier).refreshFromServer();
+        await c.read(mediaListProvider.notifier).refreshFromServer();
       } catch (e) {
         failure = e;
       }
-      expect(c.read(mediaListNotifierProvider).requireValue.single.id, 'r1');
+      expect(c.read(mediaListProvider).requireValue.single.id, 'r1');
       expect(failure, isNull);
       expect(jsonDecode(recordFile().readAsStringSync())['id'], 'r1');
     });
@@ -222,26 +222,26 @@ void main() {
       var requests = 0;
       final c = createContainer(
           serverFailure: failure, onServerRequest: () => requests++);
-      c.listen(recordingNotifierProvider('r1'), (_, __) {});
-      c.listen(downloadsNotifierProvider('r1'), (_, __) {});
-      await c.read(mediaListNotifierProvider.future);
-      await c.read(recordingNotifierProvider('r1').future);
-      await c.read(downloadsNotifierProvider('r1').future);
+      c.listen(recordingProvider('r1'), (_, _) {});
+      c.listen(downloadsProvider('r1'), (_, _) {});
+      await c.read(mediaListProvider.future);
+      await c.read(recordingProvider('r1').future);
+      await c.read(downloadsProvider('r1').future);
 
-      await c.read(mediaListNotifierProvider.notifier).refreshFromServer();
+      await c.read(mediaListProvider.notifier).refreshFromServer();
       await c
-          .read(recordingNotifierProvider('r1').notifier)
+          .read(recordingProvider('r1').notifier)
           .refreshFromServer();
       await c
-          .read(downloadsNotifierProvider('r1').notifier)
+          .read(downloadsProvider('r1').notifier)
           .refreshFromServer();
       expect(requests, 3);
-      expect(c.read(mediaListNotifierProvider).requireValue.single.id, 'r1');
-      expect(c.read(recordingNotifierProvider('r1')).requireValue.title,
+      expect(c.read(mediaListProvider).requireValue.single.id, 'r1');
+      expect(c.read(recordingProvider('r1')).requireValue.title,
           'Downloaded recording');
       expect(
           c
-              .read(downloadsNotifierProvider('r1'))
+              .read(downloadsProvider('r1'))
               .requireValue
               .single
               .fullPathMedia,
@@ -272,11 +272,11 @@ void main() {
       await request.response.close();
     });
     final c = createContainer(server: 'http://127.0.0.1:${server.port}');
-    c.listen(downloadsNotifierProvider('r1'), (_, __) {});
-    final downloads = await c.read(downloadsNotifierProvider('r1').future);
+    c.listen(downloadsProvider('r1'), (_, _) {});
+    final downloads = await c.read(downloadsProvider('r1').future);
     expect(downloads.single.title, 'Server download 1');
-    await c.read(downloadsNotifierProvider('r1').notifier).refreshFromServer();
-    expect(c.read(downloadsNotifierProvider('r1')).requireValue.single.title,
+    await c.read(downloadsProvider('r1').notifier).refreshFromServer();
+    expect(c.read(downloadsProvider('r1')).requireValue.single.title,
         'Server download 2');
     expect(
         jsonDecode(File(p.join(places.downloads().path, 'd1'))
@@ -295,10 +295,10 @@ void main() {
     final c = createContainer(
         serverFailure: http.ClientException('offline'),
         onServerRequest: () => requests++);
-    c.listen(downloadsNotifierProvider('r1'), (_, __) {});
-    expect(await c.read(downloadsNotifierProvider('r1').future), isEmpty);
+    c.listen(downloadsProvider('r1'), (_, _) {});
+    expect(await c.read(downloadsProvider('r1').future), isEmpty);
     expect(requests, 1);
-    expect(c.read(downloadsNotifierProvider('r1')).hasError, isFalse);
+    expect(c.read(downloadsProvider('r1')).hasError, isFalse);
   });
 
   test('a missing or broken download is skipped without a network fallback',
@@ -309,8 +309,8 @@ void main() {
     File(p.join(places.downloads().path, 'broken')).writeAsStringSync('');
     var requests = 0;
     final c = createContainer(onServerRequest: () => requests++);
-    c.listen(downloadsNotifierProvider('r1'), (_, __) {});
-    final downloads = await c.read(downloadsNotifierProvider('r1').future);
+    c.listen(downloadsProvider('r1'), (_, _) {});
+    final downloads = await c.read(downloadsProvider('r1').future);
     expect(requests, 0);
     expect(
         downloads.single.fullPathMedia, p.join(places.mediaDir, 'local.mp4'));
@@ -327,11 +327,11 @@ void main() {
       await request.response.close();
     });
     final c = createContainer(server: 'http://127.0.0.1:${server.port}');
-    c.listen(recordingNotifierProvider('r1'), (_, __) {});
-    await c.read(recordingNotifierProvider('r1').future);
-    await c.read(recordingNotifierProvider('r1').notifier).refreshFromServer();
+    c.listen(recordingProvider('r1'), (_, _) {});
+    await c.read(recordingProvider('r1').future);
+    await c.read(recordingProvider('r1').notifier).refreshFromServer();
     expect(requests, 1);
-    expect(c.read(recordingNotifierProvider('r1')).requireValue.id, 'r1');
+    expect(c.read(recordingProvider('r1')).requireValue.id, 'r1');
     expect(jsonDecode(recordFile().readAsStringSync())['id'], 'r1');
   });
 
@@ -341,10 +341,10 @@ void main() {
         (RecordingInfo.fromJson(recording.toJson())..title = 'x' * 131072)
             .toJson()));
     final c = createContainer();
-    c.listen(recordingNotifierProvider('r1'), (_, __) {});
-    await c.read(recordingNotifierProvider('r1').future);
-    await c.read(mediaListNotifierProvider.future);
-    final notifier = c.read(recordingNotifierProvider('r1').notifier);
+    c.listen(recordingProvider('r1'), (_, _) {});
+    await c.read(recordingProvider('r1').future);
+    await c.read(mediaListProvider.future);
+    final notifier = c.read(recordingProvider('r1').notifier);
     final failures = <Object>[];
     final writes = List.generate(
         100,
@@ -354,10 +354,10 @@ void main() {
               failures.add(e);
             }));
     for (var i = 0; i < 100; i++) {
-      c.invalidate(mediaListNotifierProvider);
+      c.invalidate(mediaListProvider);
       try {
         expect(
-            (await c.read(mediaListNotifierProvider.future)).single.id, 'r1');
+            (await c.read(mediaListProvider.future)).single.id, 'r1');
       } catch (e) {
         failures.add(e);
       }

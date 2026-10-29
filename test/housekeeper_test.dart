@@ -37,7 +37,7 @@ void main() {
     // Its recording JSON is gone, for example after the metadata was cleaned.
     file('orphan-video.mp4', 400);
     // The housekeeper is auto-disposed; keep it alive for the whole test.
-    c.listen(localMediaHousekeeperProvider, (_, __) {});
+    c.listen(localMediaHousekeeperProvider, (_, _) {});
   });
 
   tearDown(() {

@@ -16,6 +16,7 @@ import 'package:ilovlya/src/keyboard_shortcuts.dart';
 import 'package:ilovlya/src/media/media_add.dart';
 import 'package:ilovlya/src/media/media_details.dart';
 import 'package:ilovlya/src/media/media_list.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:ilovlya/src/media/media_kit/recording_play.dart';
 import 'package:ilovlya/src/model/local_download.dart';
 import 'package:ilovlya/src/model/download.dart';
@@ -31,7 +32,7 @@ class _TestMediaListNotifier extends MediaListNotifier {
 
   @override
   Future<List<RecordingInfo>> build() async {
-    final phrase = ref.watch(searchPhraseNotifierProvider).toLowerCase();
+    final phrase = ref.watch(searchPhraseProvider).toLowerCase();
     return phrase.isEmpty ? recordings : recordings.where((recording) => recording.title.toLowerCase().contains(phrase)).toList();
   }
 
@@ -162,11 +163,11 @@ final _recordings = [
 ];
 
 List<Override> _overrides({Future<RecordingInfo> Function(String url)? addRecording}) => [
-      mediaListNotifierProvider.overrideWith(() => _TestMediaListNotifier(_recordings)),
-      settingsNotifierProvider.overrideWith(_TestSettingsNotifier.new),
-      localDTNotifierProvider.overrideWith(_TestLocalDTNotifier.new),
+      mediaListProvider.overrideWith(() => _TestMediaListNotifier(_recordings)),
+      settingsProvider.overrideWith(_TestSettingsNotifier.new),
+      localDTProvider.overrideWith(_TestLocalDTNotifier.new),
       getTenantProvider.overrideWith((ref) async => Tenant(id: 'test', telegramId: 1)),
-      for (final recording in _recordings) thumbnailDataNotifierProvider(recording.thumbnailUrl).overrideWith(_TestThumbnailNotifier.new),
+      for (final recording in _recordings) thumbnailDataProvider(recording.thumbnailUrl).overrideWith(_TestThumbnailNotifier.new),
       if (addRecording != null) addRecordingProvider('https://example.test/video').overrideWith((ref) => addRecording('https://example.test/video')),
     ];
 
@@ -197,11 +198,11 @@ Widget _detailsHarness({
   Future<void> Function()? setSeen,
 }) => ProviderScope(
       overrides: [
-        settingsNotifierProvider.overrideWith(_TestSettingsNotifier.new),
-        localDTNotifierProvider.overrideWith(_TestLocalDTNotifier.new),
-        recordingNotifierProvider(recording.id).overrideWith(() => _TestRecordingNotifier(recording, onRefresh: onRefresh)),
-        downloadsNotifierProvider(recording.id).overrideWith(() => _TestDownloadsNotifier([])),
-        thumbnailDataNotifierProvider(recording.thumbnailUrl).overrideWith(_TestThumbnailNotifier.new),
+        settingsProvider.overrideWith(_TestSettingsNotifier.new),
+        localDTProvider.overrideWith(_TestLocalDTNotifier.new),
+        recordingProvider(recording.id).overrideWith(() => _TestRecordingNotifier(recording, onRefresh: onRefresh)),
+        downloadsProvider(recording.id).overrideWith(() => _TestDownloadsNotifier([])),
+        thumbnailDataProvider(recording.thumbnailUrl).overrideWith(_TestThumbnailNotifier.new),
         if (setSeen != null) setSeenProvider(recording.id).overrideWith((ref) => setSeen()),
       ],
       child: MaterialApp(
@@ -439,11 +440,11 @@ void main() {
     late _TestDownloadsNotifier notifier;
     await tester.pumpWidget(ProviderScope(
       overrides: [
-        settingsNotifierProvider.overrideWith(_TestSettingsNotifier.new),
-        localDTNotifierProvider.overrideWith(_TestLocalDTNotifier.new),
-        recordingNotifierProvider('one').overrideWith(() => _TestRecordingNotifier(recording)),
-        downloadsNotifierProvider('one').overrideWith(() => notifier = _TestDownloadsNotifier(downloads)),
-        thumbnailDataNotifierProvider(recording.thumbnailUrl).overrideWith(_TestThumbnailNotifier.new),
+        settingsProvider.overrideWith(_TestSettingsNotifier.new),
+        localDTProvider.overrideWith(_TestLocalDTNotifier.new),
+        recordingProvider('one').overrideWith(() => _TestRecordingNotifier(recording)),
+        downloadsProvider('one').overrideWith(() => notifier = _TestDownloadsNotifier(downloads)),
+        thumbnailDataProvider(recording.thumbnailUrl).overrideWith(_TestThumbnailNotifier.new),
       ],
       child: MaterialApp(
         restorationScopeId: 'details-shortcuts-test',
@@ -455,9 +456,9 @@ void main() {
     ));
     await _pumpUi(tester);
     final detailsContext = tester.element(find.byType(MediaDetailsView));
-    await ProviderScope.containerOf(detailsContext).read(downloadsNotifierProvider('one').future);
-    expect(ProviderScope.containerOf(detailsContext).read(recordingNotifierProvider('one')).hasValue, isTrue);
-    expect(ProviderScope.containerOf(detailsContext).read(downloadsNotifierProvider('one')).hasValue, isTrue);
+    await ProviderScope.containerOf(detailsContext).read(downloadsProvider('one').future);
+    expect(ProviderScope.containerOf(detailsContext).read(recordingProvider('one')).hasValue, isTrue);
+    expect(ProviderScope.containerOf(detailsContext).read(downloadsProvider('one')).hasValue, isTrue);
     expect(isTextInputFocused(), isFalse);
     final screenFocus = Focus.of(tester.element(find.byType(Scaffold)));
     screenFocus.requestFocus();

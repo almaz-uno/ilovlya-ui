@@ -111,9 +111,9 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   }
 
   void _init() async {
-    final thumbnailUrl = UniversalPlatform.isWeb ? Uri.parse(widget.recording.thumbnailUrl) : (await ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).notifier).getThumbnailUri());
+    final thumbnailUrl = UniversalPlatform.isWeb ? Uri.parse(widget.recording.thumbnailUrl) : (await ref.read(thumbnailDataProvider(widget.recording.thumbnailUrl).notifier).getThumbnailUri());
 
-    final settings = ref.read(settingsNotifierProvider).requireValue;
+    final settings = ref.read(settingsProvider).requireValue;
     final useCaching = settings.downloadWhilePlaying;
     final mediaDirectory = settings.mediaStorageDirectory;
 
@@ -127,7 +127,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     );
 
     if (UniversalPlatform.isDesktop || UniversalPlatform.isWeb) {
-      await _player.setVolume(ref.read(settingsNotifierProvider).requireValue.volume);
+      await _player.setVolume(ref.read(settingsProvider).requireValue.volume);
     }
 
     _player.stream.duration.listen((event) {
@@ -143,7 +143,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
         _player.play();
         _isFirstDurationEvent = false;
       }
-      _player.setRate(ref.read(settingsNotifierProvider.select((s) => s.value?.playerSpeed)) ?? 1.0);
+      _player.setRate(ref.read(settingsProvider.select((s) => s.value?.playerSpeed)) ?? 1.0);
     });
 
     // Combine multiple UI-updating streams into one to avoid excessive setState calls
@@ -183,7 +183,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     _player.stream.volume.listen((double volume) {
       if (!mounted) return;
       setState(() {});
-      ref.read(settingsNotifierProvider.notifier).updateVolume(volume);
+      ref.read(settingsProvider.notifier).updateVolume(volume);
     });
 
     _player.stream.completed.listen((event) {
@@ -282,11 +282,11 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     final id = widget.recording.id;
     final container = ProviderScope.containerOf(context, listen: false);
     final generation = _positionWrites[id] = (_positionWrites[id] ?? 0) + 1;
-    container.read(recordingNotifierProvider(id).notifier).putPosition(position, false);
+    container.read(recordingProvider(id).notifier).putPosition(position, false);
     unawaited(() async {
       for (var attempt = 1; attempt <= 120 && _positionWrites[id] == generation; attempt++) {
         final provider = putPositionProvider(id, position, false);
-        final keepAlive = container.listen(provider, (_, __) {}); // an auto-dispose provider read once may not finish
+        final keepAlive = container.listen(provider, (_, _) {}); // an auto-dispose provider read once may not finish
         try {
           await container.read(provider.future);
           return;
@@ -335,7 +335,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   Future<void> _switchToLocalFile(LocalDownloadTask task) async {
     if (!mounted) return;
 
-    final settings = ref.read(settingsNotifierProvider).requireValue;
+    final settings = ref.read(settingsProvider).requireValue;
     final localFilePath = p.join(settings.mediaStorageDirectory, task.filename);
     final localFile = File(localFilePath);
 
@@ -406,7 +406,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       // Revert to remote source on error
       try {
         final thumbnailUrl =
-            UniversalPlatform.isWeb ? Uri.parse(widget.recording.thumbnailUrl) : (await ref.read(thumbnailDataNotifierProvider(widget.recording.thumbnailUrl).notifier).getThumbnailUri());
+            UniversalPlatform.isWeb ? Uri.parse(widget.recording.thumbnailUrl) : (await ref.read(thumbnailDataProvider(widget.recording.thumbnailUrl).notifier).getThumbnailUri());
 
         // Save position to recording before reverting
         _sendPosition(
@@ -529,10 +529,10 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
   void _sendPosition(String recordingId, Duration position, bool autoFinished) {
     _positionWrites[recordingId] = (_positionWrites[recordingId] ?? 0) + 1;
-    if (ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed)) == false) {
+    if (ref.watch(settingsProvider.select((s) => s.value?.autoViewed)) == false) {
       autoFinished = false;
     }
-    ref.read(recordingNotifierProvider(recordingId).notifier).putPosition(position, autoFinished);
+    ref.read(recordingProvider(recordingId).notifier).putPosition(position, autoFinished);
     ref.read(putPositionProvider(recordingId, position, autoFinished));
   }
 
@@ -576,7 +576,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     final techInfoStyle = GoogleFonts.ptMono();
     return PopScope(
       onPopInvokedWithResult: (bool didPop, Object? result) {
-        final updateThumbnails = ref.read(settingsNotifierProvider.select((value) => value.requireValue.updateThumbnails));
+        final updateThumbnails = ref.read(settingsProvider.select((value) => value.requireValue.updateThumbnails));
         // Capture the container now: `ref` becomes invalid once this widget is
         // disposed by the pop, but the container outlives it.
         final container = ProviderScope.containerOf(context, listen: false);
@@ -589,11 +589,11 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
         Future.delayed(const Duration(milliseconds: 350), () {
           if (!UniversalPlatform.isWeb && updateThumbnails) {
             MKPlayerHandler.player.screenshot(format: "image/png").then((imgData) {
-              container.read(thumbnailDataNotifierProvider(thumbUrl).notifier).updateThumbnailImg(imgData);
+              container.read(thumbnailDataProvider(thumbUrl).notifier).updateThumbnailImg(imgData);
             });
           }
-          container.invalidate(recordingNotifierProvider(recId));
-          container.invalidate(mediaListNotifierProvider);
+          container.invalidate(recordingProvider(recId));
+          container.invalidate(mediaListProvider);
         });
       },
       child: Scaffold(
@@ -728,12 +728,12 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
                       Consumer(
                         builder: (context, ref, child) {
                           // Find task for current download using selector
-                          final task = ref.watch(localDTNotifierProvider.select((tasks) => tasks[widget.download.id]));
+                          final task = ref.watch(localDTProvider.select((tasks) => tasks[widget.download.id]));
 
                           // Check if download completed and file exists, then switch to local
                           // Only a playback that reads the server's URL switches; a playback download is the file already.
                           if (widget.source == null && task != null && task.status == TaskStatus.complete && !_hasAttemptedSwitch) {
-                            final settings = ref.read(settingsNotifierProvider).requireValue;
+                            final settings = ref.read(settingsProvider).requireValue;
                             final localFilePath = p.join(settings.mediaStorageDirectory, task.filename);
                             final localFile = File(localFilePath);
 
@@ -978,9 +978,9 @@ class PlayerControls extends StatelessWidget {
         IntrinsicWidth(
           child: DropdownButton<double>(
             icon: const Icon(Icons.speed),
-            value: ref.watch(settingsNotifierProvider.select((s) => s.value?.playerSpeed)),
+            value: ref.watch(settingsProvider.select((s) => s.value?.playerSpeed)),
             onChanged: (value) {
-              ref.read(settingsNotifierProvider.notifier).updatePlayerSpeed(value ?? 1.0);
+              ref.read(settingsProvider.notifier).updatePlayerSpeed(value ?? 1.0);
               player.setRate(value ?? 1.0);
             },
             items: [

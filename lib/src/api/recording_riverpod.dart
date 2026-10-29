@@ -59,10 +59,11 @@ class RecordingNotifier extends _$RecordingNotifier {
     }
   }
 
-  Future<RecordingInfo> _pullFromServer() async {
+  Future<RecordingInfo?> _pullFromServer() async {
     final stopwatch = Stopwatch()..start();
     try {
       final sp = await ref.watch(storePlacesProvider.future);
+      if (!ref.mounted) return null;
       final recording = await ref.refresh(getRecordingProvider(recordingId).future);
       if (recording.id != recordingId) throw const FormatException('Server returned a different recording ID');
 
@@ -82,14 +83,16 @@ class RecordingNotifier extends _$RecordingNotifier {
     if (!UniversalPlatform.isWeb) {
       try {
         final newRecording = await _pullFromServer();
+        if (!ref.mounted || newRecording == null) return;
         state = AsyncValue.data(newRecording);
       } catch (_) {
         // The pull already logged the error. The local recording stays usable.
         return;
       }
     }
+    if (!ref.mounted) return;
     // Still need to invalidate the list for synchronization
-    ref.invalidate(mediaListNotifierProvider);
+    ref.invalidate(mediaListProvider);
   }
 
   Future<void> putPosition(Duration? position, bool finished) async {

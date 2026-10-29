@@ -30,6 +30,6 @@ void main() async {
     );
   }
 
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(ProviderScope(retry: (retryCount, error) => null, child: const MyApp()));
 }
 

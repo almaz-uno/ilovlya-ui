@@ -80,7 +80,7 @@ void main() {
   (PartialSource, Uri) serve(
       {String id = 'd1', Duration giveUpAfter = PartialSource.defaultGiveUpAfter, Duration backoff = Duration.zero, Duration silence = Fetcher.defaultSilenceTimeout}) {
     final file = PartialFile.open(mediaDir: media.path, downloadId: id, filename: '$id.mp4', url: up.url.toString());
-    final source = PartialSource(file: file, url: up.url, giveUpAfter: giveUpAfter, backoff: (_, __) => backoff, silenceTimeout: silence);
+    final source = PartialSource(file: file, url: up.url, giveUpAfter: giveUpAfter, backoff: (_, _) => backoff, silenceTimeout: silence);
     sources.add(source);
     return (source, endpoint.register(id, '$id.mp4', source));
   }

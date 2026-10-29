@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -138,6 +137,7 @@ class SettingsNotifier extends _$SettingsNotifier {
     if (!state.hasValue) return;
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (!ref.mounted) return;
     prefs.setString(
         "theme",
         switch (state.value?.theme) {

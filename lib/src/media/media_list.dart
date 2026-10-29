@@ -43,7 +43,7 @@ Widget createThumb(WidgetRef ref, String url, {int? cacheWidth}) {
       cacheWidth: cacheWidth,
     );
   } else {
-    final thumbProvider = ref.watch(thumbnailDataNotifierProvider(url));
+    final thumbProvider = ref.watch(thumbnailDataProvider(url));
     if (!thumbProvider.hasValue) {
       // Shimmer-like placeholder instead of CircularProgressIndicator
       thumbWidget = const _ThumbnailPlaceholder();
@@ -126,7 +126,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   /// from escaping as an unhandled exception. The next periodic pull retries.
   Future<void> _refreshList() async {
     try {
-      await ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+      await ref.read(mediaListProvider.notifier).refreshFromServer();
     } catch (e) {
       AppLoggers.ui.w('Media list refresh failed: $e');
     }
@@ -224,8 +224,8 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
 
   @override
   Widget build(BuildContext context) {
-    final mediaList = ref.watch(mediaListNotifierProvider);
-    final settings = ref.watch(settingsNotifierProvider);
+    final mediaList = ref.watch(mediaListProvider);
+    final settings = ref.watch(settingsProvider);
     final primary = Theme.of(context).colorScheme.primary;
     final tenant = ref.watch(getTenantProvider);
     String usageInfo = "";
@@ -277,22 +277,22 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
           ),
           NavigateHomeIntent: CallbackAction<NavigateHomeIntent>(
             onInvoke: (intent) {
-            _selectHome(mediaList.valueOrNull ?? const []);
+            _selectHome(mediaList.value ?? const []);
               return null;
             },
           ),
           NavigateEndIntent: CallbackAction<NavigateEndIntent>(
             onInvoke: (intent) {
-            _selectEnd(mediaList.valueOrNull ?? const []);
+            _selectEnd(mediaList.value ?? const []);
               return null;
             },
           ),
         SelectPreviousIntent: CallbackAction<SelectPreviousIntent>(onInvoke: (_) {
-          _moveSelection(-1, mediaList.valueOrNull ?? const []);
+          _moveSelection(-1, mediaList.value ?? const []);
           return null;
         }),
         SelectNextIntent: CallbackAction<SelectNextIntent>(onInvoke: (_) {
-          _moveSelection(1, mediaList.valueOrNull ?? const []);
+          _moveSelection(1, mediaList.value ?? const []);
           return null;
         }),
         OpenSelectedIntent: CallbackAction<OpenSelectedIntent>(onInvoke: (_) {
@@ -351,7 +351,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                     color: Theme.of(context).colorScheme.onSurface),
                   cursorColor: Theme.of(context).colorScheme.primary,
                   onChanged: (String value) {
-                    ref.read(searchPhraseNotifierProvider.notifier).setPhrase(value);
+                    ref.read(searchPhraseProvider.notifier).setPhrase(value);
                   },
                 ),
                 actions: [
@@ -365,17 +365,17 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
                       onSelected: (String choice) {
                         switch (choice) {
                           case "seen":
-                            ref.read(settingsNotifierProvider.notifier).toggleShowSeen();
+                            ref.read(settingsProvider.notifier).toggleShowSeen();
                           case "hidden":
-                            ref.read(settingsNotifierProvider.notifier).toggleShowHidden();
+                            ref.read(settingsProvider.notifier).toggleShowHidden();
                           case "sort_by_created_at":
-                            ref.read(settingsNotifierProvider.notifier).updateSortBy("created_at");
+                            ref.read(settingsProvider.notifier).updateSortBy("created_at");
                           case "sort_by_updated_at":
-                            ref.read(settingsNotifierProvider.notifier).updateSortBy("updated_at");
+                            ref.read(settingsProvider.notifier).updateSortBy("updated_at");
                           case "with_server_file":
-                            ref.read(settingsNotifierProvider.notifier).toggleWithServerFile();
+                            ref.read(settingsProvider.notifier).toggleWithServerFile();
                           case "with_local_file":
-                            ref.read(settingsNotifierProvider.notifier).toggleWithLocalFile();
+                            ref.read(settingsProvider.notifier).toggleWithLocalFile();
                         }
                       },
                       itemBuilder: (BuildContext context) {
@@ -478,7 +478,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   }
 
   Widget _buildRecordingsList(BuildContext context, AsyncValue<List<RecordingInfo>> mediaList) {
-    final setting = ref.watch(settingsNotifierProvider);
+    final setting = ref.watch(settingsProvider);
 
     if (mediaList.hasError) {
       return ErrorWidget(mediaListErrorMessage(AppLocalizations.of(context)!, mediaList.error));
@@ -517,7 +517,7 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
 
         List<Widget> right = [];
 
-        final tt = ref.watch(localDTNotifierProvider);
+        final tt = ref.watch(localDTProvider);
         for (final did in item.downloads) {
           if (!tt.containsKey(did) || tt[did]?.status?.isFinalState == true) {
             continue;

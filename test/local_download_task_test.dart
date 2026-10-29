@@ -12,9 +12,9 @@ class _LocalDT extends LocalDTNotifier {
 
 void main() {
   test('cleaning forgets the tasks that have ended and keeps the ones still running', () {
-    final c = ProviderContainer(overrides: [localDTNotifierProvider.overrideWith(() => _LocalDT())]);
+    final c = ProviderContainer(overrides: [localDTProvider.overrideWith(() => _LocalDT())]);
     addTearDown(c.dispose);
-    final tasks = c.read(localDTNotifierProvider.notifier);
+    final tasks = c.read(localDTProvider.notifier);
     for (final (id, status) in [
       ('complete', TaskStatus.complete),
       ('failed', TaskStatus.failed),
@@ -26,6 +26,6 @@ void main() {
 
     tasks.forgetEnded();
 
-    expect(c.read(localDTNotifierProvider).keys, unorderedEquals(['running', 'paused']));
+    expect(c.read(localDTProvider).keys, unorderedEquals(['running', 'paused']));
   });
 }

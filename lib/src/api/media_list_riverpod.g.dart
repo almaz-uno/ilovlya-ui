@@ -6,38 +6,103 @@ part of 'media_list_riverpod.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$mediaListNotifierHash() => r'a38a23c121f7da3552e50bb1a4da4e22e5f47894';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [MediaListNotifier].
 @ProviderFor(MediaListNotifier)
-final mediaListNotifierProvider = AutoDisposeAsyncNotifierProvider<
-    MediaListNotifier, List<RecordingInfo>>.internal(
-  MediaListNotifier.new,
-  name: r'mediaListNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$mediaListNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final mediaListProvider = MediaListNotifierProvider._();
 
-typedef _$MediaListNotifier = AutoDisposeAsyncNotifier<List<RecordingInfo>>;
+final class MediaListNotifierProvider
+    extends $AsyncNotifierProvider<MediaListNotifier, List<RecordingInfo>> {
+  MediaListNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'mediaListProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$mediaListNotifierHash();
+
+  @$internal
+  @override
+  MediaListNotifier create() => MediaListNotifier();
+}
+
+String _$mediaListNotifierHash() => r'24b29dd72f1d87f794e1b2583332ee9890f5bdd6';
+
+abstract class _$MediaListNotifier extends $AsyncNotifier<List<RecordingInfo>> {
+  FutureOr<List<RecordingInfo>> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<List<RecordingInfo>>, List<RecordingInfo>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<RecordingInfo>>, List<RecordingInfo>>,
+              AsyncValue<List<RecordingInfo>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(SearchPhraseNotifier)
+final searchPhraseProvider = SearchPhraseNotifierProvider._();
+
+final class SearchPhraseNotifierProvider
+    extends $NotifierProvider<SearchPhraseNotifier, String> {
+  SearchPhraseNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'searchPhraseProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchPhraseNotifierHash();
+
+  @$internal
+  @override
+  SearchPhraseNotifier create() => SearchPhraseNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
 String _$searchPhraseNotifierHash() =>
     r'42b96e7dd059296b61c42cf26f1560b70989a910';
 
-/// See also [SearchPhraseNotifier].
-@ProviderFor(SearchPhraseNotifier)
-final searchPhraseNotifierProvider =
-    AutoDisposeNotifierProvider<SearchPhraseNotifier, String>.internal(
-  SearchPhraseNotifier.new,
-  name: r'searchPhraseNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$searchPhraseNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$SearchPhraseNotifier = AutoDisposeNotifier<String>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$SearchPhraseNotifier extends $Notifier<String> {
+  String build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<String, String>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

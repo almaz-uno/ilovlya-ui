@@ -21,7 +21,7 @@ const tvPollPeriod = Duration(seconds: 1);
 const _pathSessions = "/api/tv/sessions";
 const _pathPair = "/api/tv/pair";
 
-String _serverURL(Ref ref) => ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+String _serverURL(Ref ref) => ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
 
 Map<String, String> _jsonHeaders(Ref ref) => {...getAuthHeader(ref), "Content-Type": "application/json"};
 
@@ -78,8 +78,10 @@ class TvSessionState extends _$TvSessionState {
     _timer = Timer.periodic(tvPollPeriod, (_) async {
       try {
         final session = await _getSession(serverURL, headers, sessionId);
+        if (!ref.mounted) return;
         state = AsyncData(session);
       } catch (e, st) {
+        if (!ref.mounted) return;
         AppLoggers.api.w('Failed to poll the tv session', error: e, stackTrace: st);
         state = AsyncError(e, st);
       }
@@ -107,6 +109,7 @@ class TvSessionState extends _$TvSessionState {
       throw HttpStatusError.by("Unable to command the tv receiver", res);
     }
 
+    if (!ref.mounted) return;
     state = AsyncData(TvSession.fromJson(jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>));
   }
 
