@@ -9,6 +9,9 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
+.Fixed
+- Playing an MP4 or M4A while it downloads starts within a moment when the file keeps its index at the end, as yt-dlp leaves it, instead of stalling for minutes on a mobile link; the index is fetched first, and the screen no longer says the server is not answering while it answers (#176)
+
 == [3.10.0] - 2026-10-28
 
 .Added

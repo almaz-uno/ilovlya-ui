@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 
 import '../utils/logger_provider.dart';
+import 'iso_bmff.dart';
 import 'partial_file.dart';
 
 /// How a [Fetcher.run] ended.
@@ -34,6 +35,11 @@ enum FetchOutcome {
 /// [RangeSet.nextGap] at the position reached — forward to the end, then the gaps left behind. [retarget] aborts the
 /// request and continues from another offset; bytes already received are written, bytes not yet received are simply
 /// not fetched, so a seek costs a reconnect and not a second transfer.
+///
+/// A request about to close its gap is not aborted: the retarget waits for it. Two readers far apart — the player's
+/// first response still waiting at the front while the player reads the index at the end — would otherwise move the
+/// transfer back and forth on every poll, each request storing what one round trip brings (ilovlya-ui#176). For the
+/// same reason an MP4 whose `moov` follows `mdat` has its end fetched as soon as the first bytes show it.
 class Fetcher {
   /// Failures in a row after which a fetcher no player is attached to gives up.
   static const maxFailuresUnattended = 8;
@@ -66,6 +72,16 @@ class Fetcher {
   /// now and then and so never trips [silenceTimeout]. It is not the recording's bitrate on purpose: a link slower than
   /// the recording is slow, not silent, and the speed shown says so.
   static const defaultMinProgress = 64 << 10;
+
+  /// A request with this little left of its gap — or what the measured rate brings within [closingTime], if more — is
+  /// let finish before a retarget. A reconnect costs a round trip, half a second on a mobile link, in which a gap this
+  /// size arrives anyway.
+  static const closingGap = 2 << 20;
+  static const closingTime = Duration(seconds: 2);
+
+  /// The largest end of a file, after `mdat`, fetched ahead of the front. The index of a recording of some hours is a
+  /// few MiB; a larger tail is no index, and is fetched in its turn.
+  static const maxTrailingMoov = 64 << 20;
 
   final PartialFile file;
   final Uri url;
@@ -101,7 +117,6 @@ class Fetcher {
   DateTime? _silentSince;
   DateTime? _troubleSince;
   DateTime? _flowingSince;
-  DateTime? _runSince;
   /// Bytes received, in slices of at most [_slice], over the last [silenceTimeout].
   final Queue<(DateTime, int)> _arrivals = Queue();
   static const _slice = Duration(milliseconds: 100);
@@ -112,6 +127,23 @@ class Fetcher {
   HttpClientRequest? _request;
   Completer<void>? _leaveBody;
   int? _retargetTo;
+  /// A retarget that waits for the request in flight to close its gap.
+  int? _deferredTo;
+  /// The exclusive end of the gap the request in flight closes; `null` for an open-ended one, or between requests.
+  int? _gapEnd;
+  /// Whether the request in flight fetches the index at the end of the file; it is let finish whatever its size.
+  bool _pinned = false;
+  bool _pinNext = false;
+  /// Whether the request in flight has its answer, the status line and headers.
+  bool _answeredThis = false;
+  /// Since the request in flight last showed life: was made, was answered, or brought a byte. One silent for
+  /// [closingTime] is not waited for, whatever is left of its gap.
+  final Stopwatch _sinceSign = Stopwatch();
+  /// Bytes at the start of the file the next look for a trailing index needs; `null` once it has looked.
+  int? _headWanted;
+  /// Where [_assess] measures the least progress from: the start of the run, or the latest answered request this
+  /// transfer aborted itself — a retarget or a resume, which say nothing about the server.
+  DateTime? _measuredSince;
   bool _stopped = false;
   bool _running = false;
   int _requests = 0;
@@ -169,11 +201,7 @@ class Fetcher {
     if (at == null) return;
     _suspended += DateTime.now().difference(at);
     _suspendedAt = null;
-    if (_running && _request != null) {
-      _retargetTo ??= _position;
-      _request?.abort();
-      _leave();
-    }
+    if (_running && _request != null) _interrupt(_retargetTo ?? _position);
     _wakeUp();
   }
 
@@ -201,8 +229,8 @@ class Fetcher {
       return;
     }
     final window = now.subtract(silenceTimeout);
-    final runSince = _runSince;
-    if (_running && runSince != null && !runSince.isAfter(window) && _bytesSince(window) < minProgress) {
+    final measuredSince = _measuredSince;
+    if (_running && measuredSince != null && !measuredSince.isAfter(window) && _bytesSince(window) < minProgress) {
       _troubleSince ??= window;
       return;
     }
@@ -232,18 +260,25 @@ class Fetcher {
     _running = true;
     _stopped = false;
     _position = from;
-    _runSince = _now();
+    _measuredSince = _now();
     _troubleSince = null;
+    _deferredTo = null;
+    _pinNext = false;
+    _headWanted = 16;
     _flowingSince = null;
     _arrivals.clear();
     var failures = 0;
     try {
       while (!_stopped) {
+        _retargetTo ??= _deferredTo;
+        _deferredTo = null;
         final target = _retargetTo;
         if (target != null) {
           _position = target;
           _retargetTo = null;
         }
+        _pinned = _pinNext;
+        _pinNext = false;
         final length = file.length;
         int start;
         int? end;
@@ -283,12 +318,34 @@ class Fetcher {
     }
   }
 
-  /// Continues from [offset] — the place the player now reads — aborting the request in flight.
+  /// Continues from [offset] — the place the player now reads — aborting the request in flight, unless that request
+  /// is about to close its gap: then the transfer moves there right after it.
   void retarget(int offset) {
+    if (_closingSoon) {
+      _deferredTo = offset;
+      return;
+    }
+    _deferredTo = null;
+    _pinNext = false;
+    _interrupt(offset);
+    _wakeUp();
+  }
+
+  bool get _closingSoon {
+    final end = _gapEnd;
+    if (end == null || _retargetTo != null || _stopped || _sinceSign.elapsed >= closingTime) return false;
+    if (_pinned) return true;
+    final closing = max(closingGap, (rate * closingTime.inMicroseconds / 1e6).round());
+    return end - _position <= closing;
+  }
+
+  /// Aborts the request in flight to continue from [offset]. The transfer did that itself, so an answered request
+  /// cut short says nothing about the server: the least progress is measured anew from here.
+  void _interrupt(int offset) {
     _retargetTo = offset;
+    if (_answeredThis) _measuredSince = _now();
     _request?.abort();
     _leave();
-    _wakeUp();
   }
 
   /// Ends the run as soon as the request in flight is aborted.
@@ -321,6 +378,20 @@ class Fetcher {
   }
 
   Future<_Attempt> _fetch(int start, int? end) async {
+    _gapEnd = end;
+    _answeredThis = false;
+    _sinceSign
+      ..reset()
+      ..start();
+    try {
+      return await _fetchGap(start, end);
+    } finally {
+      _gapEnd = null;
+      _pinned = false;
+    }
+  }
+
+  Future<_Attempt> _fetchGap(int start, int? end) async {
     _silentSince = null;
     _request = null;
     final HttpClientRequest request;
@@ -391,6 +462,10 @@ class Fetcher {
     }
 
     _answered();
+    _answeredThis = true;
+    _sinceSign.reset();
+    // An open-ended first request learns the length from its answer, and ends there.
+    _gapEnd ??= file.length;
     _position = offset;
     try {
       // The timer stops while the loop writes a chunk, which pauses the subscription: a slow disk is not a silent server.
@@ -406,6 +481,7 @@ class Fetcher {
         }
         offset += chunk.length;
         _position = offset;
+        _sinceSign.reset();
         _measure(chunk.length);
         // The record is written anew beside the data, so it fails where the open data file does not: a directory
         // that became read-only, space that ran out between the two. Either way nothing more can be kept.
@@ -416,6 +492,8 @@ class Fetcher {
             return _cannotWrite(file.statePath, e);
           }
         }
+        final wanted = _headWanted;
+        if (wanted != null && file.ranges.end(0) >= wanted) await _lookForTrailingMoov();
       }
     } on Object catch (e) {
       if (_interrupted) return _Attempt.interrupted;
@@ -432,6 +510,28 @@ class Fetcher {
   }
 
   bool get _interrupted => _stopped || _retargetTo != null;
+
+  /// Fetches the end of the file next if the first bytes show an MP4 whose index follows `mdat`: the player reads it
+  /// before it plays anything, and it is a fraction of the file.
+  Future<void> _lookForTrailingMoov() async {
+    final length = file.length;
+    if (length == null) return;
+    final head = await file.read(0, min(file.ranges.end(0), moovProbeLimit));
+    switch (probeMoov(head, length)) {
+      case MoovNeedsMore(:final bytes):
+        _headWanted = bytes <= moovProbeLimit ? bytes : null;
+      case MoovNotTrailing():
+        _headWanted = null;
+      case MoovTrailing(:final at):
+        _headWanted = null;
+        final missing = file.ranges.end(at) < length;
+        if (missing && length - at <= maxTrailingMoov && _position < at && !_interrupted) {
+          AppLoggers.download.i('Playback download of ${file.downloadId}: moov at $at of $length follows mdat, fetching it first');
+          _pinNext = true;
+          _interrupt(at);
+        }
+    }
+  }
 
   /// The request in flight said nothing for [silenceTimeout]: it is dropped, and a failure it starts is dated from the
   /// moment it fell silent.
