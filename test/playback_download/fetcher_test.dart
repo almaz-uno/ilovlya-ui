@@ -419,6 +419,63 @@ void main() {
     await run;
   });
 
+  test('what follows mdat is let finish only when it is the index, though its first bytes came apart', () async {
+    const tail = 3 << 20;
+    src = m4aWithTrailingMoov(mdat: 4 << 20, moov: tail, tail: 'skip');
+    up.data = src;
+    up.rate = 2 << 20;
+    final at = src.length - tail;
+    final f = open();
+    // An earlier run stored 4 bytes of the box header: the request for the tail begins after them.
+    f.setLength(src.length, up.lastModified);
+    await f.write(at, src.sublist(at, at + 4));
+    final fx = fetcher(f);
+    final run = fx.run(0);
+    while (fx.position <= at + (64 << 10)) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    fx.retarget(1 << 20);
+    expect(await run, FetchOutcome.complete);
+    expect(await finish(f), src);
+    expect(up.log[1].range, 'bytes=${at + 4}-${src.length - 1}', reason: '${up.log}');
+    expect(up.log[1].bytes, lessThan(tail - 4), reason: 'a skip box is no index: ${up.log}');
+    expect(up.log[2].range, startsWith('bytes=${1 << 20}-'));
+  });
+
+  test('one stalled answer leaves the usual answer time within a few answers', () async {
+    src = randomBytes(24 << 20);
+    up.data = src;
+    up.rate = 1 << 20;
+    up.latency = const Duration(seconds: 6); // a stall, or an iOS suspend while the answer was awaited
+    final f = open();
+    final fx = fetcher(f);
+    final run = fx.run(0);
+    while (up.log.isEmpty || up.log.first.status == null) {
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
+    up.latency = Duration.zero;
+    // Two quick answers: the usual answer time is 6 s × 0.7² ≈ 2.9 s if the stall counts in full, 3 s × 0.7² ≈ 1.5 s
+    // if it counts for the most one answer does.
+    fx.retarget(8 << 20);
+    while (up.log.length < 2 || up.log.last.status == null) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    fx.retarget(src.length - (4 << 20));
+    while (up.log.length < 3 || fx.rate == 0 || src.length - fx.position > (2200 << 10)) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    expect(src.length - fx.position, greaterThan(2000 << 10), reason: 'the rest is not yet within 2 s');
+    // About 2.1 s of the rest are left: more than 1.5 s, less than 2.9 s.
+    final clock = Stopwatch()..start();
+    fx.retarget(1 << 20);
+    while (up.log.length < 4) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    expect(clock.elapsed, lessThan(const Duration(milliseconds: 700)), reason: '${up.log}');
+    fx.stop();
+    await run;
+  });
+
   test('a retarget that waits for a closing request moves the transfer once that request falls silent', () async {
     up.rate = 256 << 10;
     final f = open();
