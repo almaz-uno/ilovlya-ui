@@ -16,6 +16,8 @@ import 'package:ilovlya/src/model/settings.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
 import 'package:path/path.dart' as p;
 
+import 'helpers/provider_container.dart';
+
 class OfflineTestSettings extends SettingsNotifier {
   OfflineTestSettings(this.settings);
   final Settings settings;
@@ -41,7 +43,7 @@ void main() {
       void Function()? onServerRequest,
       List<RecordingInfo>? serverRecordings,
       List<Download>? serverDownloads}) {
-    final c = container = ProviderContainer(overrides: [
+    final c = container = createTestProviderContainer(overrides: [
       if (serverRecordings != null)
         listRecordingsProvider(0, MediaListNotifier.limit)
             .overrideWith((ref) async => serverRecordings),

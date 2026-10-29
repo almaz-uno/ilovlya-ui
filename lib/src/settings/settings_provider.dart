@@ -135,32 +135,32 @@ class SettingsNotifier extends _$SettingsNotifier {
 
   Future<void> save() async {
     if (!state.hasValue) return;
+    final settings = state.requireValue;
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (!ref.mounted) return;
     prefs.setString(
         "theme",
-        switch (state.value?.theme) {
+        switch (settings.theme) {
           ThemeMode.light => "light",
           ThemeMode.dark => "dark",
           _ => "system",
         });
 
-    prefs.setString("token", state.value?.token ?? "");
-    prefs.setString("server_url", state.value?.serverUrl ?? serverBaseURL);
-    prefs.setDouble("volume", state.value?.volume ?? 50.0);
-    prefs.setString("sort_by", state.value?.sortBy ?? "created_at");
-    prefs.setBool("show_hidden", state.value?.showHidden ?? false);
-    prefs.setBool("show_seen", state.value?.showSeen ?? false);
-    prefs.setBool("with_server_file", state.value?.withServerFile ?? false);
-    prefs.setBool("with_local_file", state.value?.withLocalFile ?? false);
-    prefs.setDouble("player_speed", state.value?.playerSpeed ?? 1.0);
-    prefs.setBool("auto_viewed", state.value?.autoViewed ?? false);
-    prefs.setBool("update_thumbnails", state.value?.updateThumbnails ?? false);
-    prefs.setString("data_storage_directory", state.value?.dataStorageDirectory ?? "");
-    prefs.setString("media_storage_directory", state.value?.mediaStorageDirectory ?? "");
-    prefs.setString("locale", state.value?.locale ?? "");
-    prefs.setBool("download_while_playing", state.value?.downloadWhilePlaying ?? false);
+    prefs.setString("token", settings.token);
+    prefs.setString("server_url", settings.serverUrl);
+    prefs.setDouble("volume", settings.volume);
+    prefs.setString("sort_by", settings.sortBy);
+    prefs.setBool("show_hidden", settings.showHidden);
+    prefs.setBool("show_seen", settings.showSeen);
+    prefs.setBool("with_server_file", settings.withServerFile);
+    prefs.setBool("with_local_file", settings.withLocalFile);
+    prefs.setDouble("player_speed", settings.playerSpeed);
+    prefs.setBool("auto_viewed", settings.autoViewed);
+    prefs.setBool("update_thumbnails", settings.updateThumbnails);
+    prefs.setString("data_storage_directory", settings.dataStorageDirectory);
+    prefs.setString("media_storage_directory", settings.mediaStorageDirectory);
+    prefs.setString("locale", settings.locale);
+    prefs.setBool("download_while_playing", settings.downloadWhilePlaying);
   }
 
   void updateTheme(ThemeMode theme) {

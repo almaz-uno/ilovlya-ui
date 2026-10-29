@@ -181,6 +181,7 @@ Route<dynamic> _route(RouteSettings settings) {
 }
 
 Widget _app({Future<RecordingInfo> Function(String url)? addRecording}) => ProviderScope(
+      retry: (_, _) => null,
       overrides: _overrides(addRecording: addRecording),
       child: MaterialApp(
         restorationScopeId: 'shortcuts-test',
@@ -197,6 +198,7 @@ Widget _detailsHarness({
   Future<void> Function()? onRefresh,
   Future<void> Function()? setSeen,
 }) => ProviderScope(
+      retry: (_, _) => null,
       overrides: [
         settingsProvider.overrideWith(_TestSettingsNotifier.new),
         localDTProvider.overrideWith(_TestLocalDTNotifier.new),
@@ -439,6 +441,7 @@ void main() {
     ];
     late _TestDownloadsNotifier notifier;
     await tester.pumpWidget(ProviderScope(
+      retry: (_, _) => null,
       overrides: [
         settingsProvider.overrideWith(_TestSettingsNotifier.new),
         localDTProvider.overrideWith(_TestLocalDTNotifier.new),

@@ -12,6 +12,7 @@ void main() {
     var requestCount = 0;
 
     await tester.pumpWidget(ProviderScope(
+      retry: (_, _) => null,
       child: MaterialApp(
         home: Scaffold(
           body: Consumer(

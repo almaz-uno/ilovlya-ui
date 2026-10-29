@@ -8,6 +8,11 @@ updates:
       flutter-dependencies:
         patterns:
           - "*"
+    ignore:
+      # google_fonts 9.x does not compile against Flutter's ThemeData text theme.
+      # See https://github.com/almaz-uno/ilovlya-ui/issues/177 (Upgrade google_fonts to 9.x).
+      - dependency-name: "google_fonts"
+        versions: [">=9.0.0"]
 
   - package-ecosystem: github-actions
     directory: /

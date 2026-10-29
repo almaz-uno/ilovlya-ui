@@ -105,6 +105,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
   // The television this recording is cast to. While it is set, the playback
   // controls of this screen act on the television instead of on this device.
   String? _castSessionId;
+  ProviderSubscription<AsyncValue<TvSession>>? _castSessionSubscription;
   // The television reports its position every few seconds; between reports the
   // position shown here advances by the clock, so it moves like the picture.
   int _castReported = -1;
@@ -164,6 +165,17 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     _updatePullSubs?.cancel();
     _rewindTimer?.cancel();
     super.deactivate();
+  }
+
+  @override
+  void dispose() {
+    _castSessionSubscription?.close();
+    super.dispose();
+  }
+
+  void _listenToCastSession(String sessionId) {
+    _castSessionSubscription?.close();
+    _castSessionSubscription = ref.listenManual(tvSessionStateProvider(sessionId), _onCastSession);
   }
 
   void _toggleSeen(RecordingInfo recording) async {
@@ -613,6 +625,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     }
 
     setState(() => _castSessionId = session!.id);
+    _listenToCastSession(session.id);
 
     // The television continues from what this screen shows, so switching to it
     // does not jump.
@@ -631,6 +644,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         if (s.isLive && s.recordingId == widget.id && !s.isIdle) {
           if (mounted) {
             setState(() => _castSessionId = s.id);
+            _listenToCastSession(s.id);
           }
           return;
         }
@@ -722,6 +736,8 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
         _currentPosition = last;
       }
     });
+    _castSessionSubscription?.close();
+    _castSessionSubscription = null;
     await _pullRefresh();
   }
 
@@ -1092,12 +1108,9 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
 
   Widget _buildPreview(BuildContext context, RecordingInfo recording, AsyncValue<List<Download>> downloads) {
     final castId = _castSessionId;
-    // Watched so the screen follows the television; the value is read through
-    // _castSession where the position is needed.
+    // The manual subscription (attached after session discovery) keeps position
+    // updates flowing when this route is covered by an opaque route.
     final cast = castId == null ? null : ref.watch(tvSessionStateProvider(castId));
-    if (castId != null) {
-      ref.listen(tvSessionStateProvider(castId), _onCastSession);
-    }
     final castPlaying = cast?.value?.isPlaying ?? false;
     final castDuration = cast?.value?.duration ?? 0;
     final l10n = AppLocalizations.of(context)!;

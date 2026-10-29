@@ -123,7 +123,10 @@ class MediaListNotifier extends _$MediaListNotifier {
   }
 
   Future<List<RecordingInfo>> _filter(Future<List<RecordingInfo>> list) async {
-    final phrase = ref.watch(searchPhraseProvider).trim();
+    return _filterWithPhrase(ref.watch(searchPhraseProvider).trim(), list);
+  }
+
+  Future<List<RecordingInfo>> _filterWithPhrase(String phrase, Future<List<RecordingInfo>> list) async {
 
     if (phrase == '') {
       return list;
@@ -169,10 +172,12 @@ class MediaListNotifier extends _$MediaListNotifier {
   Future<List<RecordingInfo>> _pullFromServer() async {
     final stopwatch = Stopwatch()..start();
     try {
-      final sp = await ref.watch(storePlacesProvider.future);
-      if (!ref.mounted) return const [];
-      final recordings = await ref.refresh(listRecordingsProvider(0, limit).future);
-      if (!ref.mounted) return const [];
+      final container = ref.container;
+      final placesFuture = container.read(storePlacesProvider.future);
+      final settingsFuture = container.read(settingsProvider.future);
+      final phrase = container.read(searchPhraseProvider).trim();
+      final sp = await placesFuture;
+      final recordings = await container.refresh(listRecordingsProvider(0, limit).future);
       if (recordings.any((r) => r.id.isEmpty)) throw const FormatException('Server recording has no ID');
 
       final recordingsDir = sp.recordings();
@@ -181,8 +186,22 @@ class MediaListNotifier extends _$MediaListNotifier {
         await writeLocalJson(File(p.join(recordingsDir.path, recording.id)), recording.toJson(), flush: false);
       }
 
-      if (!ref.mounted) return const [];
-      return await _filter(_fromDisk());
+      final settings = await settingsFuture;
+      final mediaFiles = sp.media().existsSync() ? sp.media().listSync() : <FileSystemEntity>[];
+      final showable = recordings.where((recording) {
+        recording.hasLocalFile = recording.hasLocalFile || recording.files.any((name) => mediaFiles.any((entity) => entity is File && p.basename(entity.path) == name));
+        if (recording.seenAt != null && !settings.showSeen) return false;
+        if (recording.hiddenAt != null && !settings.showHidden) return false;
+        if (settings.withServerFile && !recording.hasFile) return false;
+        if (settings.withLocalFile && !recording.hasLocalFile) return false;
+        return true;
+      }).toList()
+        ..sort((a, b) {
+          final n = DateTime.fromMillisecondsSinceEpoch(0);
+          if (settings.sortBy == "updated_at") return (b.updatedAt ?? n).compareTo(a.updatedAt ?? n);
+          return (b.createdAt ?? n).compareTo(a.createdAt ?? n);
+        });
+      return await _filterWithPhrase(phrase, Future.value(showable));
     } catch (e, s) {
       AppLoggers.media.e('Failed to pull recordings from server', error: e, stackTrace: s);
       rethrow;

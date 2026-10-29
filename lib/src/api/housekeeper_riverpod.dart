@@ -26,9 +26,14 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
     return _evaluate();
   }
 
-  Future<(int number, int size)> _evaluate() async {
+  Future<(int number, int size)> _evaluate([StorePlaces? places]) async {
     var number = 0, size = 0;
-    final sp = await ref.watch(storePlacesProvider.future);
+    final StorePlaces sp;
+    if (places != null) {
+      sp = places;
+    } else {
+      sp = await ref.watch(storePlacesProvider.future);
+    }
 
     for (final entity in sp.media().listSync(recursive: true)) {
       AppLoggers.media.t('Processing media file: ${entity.path}');
@@ -41,25 +46,18 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
   }
 
   Future<(int, int)> cleanAll() async {
-    final playback = ref.read(playbackDownloadsProvider.notifier);
-    final tasks = ref.read(localDTProvider.notifier);
-    final placesFuture = ref.watch(storePlacesProvider.future);
-    final (number, size) = state.value!;
+    final container = ref.container;
+    final placesFuture = container.read(storePlacesProvider.future);
+    final playback = container.read(playbackDownloadsProvider.notifier);
+    final tasks = container.read(localDTProvider.notifier);
+    final (number, size) = state.requireValue;
     final sp = await placesFuture;
     // Partial files go with everything else; a download a player still reads continues as a plain stream.
     await playback.stopAll();
     sp.media().deleteSync(recursive: true);
     sp.media().createSync(recursive: true);
     tasks.forgetEnded();
-    // Recalculate without touching this provider's ref after async work.
-    var newNumber = 0;
-    var newSize = 0;
-    for (final entity in sp.media().listSync(recursive: true)) {
-      if (entity is! File) continue;
-      newNumber++;
-      newSize += entity.lengthSync();
-    }
-    final newState = (newNumber, newSize);
+    final newState = await _evaluate(sp);
     if (ref.mounted) state = AsyncValue.data(newState);
     return Future.value((number, size));
   }
@@ -68,29 +66,29 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
   ///
   /// A file whose recording cannot be loaded is kept. The counters are re-evaluated even when the cleanup fails.
   Future<(int, int)> cleanStale() async {
+    final container = ref.container;
+    final placesFuture = container.read(storePlacesProvider.future);
+    final playback = container.read(playbackDownloadsProvider.notifier);
     try {
-      return await _cleanStale();
+      return await _cleanStale(container, placesFuture, playback);
     } finally {
-      if (ref.mounted) {
-        try {
-          final newState = await _evaluate();
-          if (ref.mounted) state = AsyncValue.data(newState);
-        } on Object catch (err, st) {
-          AppLoggers.media.w('Cannot re-evaluate the downloaded media', error: err, stackTrace: st);
-        }
+      try {
+        final sp = await placesFuture;
+        final newState = await _evaluate(sp);
+        if (ref.mounted) state = AsyncValue.data(newState);
+      } on Object catch (err, st) {
+        AppLoggers.media.w('Cannot re-evaluate the downloaded media', error: err, stackTrace: st);
       }
     }
   }
 
-  Future<(int, int)> _cleanStale() async {
-    final sp = await ref.read(storePlacesProvider.future);
-    if (!ref.mounted) return (0, 0);
+  Future<(int, int)> _cleanStale(ProviderContainer container, Future<StorePlaces> placesFuture, PlaybackDownloads playback) async {
+    final sp = await placesFuture;
 
     int number = 0, size = 0;
     for (final e in sp.media().listSync()) {
       if (e is! File) continue;
-      final stale = await _isStale(p.basename(e.path));
-      if (!ref.mounted) return (number, size);
+      final stale = await _isStale(container, p.basename(e.path));
       if (!stale) continue;
       number++;
       size += e.lengthSync();
@@ -102,13 +100,11 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
       for (final e in partial.listSync()) {
         if (e is! File || e.path.endsWith('.state.json') || e.path.endsWith('.tmp')) continue;
         final bn = p.basename(e.path);
-        final stale = await _isStale(bn);
-        if (!ref.mounted) return (number, size);
+        final stale = await _isStale(container, bn);
         if (!stale) continue;
         number++;
         size += e.lengthSync();
-        await ref.read(playbackDownloadsProvider.notifier).discardFile(bn);
-        if (!ref.mounted) return (number, size);
+        await playback.discardFile(bn);
         PartialFile.deleteFor(sp.media().path, bn);
       }
     }
@@ -117,12 +113,12 @@ class LocalMediaHousekeeper extends _$LocalMediaHousekeeper {
 
   /// Whether the media file [name] (`<recording id>-...`) belongs to a seen or hidden recording.
   /// A name without an id and a recording that cannot be loaded count as not stale.
-  Future<bool> _isStale(String name) async {
+  Future<bool> _isStale(ProviderContainer container, String name) async {
     final pos = name.indexOf('-');
     if (pos < 0) return false;
     final RecordingInfo ri;
     try {
-      ri = await ref.read(recordingProvider(name.substring(0, pos)).future);
+      ri = await container.read(recordingProvider(name.substring(0, pos)).future);
     } on Object catch (err) {
       AppLoggers.media.w('Cannot tell whether the media file $name is stale', error: err);
       return false;
@@ -156,16 +152,18 @@ class LocalDataNotifier extends _$LocalDataNotifier {
   }
 
   Future<int> cleanMetadata() async {
-    final sp = await ref.watch(storePlacesProvider.future);
-    final number = state.value!;
+    final container = ref.container;
+    final placesFuture = container.read(storePlacesProvider.future);
+    final mediaList = container.read(mediaListProvider.notifier);
+    final number = state.requireValue;
+    final sp = await placesFuture;
     sp.data().deleteSync(recursive: true);
     sp.recordings().createSync(recursive: true);
     sp.thumbnails().createSync(recursive: true);
     sp.downloads().createSync(recursive: true);
-    if (!ref.mounted) return number;
-    ref.invalidateSelf();
+    container.invalidate(localDataProvider);
     // Not awaited: a failed pull must not fail the cleanup that has already been done.
-    ref.read(mediaListProvider.notifier).refreshFromServer().catchError((Object e) {
+    mediaList.refreshFromServer().catchError((Object e) {
       AppLoggers.media.w('Media list refresh after metadata cleanup failed: $e');
     });
     return Future.value(number);

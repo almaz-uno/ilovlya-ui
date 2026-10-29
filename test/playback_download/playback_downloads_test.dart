@@ -15,6 +15,7 @@ import 'package:ilovlya/src/playback_download/playback_downloads.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
 import 'package:path/path.dart' as p;
 
+import '../helpers/provider_container.dart';
 import 'local_endpoint_test.dart' show fetch;
 import 'upstream.dart';
 
@@ -41,7 +42,7 @@ void main() {
     src = randomBytes(2 << 20);
     up = await Upstream.start(src);
     player = HttpClient();
-    c = ProviderContainer(overrides: [
+    c = createTestProviderContainer(overrides: [
       storePlacesProvider.overrideWith((ref) async => StorePlaces(dataDir: p.join(root.path, 'data'), mediaDir: p.join(root.path, 'media'))),
       settingsProvider.overrideWith(() => _Settings()),
       localDTProvider.overrideWith(() => _LocalDT()),

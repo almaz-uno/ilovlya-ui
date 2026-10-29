@@ -35,7 +35,7 @@ Future<void> runCacheRefreshBenchmark() async {
       File(p.join(places.recordings().path, entry.id))
   ];
   final epoch = DateTime.utc(2020);
-  final container = ProviderContainer(overrides: [
+  final container = ProviderContainer(retry: (_, _) => null, overrides: [
     storePlacesProvider.overrideWith((ref) async => places),
     settingsProvider.overrideWith(() => BenchmarkSettings(Settings(
         dataStorageDirectory: places.dataDir,
