@@ -136,7 +136,11 @@ class Upstream {
       await Future.any([gone, _release.future]);
     }
 
-    if (latency > Duration.zero) await Future.any([Future.delayed(latency), gone]);
+    if (latency > Duration.zero) {
+      var left = false;
+      await Future.any([Future.delayed(latency), gone.then((_) => left = true)]);
+      if (left) return; // the client gave up before the answer
+    }
     if (silent) return hold();
     void head(int status, Map<String, Object> fields) {
       entry.status = status;
@@ -224,7 +228,7 @@ class UpstreamRequest {
 
 /// An M4A as yt-dlp leaves it: `ftyp`, then `mdat` holding [mdat] bytes, then `moov` of [moov] bytes, the index the
 /// player reads before anything plays.
-Uint8List m4aWithTrailingMoov({required int mdat, required int moov}) {
+Uint8List m4aWithTrailingMoov({required int mdat, required int moov, String tail = 'moov'}) {
   final b = BytesBuilder();
   void box(String type, List<int> body) {
     final size = 8 + body.length;
@@ -235,7 +239,7 @@ Uint8List m4aWithTrailingMoov({required int mdat, required int moov}) {
 
   box('ftyp', [...latin1.encode('M4A '), 0, 0, 2, 0, ...latin1.encode('isomM4A ')]);
   box('mdat', randomBytes(mdat, 2));
-  box('moov', randomBytes(moov - 8, 3));
+  box(tail, randomBytes(moov - 8, 3));
   return b.takeBytes();
 }
 

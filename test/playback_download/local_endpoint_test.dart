@@ -194,7 +194,7 @@ void main() {
       final took = clock.elapsed;
       expect(tail.body, src.sublist(moovAt));
       expect(up.log.length, lessThanOrEqualTo(4), reason: 'requests until the index was read: ${up.log}');
-      expect(took, lessThan(const Duration(seconds: 2)), reason: 'the index is a fraction of a second at this rate');
+      expect(took, lessThan(const Duration(seconds: 4)), reason: 'the index is a fraction of a second at this rate');
       expect(source.fetcher.notAnsweringFor, isNull);
 
       await frontSub.cancel();

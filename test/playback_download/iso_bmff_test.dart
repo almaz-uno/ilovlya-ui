@@ -33,6 +33,13 @@ void main() {
     expect(probeMoov(withFree, 2000), isA<MoovNeedsMore>().having((p) => p.bytes, 'bytes', 16 + 40 + 16));
   });
 
+  test('a box larger than the file is not trusted, however large its size', () {
+    final size = ByteData(8)..setUint64(0, 0x7fffffffffffffff);
+    final head = Uint8List.fromList([...ftyp, ...box('mdat', 1, size.buffer.asUint8List())]);
+    expect(probeMoov(head, 1 << 20), isA<MoovNotTrailing>());
+    expect(probeMoov(Uint8List.fromList([...ftyp, ...box('mdat', 4000)]), 2000), isA<MoovNotTrailing>());
+  });
+
   test('a 64-bit mdat size is read', () {
     const big = 5 << 30;
     final size = ByteData(8)..setUint64(0, big);

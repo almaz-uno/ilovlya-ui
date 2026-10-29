@@ -31,6 +31,9 @@ final class MoovTrailing extends MoovProbe {
 const moovProbeLimit = 64 << 10;
 
 /// Walks the top-level boxes of [head], the first bytes of a file of [length] bytes, up to `mdat`.
+///
+/// Only a file that starts with `ftyp` is taken for ISO-BMFF. An old QuickTime file may start with `wide` or `mdat`
+/// instead; it is not recognised, and its index is fetched when the player asks for it.
 MoovProbe probeMoov(Uint8List head, int length) {
   final data = ByteData.sublistView(head);
   var pos = 0;
@@ -48,7 +51,9 @@ MoovProbe probeMoov(Uint8List head, int length) {
       // The box runs to the end of the file, so nothing follows it.
       return const MoovNotTrailing();
     }
-    if (size < 8) return const MoovNotTrailing();
+    // A box that does not fit in the file is a truncated or a broken one; checked before adding, as a 64-bit size
+    // could overflow.
+    if (size < 8 || size > length - pos) return const MoovNotTrailing();
     switch (type) {
       case 'moov':
         return const MoovNotTrailing();
