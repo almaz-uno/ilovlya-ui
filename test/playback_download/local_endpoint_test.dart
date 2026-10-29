@@ -104,8 +104,10 @@ void main() {
     return (source, endpoint.register(id, '$id.mp4', source));
   }
 
+  /// Waits for the transfer to end and its outcome to be settled: the run is over before the file is completed and
+  /// the state follows.
   Future<void> settle(PartialSource s) async {
-    while (s.isRunning) {
+    while (s.isRunning || s.state == SourceState.running) {
       await Future.delayed(const Duration(milliseconds: 10));
     }
   }
