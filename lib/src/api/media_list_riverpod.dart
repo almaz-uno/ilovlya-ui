@@ -8,6 +8,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import '../model/recording_info.dart';
+import '../model/settings.dart';
 import '../settings/settings_provider.dart';
 import '../utils/logger_provider.dart';
 import 'api_riverpod.dart';
@@ -32,35 +33,7 @@ class MediaListNotifier extends _$MediaListNotifier {
     final stopwatch = Stopwatch()..start();
     try {
       final sp = await ref.watch(storePlacesProvider.future);
-      final recordingsDir = sp.recordings();
-      final mediaDir = sp.media();
-
-      final resultList = <RecordingInfo>[];
-
-      final list = recordingsDir.existsSync() ? recordingsDir.listSync() : <FileSystemEntity>[];
-
-      final mediaEntities = mediaDir.existsSync() ? mediaDir.listSync() : <FileSystemEntity>[];
-
-      for (final entity in list) {
-        if (entity is! File) continue;
-
-        try {
-          final recording = RecordingInfo.fromJson(jsonDecode(entity.readAsStringSync()));
-          if (recording.id.isEmpty) throw const FormatException('Recording has no ID');
-
-          for (final df in recording.files) {
-            for (final me in mediaEntities) {
-              if (me is! File) continue;
-              recording.hasLocalFile = recording.hasLocalFile || p.basename(me.path) == df;
-              if (recording.hasLocalFile) break;
-            }
-          }
-          resultList.add(recording);
-        } catch (e, s) {
-          AppLoggers.media.w('Skipping unreadable recording ${entity.path}', error: e, stackTrace: s);
-        }
-      }
-      return resultList;
+      return _readAllFromDisk(sp);
     } catch (e, s) {
       AppLoggers.media.e('Failed to load recordings from disk', error: e, stackTrace: s);
       rethrow;
@@ -72,42 +45,15 @@ class MediaListNotifier extends _$MediaListNotifier {
   Future<List<RecordingInfo>> _fromDisk() async {
     final stopwatch = Stopwatch()..start();
     try {
-      final sortBy = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.sortBy));
-      final showHidden = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.showHidden));
-      final showSeen = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.showSeen));
-
-      final withServerFile = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.withServerFile));
-      final withLocalFile = await ref.watch(settingsNotifierProvider.selectAsync((final s) => s.withLocalFile));
-
-      final resultList = <RecordingInfo>[];
-
-      for (final recording in await allFromDisk()) {
-        if (recording.seenAt != null && !showSeen) {
-          continue;
-        }
-        if (recording.hiddenAt != null && !showHidden) {
-          continue;
-        }
-
-        if (withServerFile && !recording.hasFile) {
-          continue;
-        }
-
-        if (withLocalFile && !recording.hasLocalFile) {
-          continue;
-        }
-        resultList.add(recording);
-      }
-
-      resultList.sort((a, b) {
-        final n = DateTime.fromMillisecondsSinceEpoch(0);
-        if (sortBy == "updated_at") {
-          return (b.updatedAt ?? n).compareTo(a.updatedAt ?? n);
-        }
-        return (b.createdAt ?? n).compareTo(a.createdAt ?? n);
-      });
-
-      return resultList;
+      final settingsFuture = ref.watch(
+        settingsProvider.selectAsync((s) => (sortBy: s.sortBy, showHidden: s.showHidden, showSeen: s.showSeen, withServerFile: s.withServerFile, withLocalFile: s.withLocalFile)),
+      );
+      final placesFuture = ref.watch(storePlacesProvider.future);
+      final selected = await settingsFuture;
+      final sp = await placesFuture;
+      if (!ref.mounted) return const [];
+      final settings = Settings(sortBy: selected.sortBy, showHidden: selected.showHidden, showSeen: selected.showSeen, withServerFile: selected.withServerFile, withLocalFile: selected.withLocalFile);
+      return _readAndFilterFromDisk(sp, settings);
     } catch (e, s) {
       AppLoggers.media.e('Failed to load recordings from disk', error: e, stackTrace: s);
       rethrow;
@@ -116,8 +62,48 @@ class MediaListNotifier extends _$MediaListNotifier {
     }
   }
 
+  List<RecordingInfo> _readAllFromDisk(StorePlaces sp) {
+    final recordingsDir = sp.recordings();
+    final mediaDir = sp.media();
+    final recordings = <RecordingInfo>[];
+    final list = recordingsDir.existsSync() ? recordingsDir.listSync() : <FileSystemEntity>[];
+    final mediaNames = mediaDir.existsSync() ? mediaDir.listSync().whereType<File>().map((file) => p.basename(file.path)).toSet() : <String>{};
+
+    for (final entity in list) {
+      if (entity is! File) continue;
+      try {
+        final recording = RecordingInfo.fromJson(jsonDecode(entity.readAsStringSync()));
+        if (recording.id.isEmpty) throw const FormatException('Recording has no ID');
+        recording.hasLocalFile = recording.hasLocalFile || recording.files.any(mediaNames.contains);
+        recordings.add(recording);
+      } catch (e, s) {
+        AppLoggers.media.w('Skipping unreadable recording ${entity.path}', error: e, stackTrace: s);
+      }
+    }
+    return recordings;
+  }
+
+  List<RecordingInfo> _readAndFilterFromDisk(StorePlaces sp, Settings settings) {
+    final result = _readAllFromDisk(sp).where((recording) {
+      if (recording.seenAt != null && !settings.showSeen) return false;
+      if (recording.hiddenAt != null && !settings.showHidden) return false;
+      if (settings.withServerFile && !recording.hasFile) return false;
+      if (settings.withLocalFile && !recording.hasLocalFile) return false;
+      return true;
+    }).toList();
+    result.sort((a, b) {
+      final n = DateTime.fromMillisecondsSinceEpoch(0);
+      if (settings.sortBy == 'updated_at') return (b.updatedAt ?? n).compareTo(a.updatedAt ?? n);
+      return (b.createdAt ?? n).compareTo(a.createdAt ?? n);
+    });
+    return result;
+  }
+
   Future<List<RecordingInfo>> _filter(Future<List<RecordingInfo>> list) async {
-    final phrase = ref.watch(searchPhraseNotifierProvider).trim();
+    return _filterWithPhrase(ref.watch(searchPhraseProvider).trim(), list);
+  }
+
+  Future<List<RecordingInfo>> _filterWithPhrase(String phrase, Future<List<RecordingInfo>> list) async {
 
     if (phrase == '') {
       return list;
@@ -134,7 +120,9 @@ class MediaListNotifier extends _$MediaListNotifier {
   Future<List<RecordingInfo>> _fromWeb() async {
     final stopwatch = Stopwatch()..start();
     try {
-      final settings = await ref.watch(settingsNotifierProvider.future);
+      final settingsFuture = ref.watch(settingsProvider.future);
+      final settings = await settingsFuture;
+      if (!ref.mounted) return const [];
       final showHidden = settings.showHidden;
       final showSeen = settings.showSeen;
 
@@ -161,8 +149,10 @@ class MediaListNotifier extends _$MediaListNotifier {
   Future<List<RecordingInfo>> _pullFromServer() async {
     final stopwatch = Stopwatch()..start();
     try {
-      final sp = await ref.watch(storePlacesProvider.future);
-      final recordings = await ref.refresh(listRecordingsProvider(0, limit).future);
+      final container = ref.container;
+      final placesFuture = container.read(storePlacesProvider.future);
+      final sp = await placesFuture;
+      final recordings = await container.refresh(listRecordingsProvider(0, limit).future);
       if (recordings.any((r) => r.id.isEmpty)) throw const FormatException('Server recording has no ID');
 
       final recordingsDir = sp.recordings();
@@ -171,7 +161,9 @@ class MediaListNotifier extends _$MediaListNotifier {
         await writeLocalJson(File(p.join(recordingsDir.path, recording.id)), recording.toJson(), flush: false);
       }
 
-      return await _filter(_fromDisk());
+      final settings = await container.read(settingsProvider.future);
+      final phrase = container.read(searchPhraseProvider).trim();
+      return await _filterWithPhrase(phrase, Future.value(_readAndFilterFromDisk(sp, settings)));
     } catch (e, s) {
       AppLoggers.media.e('Failed to pull recordings from server', error: e, stackTrace: s);
       rethrow;
@@ -184,6 +176,7 @@ class MediaListNotifier extends _$MediaListNotifier {
     if (!UniversalPlatform.isWeb) {
       try {
         final newList = await _pullFromServer();
+        if (!ref.mounted) return;
         state = AsyncValue.data(newList);
       } catch (_) {
         // _pullFromServer logged the failure. Keep local data and do not let a

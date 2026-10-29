@@ -7,21 +7,21 @@ part of 'format.dart';
 // **************************************************************************
 
 Format _$FormatFromJson(Map<String, dynamic> json) => Format(
-      id: json['id'] as String? ?? "",
-      ext: json['ext'] as String? ?? "",
-      resolution: json['resolution'] as String? ?? "",
-      fps: (json['fps'] as num?)?.toInt() ?? 0,
-      hasAudio: json['has_audio'] as bool? ?? false,
-      hasVideo: json['has_video'] as bool? ?? false,
-      url: json['url'] as String? ?? "",
-    );
+  id: json['id'] as String? ?? "",
+  ext: json['ext'] as String? ?? "",
+  resolution: json['resolution'] as String? ?? "",
+  fps: (json['fps'] as num?)?.toInt() ?? 0,
+  hasAudio: json['has_audio'] as bool? ?? false,
+  hasVideo: json['has_video'] as bool? ?? false,
+  url: json['url'] as String? ?? "",
+);
 
 Map<String, dynamic> _$FormatToJson(Format instance) => <String, dynamic>{
-      'id': instance.id,
-      'ext': instance.ext,
-      'resolution': instance.resolution,
-      'fps': instance.fps,
-      'has_audio': instance.hasAudio,
-      'has_video': instance.hasVideo,
-      'url': instance.url,
-    };
+  'id': instance.id,
+  'ext': instance.ext,
+  'resolution': instance.resolution,
+  'fps': instance.fps,
+  'has_audio': instance.hasAudio,
+  'has_video': instance.hasVideo,
+  'url': instance.url,
+};

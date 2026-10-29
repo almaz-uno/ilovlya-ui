@@ -9,6 +9,7 @@ import 'package:ilovlya/src/api/media_list_riverpod.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
 import 'package:ilovlya/src/model/settings.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
+import 'package:ilovlya/src/utils/provider_retry.dart';
 import 'package:path/path.dart' as p;
 
 class BenchmarkSettings extends SettingsNotifier {
@@ -35,15 +36,15 @@ Future<void> runCacheRefreshBenchmark() async {
       File(p.join(places.recordings().path, entry.id))
   ];
   final epoch = DateTime.utc(2020);
-  final container = ProviderContainer(overrides: [
+  final container = ProviderContainer(retry: disableProviderRetry, overrides: [
     storePlacesProvider.overrideWith((ref) async => places),
-    settingsNotifierProvider.overrideWith(() => BenchmarkSettings(Settings(
+    settingsProvider.overrideWith(() => BenchmarkSettings(Settings(
         dataStorageDirectory: places.dataDir,
         mediaStorageDirectory: places.mediaDir))),
     listRecordingsProvider(0, MediaListNotifier.limit)
         .overrideWith((ref) async => entries),
   ]);
-  container.listen(mediaListNotifierProvider, (_, __) {});
+  container.listen(mediaListProvider, (_, _) {});
   try {
     void seed() {
       for (var i = 0; i < files.length; i++) {
@@ -54,8 +55,8 @@ Future<void> runCacheRefreshBenchmark() async {
     }
 
     seed();
-    await container.read(mediaListNotifierProvider.future);
-    final notifier = container.read(mediaListNotifierProvider.notifier);
+    await container.read(mediaListProvider.future);
+    final notifier = container.read(mediaListProvider.notifier);
     await notifier.refreshFromServer(); // Warm up outside the measured runs.
     for (final changed in [0, 30, 3000]) {
       final times = <double>[];
@@ -68,7 +69,7 @@ Future<void> runCacheRefreshBenchmark() async {
         final timer = Stopwatch()..start();
         await notifier.refreshFromServer();
         timer.stop();
-        if (container.read(mediaListNotifierProvider).requireValue.length !=
+        if (container.read(mediaListProvider).requireValue.length !=
             3000) {
           throw StateError('Refresh did not retain all recordings');
         }

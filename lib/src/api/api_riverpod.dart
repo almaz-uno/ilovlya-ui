@@ -19,14 +19,14 @@ part 'api_riverpod.g.dart';
 typedef HttpMethod = Future<http.Response> Function(Uri, {Map<String, String>? headers});
 
 Map<String, String> getAuthHeader(Ref ref) {
-  return <String, String>{"Authorization": ref.watch(settingsNotifierProvider.select((value) => value.requireValue.token))};
+  return <String, String>{"Authorization": ref.watch(settingsProvider.select((value) => value.requireValue.token))};
 }
 
 @riverpod
 Future<URLInfo> getUrlInfo(Ref ref, String url) async {
   AppLoggers.api.d('Getting URL info: $url');
 
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/url-info';
   final encodedURL = Uri.encodeComponent(url);
   final u = Uri.parse("$serverURL$path?url=$encodedURL");
@@ -53,7 +53,7 @@ Future<URLInfo> getUrlInfo(Ref ref, String url) async {
 Future<RecordingInfo> addRecording(Ref ref, String url) async {
   AppLoggers.api.d('Adding recording: $url');
 
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/recordings';
 
   try {
@@ -89,7 +89,7 @@ Future<RecordingInfo> addRecording(Ref ref, String url) async {
 Future<List<RecordingInfo>> listRecordings(Ref ref, int offset, int limit, {String sortBy = "created_at"}) async {
   AppLoggers.api.d('Listing recordings: offset=$offset, limit=$limit, sortBy=$sortBy');
 
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/recordings';
 
   try {
@@ -116,7 +116,7 @@ Future<List<RecordingInfo>> listRecordings(Ref ref, int offset, int limit, {Stri
 
 @riverpod
 Future<RecordingInfo> getRecording(Ref ref, String id) async {
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   final path = '/api/recordings/$id';
 
   final res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
@@ -131,7 +131,7 @@ Future<RecordingInfo> getRecording(Ref ref, String id) async {
 
 @riverpod
 Future<Download> getDownload(Ref ref, String id) async {
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   final path = '/api/recordings/downloads/$id';
 
   final res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
@@ -146,7 +146,7 @@ Future<Download> getDownload(Ref ref, String id) async {
 
 @riverpod
 Future<List<Download>> listDownloads(Ref ref, String recordingId) async {
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
 
   final path = '/api/recordings/$recordingId/downloads';
 
@@ -165,7 +165,7 @@ Future<List<Download>> listDownloads(Ref ref, String recordingId) async {
 
 @riverpod
 Future<Download> newDownload(Ref ref, String recordingId, String format) async {
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   final path = '/api/recordings/$recordingId/downloads';
 
   final res = await http
@@ -186,13 +186,13 @@ Future<Download> newDownload(Ref ref, String recordingId, String format) async {
 
 @riverpod
 Future<void> setHidden(Ref ref, String recordingId) async {
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   await _hidden(serverURL, recordingId, http.put, getAuthHeader(ref));
 }
 
 @riverpod
 Future<void> unsetHidden(Ref ref, String recordingId) async {
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   await _hidden(serverURL, recordingId, http.delete, getAuthHeader(ref));
 }
 
@@ -224,15 +224,15 @@ Future<void> _seen(String serverURL, String recordingId, HttpMethod httpMethod, 
 
 @riverpod
 Future<void> setSeen(Ref ref, String recordingId) async {
-  ref.read(recordingNotifierProvider(recordingId).notifier).putPosition(null, true);
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  ref.read(recordingProvider(recordingId).notifier).putPosition(null, true);
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   await _seen(serverURL, recordingId, http.put, getAuthHeader(ref));
 }
 
 @riverpod
 Future<void> unsetSeen(Ref ref, String recordingId) async {
-  ref.read(recordingNotifierProvider(recordingId).notifier).putPosition(null, false);
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  ref.read(recordingProvider(recordingId).notifier).putPosition(null, false);
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   await _seen(serverURL, recordingId, http.delete, getAuthHeader(ref));
 }
 
@@ -240,7 +240,7 @@ Future<void> unsetSeen(Ref ref, String recordingId) async {
 @riverpod
 Future<void> putPosition(Ref ref, String recordingId, Duration position, bool finished) async {
 
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   final path = '/api/recordings/$recordingId/position';
 
   final res = await http
@@ -264,7 +264,7 @@ Future<void> putPosition(Ref ref, String recordingId, Duration position, bool fi
 
 @riverpod
 Future<Tenant> getTenant(Ref ref) async {
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/tenant';
 
   final res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
@@ -277,7 +277,7 @@ Future<Tenant> getTenant(Ref ref) async {
 
 @riverpod
 Future<void> deleteDownloadContent(Ref ref, String downloadId) async {
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   final path = '/api/recordings/downloads/$downloadId/content';
   final res = await http.delete(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
   if (res.statusCode >= 400) {
@@ -287,7 +287,7 @@ Future<void> deleteDownloadContent(Ref ref, String downloadId) async {
 
 @riverpod
 Future<void> deleteRecordingDownloadsContent(Ref ref, String recordingId) async {
-  final serverURL = ref.watch(settingsNotifierProvider.select((value) => value.requireValue.serverUrl));
+  final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   final path = '/api/recordings/$recordingId/content';
   final res = await http.delete(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
   if (res.statusCode >= 400) {

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ilovlya/src/api/recording_mutation_riverpod.dart';
+import 'package:ilovlya/src/utils/provider_retry.dart';
 
 void main() {
   testWidgets('recording mutation shows pending indicator and rejects repeats', (tester) async {
@@ -12,6 +13,7 @@ void main() {
     var requestCount = 0;
 
     await tester.pumpWidget(ProviderScope(
+      retry: disableProviderRetry,
       child: MaterialApp(
         home: Scaffold(
           body: Consumer(

@@ -31,40 +31,48 @@ class DownloadsNotifier extends _$DownloadsNotifier {
     final stopwatch = Stopwatch()..start();
     try {
       final sp = await ref.watch(storePlacesProvider.future);
-
-      final resultList = <Download>[];
-
-      final recording = RecordingInfo.fromJson(jsonDecode(File(p.join(sp.recordings().path, recordingId)).readAsStringSync()));
-
-      for (var did in recording.downloads) {
-        final f = File(p.join(sp.downloads().path, did));
-        try {
-          final download = Download.fromJson(jsonDecode(f.readAsStringSync()));
-          if (download.id.isEmpty) throw const FormatException('Download has no ID');
-          final mediaFile = p.join(sp.media().path, download.filename);
-          download.fullPathMedia = File(mediaFile).existsSync() ? mediaFile : null;
-          resultList.add(download);
-        } catch (e, s) {
-          AppLoggers.download.w('Skipping unreadable download ${f.path}', error: e, stackTrace: s);
-        }
-      }
-
-      resultList.sort((a, b) => a.id.compareTo(b.id));
-
-      return resultList;
-    } on PathNotFoundException catch (_) {
-      try {
-        return await _fromWeb();
-      } catch (_) {
-        // _fromWeb logged the failure; a missing cache must stay usable offline.
-        return [];
-      }
+      return await _readFromDiskOrWeb(sp, _fromWeb);
     } catch (e, s) {
       AppLoggers.download.e('Failed to load downloads from disk', error: e, stackTrace: s);
       return [];
     } finally {
       AppLoggers.download.d('Load downloads for $recordingId from disk: elapsed=${stopwatch.elapsed}');
     }
+  }
+
+  Future<List<Download>> _readFromDiskOrWeb(StorePlaces sp, Future<List<Download>> Function() fetchFromWeb) async {
+    try {
+      return _readFromDisk(sp);
+    } on PathNotFoundException {
+      try {
+        return await fetchFromWeb();
+      } catch (_) {
+        // The remote fetch logs its error; a missing cache must stay usable offline.
+        return [];
+      }
+    } catch (e, s) {
+      AppLoggers.download.e('Failed to load downloads from disk', error: e, stackTrace: s);
+      return [];
+    }
+  }
+
+  List<Download> _readFromDisk(StorePlaces sp) {
+    final resultList = <Download>[];
+    final recording = RecordingInfo.fromJson(jsonDecode(File(p.join(sp.recordings().path, recordingId)).readAsStringSync()));
+    for (var did in recording.downloads) {
+      final f = File(p.join(sp.downloads().path, did));
+      try {
+        final download = Download.fromJson(jsonDecode(f.readAsStringSync()));
+        if (download.id.isEmpty) throw const FormatException('Download has no ID');
+        final mediaFile = p.join(sp.media().path, download.filename);
+        download.fullPathMedia = File(mediaFile).existsSync() ? mediaFile : null;
+        resultList.add(download);
+      } catch (e, s) {
+        AppLoggers.download.w('Skipping unreadable download ${f.path}', error: e, stackTrace: s);
+      }
+    }
+    resultList.sort((a, b) => a.id.compareTo(b.id));
+    return resultList;
   }
 
   Future<List<Download>> _fromWeb() async {
@@ -82,8 +90,10 @@ class DownloadsNotifier extends _$DownloadsNotifier {
   Future<List<Download>> _pullFromServer() async {
     final stopwatch = Stopwatch()..start();
     try {
-      final sp = await ref.watch(storePlacesProvider.future);
-      final downloads = await ref.refresh(listDownloadsProvider(recordingId).future);
+      final container = ref.container;
+      final placesFuture = container.read(storePlacesProvider.future);
+      final sp = await placesFuture;
+      final downloads = await container.refresh(listDownloadsProvider(recordingId).future);
       if (downloads.any((d) => d.id.isEmpty || d.filename.isEmpty)) throw const FormatException('Server download has no ID or filename');
 
       final recordingFile = File(p.join(sp.recordings().path, recordingId));
@@ -123,31 +133,41 @@ class DownloadsNotifier extends _$DownloadsNotifier {
   }
 
   Future<void> _clean({String downloadId = ""}) async {
-    final sp = await ref.read(storePlacesProvider.future);
-    final playback = ref.read(playbackDownloadsProvider.notifier);
-    final tasks = ref.read(localDTNotifierProvider.notifier);
-    for (final dp in state.requireValue) {
+    final container = ref.container;
+    final placesFuture = container.read(storePlacesProvider.future);
+    final playback = container.read(playbackDownloadsProvider.notifier);
+    final tasks = container.read(localDTProvider.notifier);
+    final downloads = state.requireValue;
+    final sp = await placesFuture;
+    for (final dp in downloads) {
       if (downloadId != "" && dp.id != downloadId) continue;
       // The partial file belongs to the download as much as the final one does.
       await playback.discard(dp.id);
       PartialFile.deleteFor(sp.media().path, dp.filename);
       // So does its task: a complete one would still be shown as complete. One still running is left to finish.
-      if (ref.read(localDTNotifierProvider)[dp.id]?.status?.isFinalState ?? false) tasks.forget(dp.id);
+      if (container.read(localDTProvider)[dp.id]?.status?.isFinalState ?? false) tasks.forget(dp.id);
       if (dp.fullPathMedia == null) continue;
       final f = File(dp.fullPathMedia!);
       if (f.existsSync()) f.deleteSync();
     }
     // Re-read data from disk and update state directly
-    final newDownloads = await _fromDisk();
-    state = AsyncValue.data(newDownloads);
-    ref.invalidate(recordingNotifierProvider(recordingId));
+    final newDownloads = await _readFromDiskOrWeb(sp, () async {
+      try {
+        return await container.refresh(listDownloadsProvider(recordingId).future);
+      } catch (e, s) {
+        AppLoggers.download.e('Failed to load downloads from server', error: e, stackTrace: s);
+        rethrow;
+      }
+    });
+    if (ref.mounted) state = AsyncValue.data(newDownloads);
+    container.invalidate(recordingProvider(recordingId));
   }
 
   Future<void> refreshFromServer() async {
     if (!UniversalPlatform.isWeb) {
       try {
         final newDownloads = await _pullFromServer();
-        state = AsyncValue.data(newDownloads);
+        if (ref.mounted) state = AsyncValue.data(newDownloads);
       } catch (_) {
         // The pull already logged the failure; keep the downloaded files usable.
       }

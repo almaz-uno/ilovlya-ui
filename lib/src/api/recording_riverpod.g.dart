@@ -6,173 +6,94 @@ part of 'recording_riverpod.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$recordingNotifierHash() => r'98bcd3a4e8a4cddd116980c793f5a8a4042c6ee4';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-abstract class _$RecordingNotifier
-    extends BuildlessAutoDisposeAsyncNotifier<RecordingInfo> {
-  late final String recordingId;
-
-  FutureOr<RecordingInfo> build(
-    String recordingId,
-  );
-}
-
-/// See also [RecordingNotifier].
 @ProviderFor(RecordingNotifier)
-const recordingNotifierProvider = RecordingNotifierFamily();
+final recordingProvider = RecordingNotifierFamily._();
 
-/// See also [RecordingNotifier].
-class RecordingNotifierFamily extends Family<AsyncValue<RecordingInfo>> {
-  /// See also [RecordingNotifier].
-  const RecordingNotifierFamily();
+final class RecordingNotifierProvider
+    extends $AsyncNotifierProvider<RecordingNotifier, RecordingInfo> {
+  RecordingNotifierProvider._({
+    required RecordingNotifierFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'recordingProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [RecordingNotifier].
-  RecordingNotifierProvider call(
-    String recordingId,
-  ) {
-    return RecordingNotifierProvider(
-      recordingId,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$recordingNotifierHash();
+
+  @override
+  String toString() {
+    return r'recordingProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  RecordingNotifierProvider getProviderOverride(
-    covariant RecordingNotifierProvider provider,
-  ) {
-    return call(
-      provider.recordingId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'recordingNotifierProvider';
-}
-
-/// See also [RecordingNotifier].
-class RecordingNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
-    RecordingNotifier, RecordingInfo> {
-  /// See also [RecordingNotifier].
-  RecordingNotifierProvider(
-    String recordingId,
-  ) : this._internal(
-          () => RecordingNotifier()..recordingId = recordingId,
-          from: recordingNotifierProvider,
-          name: r'recordingNotifierProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$recordingNotifierHash,
-          dependencies: RecordingNotifierFamily._dependencies,
-          allTransitiveDependencies:
-              RecordingNotifierFamily._allTransitiveDependencies,
-          recordingId: recordingId,
-        );
-
-  RecordingNotifierProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.recordingId,
-  }) : super.internal();
-
-  final String recordingId;
-
-  @override
-  FutureOr<RecordingInfo> runNotifierBuild(
-    covariant RecordingNotifier notifier,
-  ) {
-    return notifier.build(
-      recordingId,
-    );
-  }
-
-  @override
-  Override overrideWith(RecordingNotifier Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: RecordingNotifierProvider._internal(
-        () => create()..recordingId = recordingId,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        recordingId: recordingId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeAsyncNotifierProviderElement<RecordingNotifier, RecordingInfo>
-      createElement() {
-    return _RecordingNotifierProviderElement(this);
-  }
+  RecordingNotifier create() => RecordingNotifier();
 
   @override
   bool operator ==(Object other) {
-    return other is RecordingNotifierProvider &&
-        other.recordingId == recordingId;
+    return other is RecordingNotifierProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, recordingId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin RecordingNotifierRef
-    on AutoDisposeAsyncNotifierProviderRef<RecordingInfo> {
-  /// The parameter `recordingId` of this provider.
-  String get recordingId;
-}
+String _$recordingNotifierHash() => r'289e18d3ba1e6eb561c523ecb1493ca164c0ef8f';
 
-class _RecordingNotifierProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<RecordingNotifier,
-        RecordingInfo> with RecordingNotifierRef {
-  _RecordingNotifierProviderElement(super.provider);
+final class RecordingNotifierFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          RecordingNotifier,
+          AsyncValue<RecordingInfo>,
+          RecordingInfo,
+          FutureOr<RecordingInfo>,
+          String
+        > {
+  RecordingNotifierFamily._()
+    : super(
+        retry: null,
+        name: r'recordingProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  RecordingNotifierProvider call(String recordingId) =>
+      RecordingNotifierProvider._(argument: recordingId, from: this);
 
   @override
-  String get recordingId => (origin as RecordingNotifierProvider).recordingId;
+  String toString() => r'recordingProvider';
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+
+abstract class _$RecordingNotifier extends $AsyncNotifier<RecordingInfo> {
+  late final _$args = ref.$arg as String;
+  String get recordingId => _$args;
+
+  FutureOr<RecordingInfo> build(String recordingId);
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<RecordingInfo>, RecordingInfo>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<RecordingInfo>, RecordingInfo>,
+              AsyncValue<RecordingInfo>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, () => build(_$args));
+  }
+}

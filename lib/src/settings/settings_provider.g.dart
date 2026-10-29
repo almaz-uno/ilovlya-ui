@@ -6,37 +6,88 @@ part of 'settings_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(mediaDirs)
+final mediaDirsProvider = MediaDirsProvider._();
+
+final class MediaDirsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<String>>,
+          List<String>,
+          FutureOr<List<String>>
+        >
+    with $FutureModifier<List<String>>, $FutureProvider<List<String>> {
+  MediaDirsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'mediaDirsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$mediaDirsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<String>> create(Ref ref) {
+    return mediaDirs(ref);
+  }
+}
+
 String _$mediaDirsHash() => r'f103437ac256aeb49da133535dcc6562ec0fc20e';
 
-/// See also [mediaDirs].
-@ProviderFor(mediaDirs)
-final mediaDirsProvider = AutoDisposeFutureProvider<List<String>>.internal(
-  mediaDirs,
-  name: r'mediaDirsProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$mediaDirsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef MediaDirsRef = AutoDisposeFutureProviderRef<List<String>>;
-String _$settingsNotifierHash() => r'2c2f8f7b51e576d3864f06641199f424baa66eca';
-
-/// See also [SettingsNotifier].
 @ProviderFor(SettingsNotifier)
-final settingsNotifierProvider =
-    AutoDisposeAsyncNotifierProvider<SettingsNotifier, Settings>.internal(
-  SettingsNotifier.new,
-  name: r'settingsNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$settingsNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final settingsProvider = SettingsNotifierProvider._();
 
-typedef _$SettingsNotifier = AutoDisposeAsyncNotifier<Settings>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class SettingsNotifierProvider
+    extends $AsyncNotifierProvider<SettingsNotifier, Settings> {
+  SettingsNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'settingsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$settingsNotifierHash();
+
+  @$internal
+  @override
+  SettingsNotifier create() => SettingsNotifier();
+}
+
+String _$settingsNotifierHash() => r'6f62b60637c331b708c14f8f85e25c897f488c39';
+
+abstract class _$SettingsNotifier extends $AsyncNotifier<Settings> {
+  FutureOr<Settings> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<Settings>, Settings>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<Settings>, Settings>,
+              AsyncValue<Settings>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}

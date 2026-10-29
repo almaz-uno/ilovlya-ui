@@ -7,13 +7,13 @@ part of 'url_info.dart';
 // **************************************************************************
 
 URLInfo _$URLInfoFromJson(Map<String, dynamic> json) => URLInfo(
-      url: json['url'] as String?,
-      infos: (json['infos'] as List<dynamic>?)
-          ?.map((e) => RecordingInfo.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
+  url: json['url'] as String?,
+  infos: (json['infos'] as List<dynamic>?)
+      ?.map((e) => RecordingInfo.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
 
 Map<String, dynamic> _$URLInfoToJson(URLInfo instance) => <String, dynamic>{
-      'url': instance.url,
-      'infos': instance.infos,
-    };
+  'url': instance.url,
+  'infos': instance.infos,
+};

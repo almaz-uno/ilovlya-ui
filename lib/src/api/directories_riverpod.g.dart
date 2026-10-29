@@ -6,21 +6,44 @@ part of 'directories_riverpod.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$storePlacesHash() => r'8e7053109007ec4be5aa8bf5176955a8c3e67786';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [storePlaces].
 @ProviderFor(storePlaces)
-final storePlacesProvider = AutoDisposeFutureProvider<StorePlaces>.internal(
-  storePlaces,
-  name: r'storePlacesProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$storePlacesHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final storePlacesProvider = StorePlacesProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef StorePlacesRef = AutoDisposeFutureProviderRef<StorePlaces>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class StorePlacesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<StorePlaces>,
+          StorePlaces,
+          FutureOr<StorePlaces>
+        >
+    with $FutureModifier<StorePlaces>, $FutureProvider<StorePlaces> {
+  StorePlacesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'storePlacesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$storePlacesHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<StorePlaces> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<StorePlaces> create(Ref ref) {
+    return storePlaces(ref);
+  }
+}
+
+String _$storePlacesHash() => r'1b987c7c48ead4187649965ebd1885cce5fa186f';

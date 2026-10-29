@@ -32,7 +32,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = ref.watch(settingsNotifierProvider);
+    final settings = ref.watch(settingsProvider);
 
     final tokenController = TextEditingController(text: settings.requireValue.token);
     final serverUrlController = TextEditingController(text: settings.requireValue.serverUrl);
@@ -91,7 +91,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                               ),
                             ),
                             loading: () => const SizedBox.shrink(),
-                            error: (_, __) => const SizedBox.shrink(),
+                            error: (_, _) => const SizedBox.shrink(),
                           );
                         },
                       ),
@@ -100,7 +100,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         decoration: InputDecoration(labelText: AppLocalizations.of(context)!.yourTokenProvidedByBot),
                         textInputAction: TextInputAction.next,
                         onSubmitted: (String value) {
-                          ref.read(settingsNotifierProvider.notifier).updateToken(value);
+                          ref.read(settingsProvider.notifier).updateToken(value);
                         },
                       ),
                       TextField(
@@ -108,7 +108,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         decoration: InputDecoration(labelText: AppLocalizations.of(context)!.serverUrlProvidedByBot),
                         textInputAction: TextInputAction.next,
                         onSubmitted: (String value) {
-                          ref.read(settingsNotifierProvider.notifier).updateServerUrl(value);
+                          ref.read(settingsProvider.notifier).updateServerUrl(value);
                         },
                       ),
                     ] +
@@ -146,10 +146,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     return [
       DropdownButtonFormField<ThemeMode>(
         decoration: InputDecoration(labelText: AppLocalizations.of(context)!.applicationColorTheme),
-        initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.theme)),
+        initialValue: ref.watch(settingsProvider.select((s) => s.value?.theme)),
         alignment: AlignmentDirectional.topStart,
         onChanged: (ThemeMode? theme) {
-          ref.read(settingsNotifierProvider.notifier).updateTheme(theme ?? ThemeMode.system);
+          ref.read(settingsProvider.notifier).updateTheme(theme ?? ThemeMode.system);
         },
         items: [
           DropdownMenuItem(
@@ -168,10 +168,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       ),
       DropdownButtonFormField<String>(
         decoration: InputDecoration(labelText: AppLocalizations.of(context)!.language),
-        initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.locale)),
+        initialValue: ref.watch(settingsProvider.select((s) => s.value?.locale)),
         alignment: AlignmentDirectional.topStart,
         onChanged: (String? locale) {
-          ref.read(settingsNotifierProvider.notifier).updateLocale(locale ?? "");
+          ref.read(settingsProvider.notifier).updateLocale(locale ?? "");
         },
         items: [
           DropdownMenuItem<String>(
@@ -190,9 +190,9 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       ),
       DropdownButtonFormField<double>(
         decoration: InputDecoration(labelText: AppLocalizations.of(context)!.playerSpeedRate),
-        initialValue: ref.watch(settingsNotifierProvider.select((s) => s.value?.playerSpeed)),
+        initialValue: ref.watch(settingsProvider.select((s) => s.value?.playerSpeed)),
         onChanged: (value) {
-          ref.read(settingsNotifierProvider.notifier).updatePlayerSpeed(value ?? 1.0);
+          ref.read(settingsProvider.notifier).updatePlayerSpeed(value ?? 1.0);
         },
         items: [
           for (final e in getSpeedRates(AppLocalizations.of(context)!).entries)
@@ -201,17 +201,17 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       ),
       SwitchListTile(
         title: Text(AppLocalizations.of(context)!.autoMarkViewedWhenPlayed),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.autoViewed ?? false)),
+        value: ref.watch(settingsProvider.select((s) => s.value?.autoViewed ?? false)),
         onChanged: (bool? autoViewed) {
-          ref.read(settingsNotifierProvider.notifier).updateAutoViewed(autoViewed);
+          ref.read(settingsProvider.notifier).updateAutoViewed(autoViewed);
         },
         controlAffinity: ListTileControlAffinity.leading,
       ),
       SwitchListTile(
         title: Text(AppLocalizations.of(context)!.updateThumbnailProgress),
-        value: ref.watch(settingsNotifierProvider.select((s) => s.value?.updateThumbnails ?? false)),
+        value: ref.watch(settingsProvider.select((s) => s.value?.updateThumbnails ?? false)),
         onChanged: (bool? updateThumbnails) {
-          ref.read(settingsNotifierProvider.notifier).updateUpdateThumbnails(updateThumbnails);
+          ref.read(settingsProvider.notifier).updateUpdateThumbnails(updateThumbnails);
         },
         controlAffinity: ListTileControlAffinity.leading,
       ),
@@ -242,7 +242,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   List<Widget> _housekeeping(BuildContext context) {
     final ref = (context as WidgetRef);
     final media = ref.watch(localMediaHousekeeperProvider);
-    final data = ref.watch(localDataNotifierProvider);
+    final data = ref.watch(localDataProvider);
     final sp = ref.watch(storePlacesProvider);
 
     if (!media.hasValue || !data.hasValue || !sp.hasValue) {
@@ -252,7 +252,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final (number, size) = media.requireValue;
 
     final mediaDirs = ref.watch(mediaDirsProvider);
-    final mediaDir = ref.watch(settingsNotifierProvider.select((s) => s.value?.mediaStorageDirectory));
+    final mediaDir = ref.watch(settingsProvider.select((s) => s.value?.mediaStorageDirectory));
 
     return [
       Text(AppLocalizations.of(context)!.localMediaInfo, style: Theme.of(context).textTheme.bodyLarge),
@@ -262,9 +262,9 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         SwitchListTile(
           title: Text(AppLocalizations.of(context)!.downloadWhilePlaying),
           subtitle: Text(AppLocalizations.of(context)!.downloadWhilePlayingDescription),
-          value: ref.watch(settingsNotifierProvider.select((s) => s.value?.downloadWhilePlaying ?? false)),
+          value: ref.watch(settingsProvider.select((s) => s.value?.downloadWhilePlaying ?? false)),
           onChanged: (bool? value) {
-            ref.read(settingsNotifierProvider.notifier).updateDownloadWhilePlaying(value);
+            ref.read(settingsProvider.notifier).updateDownloadWhilePlaying(value);
           },
           controlAffinity: ListTileControlAffinity.leading,
         ),
@@ -314,7 +314,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           confirmDialog(
               context, AppLocalizations.of(context)!.areYouSure, AppLocalizations.of(context)!.deleteAllMetadataMessage(data.requireValue),
               () async {
-            final number = await ref.read(localDataNotifierProvider.notifier).cleanMetadata();
+            final number = await ref.read(localDataProvider.notifier).cleanMetadata();
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(AppLocalizations.of(context)!.recordingsCleanedMessage(number)),
@@ -332,7 +332,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           alignment: AlignmentDirectional.topStart,
           isExpanded: true,
           onChanged: (String? directory) {
-            ref.read(settingsNotifierProvider.notifier).updateMediaStorageDirectory(directory ?? "");
+            ref.read(settingsProvider.notifier).updateMediaStorageDirectory(directory ?? "");
           },
           items: [
             for (final d in mediaDirs.requireValue) DropdownMenuItem(value: d, child: Text(d, overflow: TextOverflow.ellipsis)),

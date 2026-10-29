@@ -15,6 +15,7 @@ import 'package:ilovlya/src/playback_download/playback_downloads.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
 import 'package:path/path.dart' as p;
 
+import '../helpers/provider_container.dart';
 import 'local_endpoint_test.dart' show fetch;
 import 'upstream.dart';
 
@@ -41,10 +42,10 @@ void main() {
     src = randomBytes(2 << 20);
     up = await Upstream.start(src);
     player = HttpClient();
-    c = ProviderContainer(overrides: [
+    c = createTestProviderContainer(overrides: [
       storePlacesProvider.overrideWith((ref) async => StorePlaces(dataDir: p.join(root.path, 'data'), mediaDir: p.join(root.path, 'media'))),
-      settingsNotifierProvider.overrideWith(() => _Settings()),
-      localDTNotifierProvider.overrideWith(() => _LocalDT()),
+      settingsProvider.overrideWith(() => _Settings()),
+      localDTProvider.overrideWith(() => _LocalDT()),
     ]);
     Directory(p.join(root.path, 'media')).createSync(recursive: true);
   });
@@ -65,7 +66,7 @@ void main() {
       );
 
   PlaybackDownloads downloads() => c.read(playbackDownloadsProvider.notifier);
-  LocalDownloadTask? task(String id) => c.read(localDTNotifierProvider)[id];
+  LocalDownloadTask? task(String id) => c.read(localDTProvider)[id];
   String media(String name) => p.join(root.path, 'media', name);
 
   Future<void> until(bool Function() condition) async {

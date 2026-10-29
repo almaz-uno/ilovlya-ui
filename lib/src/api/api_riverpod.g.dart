@@ -6,1955 +6,1060 @@ part of 'api_riverpod.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$getUrlInfoHash() => r'd909f88643dffa354a9b202b77ed01f246bb8180';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-/// See also [getUrlInfo].
 @ProviderFor(getUrlInfo)
-const getUrlInfoProvider = GetUrlInfoFamily();
+final getUrlInfoProvider = GetUrlInfoFamily._();
 
-/// See also [getUrlInfo].
-class GetUrlInfoFamily extends Family<AsyncValue<URLInfo>> {
-  /// See also [getUrlInfo].
-  const GetUrlInfoFamily();
+final class GetUrlInfoProvider
+    extends $FunctionalProvider<AsyncValue<URLInfo>, URLInfo, FutureOr<URLInfo>>
+    with $FutureModifier<URLInfo>, $FutureProvider<URLInfo> {
+  GetUrlInfoProvider._({
+    required GetUrlInfoFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'getUrlInfoProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [getUrlInfo].
-  GetUrlInfoProvider call(
-    String url,
-  ) {
-    return GetUrlInfoProvider(
-      url,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$getUrlInfoHash();
+
+  @override
+  String toString() {
+    return r'getUrlInfoProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  GetUrlInfoProvider getProviderOverride(
-    covariant GetUrlInfoProvider provider,
-  ) {
-    return call(
-      provider.url,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<URLInfo> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'getUrlInfoProvider';
-}
-
-/// See also [getUrlInfo].
-class GetUrlInfoProvider extends AutoDisposeFutureProvider<URLInfo> {
-  /// See also [getUrlInfo].
-  GetUrlInfoProvider(
-    String url,
-  ) : this._internal(
-          (ref) => getUrlInfo(
-            ref as GetUrlInfoRef,
-            url,
-          ),
-          from: getUrlInfoProvider,
-          name: r'getUrlInfoProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$getUrlInfoHash,
-          dependencies: GetUrlInfoFamily._dependencies,
-          allTransitiveDependencies:
-              GetUrlInfoFamily._allTransitiveDependencies,
-          url: url,
-        );
-
-  GetUrlInfoProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.url,
-  }) : super.internal();
-
-  final String url;
-
-  @override
-  Override overrideWith(
-    FutureOr<URLInfo> Function(GetUrlInfoRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: GetUrlInfoProvider._internal(
-        (ref) => create(ref as GetUrlInfoRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        url: url,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<URLInfo> createElement() {
-    return _GetUrlInfoProviderElement(this);
+  FutureOr<URLInfo> create(Ref ref) {
+    final argument = this.argument as String;
+    return getUrlInfo(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is GetUrlInfoProvider && other.url == url;
+    return other is GetUrlInfoProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, url.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin GetUrlInfoRef on AutoDisposeFutureProviderRef<URLInfo> {
-  /// The parameter `url` of this provider.
-  String get url;
-}
+String _$getUrlInfoHash() => r'd1c6901f5a6d21d0bdcffb0e14a004bde83641f9';
 
-class _GetUrlInfoProviderElement
-    extends AutoDisposeFutureProviderElement<URLInfo> with GetUrlInfoRef {
-  _GetUrlInfoProviderElement(super.provider);
+final class GetUrlInfoFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<URLInfo>, String> {
+  GetUrlInfoFamily._()
+    : super(
+        retry: null,
+        name: r'getUrlInfoProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  GetUrlInfoProvider call(String url) =>
+      GetUrlInfoProvider._(argument: url, from: this);
 
   @override
-  String get url => (origin as GetUrlInfoProvider).url;
+  String toString() => r'getUrlInfoProvider';
 }
 
-String _$addRecordingHash() => r'7e3fe956dee0dc5603caf37ac906a9f4502b0d66';
-
-/// See also [addRecording].
 @ProviderFor(addRecording)
-const addRecordingProvider = AddRecordingFamily();
+final addRecordingProvider = AddRecordingFamily._();
 
-/// See also [addRecording].
-class AddRecordingFamily extends Family<AsyncValue<RecordingInfo>> {
-  /// See also [addRecording].
-  const AddRecordingFamily();
+final class AddRecordingProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<RecordingInfo>,
+          RecordingInfo,
+          FutureOr<RecordingInfo>
+        >
+    with $FutureModifier<RecordingInfo>, $FutureProvider<RecordingInfo> {
+  AddRecordingProvider._({
+    required AddRecordingFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'addRecordingProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [addRecording].
-  AddRecordingProvider call(
-    String url,
-  ) {
-    return AddRecordingProvider(
-      url,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$addRecordingHash();
+
+  @override
+  String toString() {
+    return r'addRecordingProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  AddRecordingProvider getProviderOverride(
-    covariant AddRecordingProvider provider,
-  ) {
-    return call(
-      provider.url,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<RecordingInfo> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'addRecordingProvider';
-}
-
-/// See also [addRecording].
-class AddRecordingProvider extends AutoDisposeFutureProvider<RecordingInfo> {
-  /// See also [addRecording].
-  AddRecordingProvider(
-    String url,
-  ) : this._internal(
-          (ref) => addRecording(
-            ref as AddRecordingRef,
-            url,
-          ),
-          from: addRecordingProvider,
-          name: r'addRecordingProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$addRecordingHash,
-          dependencies: AddRecordingFamily._dependencies,
-          allTransitiveDependencies:
-              AddRecordingFamily._allTransitiveDependencies,
-          url: url,
-        );
-
-  AddRecordingProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.url,
-  }) : super.internal();
-
-  final String url;
-
-  @override
-  Override overrideWith(
-    FutureOr<RecordingInfo> Function(AddRecordingRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: AddRecordingProvider._internal(
-        (ref) => create(ref as AddRecordingRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        url: url,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<RecordingInfo> createElement() {
-    return _AddRecordingProviderElement(this);
+  FutureOr<RecordingInfo> create(Ref ref) {
+    final argument = this.argument as String;
+    return addRecording(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is AddRecordingProvider && other.url == url;
+    return other is AddRecordingProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, url.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin AddRecordingRef on AutoDisposeFutureProviderRef<RecordingInfo> {
-  /// The parameter `url` of this provider.
-  String get url;
-}
+String _$addRecordingHash() => r'1e6ef2f1981b7590492d1ddc6cf6308a0a47bc08';
 
-class _AddRecordingProviderElement
-    extends AutoDisposeFutureProviderElement<RecordingInfo>
-    with AddRecordingRef {
-  _AddRecordingProviderElement(super.provider);
+final class AddRecordingFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<RecordingInfo>, String> {
+  AddRecordingFamily._()
+    : super(
+        retry: null,
+        name: r'addRecordingProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  AddRecordingProvider call(String url) =>
+      AddRecordingProvider._(argument: url, from: this);
 
   @override
-  String get url => (origin as AddRecordingProvider).url;
+  String toString() => r'addRecordingProvider';
 }
 
-String _$listRecordingsHash() => r'bf93e51963de11864bd3baf22b1d17cd1e5f259c';
-
-/// See also [listRecordings].
 @ProviderFor(listRecordings)
-const listRecordingsProvider = ListRecordingsFamily();
+final listRecordingsProvider = ListRecordingsFamily._();
 
-/// See also [listRecordings].
-class ListRecordingsFamily extends Family<AsyncValue<List<RecordingInfo>>> {
-  /// See also [listRecordings].
-  const ListRecordingsFamily();
+final class ListRecordingsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<RecordingInfo>>,
+          List<RecordingInfo>,
+          FutureOr<List<RecordingInfo>>
+        >
+    with
+        $FutureModifier<List<RecordingInfo>>,
+        $FutureProvider<List<RecordingInfo>> {
+  ListRecordingsProvider._({
+    required ListRecordingsFamily super.from,
+    required (int, int, {String sortBy}) super.argument,
+  }) : super(
+         retry: null,
+         name: r'listRecordingsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [listRecordings].
+  @override
+  String debugGetCreateSourceHash() => _$listRecordingsHash();
+
+  @override
+  String toString() {
+    return r'listRecordingsProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<RecordingInfo>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<RecordingInfo>> create(Ref ref) {
+    final argument = this.argument as (int, int, {String sortBy});
+    return listRecordings(
+      ref,
+      argument.$1,
+      argument.$2,
+      sortBy: argument.sortBy,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ListRecordingsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$listRecordingsHash() => r'cab404bf5bfcb1b81acf988d0fbf8a36ff944a4c';
+
+final class ListRecordingsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<RecordingInfo>>,
+          (int, int, {String sortBy})
+        > {
+  ListRecordingsFamily._()
+    : super(
+        retry: null,
+        name: r'listRecordingsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
   ListRecordingsProvider call(
     int offset,
     int limit, {
-    String sortBy = "created_at",
-  }) {
-    return ListRecordingsProvider(
-      offset,
-      limit,
-      sortBy: sortBy,
-    );
-  }
+    String sortBy = 'created_at',
+  }) => ListRecordingsProvider._(
+    argument: (offset, limit, sortBy: sortBy),
+    from: this,
+  );
 
   @override
-  ListRecordingsProvider getProviderOverride(
-    covariant ListRecordingsProvider provider,
-  ) {
-    return call(
-      provider.offset,
-      provider.limit,
-      sortBy: provider.sortBy,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'listRecordingsProvider';
+  String toString() => r'listRecordingsProvider';
 }
 
-/// See also [listRecordings].
-class ListRecordingsProvider
-    extends AutoDisposeFutureProvider<List<RecordingInfo>> {
-  /// See also [listRecordings].
-  ListRecordingsProvider(
-    int offset,
-    int limit, {
-    String sortBy = "created_at",
-  }) : this._internal(
-          (ref) => listRecordings(
-            ref as ListRecordingsRef,
-            offset,
-            limit,
-            sortBy: sortBy,
-          ),
-          from: listRecordingsProvider,
-          name: r'listRecordingsProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$listRecordingsHash,
-          dependencies: ListRecordingsFamily._dependencies,
-          allTransitiveDependencies:
-              ListRecordingsFamily._allTransitiveDependencies,
-          offset: offset,
-          limit: limit,
-          sortBy: sortBy,
-        );
-
-  ListRecordingsProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.offset,
-    required this.limit,
-    required this.sortBy,
-  }) : super.internal();
-
-  final int offset;
-  final int limit;
-  final String sortBy;
-
-  @override
-  Override overrideWith(
-    FutureOr<List<RecordingInfo>> Function(ListRecordingsRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: ListRecordingsProvider._internal(
-        (ref) => create(ref as ListRecordingsRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        offset: offset,
-        limit: limit,
-        sortBy: sortBy,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<List<RecordingInfo>> createElement() {
-    return _ListRecordingsProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ListRecordingsProvider &&
-        other.offset == offset &&
-        other.limit == limit &&
-        other.sortBy == sortBy;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, offset.hashCode);
-    hash = _SystemHash.combine(hash, limit.hashCode);
-    hash = _SystemHash.combine(hash, sortBy.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
-}
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ListRecordingsRef on AutoDisposeFutureProviderRef<List<RecordingInfo>> {
-  /// The parameter `offset` of this provider.
-  int get offset;
-
-  /// The parameter `limit` of this provider.
-  int get limit;
-
-  /// The parameter `sortBy` of this provider.
-  String get sortBy;
-}
-
-class _ListRecordingsProviderElement
-    extends AutoDisposeFutureProviderElement<List<RecordingInfo>>
-    with ListRecordingsRef {
-  _ListRecordingsProviderElement(super.provider);
-
-  @override
-  int get offset => (origin as ListRecordingsProvider).offset;
-  @override
-  int get limit => (origin as ListRecordingsProvider).limit;
-  @override
-  String get sortBy => (origin as ListRecordingsProvider).sortBy;
-}
-
-String _$getRecordingHash() => r'afb27eab2c91c427698fb5330f8c1a11d61b875c';
-
-/// See also [getRecording].
 @ProviderFor(getRecording)
-const getRecordingProvider = GetRecordingFamily();
+final getRecordingProvider = GetRecordingFamily._();
 
-/// See also [getRecording].
-class GetRecordingFamily extends Family<AsyncValue<RecordingInfo>> {
-  /// See also [getRecording].
-  const GetRecordingFamily();
+final class GetRecordingProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<RecordingInfo>,
+          RecordingInfo,
+          FutureOr<RecordingInfo>
+        >
+    with $FutureModifier<RecordingInfo>, $FutureProvider<RecordingInfo> {
+  GetRecordingProvider._({
+    required GetRecordingFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'getRecordingProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [getRecording].
-  GetRecordingProvider call(
-    String id,
-  ) {
-    return GetRecordingProvider(
-      id,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$getRecordingHash();
+
+  @override
+  String toString() {
+    return r'getRecordingProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  GetRecordingProvider getProviderOverride(
-    covariant GetRecordingProvider provider,
-  ) {
-    return call(
-      provider.id,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<RecordingInfo> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'getRecordingProvider';
-}
-
-/// See also [getRecording].
-class GetRecordingProvider extends AutoDisposeFutureProvider<RecordingInfo> {
-  /// See also [getRecording].
-  GetRecordingProvider(
-    String id,
-  ) : this._internal(
-          (ref) => getRecording(
-            ref as GetRecordingRef,
-            id,
-          ),
-          from: getRecordingProvider,
-          name: r'getRecordingProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$getRecordingHash,
-          dependencies: GetRecordingFamily._dependencies,
-          allTransitiveDependencies:
-              GetRecordingFamily._allTransitiveDependencies,
-          id: id,
-        );
-
-  GetRecordingProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.id,
-  }) : super.internal();
-
-  final String id;
-
-  @override
-  Override overrideWith(
-    FutureOr<RecordingInfo> Function(GetRecordingRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: GetRecordingProvider._internal(
-        (ref) => create(ref as GetRecordingRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        id: id,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<RecordingInfo> createElement() {
-    return _GetRecordingProviderElement(this);
+  FutureOr<RecordingInfo> create(Ref ref) {
+    final argument = this.argument as String;
+    return getRecording(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is GetRecordingProvider && other.id == id;
+    return other is GetRecordingProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, id.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin GetRecordingRef on AutoDisposeFutureProviderRef<RecordingInfo> {
-  /// The parameter `id` of this provider.
-  String get id;
-}
+String _$getRecordingHash() => r'791f3fbb21acca3e545ab4e75738a36304a35da6';
 
-class _GetRecordingProviderElement
-    extends AutoDisposeFutureProviderElement<RecordingInfo>
-    with GetRecordingRef {
-  _GetRecordingProviderElement(super.provider);
+final class GetRecordingFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<RecordingInfo>, String> {
+  GetRecordingFamily._()
+    : super(
+        retry: null,
+        name: r'getRecordingProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  GetRecordingProvider call(String id) =>
+      GetRecordingProvider._(argument: id, from: this);
 
   @override
-  String get id => (origin as GetRecordingProvider).id;
+  String toString() => r'getRecordingProvider';
 }
 
-String _$getDownloadHash() => r'9581d8ae507a7d156f9c5775379ef6d1084199d3';
-
-/// See also [getDownload].
 @ProviderFor(getDownload)
-const getDownloadProvider = GetDownloadFamily();
+final getDownloadProvider = GetDownloadFamily._();
 
-/// See also [getDownload].
-class GetDownloadFamily extends Family<AsyncValue<Download>> {
-  /// See also [getDownload].
-  const GetDownloadFamily();
+final class GetDownloadProvider
+    extends
+        $FunctionalProvider<AsyncValue<Download>, Download, FutureOr<Download>>
+    with $FutureModifier<Download>, $FutureProvider<Download> {
+  GetDownloadProvider._({
+    required GetDownloadFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'getDownloadProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [getDownload].
-  GetDownloadProvider call(
-    String id,
-  ) {
-    return GetDownloadProvider(
-      id,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$getDownloadHash();
+
+  @override
+  String toString() {
+    return r'getDownloadProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  GetDownloadProvider getProviderOverride(
-    covariant GetDownloadProvider provider,
-  ) {
-    return call(
-      provider.id,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<Download> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'getDownloadProvider';
-}
-
-/// See also [getDownload].
-class GetDownloadProvider extends AutoDisposeFutureProvider<Download> {
-  /// See also [getDownload].
-  GetDownloadProvider(
-    String id,
-  ) : this._internal(
-          (ref) => getDownload(
-            ref as GetDownloadRef,
-            id,
-          ),
-          from: getDownloadProvider,
-          name: r'getDownloadProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$getDownloadHash,
-          dependencies: GetDownloadFamily._dependencies,
-          allTransitiveDependencies:
-              GetDownloadFamily._allTransitiveDependencies,
-          id: id,
-        );
-
-  GetDownloadProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.id,
-  }) : super.internal();
-
-  final String id;
-
-  @override
-  Override overrideWith(
-    FutureOr<Download> Function(GetDownloadRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: GetDownloadProvider._internal(
-        (ref) => create(ref as GetDownloadRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        id: id,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<Download> createElement() {
-    return _GetDownloadProviderElement(this);
+  FutureOr<Download> create(Ref ref) {
+    final argument = this.argument as String;
+    return getDownload(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is GetDownloadProvider && other.id == id;
+    return other is GetDownloadProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, id.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin GetDownloadRef on AutoDisposeFutureProviderRef<Download> {
-  /// The parameter `id` of this provider.
-  String get id;
-}
+String _$getDownloadHash() => r'9199c7cd77cb15a76b066875c306d50a83fd72ee';
 
-class _GetDownloadProviderElement
-    extends AutoDisposeFutureProviderElement<Download> with GetDownloadRef {
-  _GetDownloadProviderElement(super.provider);
+final class GetDownloadFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Download>, String> {
+  GetDownloadFamily._()
+    : super(
+        retry: null,
+        name: r'getDownloadProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  GetDownloadProvider call(String id) =>
+      GetDownloadProvider._(argument: id, from: this);
 
   @override
-  String get id => (origin as GetDownloadProvider).id;
+  String toString() => r'getDownloadProvider';
 }
 
-String _$listDownloadsHash() => r'2fd8610559d19d59ba0b5741bc5af9896f8d0f98';
-
-/// See also [listDownloads].
 @ProviderFor(listDownloads)
-const listDownloadsProvider = ListDownloadsFamily();
+final listDownloadsProvider = ListDownloadsFamily._();
 
-/// See also [listDownloads].
-class ListDownloadsFamily extends Family<AsyncValue<List<Download>>> {
-  /// See also [listDownloads].
-  const ListDownloadsFamily();
+final class ListDownloadsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Download>>,
+          List<Download>,
+          FutureOr<List<Download>>
+        >
+    with $FutureModifier<List<Download>>, $FutureProvider<List<Download>> {
+  ListDownloadsProvider._({
+    required ListDownloadsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'listDownloadsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [listDownloads].
-  ListDownloadsProvider call(
-    String recordingId,
-  ) {
-    return ListDownloadsProvider(
-      recordingId,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$listDownloadsHash();
+
+  @override
+  String toString() {
+    return r'listDownloadsProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  ListDownloadsProvider getProviderOverride(
-    covariant ListDownloadsProvider provider,
-  ) {
-    return call(
-      provider.recordingId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<List<Download>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'listDownloadsProvider';
-}
-
-/// See also [listDownloads].
-class ListDownloadsProvider extends AutoDisposeFutureProvider<List<Download>> {
-  /// See also [listDownloads].
-  ListDownloadsProvider(
-    String recordingId,
-  ) : this._internal(
-          (ref) => listDownloads(
-            ref as ListDownloadsRef,
-            recordingId,
-          ),
-          from: listDownloadsProvider,
-          name: r'listDownloadsProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$listDownloadsHash,
-          dependencies: ListDownloadsFamily._dependencies,
-          allTransitiveDependencies:
-              ListDownloadsFamily._allTransitiveDependencies,
-          recordingId: recordingId,
-        );
-
-  ListDownloadsProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.recordingId,
-  }) : super.internal();
-
-  final String recordingId;
-
-  @override
-  Override overrideWith(
-    FutureOr<List<Download>> Function(ListDownloadsRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: ListDownloadsProvider._internal(
-        (ref) => create(ref as ListDownloadsRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        recordingId: recordingId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<List<Download>> createElement() {
-    return _ListDownloadsProviderElement(this);
+  FutureOr<List<Download>> create(Ref ref) {
+    final argument = this.argument as String;
+    return listDownloads(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is ListDownloadsProvider && other.recordingId == recordingId;
+    return other is ListDownloadsProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, recordingId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ListDownloadsRef on AutoDisposeFutureProviderRef<List<Download>> {
-  /// The parameter `recordingId` of this provider.
-  String get recordingId;
-}
+String _$listDownloadsHash() => r'95164b5f10bb9bcf6d4509ecf5f35717887e93a5';
 
-class _ListDownloadsProviderElement
-    extends AutoDisposeFutureProviderElement<List<Download>>
-    with ListDownloadsRef {
-  _ListDownloadsProviderElement(super.provider);
+final class ListDownloadsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Download>>, String> {
+  ListDownloadsFamily._()
+    : super(
+        retry: null,
+        name: r'listDownloadsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ListDownloadsProvider call(String recordingId) =>
+      ListDownloadsProvider._(argument: recordingId, from: this);
 
   @override
-  String get recordingId => (origin as ListDownloadsProvider).recordingId;
+  String toString() => r'listDownloadsProvider';
 }
 
-String _$newDownloadHash() => r'e5d835530b85d22f78f94a31aa9ec77974874b4d';
-
-/// See also [newDownload].
 @ProviderFor(newDownload)
-const newDownloadProvider = NewDownloadFamily();
+final newDownloadProvider = NewDownloadFamily._();
 
-/// See also [newDownload].
-class NewDownloadFamily extends Family<AsyncValue<Download>> {
-  /// See also [newDownload].
-  const NewDownloadFamily();
+final class NewDownloadProvider
+    extends
+        $FunctionalProvider<AsyncValue<Download>, Download, FutureOr<Download>>
+    with $FutureModifier<Download>, $FutureProvider<Download> {
+  NewDownloadProvider._({
+    required NewDownloadFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'newDownloadProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [newDownload].
-  NewDownloadProvider call(
-    String recordingId,
-    String format,
-  ) {
-    return NewDownloadProvider(
-      recordingId,
-      format,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$newDownloadHash();
+
+  @override
+  String toString() {
+    return r'newDownloadProvider'
+        ''
+        '$argument';
   }
 
+  @$internal
   @override
-  NewDownloadProvider getProviderOverride(
-    covariant NewDownloadProvider provider,
-  ) {
-    return call(
-      provider.recordingId,
-      provider.format,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<Download> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'newDownloadProvider';
-}
-
-/// See also [newDownload].
-class NewDownloadProvider extends AutoDisposeFutureProvider<Download> {
-  /// See also [newDownload].
-  NewDownloadProvider(
-    String recordingId,
-    String format,
-  ) : this._internal(
-          (ref) => newDownload(
-            ref as NewDownloadRef,
-            recordingId,
-            format,
-          ),
-          from: newDownloadProvider,
-          name: r'newDownloadProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$newDownloadHash,
-          dependencies: NewDownloadFamily._dependencies,
-          allTransitiveDependencies:
-              NewDownloadFamily._allTransitiveDependencies,
-          recordingId: recordingId,
-          format: format,
-        );
-
-  NewDownloadProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.recordingId,
-    required this.format,
-  }) : super.internal();
-
-  final String recordingId;
-  final String format;
-
-  @override
-  Override overrideWith(
-    FutureOr<Download> Function(NewDownloadRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: NewDownloadProvider._internal(
-        (ref) => create(ref as NewDownloadRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        recordingId: recordingId,
-        format: format,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<Download> createElement() {
-    return _NewDownloadProviderElement(this);
+  FutureOr<Download> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return newDownload(ref, argument.$1, argument.$2);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is NewDownloadProvider &&
-        other.recordingId == recordingId &&
-        other.format == format;
+    return other is NewDownloadProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, recordingId.hashCode);
-    hash = _SystemHash.combine(hash, format.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin NewDownloadRef on AutoDisposeFutureProviderRef<Download> {
-  /// The parameter `recordingId` of this provider.
-  String get recordingId;
+String _$newDownloadHash() => r'77f70995b8a09815d72fbe53ef69756020825a62';
 
-  /// The parameter `format` of this provider.
-  String get format;
-}
+final class NewDownloadFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Download>, (String, String)> {
+  NewDownloadFamily._()
+    : super(
+        retry: null,
+        name: r'newDownloadProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
-class _NewDownloadProviderElement
-    extends AutoDisposeFutureProviderElement<Download> with NewDownloadRef {
-  _NewDownloadProviderElement(super.provider);
+  NewDownloadProvider call(String recordingId, String format) =>
+      NewDownloadProvider._(argument: (recordingId, format), from: this);
 
   @override
-  String get recordingId => (origin as NewDownloadProvider).recordingId;
-  @override
-  String get format => (origin as NewDownloadProvider).format;
+  String toString() => r'newDownloadProvider';
 }
 
-String _$setHiddenHash() => r'f5c7445689a44f970ff2f83b024ec25c28ad5843';
-
-/// See also [setHidden].
 @ProviderFor(setHidden)
-const setHiddenProvider = SetHiddenFamily();
+final setHiddenProvider = SetHiddenFamily._();
 
-/// See also [setHidden].
-class SetHiddenFamily extends Family<AsyncValue<void>> {
-  /// See also [setHidden].
-  const SetHiddenFamily();
+final class SetHiddenProvider
+    extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
+    with $FutureModifier<void>, $FutureProvider<void> {
+  SetHiddenProvider._({
+    required SetHiddenFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'setHiddenProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [setHidden].
-  SetHiddenProvider call(
-    String recordingId,
-  ) {
-    return SetHiddenProvider(
-      recordingId,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$setHiddenHash();
+
+  @override
+  String toString() {
+    return r'setHiddenProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  SetHiddenProvider getProviderOverride(
-    covariant SetHiddenProvider provider,
-  ) {
-    return call(
-      provider.recordingId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'setHiddenProvider';
-}
-
-/// See also [setHidden].
-class SetHiddenProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [setHidden].
-  SetHiddenProvider(
-    String recordingId,
-  ) : this._internal(
-          (ref) => setHidden(
-            ref as SetHiddenRef,
-            recordingId,
-          ),
-          from: setHiddenProvider,
-          name: r'setHiddenProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$setHiddenHash,
-          dependencies: SetHiddenFamily._dependencies,
-          allTransitiveDependencies: SetHiddenFamily._allTransitiveDependencies,
-          recordingId: recordingId,
-        );
-
-  SetHiddenProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.recordingId,
-  }) : super.internal();
-
-  final String recordingId;
-
-  @override
-  Override overrideWith(
-    FutureOr<void> Function(SetHiddenRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: SetHiddenProvider._internal(
-        (ref) => create(ref as SetHiddenRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        recordingId: recordingId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<void> createElement() {
-    return _SetHiddenProviderElement(this);
+  FutureOr<void> create(Ref ref) {
+    final argument = this.argument as String;
+    return setHidden(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is SetHiddenProvider && other.recordingId == recordingId;
+    return other is SetHiddenProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, recordingId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin SetHiddenRef on AutoDisposeFutureProviderRef<void> {
-  /// The parameter `recordingId` of this provider.
-  String get recordingId;
-}
+String _$setHiddenHash() => r'0eb291e3fa19a3f6db26743a7a3f83038ae27d8c';
 
-class _SetHiddenProviderElement extends AutoDisposeFutureProviderElement<void>
-    with SetHiddenRef {
-  _SetHiddenProviderElement(super.provider);
+final class SetHiddenFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<void>, String> {
+  SetHiddenFamily._()
+    : super(
+        retry: null,
+        name: r'setHiddenProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  SetHiddenProvider call(String recordingId) =>
+      SetHiddenProvider._(argument: recordingId, from: this);
 
   @override
-  String get recordingId => (origin as SetHiddenProvider).recordingId;
+  String toString() => r'setHiddenProvider';
 }
 
-String _$unsetHiddenHash() => r'6d23834a339a3e7b9c3886bf0ed08bf7887b3eec';
-
-/// See also [unsetHidden].
 @ProviderFor(unsetHidden)
-const unsetHiddenProvider = UnsetHiddenFamily();
+final unsetHiddenProvider = UnsetHiddenFamily._();
 
-/// See also [unsetHidden].
-class UnsetHiddenFamily extends Family<AsyncValue<void>> {
-  /// See also [unsetHidden].
-  const UnsetHiddenFamily();
+final class UnsetHiddenProvider
+    extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
+    with $FutureModifier<void>, $FutureProvider<void> {
+  UnsetHiddenProvider._({
+    required UnsetHiddenFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'unsetHiddenProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [unsetHidden].
-  UnsetHiddenProvider call(
-    String recordingId,
-  ) {
-    return UnsetHiddenProvider(
-      recordingId,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$unsetHiddenHash();
+
+  @override
+  String toString() {
+    return r'unsetHiddenProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  UnsetHiddenProvider getProviderOverride(
-    covariant UnsetHiddenProvider provider,
-  ) {
-    return call(
-      provider.recordingId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'unsetHiddenProvider';
-}
-
-/// See also [unsetHidden].
-class UnsetHiddenProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [unsetHidden].
-  UnsetHiddenProvider(
-    String recordingId,
-  ) : this._internal(
-          (ref) => unsetHidden(
-            ref as UnsetHiddenRef,
-            recordingId,
-          ),
-          from: unsetHiddenProvider,
-          name: r'unsetHiddenProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$unsetHiddenHash,
-          dependencies: UnsetHiddenFamily._dependencies,
-          allTransitiveDependencies:
-              UnsetHiddenFamily._allTransitiveDependencies,
-          recordingId: recordingId,
-        );
-
-  UnsetHiddenProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.recordingId,
-  }) : super.internal();
-
-  final String recordingId;
-
-  @override
-  Override overrideWith(
-    FutureOr<void> Function(UnsetHiddenRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: UnsetHiddenProvider._internal(
-        (ref) => create(ref as UnsetHiddenRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        recordingId: recordingId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<void> createElement() {
-    return _UnsetHiddenProviderElement(this);
+  FutureOr<void> create(Ref ref) {
+    final argument = this.argument as String;
+    return unsetHidden(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is UnsetHiddenProvider && other.recordingId == recordingId;
+    return other is UnsetHiddenProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, recordingId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin UnsetHiddenRef on AutoDisposeFutureProviderRef<void> {
-  /// The parameter `recordingId` of this provider.
-  String get recordingId;
-}
+String _$unsetHiddenHash() => r'33f4cf41b3c690552d6e48022d52f9f8e53ab69e';
 
-class _UnsetHiddenProviderElement extends AutoDisposeFutureProviderElement<void>
-    with UnsetHiddenRef {
-  _UnsetHiddenProviderElement(super.provider);
+final class UnsetHiddenFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<void>, String> {
+  UnsetHiddenFamily._()
+    : super(
+        retry: null,
+        name: r'unsetHiddenProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  UnsetHiddenProvider call(String recordingId) =>
+      UnsetHiddenProvider._(argument: recordingId, from: this);
 
   @override
-  String get recordingId => (origin as UnsetHiddenProvider).recordingId;
+  String toString() => r'unsetHiddenProvider';
 }
 
-String _$setSeenHash() => r'ca9c0a6de406775ff73117de5644a2797c47f3a1';
-
-/// See also [setSeen].
 @ProviderFor(setSeen)
-const setSeenProvider = SetSeenFamily();
+final setSeenProvider = SetSeenFamily._();
 
-/// See also [setSeen].
-class SetSeenFamily extends Family<AsyncValue<void>> {
-  /// See also [setSeen].
-  const SetSeenFamily();
+final class SetSeenProvider
+    extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
+    with $FutureModifier<void>, $FutureProvider<void> {
+  SetSeenProvider._({
+    required SetSeenFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'setSeenProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [setSeen].
-  SetSeenProvider call(
-    String recordingId,
-  ) {
-    return SetSeenProvider(
-      recordingId,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$setSeenHash();
+
+  @override
+  String toString() {
+    return r'setSeenProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  SetSeenProvider getProviderOverride(
-    covariant SetSeenProvider provider,
-  ) {
-    return call(
-      provider.recordingId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'setSeenProvider';
-}
-
-/// See also [setSeen].
-class SetSeenProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [setSeen].
-  SetSeenProvider(
-    String recordingId,
-  ) : this._internal(
-          (ref) => setSeen(
-            ref as SetSeenRef,
-            recordingId,
-          ),
-          from: setSeenProvider,
-          name: r'setSeenProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$setSeenHash,
-          dependencies: SetSeenFamily._dependencies,
-          allTransitiveDependencies: SetSeenFamily._allTransitiveDependencies,
-          recordingId: recordingId,
-        );
-
-  SetSeenProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.recordingId,
-  }) : super.internal();
-
-  final String recordingId;
-
-  @override
-  Override overrideWith(
-    FutureOr<void> Function(SetSeenRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: SetSeenProvider._internal(
-        (ref) => create(ref as SetSeenRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        recordingId: recordingId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<void> createElement() {
-    return _SetSeenProviderElement(this);
+  FutureOr<void> create(Ref ref) {
+    final argument = this.argument as String;
+    return setSeen(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is SetSeenProvider && other.recordingId == recordingId;
+    return other is SetSeenProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, recordingId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin SetSeenRef on AutoDisposeFutureProviderRef<void> {
-  /// The parameter `recordingId` of this provider.
-  String get recordingId;
-}
+String _$setSeenHash() => r'7722e4e3afbc89396d61c67f6955ce465d302e4c';
 
-class _SetSeenProviderElement extends AutoDisposeFutureProviderElement<void>
-    with SetSeenRef {
-  _SetSeenProviderElement(super.provider);
+final class SetSeenFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<void>, String> {
+  SetSeenFamily._()
+    : super(
+        retry: null,
+        name: r'setSeenProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  SetSeenProvider call(String recordingId) =>
+      SetSeenProvider._(argument: recordingId, from: this);
 
   @override
-  String get recordingId => (origin as SetSeenProvider).recordingId;
+  String toString() => r'setSeenProvider';
 }
 
-String _$unsetSeenHash() => r'cdf3d1f810f2742d8c132e5a7b87e5c671e30102';
-
-/// See also [unsetSeen].
 @ProviderFor(unsetSeen)
-const unsetSeenProvider = UnsetSeenFamily();
+final unsetSeenProvider = UnsetSeenFamily._();
 
-/// See also [unsetSeen].
-class UnsetSeenFamily extends Family<AsyncValue<void>> {
-  /// See also [unsetSeen].
-  const UnsetSeenFamily();
+final class UnsetSeenProvider
+    extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
+    with $FutureModifier<void>, $FutureProvider<void> {
+  UnsetSeenProvider._({
+    required UnsetSeenFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'unsetSeenProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [unsetSeen].
-  UnsetSeenProvider call(
-    String recordingId,
-  ) {
-    return UnsetSeenProvider(
-      recordingId,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$unsetSeenHash();
+
+  @override
+  String toString() {
+    return r'unsetSeenProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  UnsetSeenProvider getProviderOverride(
-    covariant UnsetSeenProvider provider,
-  ) {
-    return call(
-      provider.recordingId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'unsetSeenProvider';
-}
-
-/// See also [unsetSeen].
-class UnsetSeenProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [unsetSeen].
-  UnsetSeenProvider(
-    String recordingId,
-  ) : this._internal(
-          (ref) => unsetSeen(
-            ref as UnsetSeenRef,
-            recordingId,
-          ),
-          from: unsetSeenProvider,
-          name: r'unsetSeenProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$unsetSeenHash,
-          dependencies: UnsetSeenFamily._dependencies,
-          allTransitiveDependencies: UnsetSeenFamily._allTransitiveDependencies,
-          recordingId: recordingId,
-        );
-
-  UnsetSeenProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.recordingId,
-  }) : super.internal();
-
-  final String recordingId;
-
-  @override
-  Override overrideWith(
-    FutureOr<void> Function(UnsetSeenRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: UnsetSeenProvider._internal(
-        (ref) => create(ref as UnsetSeenRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        recordingId: recordingId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<void> createElement() {
-    return _UnsetSeenProviderElement(this);
+  FutureOr<void> create(Ref ref) {
+    final argument = this.argument as String;
+    return unsetSeen(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is UnsetSeenProvider && other.recordingId == recordingId;
+    return other is UnsetSeenProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, recordingId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin UnsetSeenRef on AutoDisposeFutureProviderRef<void> {
-  /// The parameter `recordingId` of this provider.
-  String get recordingId;
-}
+String _$unsetSeenHash() => r'4ffbb5eefb54895daa6828ac93d573f895035937';
 
-class _UnsetSeenProviderElement extends AutoDisposeFutureProviderElement<void>
-    with UnsetSeenRef {
-  _UnsetSeenProviderElement(super.provider);
+final class UnsetSeenFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<void>, String> {
+  UnsetSeenFamily._()
+    : super(
+        retry: null,
+        name: r'unsetSeenProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  UnsetSeenProvider call(String recordingId) =>
+      UnsetSeenProvider._(argument: recordingId, from: this);
 
   @override
-  String get recordingId => (origin as UnsetSeenProvider).recordingId;
+  String toString() => r'unsetSeenProvider';
 }
 
-String _$putPositionHash() => r'576fedd0cc207f6c1c7cd1615a44d4f68f26f766';
-
-/// See also [putPosition].
 @ProviderFor(putPosition)
-const putPositionProvider = PutPositionFamily();
+final putPositionProvider = PutPositionFamily._();
 
-/// See also [putPosition].
-class PutPositionFamily extends Family<AsyncValue<void>> {
-  /// See also [putPosition].
-  const PutPositionFamily();
+final class PutPositionProvider
+    extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
+    with $FutureModifier<void>, $FutureProvider<void> {
+  PutPositionProvider._({
+    required PutPositionFamily super.from,
+    required (String, Duration, bool) super.argument,
+  }) : super(
+         retry: null,
+         name: r'putPositionProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [putPosition].
+  @override
+  String debugGetCreateSourceHash() => _$putPositionHash();
+
+  @override
+  String toString() {
+    return r'putPositionProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<void> create(Ref ref) {
+    final argument = this.argument as (String, Duration, bool);
+    return putPosition(ref, argument.$1, argument.$2, argument.$3);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PutPositionProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$putPositionHash() => r'93a3d8a18d15ed2a4e6cee179c92f6e93ff14970';
+
+final class PutPositionFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<void>, (String, Duration, bool)> {
+  PutPositionFamily._()
+    : super(
+        retry: null,
+        name: r'putPositionProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
   PutPositionProvider call(
     String recordingId,
     Duration position,
     bool finished,
-  ) {
-    return PutPositionProvider(
-      recordingId,
-      position,
-      finished,
-    );
-  }
+  ) => PutPositionProvider._(
+    argument: (recordingId, position, finished),
+    from: this,
+  );
 
   @override
-  PutPositionProvider getProviderOverride(
-    covariant PutPositionProvider provider,
-  ) {
-    return call(
-      provider.recordingId,
-      provider.position,
-      provider.finished,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'putPositionProvider';
+  String toString() => r'putPositionProvider';
 }
 
-/// See also [putPosition].
-class PutPositionProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [putPosition].
-  PutPositionProvider(
-    String recordingId,
-    Duration position,
-    bool finished,
-  ) : this._internal(
-          (ref) => putPosition(
-            ref as PutPositionRef,
-            recordingId,
-            position,
-            finished,
-          ),
-          from: putPositionProvider,
-          name: r'putPositionProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$putPositionHash,
-          dependencies: PutPositionFamily._dependencies,
-          allTransitiveDependencies:
-              PutPositionFamily._allTransitiveDependencies,
-          recordingId: recordingId,
-          position: position,
-          finished: finished,
-        );
-
-  PutPositionProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.recordingId,
-    required this.position,
-    required this.finished,
-  }) : super.internal();
-
-  final String recordingId;
-  final Duration position;
-  final bool finished;
-
-  @override
-  Override overrideWith(
-    FutureOr<void> Function(PutPositionRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: PutPositionProvider._internal(
-        (ref) => create(ref as PutPositionRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        recordingId: recordingId,
-        position: position,
-        finished: finished,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<void> createElement() {
-    return _PutPositionProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is PutPositionProvider &&
-        other.recordingId == recordingId &&
-        other.position == position &&
-        other.finished == finished;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, recordingId.hashCode);
-    hash = _SystemHash.combine(hash, position.hashCode);
-    hash = _SystemHash.combine(hash, finished.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
-}
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin PutPositionRef on AutoDisposeFutureProviderRef<void> {
-  /// The parameter `recordingId` of this provider.
-  String get recordingId;
-
-  /// The parameter `position` of this provider.
-  Duration get position;
-
-  /// The parameter `finished` of this provider.
-  bool get finished;
-}
-
-class _PutPositionProviderElement extends AutoDisposeFutureProviderElement<void>
-    with PutPositionRef {
-  _PutPositionProviderElement(super.provider);
-
-  @override
-  String get recordingId => (origin as PutPositionProvider).recordingId;
-  @override
-  Duration get position => (origin as PutPositionProvider).position;
-  @override
-  bool get finished => (origin as PutPositionProvider).finished;
-}
-
-String _$getTenantHash() => r'6af8dff845d1d469a2369acfa4e45833d207b2bc';
-
-/// See also [getTenant].
 @ProviderFor(getTenant)
-final getTenantProvider = AutoDisposeFutureProvider<Tenant>.internal(
-  getTenant,
-  name: r'getTenantProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$getTenantHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final getTenantProvider = GetTenantProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef GetTenantRef = AutoDisposeFutureProviderRef<Tenant>;
-String _$deleteDownloadContentHash() =>
-    r'4757abe55d8926839cdd5893e010191f4163b8de';
+final class GetTenantProvider
+    extends $FunctionalProvider<AsyncValue<Tenant>, Tenant, FutureOr<Tenant>>
+    with $FutureModifier<Tenant>, $FutureProvider<Tenant> {
+  GetTenantProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'getTenantProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
-/// See also [deleteDownloadContent].
-@ProviderFor(deleteDownloadContent)
-const deleteDownloadContentProvider = DeleteDownloadContentFamily();
+  @override
+  String debugGetCreateSourceHash() => _$getTenantHash();
 
-/// See also [deleteDownloadContent].
-class DeleteDownloadContentFamily extends Family<AsyncValue<void>> {
-  /// See also [deleteDownloadContent].
-  const DeleteDownloadContentFamily();
+  @$internal
+  @override
+  $FutureProviderElement<Tenant> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
-  /// See also [deleteDownloadContent].
-  DeleteDownloadContentProvider call(
-    String downloadId,
-  ) {
-    return DeleteDownloadContentProvider(
-      downloadId,
-    );
+  @override
+  FutureOr<Tenant> create(Ref ref) {
+    return getTenant(ref);
   }
-
-  @override
-  DeleteDownloadContentProvider getProviderOverride(
-    covariant DeleteDownloadContentProvider provider,
-  ) {
-    return call(
-      provider.downloadId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'deleteDownloadContentProvider';
 }
 
-/// See also [deleteDownloadContent].
-class DeleteDownloadContentProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [deleteDownloadContent].
-  DeleteDownloadContentProvider(
-    String downloadId,
-  ) : this._internal(
-          (ref) => deleteDownloadContent(
-            ref as DeleteDownloadContentRef,
-            downloadId,
-          ),
-          from: deleteDownloadContentProvider,
-          name: r'deleteDownloadContentProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$deleteDownloadContentHash,
-          dependencies: DeleteDownloadContentFamily._dependencies,
-          allTransitiveDependencies:
-              DeleteDownloadContentFamily._allTransitiveDependencies,
-          downloadId: downloadId,
-        );
+String _$getTenantHash() => r'6f9949ff4dcd1860b81715b966bab7b4eaee40ac';
 
-  DeleteDownloadContentProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.downloadId,
-  }) : super.internal();
+@ProviderFor(deleteDownloadContent)
+final deleteDownloadContentProvider = DeleteDownloadContentFamily._();
 
-  final String downloadId;
+final class DeleteDownloadContentProvider
+    extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
+    with $FutureModifier<void>, $FutureProvider<void> {
+  DeleteDownloadContentProvider._({
+    required DeleteDownloadContentFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'deleteDownloadContentProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
-  Override overrideWith(
-    FutureOr<void> Function(DeleteDownloadContentRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: DeleteDownloadContentProvider._internal(
-        (ref) => create(ref as DeleteDownloadContentRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        downloadId: downloadId,
-      ),
-    );
+  String debugGetCreateSourceHash() => _$deleteDownloadContentHash();
+
+  @override
+  String toString() {
+    return r'deleteDownloadContentProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  AutoDisposeFutureProviderElement<void> createElement() {
-    return _DeleteDownloadContentProviderElement(this);
+  $FutureProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<void> create(Ref ref) {
+    final argument = this.argument as String;
+    return deleteDownloadContent(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is DeleteDownloadContentProvider &&
-        other.downloadId == downloadId;
+    return other is DeleteDownloadContentProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, downloadId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin DeleteDownloadContentRef on AutoDisposeFutureProviderRef<void> {
-  /// The parameter `downloadId` of this provider.
-  String get downloadId;
-}
+String _$deleteDownloadContentHash() =>
+    r'8258ca27eb4bacb46385e8f74f65c47b4379714f';
 
-class _DeleteDownloadContentProviderElement
-    extends AutoDisposeFutureProviderElement<void>
-    with DeleteDownloadContentRef {
-  _DeleteDownloadContentProviderElement(super.provider);
-
-  @override
-  String get downloadId => (origin as DeleteDownloadContentProvider).downloadId;
-}
-
-String _$deleteRecordingDownloadsContentHash() =>
-    r'625560efffa83365714615a33db0bc6a29cc7d13';
-
-/// See also [deleteRecordingDownloadsContent].
-@ProviderFor(deleteRecordingDownloadsContent)
-const deleteRecordingDownloadsContentProvider =
-    DeleteRecordingDownloadsContentFamily();
-
-/// See also [deleteRecordingDownloadsContent].
-class DeleteRecordingDownloadsContentFamily extends Family<AsyncValue<void>> {
-  /// See also [deleteRecordingDownloadsContent].
-  const DeleteRecordingDownloadsContentFamily();
-
-  /// See also [deleteRecordingDownloadsContent].
-  DeleteRecordingDownloadsContentProvider call(
-    String recordingId,
-  ) {
-    return DeleteRecordingDownloadsContentProvider(
-      recordingId,
-    );
-  }
-
-  @override
-  DeleteRecordingDownloadsContentProvider getProviderOverride(
-    covariant DeleteRecordingDownloadsContentProvider provider,
-  ) {
-    return call(
-      provider.recordingId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'deleteRecordingDownloadsContentProvider';
-}
-
-/// See also [deleteRecordingDownloadsContent].
-class DeleteRecordingDownloadsContentProvider
-    extends AutoDisposeFutureProvider<void> {
-  /// See also [deleteRecordingDownloadsContent].
-  DeleteRecordingDownloadsContentProvider(
-    String recordingId,
-  ) : this._internal(
-          (ref) => deleteRecordingDownloadsContent(
-            ref as DeleteRecordingDownloadsContentRef,
-            recordingId,
-          ),
-          from: deleteRecordingDownloadsContentProvider,
-          name: r'deleteRecordingDownloadsContentProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$deleteRecordingDownloadsContentHash,
-          dependencies: DeleteRecordingDownloadsContentFamily._dependencies,
-          allTransitiveDependencies:
-              DeleteRecordingDownloadsContentFamily._allTransitiveDependencies,
-          recordingId: recordingId,
-        );
-
-  DeleteRecordingDownloadsContentProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.recordingId,
-  }) : super.internal();
-
-  final String recordingId;
-
-  @override
-  Override overrideWith(
-    FutureOr<void> Function(DeleteRecordingDownloadsContentRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: DeleteRecordingDownloadsContentProvider._internal(
-        (ref) => create(ref as DeleteRecordingDownloadsContentRef),
-        from: from,
-        name: null,
+final class DeleteDownloadContentFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<void>, String> {
+  DeleteDownloadContentFamily._()
+    : super(
+        retry: null,
+        name: r'deleteDownloadContentProvider',
         dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        recordingId: recordingId,
-      ),
-    );
-  }
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  DeleteDownloadContentProvider call(String downloadId) =>
+      DeleteDownloadContentProvider._(argument: downloadId, from: this);
 
   @override
-  AutoDisposeFutureProviderElement<void> createElement() {
-    return _DeleteRecordingDownloadsContentProviderElement(this);
+  String toString() => r'deleteDownloadContentProvider';
+}
+
+@ProviderFor(deleteRecordingDownloadsContent)
+final deleteRecordingDownloadsContentProvider =
+    DeleteRecordingDownloadsContentFamily._();
+
+final class DeleteRecordingDownloadsContentProvider
+    extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
+    with $FutureModifier<void>, $FutureProvider<void> {
+  DeleteRecordingDownloadsContentProvider._({
+    required DeleteRecordingDownloadsContentFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'deleteRecordingDownloadsContentProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$deleteRecordingDownloadsContentHash();
+
+  @override
+  String toString() {
+    return r'deleteRecordingDownloadsContentProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<void> create(Ref ref) {
+    final argument = this.argument as String;
+    return deleteRecordingDownloadsContent(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
     return other is DeleteRecordingDownloadsContentProvider &&
-        other.recordingId == recordingId;
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, recordingId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin DeleteRecordingDownloadsContentRef on AutoDisposeFutureProviderRef<void> {
-  /// The parameter `recordingId` of this provider.
-  String get recordingId;
-}
+String _$deleteRecordingDownloadsContentHash() =>
+    r'a034e3aca50b120af162f547494977e93c4064d3';
 
-class _DeleteRecordingDownloadsContentProviderElement
-    extends AutoDisposeFutureProviderElement<void>
-    with DeleteRecordingDownloadsContentRef {
-  _DeleteRecordingDownloadsContentProviderElement(super.provider);
+final class DeleteRecordingDownloadsContentFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<void>, String> {
+  DeleteRecordingDownloadsContentFamily._()
+    : super(
+        retry: null,
+        name: r'deleteRecordingDownloadsContentProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  DeleteRecordingDownloadsContentProvider call(String recordingId) =>
+      DeleteRecordingDownloadsContentProvider._(
+        argument: recordingId,
+        from: this,
+      );
 
   @override
-  String get recordingId =>
-      (origin as DeleteRecordingDownloadsContentProvider).recordingId;
+  String toString() => r'deleteRecordingDownloadsContentProvider';
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

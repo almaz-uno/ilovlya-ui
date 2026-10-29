@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -42,12 +41,12 @@ class StorePlaces {
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 Future<StorePlaces> storePlaces(Ref ref) async {
   // selectAsync waits for settings to load instead of throwing on AsyncLoading;
   // both dependencies are registered before the first await.
-  final dataDir = ref.watch(settingsNotifierProvider.selectAsync((value) => value.dataStorageDirectory));
-  final mediaDir = ref.watch(settingsNotifierProvider.selectAsync((value) => value.mediaStorageDirectory));
+  final dataDir = ref.watch(settingsProvider.selectAsync((value) => value.dataStorageDirectory));
+  final mediaDir = ref.watch(settingsProvider.selectAsync((value) => value.mediaStorageDirectory));
 
   return StorePlaces(dataDir: await dataDir, mediaDir: await mediaDir);
 }

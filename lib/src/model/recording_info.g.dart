@@ -35,8 +35,9 @@ RecordingInfo _$RecordingInfoFromJson(Map<String, dynamic> json) =>
       hasFile: json['has_file'] as bool? ?? false,
       files:
           (json['files'] as List<dynamic>?)?.map((e) => e as String).toList() ??
-              const [],
-      downloads: (json['downloads'] as List<dynamic>?)
+          const [],
+      downloads:
+          (json['downloads'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           const [],

@@ -6,173 +6,94 @@ part of 'downloads_riverpod.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$downloadsNotifierHash() => r'6e3d52665e61732b59e7f2f0d1e0cd88379bb6f3';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-abstract class _$DownloadsNotifier
-    extends BuildlessAutoDisposeAsyncNotifier<List<Download>> {
-  late final String recordingId;
-
-  FutureOr<List<Download>> build(
-    String recordingId,
-  );
-}
-
-/// See also [DownloadsNotifier].
 @ProviderFor(DownloadsNotifier)
-const downloadsNotifierProvider = DownloadsNotifierFamily();
+final downloadsProvider = DownloadsNotifierFamily._();
 
-/// See also [DownloadsNotifier].
-class DownloadsNotifierFamily extends Family<AsyncValue<List<Download>>> {
-  /// See also [DownloadsNotifier].
-  const DownloadsNotifierFamily();
+final class DownloadsNotifierProvider
+    extends $AsyncNotifierProvider<DownloadsNotifier, List<Download>> {
+  DownloadsNotifierProvider._({
+    required DownloadsNotifierFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'downloadsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// See also [DownloadsNotifier].
-  DownloadsNotifierProvider call(
-    String recordingId,
-  ) {
-    return DownloadsNotifierProvider(
-      recordingId,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$downloadsNotifierHash();
+
+  @override
+  String toString() {
+    return r'downloadsProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  DownloadsNotifierProvider getProviderOverride(
-    covariant DownloadsNotifierProvider provider,
-  ) {
-    return call(
-      provider.recordingId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'downloadsNotifierProvider';
-}
-
-/// See also [DownloadsNotifier].
-class DownloadsNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
-    DownloadsNotifier, List<Download>> {
-  /// See also [DownloadsNotifier].
-  DownloadsNotifierProvider(
-    String recordingId,
-  ) : this._internal(
-          () => DownloadsNotifier()..recordingId = recordingId,
-          from: downloadsNotifierProvider,
-          name: r'downloadsNotifierProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$downloadsNotifierHash,
-          dependencies: DownloadsNotifierFamily._dependencies,
-          allTransitiveDependencies:
-              DownloadsNotifierFamily._allTransitiveDependencies,
-          recordingId: recordingId,
-        );
-
-  DownloadsNotifierProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.recordingId,
-  }) : super.internal();
-
-  final String recordingId;
-
-  @override
-  FutureOr<List<Download>> runNotifierBuild(
-    covariant DownloadsNotifier notifier,
-  ) {
-    return notifier.build(
-      recordingId,
-    );
-  }
-
-  @override
-  Override overrideWith(DownloadsNotifier Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: DownloadsNotifierProvider._internal(
-        () => create()..recordingId = recordingId,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        recordingId: recordingId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeAsyncNotifierProviderElement<DownloadsNotifier, List<Download>>
-      createElement() {
-    return _DownloadsNotifierProviderElement(this);
-  }
+  DownloadsNotifier create() => DownloadsNotifier();
 
   @override
   bool operator ==(Object other) {
-    return other is DownloadsNotifierProvider &&
-        other.recordingId == recordingId;
+    return other is DownloadsNotifierProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, recordingId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin DownloadsNotifierRef
-    on AutoDisposeAsyncNotifierProviderRef<List<Download>> {
-  /// The parameter `recordingId` of this provider.
-  String get recordingId;
-}
+String _$downloadsNotifierHash() => r'ec529b87c75c483d36386511a63c2acbdcbc7713';
 
-class _DownloadsNotifierProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<DownloadsNotifier,
-        List<Download>> with DownloadsNotifierRef {
-  _DownloadsNotifierProviderElement(super.provider);
+final class DownloadsNotifierFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          DownloadsNotifier,
+          AsyncValue<List<Download>>,
+          List<Download>,
+          FutureOr<List<Download>>,
+          String
+        > {
+  DownloadsNotifierFamily._()
+    : super(
+        retry: null,
+        name: r'downloadsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  DownloadsNotifierProvider call(String recordingId) =>
+      DownloadsNotifierProvider._(argument: recordingId, from: this);
 
   @override
-  String get recordingId => (origin as DownloadsNotifierProvider).recordingId;
+  String toString() => r'downloadsProvider';
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+
+abstract class _$DownloadsNotifier extends $AsyncNotifier<List<Download>> {
+  late final _$args = ref.$arg as String;
+  String get recordingId => _$args;
+
+  FutureOr<List<Download>> build(String recordingId);
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<List<Download>>, List<Download>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<Download>>, List<Download>>,
+              AsyncValue<List<Download>>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, () => build(_$args));
+  }
+}

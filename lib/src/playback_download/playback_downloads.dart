@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/widgets.dart' show AppLifecycleListener, AppLifecycleState;
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderBase;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../api/directories_riverpod.dart';
@@ -39,7 +38,7 @@ class _Session {
 /// unattended until it completes, fails eight times in a row, or another one starts.
 ///
 /// The state is the [SourceState] of every download it owns; the progress itself is published into
-/// [localDTNotifierProvider], beside the `background_downloader` tasks, which is where the player's progress line and
+/// [localDTProvider], beside the `background_downloader` tasks, which is where the player's progress line and
 /// the explicit download's guard already look.
 ///
 /// On iOS the endpoint listens only while it may be needed: with the application in front, or with the player playing,
@@ -121,7 +120,9 @@ class PlaybackDownloads extends _$PlaybackDownloads {
   /// setting off.
   Future<Uri> open(Download d) async {
     await _listening;
+    if (!ref.mounted) return Uri.parse(d.url);
     final endpoint = await (_endpoint ??= LocalMediaEndpoint.start());
+    if (!ref.mounted) return Uri.parse(d.url);
     for (final other in _sessions.values.toList()) {
       if (other.download.id != d.id && other.source.isRunning) {
         other.attached = false;
@@ -130,17 +131,22 @@ class PlaybackDownloads extends _$PlaybackDownloads {
         AppLoggers.download.i('Playback download of ${other.download.id} paused for ${d.id}');
       }
     }
+    if (!ref.mounted) return Uri.parse(d.url);
 
     var s = _sessions[d.id];
     if (s != null && (s.source.isGone || s.source.state == SourceState.passThrough)) {
       await _drop(d.id);
+      if (!ref.mounted) return Uri.parse(d.url);
       s = null;
     }
     if (s == null) {
       final sp = await ref.read(storePlacesProvider.future);
+      if (!ref.mounted) return Uri.parse(d.url);
       final file = PartialFile.open(mediaDir: sp.media().path, downloadId: d.id, filename: d.filename, url: d.url);
+      final authorization = await _authorization();
+      if (!ref.mounted) return Uri.parse(d.url);
       final source = PartialSource(
-          file: file, url: Uri.parse(d.url), authorization: await _authorization(), silenceTimeout: silenceTimeout, flowingWithin: flowingWithin, recoveredAfter: recoveredAfter);
+          file: file, url: Uri.parse(d.url), authorization: authorization, silenceTimeout: silenceTimeout, flowingWithin: flowingWithin, recoveredAfter: recoveredAfter);
       s = _Session(d, source);
       source.onChange = () => _changed(d.id);
       _sessions[d.id] = s;
@@ -273,7 +279,7 @@ class PlaybackDownloads extends _$PlaybackDownloads {
 
   /// The `Authorization` value the rest of the client sends (`getAuthHeader`): the bare token.
   Future<String?> _authorization() async {
-    final token = (await ref.read(settingsNotifierProvider.future)).token;
+    final token = (await ref.read(settingsProvider.future)).token;
     return token.isEmpty ? null : token;
   }
 
@@ -283,11 +289,13 @@ class PlaybackDownloads extends _$PlaybackDownloads {
     (await _endpoint)?.unregister(id);
     await s.source.dispose();
     if (s.source.state == SourceState.passThrough) await s.source.releaseStored();
-    if (s.source.state != SourceState.complete) ref.read(localDTNotifierProvider.notifier).forget(id);
+    if (!ref.mounted) return;
+    if (s.source.state != SourceState.complete) ref.read(localDTProvider.notifier).forget(id);
     state = {...state}..remove(id);
   }
 
   void _changed(String id) {
+    if (!ref.mounted) return;
     final s = _sessions[id];
     if (s == null) return;
     _publish(s);
@@ -297,9 +305,11 @@ class PlaybackDownloads extends _$PlaybackDownloads {
       // By *recording* identifier, which the family parameter is. Only what is shown needs re-reading: invalidating a
       // provider nobody watches would build it once for nothing.
       final rid = s.download.recordingId;
-      for (final provider in <ProviderBase<Object?>>[downloadsNotifierProvider(rid), recordingNotifierProvider(rid), mediaListNotifierProvider]) {
-        if (ref.exists(provider)) ref.invalidate(provider);
-      }
+      final downloads = downloadsProvider(rid);
+      if (ref.exists(downloads)) ref.invalidate(downloads);
+      final recording = recordingProvider(rid);
+      if (ref.exists(recording)) ref.invalidate(recording);
+      if (ref.exists(mediaListProvider)) ref.invalidate(mediaListProvider);
       AppLoggers.download.i('Playback download of $id complete: ${s.source.file.finalPath}');
       if (!s.attached) unawaited(_drop(id));
     }
@@ -317,7 +327,7 @@ class PlaybackDownloads extends _$PlaybackDownloads {
     // such a server. A stall that has not failed yet shows the speed decaying, and no time remaining.
     final waiting = src.isRunning && src.fetcher.notAnsweringFor != null;
     final measured = src.isRunning && !waiting && rate > 0;
-    ref.read(localDTNotifierProvider.notifier).publish(LocalDownloadTask(
+    ref.read(localDTProvider.notifier).publish(LocalDownloadTask(
           id: s.download.id,
           displayName: s.download.title,
           filename: s.download.filename,

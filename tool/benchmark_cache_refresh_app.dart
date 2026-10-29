@@ -2,6 +2,8 @@
 // temporary directory. No application settings, tokens or saved media are read.
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ilovlya/src/utils/provider_retry.dart';
 
 import 'cache_refresh_benchmark.dart';
 
@@ -19,5 +21,6 @@ Future<void> main() async {
 }
 
 void showStatus(String status) {
-  runApp(MaterialApp(home: Scaffold(body: Center(child: Text(status)))));
+  // This status-only widget does not read providers. The scope keeps the app root conventional.
+  runApp(ProviderScope(retry: disableProviderRetry, child: MaterialApp(home: Scaffold(body: Center(child: Text(status))))));
 }

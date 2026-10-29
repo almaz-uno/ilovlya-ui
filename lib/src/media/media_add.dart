@@ -192,7 +192,7 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
     // _futureMediaAdd = ; // the full information about media should be acquired anew
     ref.read(addRecordingProvider(url).future).then((value) {
       if (!mounted || !context.mounted) return;
-      ref.read(mediaListNotifierProvider.notifier).refreshFromServer();
+      ref.read(mediaListProvider.notifier).refreshFromServer();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(AppLocalizations.of(context)!.successfullyAddedMessage(value.title)),
       ));

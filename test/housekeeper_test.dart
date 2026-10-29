@@ -7,6 +7,8 @@ import 'package:ilovlya/src/api/directories_riverpod.dart';
 import 'package:ilovlya/src/api/housekeeper_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import 'helpers/provider_container.dart';
+
 void main() {
   late Directory root;
   late ProviderContainer c;
@@ -24,7 +26,7 @@ void main() {
 
   setUp(() async {
     root = Directory.systemTemp.createTempSync('housekeeper_test');
-    c = ProviderContainer(overrides: [
+    c = createTestProviderContainer(overrides: [
       storePlacesProvider.overrideWith((ref) async => StorePlaces(dataDir: p.join(root.path, 'data'), mediaDir: p.join(root.path, 'media'))),
     ]);
     Directory(p.join(root.path, 'media')).createSync(recursive: true);
@@ -37,7 +39,7 @@ void main() {
     // Its recording JSON is gone, for example after the metadata was cleaned.
     file('orphan-video.mp4', 400);
     // The housekeeper is auto-disposed; keep it alive for the whole test.
-    c.listen(localMediaHousekeeperProvider, (_, __) {});
+    c.listen(localMediaHousekeeperProvider, (_, _) {});
   });
 
   tearDown(() {

@@ -13,7 +13,7 @@ Future<void> _serialize(File file, Future<void> Function() operation) {
   final key = p.normalize(p.absolute(file.path));
   final result =
       (_writes[key] ?? Future<void>.value()).then((_) => operation());
-  final tail = result.then<void>((_) {}, onError: (Object _, StackTrace __) {});
+  final tail = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
   _writes[key] = tail;
   unawaited(tail.then((_) {
     if (identical(_writes[key], tail)) _writes.remove(key);
