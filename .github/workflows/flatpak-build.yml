@@ -64,7 +64,7 @@ jobs:
 
       # Kept for the release job, and for a pull request so that its bundle can be installed and tried.
       - name: Keep the bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: flatpak-bundle
           path: ilovlya-${{ env.TAG }}.flatpak
