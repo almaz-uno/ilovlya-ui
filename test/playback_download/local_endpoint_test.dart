@@ -50,6 +50,25 @@ Future<Read> fetch(HttpClient client, Uri url, {String? range, int? take, String
   return Read(res.statusCode, res.headers, take != null && bytes.length > take ? Uint8List.sublistView(bytes, 0, take) : bytes, error, first ?? clock.elapsed);
 }
 
+/// A response the player opened and stopped reading without closing it: libmpv's first request, from byte 0, while it
+/// reads the index at the end. The endpoint goes on waiting for its bytes.
+Future<(Socket, StreamSubscription<Uint8List>)> stall(Uri url, {required int after}) async {
+  final socket = await Socket.connect(url.host, url.port);
+  socket.write('GET ${url.path} HTTP/1.1\r\nHost: ${url.host}:${url.port}\r\nRange: bytes=0-\r\n\r\n');
+  var got = 0;
+  late StreamSubscription<Uint8List> sub;
+  final enough = Completer<void>();
+  sub = socket.listen((bytes) {
+    got += bytes.length;
+    if (got >= after && !enough.isCompleted) {
+      sub.pause();
+      enough.complete();
+    }
+  }, onError: (_) {}, cancelOnError: true);
+  await enough.future;
+  return (socket, sub);
+}
+
 void main() {
   late Directory media;
   late Upstream up;
@@ -153,6 +172,36 @@ void main() {
     expect(up.log.length, requests, reason: 'no new request to the server: ${up.log}');
     source.fetcher.stop();
   });
+
+  // ilovlya-ui#176: two readers far apart — the first response waiting at the front, the index read at the end — moved
+  // the transfer back and forth, each request storing what one round trip brought, some hundreds of requests for the
+  // index. Without the look at the first bytes (a file not seen as an MP4) the closing gap alone must keep it short.
+  for (final recognised in [true, false]) {
+    test('an index at the end read while the first response waits at the front takes a few requests (${recognised ? 'm4a' : 'unrecognised'})',
+        () async {
+      const moov = 240962;
+      src = m4aWithTrailingMoov(mdat: 8 << 20, moov: moov);
+      if (!recognised) src.setRange(4, 8, 'xxxx'.codeUnits);
+      up.data = src;
+      up.rate = 2 << 20; // a mobile link
+      up.latency = const Duration(milliseconds: 150);
+      final (source, url) = serve();
+      final moovAt = src.length - moov;
+
+      final (front, frontSub) = await stall(url, after: 64 << 10);
+      final clock = Stopwatch()..start();
+      final tail = await fetch(player, url, range: 'bytes=$moovAt-');
+      final took = clock.elapsed;
+      expect(tail.body, src.sublist(moovAt));
+      expect(up.log.length, lessThanOrEqualTo(4), reason: 'requests until the index was read: ${up.log}');
+      expect(took, lessThan(const Duration(seconds: 4)), reason: 'the index is a fraction of a second at this rate');
+      expect(source.fetcher.notAnsweringFor, isNull);
+
+      await frontSub.cancel();
+      front.destroy();
+      source.fetcher.stop();
+    });
+  }
 
   test('refuses what was not registered with it', () async {
     final (_, url) = serve();

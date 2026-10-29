@@ -20,6 +20,9 @@ class Upstream {
   /// Bytes per second for bodies; `null` for as fast as the socket takes them.
   int? rate;
 
+  /// How long every answer takes to begin: the round trip of a mobile link.
+  Duration latency = Duration.zero;
+
   /// Answers the next requests with this status and an empty body, one per entry.
   final List<int> failNext = [];
 
@@ -133,6 +136,11 @@ class Upstream {
       await Future.any([gone, _release.future]);
     }
 
+    if (latency > Duration.zero) {
+      var left = false;
+      await Future.any([Future.delayed(latency), gone.then((_) => left = true)]);
+      if (left) return; // the client gave up before the answer
+    }
     if (silent) return hold();
     void head(int status, Map<String, Object> fields) {
       entry.status = status;
@@ -216,6 +224,23 @@ class UpstreamRequest {
 
   @override
   String toString() => 'UpstreamRequest($range, ifRange: $ifRange, status: $status, bytes: $bytes${silenced ? ', silenced' : ''})';
+}
+
+/// An M4A as yt-dlp leaves it: `ftyp`, then `mdat` holding [mdat] bytes, then `moov` of [moov] bytes, the index the
+/// player reads before anything plays.
+Uint8List m4aWithTrailingMoov({required int mdat, required int moov, String tail = 'moov'}) {
+  final b = BytesBuilder();
+  void box(String type, List<int> body) {
+    final size = 8 + body.length;
+    b.add([size >> 24 & 0xff, size >> 16 & 0xff, size >> 8 & 0xff, size & 0xff]);
+    b.add(latin1.encode(type));
+    b.add(body);
+  }
+
+  box('ftyp', [...latin1.encode('M4A '), 0, 0, 2, 0, ...latin1.encode('isomM4A ')]);
+  box('mdat', randomBytes(mdat, 2));
+  box(tail, randomBytes(moov - 8, 3));
+  return b.takeBytes();
 }
 
 Uint8List randomBytes(int n, [int seed = 1]) {

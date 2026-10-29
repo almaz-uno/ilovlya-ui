@@ -292,6 +292,242 @@ void main() {
     expect(await run, FetchOutcome.stopped);
   });
 
+  test('a retarget waits for a request about to close its gap, then moves', () async {
+    up.rate = 1 << 20;
+    final f = open();
+    final fx = fetcher(f);
+    final from = src.length - (512 << 10);
+    final run = fx.run(from);
+    while (fx.position < from + (64 << 10)) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    fx.retarget(1 << 20);
+    expect(await run, FetchOutcome.complete);
+    expect(await finish(f), src);
+    expect(up.log.first.bytes, 512 << 10, reason: 'the closing request is not cut: ${up.log}');
+    expect(up.log[1].range, 'bytes=${1 << 20}-${from - 1}', reason: 'then where the reader asked');
+    expect(up.bytesServed, src.length);
+  });
+
+  test('an m4a whose moov follows mdat has its end fetched right after its first bytes', () async {
+    src = m4aWithTrailingMoov(mdat: 4 << 20, moov: 240962);
+    up.data = src;
+    up.rate = 4 << 20;
+    final moovAt = src.length - 240962;
+    final f = open();
+    expect(await fetcher(f).run(0), FetchOutcome.complete);
+    expect(await finish(f), src);
+    expect(up.log.length, 3, reason: '${up.log}');
+    expect(up.log[0].range, 'bytes=0-');
+    expect(up.log[1].range, 'bytes=$moovAt-${src.length - 1}');
+    expect(up.log[1].bytes, 240962);
+    expect(up.log[2].range, endsWith('-${moovAt - 1}'));
+    expect(up.bytesServed - src.length, lessThan(256 << 10), reason: 'served ${up.bytesServed} for ${src.length}');
+  });
+
+  test('a retarget while the index at the end is fetched waits for it, whatever its size', () async {
+    const moov = 3 << 20; // more than a closing gap
+    src = m4aWithTrailingMoov(mdat: 4 << 20, moov: moov);
+    up.data = src;
+    up.rate = 2 << 20;
+    final moovAt = src.length - moov;
+    final f = open();
+    final fx = fetcher(f);
+    final run = fx.run(0);
+    while (fx.position <= moovAt + (64 << 10)) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    fx.retarget(1 << 20);
+    expect(await run, FetchOutcome.complete);
+    expect(await finish(f), src);
+    expect(up.log[1].range, 'bytes=$moovAt-${src.length - 1}');
+    expect(up.log[1].bytes, moov, reason: '${up.log}');
+    expect(up.log[2].range, startsWith('bytes=${1 << 20}-'));
+  });
+
+  test('what follows mdat is let finish only when it is the index', () async {
+    const tail = 3 << 20;
+    src = m4aWithTrailingMoov(mdat: 4 << 20, moov: tail, tail: 'skip');
+    up.data = src;
+    up.rate = 2 << 20;
+    final at = src.length - tail;
+    final f = open();
+    final fx = fetcher(f);
+    final run = fx.run(0);
+    while (fx.position <= at + (64 << 10)) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    fx.retarget(1 << 20);
+    expect(await run, FetchOutcome.complete);
+    expect(await finish(f), src);
+    expect(up.log[1].range, 'bytes=$at-${src.length - 1}');
+    expect(up.log[1].bytes, lessThan(tail), reason: 'a skip box is no index: ${up.log}');
+    expect(up.log[2].range, startsWith('bytes=${1 << 20}-'));
+  });
+
+  test('a resume in the middle of the index keeps it pinned', () async {
+    const moov = 3 << 20;
+    src = m4aWithTrailingMoov(mdat: 4 << 20, moov: moov);
+    up.data = src;
+    up.rate = 1 << 20;
+    final at = src.length - moov;
+    final f = open();
+    final fx = fetcher(f);
+    final run = fx.run(0);
+    while (fx.position <= at + (256 << 10)) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    fx.suspend();
+    fx.resume(); // iOS took the socket: the request goes on from where it was, from the middle of the index
+    while (up.log.length < 3 || fx.position <= at + (384 << 10)) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    fx.retarget(1 << 20);
+    expect(await run, FetchOutcome.complete);
+    expect(await finish(f), src);
+    expect(up.log[2].range, endsWith('-${src.length - 1}'), reason: '${up.log}');
+    expect(up.log[2].range, isNot('bytes=$at-${src.length - 1}'));
+    expect(at + moov - int.parse(RegExp(r'bytes=(\d+)-').firstMatch(up.log[2].range!)![1]!), up.log[2].bytes,
+        reason: 'the rest of the index is not cut: ${up.log}');
+    expect(up.log[3].range, startsWith('bytes=${1 << 20}-'));
+  });
+
+  test('one slow answer does not make a retarget wait for many seconds of the rest', () async {
+    src = randomBytes(16 << 20);
+    up.data = src;
+    up.rate = 1 << 20;
+    up.latency = const Duration(seconds: 5); // a stall on the first answer
+    final f = open();
+    final fx = fetcher(f);
+    final from = src.length - (8 << 20);
+    final run = fx.run(from);
+    while (up.log.isEmpty || up.log.first.status == null) {
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
+    up.latency = Duration.zero;
+    while (fx.rate == 0 || fx.position < from + (1200 << 10)) {
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
+    // About 6.8 s of the rest are left: more than the answer time counts for.
+    final clock = Stopwatch()..start();
+    fx.retarget(1 << 20);
+    while (up.log.length < 2) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    expect(clock.elapsed, lessThan(const Duration(milliseconds: 500)), reason: '${up.log}');
+    fx.stop();
+    await run;
+  });
+
+  test('a retarget that waits for a closing request moves the transfer once that request falls silent', () async {
+    up.rate = 256 << 10;
+    final f = open();
+    final fx = fetcher(f);
+    final from = src.length - (256 << 10);
+    up.silentNextAfter = 64 << 10;
+    final run = fx.run(from);
+    while (fx.position < from + (16 << 10)) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    // Asked once, as the endpoint does, while the request still brings bytes: it waits.
+    fx.retarget(1 << 20);
+    final clock = Stopwatch()..start();
+    while (up.log.length < 2) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    expect(up.log.first.silenced, isTrue, reason: '${up.log}');
+    expect(clock.elapsed, lessThan(Fetcher.liveWithin + const Duration(seconds: 1)), reason: 'not the 15 s silence timeout');
+    expect(up.log[1].range, startsWith('bytes=${1 << 20}-'));
+    fx.stop();
+    await run;
+  });
+
+  test('a retarget while a request waits for its answer is judged by that request, not by where the last one ended', () async {
+    final f = open();
+    final from = src.length - (256 << 10);
+    final fx = fetcher(f);
+    up.rate = 1 << 20; // the gap behind takes almost 4 s
+    up.latency = const Duration(milliseconds: 400);
+    final run = fx.run(from);
+    // The tail is done; the gap behind, [0, from), is asked for next and not answered yet.
+    while (up.log.length < 2) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    await Future.delayed(const Duration(milliseconds: 100));
+    final clock = Stopwatch()..start();
+    fx.retarget(2 << 20);
+    while (up.log.length < 3) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    expect(clock.elapsed, lessThan(const Duration(seconds: 1)), reason: 'not after the whole gap: ${up.log}');
+    expect(up.log[1].range, 'bytes=0-${from - 1}');
+    expect(up.log[1].status, isNull, reason: 'aborted before its answer: ${up.log}');
+    expect(up.log[2].range, startsWith('bytes=${2 << 20}-'));
+    fx.stop();
+    await run;
+  });
+
+  test('a closing request is waited for only while its rest arrives within the closing time', () async {
+    up.rate = 128 << 10;
+    final f = open();
+    final fx = fetcher(f);
+    final from = src.length - (1536 << 10);
+    final run = fx.run(from);
+    while (fx.rate == 0 || fx.position < from + (192 << 10)) {
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
+    // More than a second of the rest at this rate is left: the retarget does not wait for it.
+    final clock = Stopwatch()..start();
+    fx.retarget(1 << 20);
+    while (up.log.length < 2) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    expect(clock.elapsed, lessThan(const Duration(milliseconds: 500)));
+    expect(up.log.first.bytes, lessThan(1536 << 10), reason: '${up.log}');
+    fx.stop();
+    await run;
+  });
+
+  test('seeks over a link with a long round trip are no sign of a server that does not answer', () async {
+    src = randomBytes(16 << 20);
+    up.data = src;
+    up.rate = 96 << 10; // above the least progress, but a third of every cycle goes to the reconnect
+    up.latency = const Duration(milliseconds: 300);
+    final fx = fetcher(open(), silence: const Duration(seconds: 1), minProgress: 64 << 10);
+    final run = fx.run(1 << 20);
+    final clock = Stopwatch()..start();
+    var far = false;
+    while (clock.elapsed < const Duration(seconds: 4)) {
+      fx.retarget((far = !far) ? 8 << 20 : 1 << 20);
+      for (var i = 0; i < 20; i++) {
+        expect(fx.notAnsweringFor, isNull, reason: 'at ${clock.elapsed}: ${up.log}');
+        await Future.delayed(const Duration(milliseconds: 20));
+      }
+    }
+    expect(up.log.length, greaterThan(5), reason: 'every retarget is a new request: ${up.log}');
+    fx.stop();
+    expect(await run, FetchOutcome.stopped);
+  });
+
+  test('a server that answers every request and sends nothing is not answering, however often the player seeks', () async {
+    src = randomBytes(16 << 20);
+    up.data = src;
+    up.silentEveryAfter = 0; // a stalled proxy: the head, then silence
+    up.latency = const Duration(milliseconds: 50);
+    final fx = fetcher(open(), silence: const Duration(seconds: 1), minProgress: 64 << 10);
+    final run = fx.run(1 << 20);
+    final clock = Stopwatch()..start();
+    var far = false;
+    while (fx.notAnsweringFor == null && clock.elapsed < const Duration(seconds: 4)) {
+      fx.retarget((far = !far) ? 8 << 20 : 1 << 20);
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+    expect(fx.notAnsweringFor, isNotNull, reason: 'after ${clock.elapsed}: ${up.log}');
+    expect(fx.failingFor, isNull, reason: 'no request lived long enough to fail');
+    fx.stop();
+    await run;
+  });
+
   test('failures are retried while a player is attached', () async {
     up.failNext.addAll([503, 502, 503]);
     final f = open();
