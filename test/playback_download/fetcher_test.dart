@@ -365,6 +365,60 @@ void main() {
     expect(up.log[2].range, startsWith('bytes=${1 << 20}-'));
   });
 
+  test('a resume in the middle of the index keeps it pinned', () async {
+    const moov = 3 << 20;
+    src = m4aWithTrailingMoov(mdat: 4 << 20, moov: moov);
+    up.data = src;
+    up.rate = 1 << 20;
+    final at = src.length - moov;
+    final f = open();
+    final fx = fetcher(f);
+    final run = fx.run(0);
+    while (fx.position <= at + (256 << 10)) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    fx.suspend();
+    fx.resume(); // iOS took the socket: the request goes on from where it was, from the middle of the index
+    while (up.log.length < 3 || fx.position <= at + (384 << 10)) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    fx.retarget(1 << 20);
+    expect(await run, FetchOutcome.complete);
+    expect(await finish(f), src);
+    expect(up.log[2].range, endsWith('-${src.length - 1}'), reason: '${up.log}');
+    expect(up.log[2].range, isNot('bytes=$at-${src.length - 1}'));
+    expect(at + moov - int.parse(RegExp(r'bytes=(\d+)-').firstMatch(up.log[2].range!)![1]!), up.log[2].bytes,
+        reason: 'the rest of the index is not cut: ${up.log}');
+    expect(up.log[3].range, startsWith('bytes=${1 << 20}-'));
+  });
+
+  test('one slow answer does not make a retarget wait for many seconds of the rest', () async {
+    src = randomBytes(16 << 20);
+    up.data = src;
+    up.rate = 1 << 20;
+    up.latency = const Duration(seconds: 5); // a stall on the first answer
+    final f = open();
+    final fx = fetcher(f);
+    final from = src.length - (8 << 20);
+    final run = fx.run(from);
+    while (up.log.isEmpty || up.log.first.status == null) {
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
+    up.latency = Duration.zero;
+    while (fx.rate == 0 || fx.position < from + (1200 << 10)) {
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
+    // About 6.8 s of the rest are left: more than the answer time counts for.
+    final clock = Stopwatch()..start();
+    fx.retarget(1 << 20);
+    while (up.log.length < 2) {
+      await Future.delayed(const Duration(milliseconds: 5));
+    }
+    expect(clock.elapsed, lessThan(const Duration(milliseconds: 500)), reason: '${up.log}');
+    fx.stop();
+    await run;
+  });
+
   test('a retarget that waits for a closing request moves the transfer once that request falls silent', () async {
     up.rate = 256 << 10;
     final f = open();

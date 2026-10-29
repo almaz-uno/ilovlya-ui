@@ -74,9 +74,16 @@ class Fetcher {
   static const defaultMinProgress = 64 << 10;
 
   /// A retarget waits for the request in flight when the rest of its gap arrives, at the measured rate, within the
-  /// longer of this and twice the time the latest request took to be answered. Aborting costs a reconnect, about that
-  /// answer time; the rest of the gap would arrive meanwhile anyway.
+  /// longer of this and the usual time a request takes to be answered ([maxAnswerTime] at most). Aborting costs a
+  /// reconnect, about that answer time; the rest of the gap would arrive meanwhile anyway.
   static const closingTime = Duration(seconds: 1);
+
+  /// The most the answer time counts for in [closingTime]: an answer that took longer was a stall, not the cost of a
+  /// reconnect, and would make a seek wait for many MiB.
+  static const maxAnswerTime = Duration(seconds: 3);
+
+  /// Weight of the newest answer in the usual answer time.
+  static const answerAlpha = 0.3;
 
   /// What stands for [closingTime] at the measured rate while no rate is measured yet: the first request of a run.
   /// The index of a long audio recording, some hundred KiB, fits.
@@ -154,8 +161,11 @@ class Fetcher {
   bool _pinNext = false;
   /// Since the request in flight last showed life: was made, was answered, or brought a byte; see [liveWithin].
   final Stopwatch _sinceSign = Stopwatch();
-  /// How long the latest answered request took from being made to its answer: what a reconnect costs.
+  /// How long a request usually takes from being made to its answer, a moving average: what a reconnect costs.
   Duration _answerTime = Duration.zero;
+  /// Where the index at the end begins, once the first bytes have shown it; a request from there is checked to bring
+  /// a `moov` box.
+  int? _pinAt;
   Timer? _deferredTimer;
   /// Set from a retarget or a resume until the next answer: the reconnect the transfer brought on itself.
   DateTime? _reconnectingSince;
@@ -299,6 +309,7 @@ class Fetcher {
     _deferredTo = null;
     _pinNext = false;
     _headWanted = 16;
+    _pinAt = null;
     _flowingSince = null;
     _arrivals.clear();
     var failures = 0;
@@ -395,7 +406,7 @@ class Fetcher {
     final r = rate;
     if (_pinned) return r == 0 || left <= r * maxPinTime.inMicroseconds / 1e6;
     if (r == 0) return left <= closingFloor;
-    final within = max(closingTime.inMicroseconds, 2 * _answerTime.inMicroseconds);
+    final within = max(closingTime.inMicroseconds, min(_answerTime.inMicroseconds, maxAnswerTime.inMicroseconds));
     return left <= r * within / 1e6;
   }
 
@@ -525,12 +536,13 @@ class Fetcher {
     }
 
     _answered();
-    _answerTime = asked.elapsed;
+    final took = asked.elapsed;
+    _answerTime = _answerTime == Duration.zero ? took : took * answerAlpha + _answerTime * (1 - answerAlpha);
     _sinceSign.reset();
     final reconnecting = _reconnectingSince;
     if (reconnecting != null) {
-      final took = _now().difference(reconnecting);
-      _excluded += took < reconnectAllowance ? took : reconnectAllowance;
+      final cost = _now().difference(reconnecting);
+      _excluded += cost < reconnectAllowance ? cost : reconnectAllowance;
       _reconnectingSince = null;
     }
     // An open-ended first request learns the length from its answer, and ends there.
@@ -545,9 +557,10 @@ class Fetcher {
         // that is already arriving.
         if (_interrupted) break;
         if (!pinChecked) {
-          // What follows `mdat` is not always the index; anything else is fetched by the usual rules.
+          // What follows `mdat` is not always the index; anything else is fetched by the usual rules. Only a request
+          // from where the index begins shows its type; one from its middle — after a resume — keeps the pin.
           pinChecked = true;
-          if (offset == start && chunk.length >= 8 && String.fromCharCodes(chunk, 4, 8) != 'moov') _pinned = false;
+          if (start == _pinAt && offset == start && chunk.length >= 8 && String.fromCharCodes(chunk, 4, 8) != 'moov') _pinned = false;
         }
         try {
           await file.write(offset, chunk);
@@ -600,10 +613,17 @@ class Fetcher {
       case MoovTrailing(:final at):
         _headWanted = null;
         final missing = file.ranges.end(at) < length;
+        // The start of the tail already stored shows its type here; the request then begins further on.
+        if (missing && file.ranges.end(at) >= at + 8) {
+          final type = await file.read(at, 8);
+          if (String.fromCharCodes(type, 4, 8) != 'moov') return;
+        }
         // A retarget already made — the player reading elsewhere, likely the index itself — is left alone, and the look
-        // is not repeated: the player knows where to read now.
+        // is not repeated: the player knows where to read now. One that waits for the request in flight is not made yet:
+        // the index goes first, and that retarget right after it.
         if (missing && length - at <= maxTrailingMoov && _position < at && !_interrupted) {
           AppLoggers.download.i('Playback download of ${file.downloadId}: moov at $at of $length follows mdat, fetching it first');
+          _pinAt = at;
           _pinNext = true;
           _interrupt(at);
         }
