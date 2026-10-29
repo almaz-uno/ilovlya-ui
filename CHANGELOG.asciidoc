@@ -9,6 +9,16 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
+== [3.12.0] - 2026-10-30
+
+.Fixed
+- Playing a recording while it downloads no longer gives up on a server that is slow to answer, as over a mobile link, when the player reads two places of the file at once; a server that stays silent or cannot be connected to is now reported as unreachable instead of being retried for ever (#193, #185)
+
+.Changed
+- The app is built on Riverpod 3; the macOS project is migrated for Flutter 3.47 (#173, #184)
+- The server tells a client only the errors meant for it and keeps internal details in its log (ilovlya#90)
+- The server needs its database address set in `DB_URL` and no longer falls back to a built-in default (ilovlya#88)
+
 == [3.11.0] - 2026-10-29
 
 .Fixed
