@@ -414,7 +414,8 @@ void main() {
     while (up.log.length < 2) {
       await Future.delayed(const Duration(milliseconds: 5));
     }
-    expect(clock.elapsed, lessThan(const Duration(milliseconds: 500)), reason: '${up.log}');
+    expect(up.log.first.bytes, lessThan(8 << 20), reason: 'cut, not let finish: ${up.log}');
+    expect(clock.elapsed, lessThan(const Duration(seconds: 3)), reason: 'a safety net; the rest takes 6.8 s: ${up.log}');
     fx.stop();
     await run;
   });
@@ -471,7 +472,8 @@ void main() {
     while (up.log.length < 4) {
       await Future.delayed(const Duration(milliseconds: 5));
     }
-    expect(clock.elapsed, lessThan(const Duration(milliseconds: 700)), reason: '${up.log}');
+    expect(up.log[2].bytes, lessThan(4 << 20), reason: 'cut, not let finish: ${up.log}');
+    expect(clock.elapsed, lessThan(const Duration(seconds: 5)), reason: 'a safety net: ${up.log}');
     fx.stop();
     await run;
   });
@@ -516,7 +518,7 @@ void main() {
     while (up.log.length < 3) {
       await Future.delayed(const Duration(milliseconds: 5));
     }
-    expect(clock.elapsed, lessThan(const Duration(seconds: 1)), reason: 'not after the whole gap: ${up.log}');
+    expect(clock.elapsed, lessThan(const Duration(seconds: 3)), reason: 'a safety net; the whole gap takes ~4 s: ${up.log}');
     expect(up.log[1].range, 'bytes=0-${from - 1}');
     expect(up.log[1].status, isNull, reason: 'aborted before its answer: ${up.log}');
     expect(up.log[2].range, startsWith('bytes=${2 << 20}-'));
@@ -539,8 +541,8 @@ void main() {
     while (up.log.length < 2) {
       await Future.delayed(const Duration(milliseconds: 5));
     }
-    expect(clock.elapsed, lessThan(const Duration(milliseconds: 500)));
-    expect(up.log.first.bytes, lessThan(1536 << 10), reason: '${up.log}');
+    expect(up.log.first.bytes, lessThan(1536 << 10), reason: 'cut, not let finish: ${up.log}');
+    expect(clock.elapsed, lessThan(const Duration(seconds: 3)), reason: 'a safety net; the rest takes ~10 s');
     fx.stop();
     await run;
   });

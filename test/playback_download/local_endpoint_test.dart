@@ -142,7 +142,9 @@ void main() {
     final tailFrom = src.length - 65536;
     final tail = await fetch(player, url, range: 'bytes=$tailFrom-');
     expect(tail.body, src.sublist(tailFrom));
-    expect(tail.firstByte, lessThan(const Duration(seconds: 1)), reason: 'the whole file would take 2 s');
+    expect(up.log[1].range, startsWith('bytes=$tailFrom-'), reason: 'moved where the player reads: ${up.log}');
+    expect(up.log.first.bytes, lessThan(tailFrom), reason: 'the first request was cut, not let run to the tail: ${up.log}');
+    expect(tail.firstByte, lessThan(const Duration(seconds: 5)), reason: 'a safety net; the whole file takes 2 s');
     final rest = await fetch(player, url, range: 'bytes=0-');
     expect(rest.body, src);
     await settle(source);
@@ -156,8 +158,10 @@ void main() {
     final seekTo = 3 << 20;
     final after = await fetch(player, url, range: 'bytes=$seekTo-', take: 100000);
     expect(after.body, src.sublist(seekTo, seekTo + 100000));
-    expect(after.firstByte, lessThan(const Duration(milliseconds: 800)), reason: 'waiting would take ~2.8 s at 1 MiB/s');
     expect(up.log.map((r) => r.range), contains(startsWith('bytes=$seekTo-')));
+    final below = up.log.where((r) => int.parse(RegExp(r'bytes=(\d+)-').firstMatch(r.range!)![1]!) < seekTo).fold(0, (n, r) => n + r.bytes);
+    expect(below, lessThan(seekTo), reason: 'moved there, not fetched its way there: ${up.log}');
+    expect(after.firstByte, lessThan(const Duration(seconds: 5)), reason: 'a safety net; fetching the way there takes ~2.8 s');
     source.fetcher.stop();
   });
 
@@ -256,6 +260,7 @@ void main() {
 
   test('a partial file whose server file changed meanwhile is started over, and serves none of the old bytes', () async {
     up.rate = 4 << 20;
+    up.silentNextAfter = 2 << 20; // the first transfer never finishes the file, however slow the test runs
     final (first, url) = serve();
     await fetch(player, url, range: 'bytes=0-', take: 1 << 20);
     await first.dispose(); // the application went away, keeping what was stored
@@ -284,10 +289,14 @@ void main() {
     final waiting = await fetch(player, url, range: 'bytes=${3 << 20}-');
     expect(waiting.error, isNotNull, reason: 'reset, so that the player learns of it');
     expect(clock.elapsed, greaterThanOrEqualTo(const Duration(milliseconds: 300)));
+    final failing = source.fetcher.failingFor!;
     clock.reset();
     final next = await fetch(player, url, range: 'bytes=${3 << 20}-');
     expect(next.error, isNotNull);
-    expect(clock.elapsed, lessThan(const Duration(seconds: 1)), reason: 'one try for it, not a second full wait');
+    // The try the read prompts fails too, and the failure goes on from where it was: no second full wait.
+    // The fetcher's clock is not the stopwatch: they may part by microseconds.
+    expect(source.fetcher.failingFor, greaterThanOrEqualTo(failing + clock.elapsed - const Duration(milliseconds: 10)));
+    expect(clock.elapsed, lessThan(const Duration(seconds: 5)), reason: 'a safety net');
 
     up.down = false;
     up.rate = null;
@@ -306,7 +315,7 @@ void main() {
     final read = await fetch(player, url, range: 'bytes=0-');
     expect(read.error, isNull);
     expect(read.body, src, reason: 'the whole file, through one response, with no reopening');
-    expect(clock.elapsed, lessThan(const Duration(seconds: 5)));
+    expect(clock.elapsed, lessThan(const Duration(seconds: 15)), reason: 'a safety net');
     expect(up.log.first.silenced, isTrue);
     expect(up.log[1].range, startsWith('bytes=${up.log.first.bytes}-'), reason: 'resumed at the byte it reached: ${up.log}');
     await settle(source);
@@ -339,8 +348,10 @@ void main() {
     final clock = Stopwatch()..start();
     final waiting = await fetch(player, url, range: 'bytes=${3 << 20}-');
     expect(waiting.error, isNotNull, reason: 'reset, so that the player learns of it');
-    expect(clock.elapsed, lessThan(const Duration(seconds: 2)), reason: 'given up about 600 ms after the bytes stopped');
+    // Given up for the server's silence, whichever reads steered the transfer meanwhile (the first one may still wait).
+    expect(source.serverAway, isTrue, reason: '${up.log}');
     expect(up.log.where((r) => r.silenced), isNotEmpty);
+    expect(clock.elapsed, lessThan(const Duration(seconds: 5)), reason: 'a safety net; given up about 600 ms after the bytes stopped');
 
     up.silent = false;
     up.rate = null;
@@ -348,6 +359,25 @@ void main() {
     expect(back.error, isNull);
     expect(back.body, Uint8List.sublistView(src, 3 << 20));
     expect(source.isGone, isFalse);
+  });
+
+  test('a silent server is given up though two waiting reads steer the transfer by turns', () async {
+    // libmpv's first response stalls at the front while it reads elsewhere; both reads wait, and each steers the transfer
+    // back to itself every 250 ms. Before, every request was cut short of the silence timeout by the other read's
+    // retarget, a cut request was no failure, and the reads never gave up: ~8 requests a second for ever.
+    up.rate = 1 << 20;
+    final (source, url) = serve(giveUpAfter: const Duration(milliseconds: 600), backoff: const Duration(milliseconds: 50), silence: const Duration(seconds: 1));
+    final (front, paused) = await stall(url, after: 65536);
+    try {
+      up.silent = true;
+      final far = await fetch(player, url, range: 'bytes=${3 << 20}-').timeout(const Duration(seconds: 10));
+      expect(far.error, isNotNull, reason: 'reset, so that the player learns of it');
+      expect(source.serverAway, isTrue);
+      expect(up.log.map((r) => r.range), containsAll([startsWith('bytes=${3 << 20}-'), isNot(startsWith('bytes=${3 << 20}-'))]), reason: 'both reads steered: ${up.log}');
+    } finally {
+      await paused.cancel();
+      front.destroy();
+    }
   });
 
   test('a file replaced on the server during playback ends the playback rather than splicing two files', () async {
@@ -392,9 +422,7 @@ void main() {
       expect((await fetch(player, url, range: 'bytes=0-1023')).status, 206);
     }
     await endpoint.suspend();
-    final clock = Stopwatch()..start();
-    await endpoint.resume();
-    expect(clock.elapsed, lessThan(const Duration(seconds: 1)));
+    await endpoint.resume(wait: Duration.zero); // bound at the first try, or this throws
     expect((await fetch(player, url, range: 'bytes=0-1023')).body, Uint8List.sublistView(src, 0, 1024));
   });
 

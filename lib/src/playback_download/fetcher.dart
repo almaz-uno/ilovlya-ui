@@ -140,6 +140,11 @@ class Fetcher {
   Duration _suspended = Duration.zero;
   DateTime? _failingSince;
   DateTime? _silentSince;
+  /// Since when the server has said nothing to this transfer: its last answer or byte, or the request that began the
+  /// quiet; `null` between a request that ended well or failed and the next one. A retarget does not start it over:
+  /// readers that steer the transfer by turns — libmpv's stalled first response and its read at the index — would
+  /// otherwise cut every request short of [silenceTimeout], and a silent server would never fail.
+  DateTime? _quietSince;
   DateTime? _troubleSince;
   DateTime? _flowingSince;
   /// Bytes received, in slices of at most [_slice], over the last [silenceTimeout].
@@ -232,6 +237,8 @@ class Fetcher {
     if (at == null) return;
     _suspended += DateTime.now().difference(at);
     _suspendedAt = null;
+    // The sockets were reclaimed, not left unanswered by the server: the request made now has the whole silence timeout.
+    _quietSince = null;
     if (_running && _request != null) {
       // The index at the end is fetched again as it was: pinned.
       _pinNext = _pinNext || _pinned;
@@ -304,6 +311,7 @@ class Fetcher {
     _stopped = false;
     _position = from;
     _measuredSince = _progressNow();
+    _quietSince = null;
     _reconnectingSince = null;
     _troubleSince = null;
     _deferredTo = null;
@@ -343,12 +351,14 @@ class Fetcher {
           case _Attempt.done:
           case _Attempt.restarted:
             failures = 0;
+            _quietSince = null;
           case _Attempt.interrupted:
             break;
           case _Attempt.failed:
             _reconnectingSince = null;
             failures++;
             _failingSince ??= _silentSince ?? _now();
+            _quietSince = null;
             _troubleSince ??= _failingSince;
             if (!playerAttached && failures >= maxFailuresUnattended) return FetchOutcome.failed;
             await _sleepUnlessInterrupted(_backoff(failures, readerWaiting));
@@ -466,6 +476,7 @@ class Fetcher {
 
   Future<_Attempt> _fetchGap(int start, int? end) async {
     _silentSince = null;
+    _quietSince ??= _now();
     _request = null;
     final HttpClientRequest request;
     final HttpClientResponse response;
@@ -477,7 +488,7 @@ class Fetcher {
       final lastModified = file.lastModified;
       if (lastModified != null) request.headers.set(HttpHeaders.ifRangeHeader, lastModified);
       if (authorization != null) request.headers.set(HttpHeaders.authorizationHeader, authorization!);
-      response = await request.close().timeout(silenceTimeout);
+      response = await request.close().timeout(_silenceLeft());
     } on Object catch (e) {
       if (_interrupted) return _Attempt.interrupted;
       final timedOut = e is TimeoutException || (e is SocketException && e.message.contains('timed out'));
@@ -565,6 +576,7 @@ class Fetcher {
         if (!pinChecked) pinChecked = await _checkPin(offset);
         _position = offset;
         _sinceSign.reset();
+        _quietSince = _now();
         _measure(chunk.length);
         // The record is written anew beside the data, so it fails where the open data file does not: a directory
         // that became read-only, space that ran out between the two. Either way nothing more can be kept.
@@ -640,11 +652,18 @@ class Fetcher {
     }
   }
 
-  /// The request in flight said nothing for [silenceTimeout]: it is dropped, and a failure it starts is dated from the
-  /// moment it fell silent.
+  /// What is left of [silenceTimeout] since the server last said anything, for the answer to the request being made.
+  Duration _silenceLeft() {
+    final since = _quietSince;
+    final left = since == null ? silenceTimeout : silenceTimeout - _now().difference(since);
+    return left > Duration.zero ? left : Duration.zero;
+  }
+
+  /// The server said nothing for [silenceTimeout]: the request in flight is dropped, and a failure it starts is dated
+  /// from the moment the server fell silent — not from when the timer fired, which a busy event loop delays.
   void _silent() {
     _request?.abort();
-    _silentSince = _now().subtract(silenceTimeout);
+    _silentSince = _quietSince ?? _now().subtract(silenceTimeout);
   }
 
   _Attempt _cannotWrite(String path, FileSystemException e) {
@@ -656,6 +675,7 @@ class Fetcher {
   /// The server answered with something the transfer goes on with.
   void _answered() {
     _failingSince = null;
+    _quietSince = _now();
     onAnswer?.call();
   }
 
