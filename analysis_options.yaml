@@ -11,11 +11,6 @@ include: package:flutter_lints/flutter.yaml
 plugins:
   riverpod_lint: ^3.1.0
 analyzer:
-  errors:
-    # The analysis-server plugin currently still needs the legacy registration below.
-    analysis_options_deprecated_plugins: ignore
-  plugins:
-    - riverpod_lint
   exclude:
     - build/**
     - android/**

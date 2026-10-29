@@ -103,7 +103,7 @@ Future<List<String>> _mediaDirChoices() async {
   return dirs;
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class SettingsNotifier extends _$SettingsNotifier {
   @override
   Future<Settings> build() async {

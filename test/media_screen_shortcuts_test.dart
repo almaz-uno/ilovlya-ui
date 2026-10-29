@@ -193,21 +193,20 @@ Widget _app({Future<RecordingInfo> Function(String url)? addRecording}) => Provi
     );
 
 
-Widget _detailsHarness({
+List<Override> _detailsOverrides({
   required RecordingInfo recording,
-  Future<void> Function()? onRefresh,
   Future<void> Function()? setSeen,
-}) => ProviderScope(
-      retry: (_, _) => null,
-      overrides: [
-        settingsProvider.overrideWith(_TestSettingsNotifier.new),
-        localDTProvider.overrideWith(_TestLocalDTNotifier.new),
-        recordingProvider(recording.id).overrideWith(() => _TestRecordingNotifier(recording, onRefresh: onRefresh)),
-        downloadsProvider(recording.id).overrideWith(() => _TestDownloadsNotifier([])),
-        thumbnailDataProvider(recording.thumbnailUrl).overrideWith(_TestThumbnailNotifier.new),
-        if (setSeen != null) setSeenProvider(recording.id).overrideWith((ref) => setSeen()),
-      ],
-      child: MaterialApp(
+  Future<void> Function()? onRefresh,
+}) => [
+      settingsProvider.overrideWith(_TestSettingsNotifier.new),
+      localDTProvider.overrideWith(_TestLocalDTNotifier.new),
+      recordingProvider(recording.id).overrideWith(() => _TestRecordingNotifier(recording, onRefresh: onRefresh)),
+      downloadsProvider(recording.id).overrideWith(() => _TestDownloadsNotifier([])),
+      thumbnailDataProvider(recording.thumbnailUrl).overrideWith(_TestThumbnailNotifier.new),
+      if (setSeen != null) setSeenProvider(recording.id).overrideWith((ref) => setSeen()),
+    ];
+
+Widget _detailsApp(RecordingInfo recording) => MaterialApp(
         restorationScopeId: 'details-safety-test',
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -219,8 +218,7 @@ Widget _detailsHarness({
             ),
           ),
         ),
-      ),
-    );
+      );
 
 Future<void> _pumpUi(WidgetTester tester) async {
   for (var i = 0; i < 5; i++) {
@@ -395,7 +393,11 @@ void main() {
   testWidgets('seen request completion after leaving recording does not use disposed ref', (tester) async {
     final request = Completer<void>();
     final recording = RecordingInfo(id: 'one', title: 'Jazz recording', thumbnailUrl: 'thumb:seen');
-    await tester.pumpWidget(_detailsHarness(recording: recording, setSeen: () => request.future));
+    await tester.pumpWidget(ProviderScope(
+      retry: (_, _) => null,
+      overrides: _detailsOverrides(recording: recording, setSeen: () => request.future),
+      child: _detailsApp(recording),
+    ));
     await tester.tap(find.text('Open recording'));
     await _pumpUi(tester);
 
@@ -412,12 +414,13 @@ void main() {
     final pendingRefresh = Completer<void>();
     var refreshCalls = 0;
     final recording = RecordingInfo(id: 'one', title: 'Jazz recording', thumbnailUrl: 'thumb:periodic');
-    await tester.pumpWidget(_detailsHarness(
-      recording: recording,
-      onRefresh: () async {
+    await tester.pumpWidget(ProviderScope(
+      retry: (_, _) => null,
+      overrides: _detailsOverrides(recording: recording, onRefresh: () async {
         refreshCalls++;
         await pendingRefresh.future;
-      },
+      }),
+      child: _detailsApp(recording),
     ));
     await tester.tap(find.text('Open recording'));
     await tester.pumpAndSettle();

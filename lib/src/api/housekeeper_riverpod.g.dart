@@ -34,7 +34,7 @@ final class LocalMediaHousekeeperProvider
 }
 
 String _$localMediaHousekeeperHash() =>
-    r'271bbe153ff61fa26e6eb3e65ba56df972d50e92';
+    r'e429153b5ffc48f6799376632478279404b10681';
 
 abstract class _$LocalMediaHousekeeper extends $AsyncNotifier<(int, int)> {
   FutureOr<(int, int)> build();
@@ -78,7 +78,7 @@ final class LocalDataNotifierProvider
   LocalDataNotifier create() => LocalDataNotifier();
 }
 
-String _$localDataNotifierHash() => r'66b2162347edee626dd32ab59c95bcc168bb2947';
+String _$localDataNotifierHash() => r'f17b378424b412f3879f6543e74ce4c43da60ae3';
 
 abstract class _$LocalDataNotifier extends $AsyncNotifier<int> {
   FutureOr<int> build();

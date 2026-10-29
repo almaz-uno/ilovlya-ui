@@ -31,13 +31,11 @@ class DownloadsNotifier extends _$DownloadsNotifier {
     final stopwatch = Stopwatch()..start();
     try {
       final sp = await ref.watch(storePlacesProvider.future);
-
-      return _readFromDisk(sp);
-    } on PathNotFoundException catch (_) {
+      return await _readFromDiskOrWeb(sp, _fromWeb);
+    } on PathNotFoundException {
       try {
         return await _fromWeb();
       } catch (_) {
-        // _fromWeb logged the failure; a missing cache must stay usable offline.
         return [];
       }
     } catch (e, s) {
@@ -45,6 +43,22 @@ class DownloadsNotifier extends _$DownloadsNotifier {
       return [];
     } finally {
       AppLoggers.download.d('Load downloads for $recordingId from disk: elapsed=${stopwatch.elapsed}');
+    }
+  }
+
+  Future<List<Download>> _readFromDiskOrWeb(StorePlaces sp, Future<List<Download>> Function() fetchFromWeb) async {
+    try {
+      return _readFromDisk(sp);
+    } on PathNotFoundException {
+      try {
+        return await fetchFromWeb();
+      } catch (_) {
+        // The remote fetch logs its error; a missing cache must stay usable offline.
+        return [];
+      }
+    } catch (e, s) {
+      AppLoggers.download.e('Failed to load downloads from disk', error: e, stackTrace: s);
+      return [];
     }
   }
 
@@ -107,8 +121,6 @@ class DownloadsNotifier extends _$DownloadsNotifier {
         }, flush: false);
       }
 
-      container.invalidate(recordingProvider(recordingId));
-
       return downloads;
     } catch (e, s) {
       AppLoggers.download.e('Failed to pull downloads from server', error: e, stackTrace: s);
@@ -145,7 +157,14 @@ class DownloadsNotifier extends _$DownloadsNotifier {
       if (f.existsSync()) f.deleteSync();
     }
     // Re-read data from disk and update state directly
-    final newDownloads = _readFromDisk(sp);
+    final newDownloads = await _readFromDiskOrWeb(sp, () async {
+      try {
+        return await container.refresh(listDownloadsProvider(recordingId).future);
+      } catch (e, s) {
+        AppLoggers.download.e('Failed to load downloads from server', error: e, stackTrace: s);
+        rethrow;
+      }
+    });
     if (ref.mounted) state = AsyncValue.data(newDownloads);
     container.invalidate(recordingProvider(recordingId));
   }

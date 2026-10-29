@@ -26,7 +26,7 @@ final class StorePlacesProvider
         argument: null,
         retry: null,
         name: r'storePlacesProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -46,4 +46,4 @@ final class StorePlacesProvider
   }
 }
 
-String _$storePlacesHash() => r'447c516ce98b2f9c941c71ff75129c83ce25efe5';
+String _$storePlacesHash() => r'1b987c7c48ead4187649965ebd1885cce5fa186f';

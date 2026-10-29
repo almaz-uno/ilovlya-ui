@@ -41,7 +41,7 @@ class StorePlaces {
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 Future<StorePlaces> storePlaces(Ref ref) async {
   // selectAsync waits for settings to load instead of throwing on AsyncLoading;
   // both dependencies are registered before the first await.

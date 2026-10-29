@@ -38,6 +38,17 @@ class _LocalTasks extends LocalDTNotifier {
   Map<String, LocalDownloadTask> build() => {};
 }
 
+class _CountingMediaListNotifier extends MediaListNotifier {
+  _CountingMediaListNotifier(this.onBuild);
+  final void Function() onBuild;
+
+  @override
+  Future<List<RecordingInfo>> build() async {
+    onBuild();
+    return [];
+  }
+}
+
 class _DelayedPlaybackDownloads extends PlaybackDownloads {
   final started = Completer<void>();
   final finishDiscard = Completer<void>();
@@ -109,6 +120,7 @@ void main() {
     await playback.started.future;
     subscription.close();
     await Future<void>.delayed(Duration.zero);
+    expect(c.exists(downloadsProvider('r1')), isFalse);
     playback.finishDiscard.complete();
     await cleanup;
 
@@ -130,6 +142,7 @@ void main() {
     expect(await playback.discardFileStarted.future, 'r1-local.mp4');
     subscription.close();
     await Future<void>.delayed(Duration.zero);
+    expect(c.exists(localMediaHousekeeperProvider), isFalse);
     playback.finishDiscardFile.complete();
     expect(await cleanup, (1, 3));
 
@@ -137,31 +150,44 @@ void main() {
   });
 
   test('recording refresh writes its cache after the notifier is disposed', () async {
-    saveRecording(recording());
+    final placesReady = Completer<StorePlaces>();
+    final placesStarted = Completer<void>();
     final response = Completer<RecordingInfo>();
-    final started = Completer<void>();
-    final c = container(
+    var serverReads = 0;
+    var mediaListBuilds = 0;
+    final c = createTestProviderContainer(
       overrides: [
+        storePlacesProvider.overrideWith((ref) {
+          placesStarted.complete();
+          return placesReady.future;
+        }),
+        settingsProvider.overrideWith(() => _Settings(Settings(dataStorageDirectory: places.dataDir, mediaStorageDirectory: places.mediaDir))),
+        mediaListProvider.overrideWith(() => _CountingMediaListNotifier(() => mediaListBuilds++)),
         getRecordingProvider('r1').overrideWith((ref) async {
-          started.complete();
+          serverReads++;
           return response.future;
         }),
       ],
     );
     addTearDown(c.dispose);
-    c.listen(mediaListProvider, (_, _) {});
+    final mediaListSubscription = c.listen(mediaListProvider, (_, _) {});
+    addTearDown(mediaListSubscription.close);
     await c.read(mediaListProvider.future);
     final subscription = c.listen(recordingProvider('r1'), (_, _) {});
-    await c.read(recordingProvider('r1').future);
 
     final refresh = c.read(recordingProvider('r1').notifier).refreshFromServer();
-    await started.future;
+    await placesStarted.future;
     subscription.close();
     await Future<void>.delayed(Duration.zero);
+    expect(c.exists(recordingProvider('r1')), isFalse);
+    placesReady.complete(places);
     response.complete(recording(title: 'Updated title'));
     await refresh;
 
+    expect(serverReads, 1);
     expect(jsonDecode(File(p.join(places.recordings().path, 'r1')).readAsStringSync())['title'], 'Updated title');
+    await Future<void>.delayed(Duration.zero);
+    expect(mediaListBuilds, greaterThan(1));
   });
 
   test('media list refresh writes its cache after the notifier is disposed', () async {
@@ -183,6 +209,7 @@ void main() {
     await started.future;
     subscription.close();
     await Future<void>.delayed(Duration.zero);
+    expect(c.exists(mediaListProvider), isFalse);
     response.complete([recording(title: 'From server')]);
     await refresh;
 
@@ -190,29 +217,37 @@ void main() {
   });
 
   test('downloads refresh writes its cache after the notifier is disposed', () async {
-    saveRecording(recording());
-    saveDownload(download());
+    final placesReady = Completer<StorePlaces>();
+    final placesStarted = Completer<void>();
     final response = Completer<List<Download>>();
-    final started = Completer<void>();
-    final c = container(
+    var serverReads = 0;
+    final c = createTestProviderContainer(
       overrides: [
+        storePlacesProvider.overrideWith((ref) {
+          placesStarted.complete();
+          return placesReady.future;
+        }),
+        settingsProvider.overrideWith(() => _Settings(Settings(dataStorageDirectory: places.dataDir, mediaStorageDirectory: places.mediaDir))),
+        localDTProvider.overrideWith(() => _LocalTasks()),
         listDownloadsProvider('r1').overrideWith((ref) async {
-          started.complete();
+          serverReads++;
           return response.future;
         }),
       ],
     );
     addTearDown(c.dispose);
     final subscription = c.listen(downloadsProvider('r1'), (_, _) {});
-    await c.read(downloadsProvider('r1').future);
 
     final refresh = c.read(downloadsProvider('r1').notifier).refreshFromServer();
-    await started.future;
+    await placesStarted.future;
     subscription.close();
     await Future<void>.delayed(Duration.zero);
+    expect(c.exists(downloadsProvider('r1')), isFalse);
+    placesReady.complete(places);
     response.complete([download(title: 'Updated download')]);
     await refresh;
 
+    expect(serverReads, 1);
     expect(jsonDecode(File(p.join(places.downloads().path, 'd1')).readAsStringSync())['title'], 'Updated download');
   });
 
@@ -226,6 +261,8 @@ void main() {
     final update = c.read(thumbnailDataProvider(url).notifier).updateThumbnailImg(bytes);
     await Future<void>.delayed(Duration.zero);
     subscription.close();
+    await Future<void>.delayed(Duration.zero);
+    expect(c.exists(thumbnailDataProvider(url)), isFalse);
     placesReady.complete(places);
     await update;
 

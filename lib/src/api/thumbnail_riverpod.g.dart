@@ -51,7 +51,7 @@ final class ThumbnailDataNotifierProvider
 }
 
 String _$thumbnailDataNotifierHash() =>
-    r'd29bcf3ceb1bf8e7e13390c34b7f7f219eac8922';
+    r'adbbddb25b61f03aa3d0678f9150f45b584acef9';
 
 final class ThumbnailDataNotifierFamily extends $Family
     with

@@ -8,6 +8,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import '../model/recording_info.dart';
+import '../model/settings.dart';
 import '../settings/settings_provider.dart';
 import '../utils/logger_provider.dart';
 import 'api_riverpod.dart';
@@ -32,35 +33,7 @@ class MediaListNotifier extends _$MediaListNotifier {
     final stopwatch = Stopwatch()..start();
     try {
       final sp = await ref.watch(storePlacesProvider.future);
-      final recordingsDir = sp.recordings();
-      final mediaDir = sp.media();
-
-      final resultList = <RecordingInfo>[];
-
-      final list = recordingsDir.existsSync() ? recordingsDir.listSync() : <FileSystemEntity>[];
-
-      final mediaEntities = mediaDir.existsSync() ? mediaDir.listSync() : <FileSystemEntity>[];
-
-      for (final entity in list) {
-        if (entity is! File) continue;
-
-        try {
-          final recording = RecordingInfo.fromJson(jsonDecode(entity.readAsStringSync()));
-          if (recording.id.isEmpty) throw const FormatException('Recording has no ID');
-
-          for (final df in recording.files) {
-            for (final me in mediaEntities) {
-              if (me is! File) continue;
-              recording.hasLocalFile = recording.hasLocalFile || p.basename(me.path) == df;
-              if (recording.hasLocalFile) break;
-            }
-          }
-          resultList.add(recording);
-        } catch (e, s) {
-          AppLoggers.media.w('Skipping unreadable recording ${entity.path}', error: e, stackTrace: s);
-        }
-      }
-      return resultList;
+      return _readAllFromDisk(sp);
     } catch (e, s) {
       AppLoggers.media.e('Failed to load recordings from disk', error: e, stackTrace: s);
       rethrow;
@@ -72,54 +45,68 @@ class MediaListNotifier extends _$MediaListNotifier {
   Future<List<RecordingInfo>> _fromDisk() async {
     final stopwatch = Stopwatch()..start();
     try {
-      final sortByFuture = ref.watch(settingsProvider.selectAsync((final s) => s.sortBy));
-      final showHiddenFuture = ref.watch(settingsProvider.selectAsync((final s) => s.showHidden));
-      final showSeenFuture = ref.watch(settingsProvider.selectAsync((final s) => s.showSeen));
-      final withServerFileFuture = ref.watch(settingsProvider.selectAsync((final s) => s.withServerFile));
-      final withLocalFileFuture = ref.watch(settingsProvider.selectAsync((final s) => s.withLocalFile));
-
-      final sortBy = await sortByFuture;
-      final showHidden = await showHiddenFuture;
-      final showSeen = await showSeenFuture;
-      final withServerFile = await withServerFileFuture;
-      final withLocalFile = await withLocalFileFuture;
+      final settingsFuture = ref.watch(
+        settingsProvider.selectAsync((s) => (sortBy: s.sortBy, showHidden: s.showHidden, showSeen: s.showSeen, withServerFile: s.withServerFile, withLocalFile: s.withLocalFile)),
+      );
+      final placesFuture = ref.watch(storePlacesProvider.future);
+      final selected = await settingsFuture;
+      final sp = await placesFuture;
       if (!ref.mounted) return const [];
-
-      final resultList = <RecordingInfo>[];
-
-      for (final recording in await allFromDisk()) {
-        if (recording.seenAt != null && !showSeen) {
-          continue;
-        }
-        if (recording.hiddenAt != null && !showHidden) {
-          continue;
-        }
-
-        if (withServerFile && !recording.hasFile) {
-          continue;
-        }
-
-        if (withLocalFile && !recording.hasLocalFile) {
-          continue;
-        }
-        resultList.add(recording);
-      }
-
-      resultList.sort((a, b) {
-        final n = DateTime.fromMillisecondsSinceEpoch(0);
-        if (sortBy == "updated_at") {
-          return (b.updatedAt ?? n).compareTo(a.updatedAt ?? n);
-        }
-        return (b.createdAt ?? n).compareTo(a.createdAt ?? n);
-      });
-
-      return resultList;
+      final settings = Settings(sortBy: selected.sortBy, showHidden: selected.showHidden, showSeen: selected.showSeen, withServerFile: selected.withServerFile, withLocalFile: selected.withLocalFile);
+      return _readAndFilterFromDisk(sp, settings);
     } catch (e, s) {
       AppLoggers.media.e('Failed to load recordings from disk', error: e, stackTrace: s);
       rethrow;
     } finally {
       AppLoggers.media.d('Load recordings from disk: elapsed=${stopwatch.elapsed}');
     }
+  }
+
+  List<RecordingInfo> _readAllFromDisk(StorePlaces sp) {
+    final recordingsDir = sp.recordings();
+    final mediaDir = sp.media();
+    final recordings = <RecordingInfo>[];
+    final list = recordingsDir.existsSync() ? recordingsDir.listSync() : <FileSystemEntity>[];
+    final mediaNames = mediaDir.existsSync() ? mediaDir.listSync().whereType<File>().map((file) => p.basename(file.path)).toSet() : <String>{};
+
+    for (final entity in list) {
+      if (entity is! File) continue;
+      try {
+        final recording = RecordingInfo.fromJson(jsonDecode(entity.readAsStringSync()));
+        if (recording.id.isEmpty) throw const FormatException('Recording has no ID');
+        recording.hasLocalFile = recording.hasLocalFile || recording.files.any(mediaNames.contains);
+        recordings.add(recording);
+      } catch (e, s) {
+        AppLoggers.media.w('Skipping unreadable recording ${entity.path}', error: e, stackTrace: s);
+      }
+    }
+    return recordings;
+  }
+
+  List<RecordingInfo> _readAndFilterFromDisk(StorePlaces sp, Settings settings, {List<RecordingInfo> serverRecordings = const []}) {
+    final recordingsById = {for (final recording in _readAllFromDisk(sp)) recording.id: recording};
+    final mediaDir = sp.media();
+    final mediaNames = mediaDir.existsSync() ? mediaDir.listSync().whereType<File>().map((file) => p.basename(file.path)).toSet() : <String>{};
+
+    for (final recording in serverRecordings) {
+      final localRecording = recordingsById[recording.id];
+      recording.hasLocalFile = recording.hasLocalFile || (localRecording?.hasLocalFile ?? false) || recording.files.any(mediaNames.contains);
+      recordingsById[recording.id] = recording;
+    }
+
+    final result = recordingsById.values.where((recording) {
+      if (recording.seenAt != null && !settings.showSeen) return false;
+      if (recording.hiddenAt != null && !settings.showHidden) return false;
+      if (settings.withServerFile && !recording.hasFile) return false;
+      if (settings.withLocalFile && !recording.hasLocalFile) return false;
+      return true;
+    }).toList();
+    result.sort((a, b) {
+      final n = DateTime.fromMillisecondsSinceEpoch(0);
+      if (settings.sortBy == 'updated_at') return (b.updatedAt ?? n).compareTo(a.updatedAt ?? n);
+      return (b.createdAt ?? n).compareTo(a.createdAt ?? n);
+    });
+    return result;
   }
 
   Future<List<RecordingInfo>> _filter(Future<List<RecordingInfo>> list) async {
@@ -187,21 +174,7 @@ class MediaListNotifier extends _$MediaListNotifier {
       }
 
       final settings = await settingsFuture;
-      final mediaFiles = sp.media().existsSync() ? sp.media().listSync() : <FileSystemEntity>[];
-      final showable = recordings.where((recording) {
-        recording.hasLocalFile = recording.hasLocalFile || recording.files.any((name) => mediaFiles.any((entity) => entity is File && p.basename(entity.path) == name));
-        if (recording.seenAt != null && !settings.showSeen) return false;
-        if (recording.hiddenAt != null && !settings.showHidden) return false;
-        if (settings.withServerFile && !recording.hasFile) return false;
-        if (settings.withLocalFile && !recording.hasLocalFile) return false;
-        return true;
-      }).toList()
-        ..sort((a, b) {
-          final n = DateTime.fromMillisecondsSinceEpoch(0);
-          if (settings.sortBy == "updated_at") return (b.updatedAt ?? n).compareTo(a.updatedAt ?? n);
-          return (b.createdAt ?? n).compareTo(a.createdAt ?? n);
-        });
-      return await _filterWithPhrase(phrase, Future.value(showable));
+      return await _filterWithPhrase(phrase, Future.value(_readAndFilterFromDisk(sp, settings, serverRecordings: recordings)));
     } catch (e, s) {
       AppLoggers.media.e('Failed to pull recordings from server', error: e, stackTrace: s);
       rethrow;

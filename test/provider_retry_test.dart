@@ -4,18 +4,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'helpers/provider_container.dart';
 
 void main() {
-  test('a failed provider remains in AsyncError without automatic retry', () async {
-    var calls = 0;
+  test('test containers disable Riverpod automatic retries', () async {
+    var defaultCalls = 0;
+    final defaultProvider = FutureProvider<int>((ref) {
+      defaultCalls++;
+      throw Exception('expected failure');
+    });
+    final defaultContainer = ProviderContainer();
+    addTearDown(defaultContainer.dispose);
+    final defaultSubscription = defaultContainer.listen(defaultProvider, (_, _) {});
+    addTearDown(defaultSubscription.close);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    expect(defaultCalls, greaterThan(1));
+
+    var testCalls = 0;
     final provider = FutureProvider<int>((ref) {
-      calls++;
-      throw StateError('expected failure');
+      testCalls++;
+      throw Exception('expected failure');
     });
     final container = createTestProviderContainer();
     addTearDown(container.dispose);
+    final subscription = container.listen(provider, (_, _) {});
+    addTearDown(subscription.close);
 
-    await expectLater(container.read(provider.future), throwsA(isA<StateError>()));
+    await Future<void>.delayed(const Duration(milliseconds: 300));
     expect(container.read(provider).hasError, isTrue);
-    await Future<void>.delayed(const Duration(milliseconds: 50));
-    expect(calls, 1);
+    expect(testCalls, 1);
   });
 }
