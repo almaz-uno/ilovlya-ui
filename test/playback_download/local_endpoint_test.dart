@@ -407,6 +407,30 @@ void main() {
     expect(up.log.length, lessThanOrEqualTo(6), reason: '${up.log}');
   });
 
+  test('a server that cannot be connected to is given up though two waiting reads steer the transfer by turns', () async {
+    // The connect itself hangs, as to a host that drops the packets: no request exists to abort, and a retarget used to
+    // leave the connect running until the client's own timeout, then take its end for its own cut — no failure, and
+    // the other read asked again, for ever.
+    var hang = Duration.zero;
+    final client = HttpClient()
+      ..connectionFactory = (uri, proxyHost, proxyPort) async {
+        await Future<void>.delayed(hang);
+        return Socket.startConnect(uri.host, uri.port);
+      };
+    up.rate = 64 << 10; // the transfer does not reach either read by itself
+    final file = PartialFile.open(mediaDir: media.path, downloadId: 'd1', filename: 'd1.mp4', url: up.url.toString());
+    final source = PartialSource(
+        file: file, url: up.url, client: client, giveUpAfter: const Duration(milliseconds: 600), backoff: (_, _) => const Duration(milliseconds: 50), silenceTimeout: const Duration(seconds: 1));
+    sources.add(source);
+    final url = endpoint.register('d1', 'd1.mp4', source);
+    await fetch(player, url, range: 'bytes=0-', take: 16384);
+    hang = const Duration(seconds: 3); // every connect from now on, none of them failing by itself
+    final reads = await (fetch(player, url, range: 'bytes=${1 << 20}-'), fetch(player, url, range: 'bytes=${3 << 20}-')).wait.timeout(const Duration(seconds: 10));
+    expect(reads.$1.error, isNotNull, reason: 'reset, so that the player learns of it');
+    expect(reads.$2.error, isNotNull, reason: 'reset, so that the player learns of it');
+    expect(source.serverAway, isTrue);
+  });
+
   test('a file replaced on the server during playback ends the playback rather than splicing two files', () async {
     up.rate = 1 << 20;
     final (source, url) = serve();

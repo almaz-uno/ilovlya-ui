@@ -160,6 +160,8 @@ class Fetcher {
   final Stopwatch _sinceChunk = Stopwatch();
   HttpClientRequest? _request;
   Completer<void>? _leaveBody;
+  /// Completed to stop waiting for a connect, which has no request to abort yet.
+  Completer<void>? _leaveConnect;
   int? _retargetTo;
   /// A retarget that waits for the request in flight to close its gap.
   int? _deferredTo;
@@ -424,7 +426,7 @@ class Fetcher {
 
   /// A retarget's [_interrupt], which remembers a request cut before its answer.
   void _cut(int offset) {
-    if (_awaitingAnswer && _request != null) _cutUnanswered = true;
+    if (_awaitingAnswer) _cutUnanswered = true;
     _interrupt(offset);
   }
 
@@ -434,12 +436,6 @@ class Fetcher {
     return twice > answerFloor ? twice : answerFloor;
   }
 
-  /// Whether the request in flight is let have its answer before a retarget cuts it. A request cut before its answer
-  /// brings nothing — the next one waits for an answer again, over a new connection — and two reads that steer the
-  /// transfer by turns, each every 250 ms, would cut every request over a link whose answers take longer than that.
-  /// The request is waited for up to [_answerAllowance]; after a request was cut unanswered, the next one is waited
-  /// for until its answer or its silence timeout, so a link slower than the allowance is answered all the same, while
-  /// a dead connection is still left after one allowance.
   /// Whether the request in flight was answered so lately that a retarget would cut it before it ran for what its
   /// reconnect cost — the usual answer time. Two reads that steer the transfer by turns, each as soon as a chunk
   /// arrives, would otherwise have every request over a slow link bring a chunk or two for a whole answer time.
@@ -448,6 +444,12 @@ class Fetcher {
     return _sinceAnswer.elapsed < _answerTime;
   }
 
+  /// Whether the request in flight — connecting, or asked and not answered — is let have its answer before a retarget
+  /// cuts it. A request cut before its answer brings nothing — the next one waits for an answer again, over a new
+  /// connection — and two reads that steer the transfer by turns, each every 250 ms, would cut every request over a
+  /// link whose answers take longer than that. The request is waited for up to [_answerAllowance]; after a request was
+  /// cut unanswered, the next one is waited for until its answer or its silence timeout, so a link slower than the
+  /// allowance is answered all the same, while a dead connection is still left after one allowance.
   bool get _answerDue {
     if (!_awaitingAnswer || _retargetTo != null || _stopped) return false;
     return _cutUnanswered || _sinceSign.elapsed < _answerAllowance;
@@ -488,8 +490,9 @@ class Fetcher {
 
   /// Ends the body being read at once, rather than at its next chunk, which a silent server does not send.
   void _leave() {
-    final leave = _leaveBody;
-    if (leave != null && !leave.isCompleted) leave.complete();
+    for (final leave in [_leaveConnect, _leaveBody]) {
+      if (leave != null && !leave.isCompleted) leave.complete();
+    }
   }
 
   void _wakeUp() {
@@ -531,8 +534,24 @@ class Fetcher {
     final HttpClientResponse response;
     final asked = Stopwatch()..start();
     try {
-      request = _request = await _client.getUrl(url);
-      // A retarget or a stop while connecting found no request to abort.
+      // The connect has no request to abort yet: a retarget or a stop leaves it through [_leave], and so does its silence
+      // timeout, which then counts as the server's silence. A connect left behind is aborted once it is made.
+      final connecting = _client.getUrl(url);
+      final leave = _leaveConnect = Completer<void>();
+      final HttpClientRequest? made;
+      try {
+        made = await Future.any<HttpClientRequest?>([connecting, leave.future.then((_) => null)]).timeout(_answerWait());
+      } on TimeoutException {
+        unawaited(connecting.then((r) => r.abort(), onError: (Object _) {}));
+        rethrow;
+      } finally {
+        _leaveConnect = null;
+      }
+      if (made == null) {
+        unawaited(connecting.then((r) => r.abort(), onError: (Object _) {}));
+        return _Attempt.interrupted;
+      }
+      request = _request = made;
       if (_interrupted) {
         request.abort();
         return _Attempt.interrupted;
