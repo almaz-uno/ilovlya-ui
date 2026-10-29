@@ -52,7 +52,9 @@ class PartialSource implements EndpointSource {
   int _readers = 0;
   int? _steeredTo;
   StreamSubscription<void>? _lengthWatch;
-  Completer<int>? _length;
+  /// The pending [length] calls, each with the number of tries the fetcher had made when it came.
+  final List<(Completer<int>, int)> _lengthWaiters = [];
+  bool _lengthPolling = false;
   bool _confirmed;
 
   PartialSource(
@@ -152,42 +154,88 @@ class PartialSource implements EndpointSource {
   /// Whether the stored bytes are known to be the server's file: nothing was stored, or the server has answered.
   bool get confirmed => _confirmed;
 
-  /// The file's length once the server has confirmed it. Waits as a read does ([available]): a server that has failed
-  /// for [giveUpAfter] is given up with [UpstreamUnavailable], after the try the wait prompts, rather than waited for
-  /// as long as it says nothing.
+  /// The file's length once the server has confirmed it, the transfer started if it is not running. Throws
+  /// [SourceGone]; [UpstreamUnavailable] once the server has failed for [giveUpAfter] and a try made since the call
+  /// failed too — an old failure alone does not give up a server that may be back; [TransferStopped] when the
+  /// transfer stops before the length is known (paused for another download, disposed).
   @override
-  Future<int> length() async {
+  Future<int> length() {
     final known = file.length;
-    if (known != null && _confirmed) return known;
-    if (isGone) throw SourceGone(_goneReason!);
-    final c = _length ??= Completer<int>();
+    if (known != null && _confirmed) return Future.value(known);
+    if (isGone) return Future.error(SourceGone(_goneReason!));
     _lengthWatch ??= file.changes.listen((_) => _deliverLength());
+    final since = fetcher.attempts;
     resume(0);
+    if (fetcher.failingFor != null) fetcher.wake();
+    final waiter = Completer<int>();
+    _lengthWaiters.add((waiter, since));
+    if (!_lengthPolling) unawaited(_pollLength());
+    return waiter.future;
+  }
+
+  /// Looks after the pending [length] calls, all of them at once: one listener, one timer, however many wait. Counts
+  /// as one reader while any waits, so that failures are retried every second.
+  Future<void> _pollLength() async {
+    _lengthPolling = true;
     _readers++;
     fetcher.readerWaiting = true;
-    if (fetcher.failingFor != null) fetcher.wake();
-    final arrived = DateTime.now();
-    final grace = giveUpAfter < retryGrace ? giveUpAfter : retryGrace;
     try {
-      while (!c.isCompleted) {
-        final failing = fetcher.failingFor;
-        if (failing != null && failing >= giveUpAfter && DateTime.now().difference(arrived) >= grace) throw UpstreamUnavailable(failing);
-        await Future.any([c.future, Future<void>.delayed(const Duration(milliseconds: 250))]);
+      while (true) {
+        _settleLengthWaiters();
+        if (_lengthWaiters.isEmpty) return;
+        await file.changes.first.timeout(const Duration(milliseconds: 250), onTimeout: () {});
       }
-      return await c.future;
     } finally {
       _readers--;
       fetcher.readerWaiting = _readers > 0;
+      _lengthPolling = false;
     }
+  }
+
+  void _settleLengthWaiters() {
+    if (_lengthWaiters.isEmpty) return;
+    final l = file.length;
+    Object? error;
+    if (l != null && _confirmed) {
+      for (final (w, _) in _lengthWaiters) {
+        w.complete(l);
+      }
+      _lengthWaiters.clear();
+      return;
+    }
+    if (isGone) {
+      error = SourceGone(_goneReason!);
+    } else if (!isRunning) {
+      error = const TransferStopped();
+    }
+    if (error != null) {
+      for (final (w, _) in _lengthWaiters) {
+        w.completeError(error);
+      }
+      _lengthWaiters.clear();
+      return;
+    }
+    final failing = fetcher.failingFor;
+    if (failing == null || failing < giveUpAfter) return;
+    final failed = fetcher.lastFailedAttempt;
+    _lengthWaiters.removeWhere((entry) {
+      final (w, since) = entry;
+      if (failed <= since) return false;
+      w.completeError(UpstreamUnavailable(failing));
+      return true;
+    });
   }
 
   /// Completes a pending [length] once the fetcher has learnt it, and the server has confirmed it. Called on every
   /// write, every answer and every change of state, because a write that fails — the reason for a pass-through —
   /// fires no change, while the length is already known.
   void _deliverLength() {
-    final c = _length;
     final l = file.length;
-    if (c != null && l != null && _confirmed && !c.isCompleted) c.complete(l);
+    if (l == null || !_confirmed) return;
+    for (final (w, _) in _lengthWaiters) {
+      w.complete(l);
+    }
+    _lengthWaiters.clear();
   }
 
   void _onAnswer() {
@@ -272,6 +320,8 @@ class PartialSource implements EndpointSource {
       AppLoggers.download.w('Playback download of ${file.downloadId} could not settle after $outcome', error: e);
       _run = null;
     }
+    // A length still awaited will not come from this run.
+    _settleLengthWaiters();
   }
 
   Future<void> _settle(FetchOutcome outcome) async {
@@ -301,9 +351,8 @@ class PartialSource implements EndpointSource {
 
   void _gone(String reason) {
     _goneReason = reason;
-    final c = _length;
-    if (c != null && !c.isCompleted) c.completeError(SourceGone(reason));
     _setState(SourceState.gone);
+    _settleLengthWaiters();
   }
 
   void _setState(SourceState s) {

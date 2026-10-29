@@ -195,6 +195,8 @@ class Fetcher {
   bool _stopped = false;
   bool _running = false;
   int _requests = 0;
+  int _attempts = 0;
+  int _lastFailedAttempt = 0;
 
   Fetcher(
       {required this.file,
@@ -232,6 +234,13 @@ class Fetcher {
 
   /// Requests made so far; what a test or a log line counts.
   int get requests => _requests;
+
+  /// Tries made so far, each counted as it starts — a request, or a connect that never became one.
+  int get attempts => _attempts;
+
+  /// The number in [attempts] of the latest try that failed; 0 for none. A failure of a try made after some moment is a
+  /// judgement of the server since then, which [failingFor] alone is not.
+  int get lastFailedAttempt => _lastFailedAttempt;
 
   /// The time the transfer is measured by: wall-clock time without the time the application spent suspended, and
   /// standing still while it is. On iOS the process is suspended in the background while nothing plays (spec 004, "On
@@ -371,6 +380,7 @@ class Fetcher {
             break;
           case _Attempt.failed:
             _reconnectingSince = null;
+            _lastFailedAttempt = _attempts;
             failures++;
             _failingSince ??= _silentSince ?? _now();
             _quietSince = null;
@@ -526,6 +536,7 @@ class Fetcher {
   }
 
   Future<_Attempt> _fetchGap(int start, int? end) async {
+    _attempts++;
     _silentSince = null;
     _quietSince ??= _now();
     _request = null;

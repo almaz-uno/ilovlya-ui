@@ -22,8 +22,8 @@ abstract interface class EndpointSource {
 
   bool get isGone;
 
-  /// The file's length, waiting for the server's first answer if it is not known yet. Throws [SourceGone], or
-  /// [UpstreamUnavailable] when the server has not answered for too long.
+  /// The file's length, waiting for the server's first answer if it is not known yet. Throws [SourceGone],
+  /// [UpstreamUnavailable] when the server has not answered for too long, or [TransferStopped].
   Future<int> length();
 
   /// How many bytes are readable at [offset] right now, waiting for them if there are none. [isCancelled] is consulted
@@ -55,6 +55,15 @@ class UpstreamUnavailable implements Exception {
 
   @override
   String toString() => 'UpstreamUnavailable(${failingFor.inSeconds} s)';
+}
+
+/// The transfer stopped before the file's length was known — paused for another download, or disposed. The response
+/// is answered as for a server away; the URL is served again once the transfer runs.
+class TransferStopped implements Exception {
+  const TransferStopped();
+
+  @override
+  String toString() => 'TransferStopped';
 }
 
 /// An HTTP endpoint on the loopback interface from which the player reads a download while it arrives.
@@ -169,14 +178,12 @@ class LocalMediaEndpoint {
     final int length;
     try {
       length = await source.length();
-    } on UpstreamUnavailable catch (e) {
-      // The server has not answered for too long: unavailable, not missing. The player gives up and says so; the URL
-      // is served again once the server answers.
-      AppLoggers.download.w('Local endpoint: no length for $id', error: e);
-      return _status(res, HttpStatus.serviceUnavailable);
     } on Object catch (e) {
       AppLoggers.download.w('Local endpoint: no length for $id', error: e);
-      return _status(res, HttpStatus.notFound);
+      // The server has not answered for too long, or the transfer stopped before it did: unavailable, not missing. The
+      // player gives up and says so; the URL is served again once the server answers.
+      final unavailable = e is UpstreamUnavailable || e is TransferStopped;
+      return _status(res, unavailable ? HttpStatus.serviceUnavailable : HttpStatus.notFound);
     }
 
     final range = _Range.parse(req.headers.value(HttpHeaders.rangeHeader), length);

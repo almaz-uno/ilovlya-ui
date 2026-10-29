@@ -176,6 +176,8 @@ class PlaybackDownloads extends _$PlaybackDownloads {
         // The server has been away for long already. The endpoint answers the player that it is unavailable, and serves
         // the URL once the server is back.
         AppLoggers.download.w('Playback download of ${d.id} opened while the server is away: $e');
+      } on TransferStopped {
+        // Stopped meanwhile — another download opened. The endpoint answers the player as for a server away.
       }
     }
     return url;

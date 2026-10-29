@@ -435,19 +435,73 @@ void main() {
     // No answer yet, so no length: the endpoint waited for it with no bound, and the player's first request hung for as
     // long as the server said nothing (#195).
     up.silent = true;
-    final (source, url) = serve(giveUpAfter: const Duration(milliseconds: 600), backoff: const Duration(milliseconds: 50), silence: const Duration(seconds: 1));
+    const giveUpAfter = Duration(seconds: 1);
+    final (source, url) = serve(giveUpAfter: giveUpAfter, backoff: const Duration(milliseconds: 50), silence: const Duration(milliseconds: 300));
     final clock = Stopwatch()..start();
     final first = await fetch(player, url, range: 'bytes=0-').timeout(const Duration(seconds: 10));
     expect(first.status, HttpStatus.serviceUnavailable, reason: 'unavailable, not missing: ${first.status}');
     expect(source.serverAway, isTrue);
     expect(source.isGone, isFalse);
-    expect(clock.elapsed, lessThan(const Duration(seconds: 5)), reason: 'a safety net; given up one silence timeout after the first request');
+    // The bound of #195: within the give-up time and the grace a read is given, not after the fetcher's own timeouts.
+    expect(clock.elapsed, lessThan(giveUpAfter + PartialSource.retryGrace), reason: '${up.log}');
 
     up.silent = false;
     up.dropConnections();
     final back = await fetch(player, url, range: 'bytes=0-').timeout(const Duration(seconds: 10));
     expect(back.status, HttpStatus.partialContent);
     expect(back.body, src);
+  });
+
+  test('a server that comes back slow to answer is waited for, though it was given up before', () async {
+    // The failure goes on until an answer: the second wait for the length found it older than the give-up time at once.
+    // It is judged by a try made after it came, which the server answers, in 1.5 s.
+    up.silent = true;
+    final (source, _) = serve(giveUpAfter: const Duration(milliseconds: 600), backoff: const Duration(milliseconds: 50), silence: const Duration(seconds: 2));
+    await expectLater(source.length().timeout(const Duration(seconds: 10)), throwsA(isA<UpstreamUnavailable>()));
+    expect(source.fetcher.failingFor, greaterThanOrEqualTo(const Duration(milliseconds: 600)));
+
+    up.silent = false;
+    up.latency = const Duration(milliseconds: 1500);
+    up.dropConnections();
+    expect(await source.length().timeout(const Duration(seconds: 10)), src.length);
+  });
+
+  test('a wait for the length ends when the transfer stops before it is known, and leaves nothing running', () async {
+    // Paused for another download, or disposed, before the server failed even once: the wait looked for a length or a
+    // failure that would never come, every 250 ms, for ever, and kept the source counted as read.
+    for (final stop in ['pause', 'dispose']) {
+      up.silent = true;
+      final (source, url) = serve(id: 'd-$stop', silence: const Duration(seconds: 30));
+      final waiting = expectLater(source.length().timeout(const Duration(seconds: 2)), throwsA(isA<TransferStopped>()), reason: stop);
+      final player = fetch(HttpClient(), url, range: 'bytes=0-');
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(source.fetcher.readerWaiting, isTrue);
+      await (stop == 'pause' ? source.pause() : source.dispose());
+      await waiting;
+      expect((await player.timeout(const Duration(seconds: 2))).status, HttpStatus.serviceUnavailable, reason: stop);
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(source.fetcher.readerWaiting, isFalse, reason: 'no wait left behind after $stop');
+      up.silent = false;
+      up.dropConnections();
+    }
+  });
+
+  test('a resumed download whose server is away answers unavailable, not the length it kept', () async {
+    // The length stored with the partial file is not handed to the player until the server confirms the file.
+    up.rate = 4 << 20;
+    up.silentNextAfter = 2 << 20; // the first transfer never finishes the file
+    final (first, url) = serve();
+    await fetch(player, url, range: 'bytes=0-', take: 1 << 20);
+    await first.dispose();
+
+    up.silent = true;
+    final (second, again) = serve(giveUpAfter: const Duration(milliseconds: 600), backoff: const Duration(milliseconds: 50), silence: const Duration(milliseconds: 300));
+    expect(second.confirmed, isFalse);
+    expect(second.file.length, src.length, reason: 'the length kept from the first transfer');
+    final r = await fetch(player, again, range: 'bytes=0-').timeout(const Duration(seconds: 10));
+    expect(r.status, HttpStatus.serviceUnavailable);
+    expect(r.headers.contentLength, 0);
+    expect(r.headers.value(HttpHeaders.contentRangeHeader), isNull);
   });
 
   test('a file replaced on the server during playback ends the playback rather than splicing two files', () async {

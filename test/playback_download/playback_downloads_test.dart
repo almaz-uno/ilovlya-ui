@@ -204,8 +204,11 @@ void main() {
       ..giveUpAfter = const Duration(milliseconds: 600);
     up.silent = true;
     final url = await downloads().open(download('d1')).timeout(PlaybackDownloads.lengthWait);
+    final clock = Stopwatch()..start();
     final r = await fetch(player, url, range: 'bytes=0-').timeout(const Duration(seconds: 5));
     expect(r.status, HttpStatus.serviceUnavailable);
+    // At once: after the one try the request prompts, which fails within the 300 ms silence timeout.
+    expect(clock.elapsed, lessThan(const Duration(seconds: 1)), reason: 'not after the give-up time again');
     up.silent = false;
     await downloads().discard('d1');
   });
