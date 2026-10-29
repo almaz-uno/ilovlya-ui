@@ -5,6 +5,13 @@ updates:
     schedule:
       interval: weekly
     groups:
+      # The Riverpod packages have to move together: riverpod_generator pins
+      # riverpod_analyzer_utils, which fixes the analyzer and riverpod_lint versions.
+      riverpod:
+        patterns:
+          - "riverpod*"
+          - "flutter_riverpod"
+          - "hooks_riverpod"
       flutter-dependencies:
         patterns:
           - "*"
@@ -13,6 +20,9 @@ updates:
       # See https://github.com/almaz-uno/ilovlya-ui/issues/177 (Upgrade google_fonts to 9.x).
       - dependency-name: "google_fonts"
         versions: [">=9.0.0"]
+      # media_kit_video comes from a fork with a Linux fix (dependency_overrides);
+      # an update from pub.dev would drop that fix.
+      - dependency-name: "media_kit_video"
 
   - package-ecosystem: github-actions
     directory: /
