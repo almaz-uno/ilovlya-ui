@@ -520,7 +520,9 @@ void main() {
     }
     expect(clock.elapsed, lessThan(const Duration(seconds: 3)), reason: 'a safety net; the whole gap takes ~4 s: ${up.log}');
     expect(up.log[1].range, 'bytes=0-${from - 1}');
-    expect(up.log[1].status, isNull, reason: 'aborted before its answer: ${up.log}');
+    // Let have its answer — cutting it would bring nothing sooner — and cut one answer time later.
+    expect(up.log[1].status, 206, reason: '${up.log}');
+    expect(up.log[1].bytes, lessThan(1 << 20), reason: 'cut, not let finish: ${up.log}');
     expect(up.log[2].range, startsWith('bytes=${2 << 20}-'));
     fx.stop();
     await run;
@@ -563,7 +565,10 @@ void main() {
         await Future.delayed(const Duration(milliseconds: 20));
       }
     }
-    expect(up.log.length, greaterThan(5), reason: 'every retarget is a new request: ${up.log}');
+    // A retarget waits for the answer of the request in flight and for one answer time of its body, so the seeks are
+    // fewer requests than retargets; the transfer went both ways all the same.
+    final starts = up.log.skip(1).map((r) => int.parse(RegExp(r'bytes=(\d+)-').firstMatch(r.range!)![1]!)).toList();
+    expect(starts, containsAll([greaterThanOrEqualTo(8 << 20), lessThan(8 << 20)]), reason: '${up.log}');
     fx.stop();
     expect(await run, FetchOutcome.stopped);
   });

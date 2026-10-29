@@ -106,8 +106,10 @@ void main() {
 
   /// Waits for the transfer to end and its outcome to be settled: the run is over before the file is completed and
   /// the state follows.
-  Future<void> settle(PartialSource s) async {
+  Future<void> settle(PartialSource s, {Duration within = const Duration(seconds: 10)}) async {
+    final clock = Stopwatch()..start();
     while (s.isRunning || s.state == SourceState.running) {
+      if (clock.elapsed > within) fail('not settled within $within: running ${s.isRunning}, ${s.state}');
       await Future.delayed(const Duration(milliseconds: 10));
     }
   }
@@ -365,7 +367,7 @@ void main() {
 
   test('a silent server is given up though two waiting reads steer the transfer by turns', () async {
     // libmpv's first response stalls at the front while it reads elsewhere; both reads wait, and each steers the transfer
-    // back to itself every 250 ms. Before, every request was cut short of the silence timeout by the other read's
+    // back to itself every 250 ms. On develop every request was cut short of the silence timeout by the other read's
     // retarget, a cut request was no failure, and the reads never gave up: ~8 requests a second for ever.
     up.rate = 1 << 20;
     final (source, url) = serve(giveUpAfter: const Duration(milliseconds: 600), backoff: const Duration(milliseconds: 50), silence: const Duration(seconds: 1));
@@ -375,11 +377,34 @@ void main() {
       final far = await fetch(player, url, range: 'bytes=${3 << 20}-').timeout(const Duration(seconds: 10));
       expect(far.error, isNotNull, reason: 'reset, so that the player learns of it');
       expect(source.serverAway, isTrue);
-      expect(up.log.map((r) => r.range), containsAll([startsWith('bytes=${3 << 20}-'), isNot(startsWith('bytes=${3 << 20}-'))]), reason: 'both reads steered: ${up.log}');
+      // The request for the read at 3 MiB was let wait for its answer until the silence timeout, not cut by the other.
+      final asked = up.log.where((r) => r.range!.startsWith('bytes=${3 << 20}-')).toList();
+      expect(asked, isNotEmpty, reason: '${up.log}');
+      expect(asked.first.silenced, isTrue, reason: '${up.log}');
+      expect(up.log.length, lessThanOrEqualTo(4), reason: 'no request a 250 ms: ${up.log}');
     } finally {
       await paused.cancel();
       front.destroy();
     }
+  });
+
+  test('two reads that steer the transfer by turns are both served by a server slow to answer', () async {
+    // Each read steers the transfer back to itself every 250 ms. A request cut before its answer brings nothing, and
+    // over a link whose answers take longer than that no request was ever answered: on develop the two reads cut each
+    // other's requests for ever, and counting the silence across them gave up on a server that answers.
+    up.rate = 2 << 20;
+    up.latency = const Duration(milliseconds: 400);
+    final (source, url) = serve(giveUpAfter: const Duration(milliseconds: 600), backoff: const Duration(milliseconds: 50), silence: const Duration(seconds: 1));
+    final front = fetch(player, url, range: 'bytes=0-', take: 256 << 10);
+    final far = fetch(player, url, range: 'bytes=${3 << 20}-', take: 256 << 10);
+    final (a, b) = await (front, far).wait.timeout(const Duration(seconds: 10));
+    expect(a.error, isNull);
+    expect(a.body, Uint8List.sublistView(src, 0, 256 << 10));
+    expect(b.error, isNull);
+    expect(b.body, Uint8List.sublistView(src, 3 << 20, (3 << 20) + (256 << 10)));
+    expect(source.serverAway, isFalse);
+    expect(up.log.where((r) => r.status == null), hasLength(lessThanOrEqualTo(1)), reason: 'no request cut before its answer but one at most: ${up.log}');
+    expect(up.log.length, lessThanOrEqualTo(6), reason: '${up.log}');
   });
 
   test('a file replaced on the server during playback ends the playback rather than splicing two files', () async {

@@ -93,6 +93,10 @@ class Fetcher {
   /// that fell silent is not, whatever is left of its gap.
   static const liveWithin = Duration(seconds: 2);
 
+  /// The least a request is let wait for its answer before a retarget cuts it, and before a silence counted from earlier
+  /// requests fails it; twice the usual answer time when that is longer. See [_answerDue].
+  static const answerFloor = liveWithin;
+
   /// How often a retarget that waits is looked at again: the request it waits for may fall silent, or slow down.
   static const deferredCheck = Duration(milliseconds: 250);
 
@@ -172,6 +176,12 @@ class Fetcher {
   /// a `moov` box.
   int? _pinAt;
   Timer? _deferredTimer;
+  /// Set from the moment the request in flight is asked for until its answer — its status line — arrives.
+  bool _awaitingAnswer = false;
+  /// Set when a retarget cut a request before its answer, until a request is answered; see [_answerDue].
+  bool _cutUnanswered = false;
+  /// Since the request in flight was answered; see [_justAnswered].
+  final Stopwatch _sinceAnswer = Stopwatch();
   /// Set from a retarget or a resume until the next answer: the reconnect the transfer brought on itself.
   DateTime? _reconnectingSince;
   /// Reconnect time taken out of the progress clock; see [_progressNow].
@@ -312,7 +322,10 @@ class Fetcher {
     _position = from;
     _measuredSince = _progressNow();
     _quietSince = null;
-    _reconnectingSince = null;
+    _cutUnanswered = false;
+    // The connect that starts a run is the transfer's own as much as a reconnect after a retarget: a run started where
+    // the player reads, and moved at once, did not count it either when the retarget cut that first request unanswered.
+    _reconnectingSince = _now();
     _troubleSince = null;
     _deferredTo = null;
     _pinNext = false;
@@ -382,7 +395,7 @@ class Fetcher {
   /// Continues from [offset] — the place the player now reads — aborting the request in flight, unless that request
   /// is about to close its gap: then the transfer moves there right after it.
   void retarget(int offset) {
-    if (_closingSoon) {
+    if (_closingSoon || _answerDue || _justAnswered) {
       _deferredTo = offset;
       // The reader that asked may not ask again — the endpoint asks once per offset — so the transfer itself looks
       // again until the request is done, falls silent, or slows down.
@@ -391,7 +404,7 @@ class Fetcher {
     }
     _deferredTo = null;
     _pinNext = false;
-    _interrupt(offset);
+    _cut(offset);
     _wakeUp();
   }
 
@@ -403,10 +416,41 @@ class Fetcher {
       return;
     }
     // Between requests the run takes it up by itself.
-    if (_gapEnd == null || _retargetTo != null || _closingSoon) return;
+    if ((_gapEnd == null && !_awaitingAnswer) || _retargetTo != null || _closingSoon || _answerDue || _justAnswered) return;
     _deferredTo = null;
     _pinNext = false;
-    _interrupt(to);
+    _cut(to);
+  }
+
+  /// A retarget's [_interrupt], which remembers a request cut before its answer.
+  void _cut(int offset) {
+    if (_awaitingAnswer && _request != null) _cutUnanswered = true;
+    _interrupt(offset);
+  }
+
+  /// [answerFloor], or twice the usual answer time when that is longer.
+  Duration get _answerAllowance {
+    final twice = _answerTime * 2;
+    return twice > answerFloor ? twice : answerFloor;
+  }
+
+  /// Whether the request in flight is let have its answer before a retarget cuts it. A request cut before its answer
+  /// brings nothing — the next one waits for an answer again, over a new connection — and two reads that steer the
+  /// transfer by turns, each every 250 ms, would cut every request over a link whose answers take longer than that.
+  /// The request is waited for up to [_answerAllowance]; after a request was cut unanswered, the next one is waited
+  /// for until its answer or its silence timeout, so a link slower than the allowance is answered all the same, while
+  /// a dead connection is still left after one allowance.
+  /// Whether the request in flight was answered so lately that a retarget would cut it before it ran for what its
+  /// reconnect cost — the usual answer time. Two reads that steer the transfer by turns, each as soon as a chunk
+  /// arrives, would otherwise have every request over a slow link bring a chunk or two for a whole answer time.
+  bool get _justAnswered {
+    if (_awaitingAnswer || _gapEnd == null || _retargetTo != null || _stopped || !_sinceAnswer.isRunning) return false;
+    return _sinceAnswer.elapsed < _answerTime;
+  }
+
+  bool get _answerDue {
+    if (!_awaitingAnswer || _retargetTo != null || _stopped) return false;
+    return _cutUnanswered || _sinceSign.elapsed < _answerAllowance;
   }
 
   bool get _closingSoon {
@@ -471,6 +515,10 @@ class Fetcher {
     } finally {
       _gapEnd = null;
       _pinned = false;
+      _awaitingAnswer = false;
+      _sinceAnswer
+        ..stop()
+        ..reset();
     }
   }
 
@@ -478,18 +526,25 @@ class Fetcher {
     _silentSince = null;
     _quietSince ??= _now();
     _request = null;
+    _awaitingAnswer = true;
     final HttpClientRequest request;
     final HttpClientResponse response;
     final asked = Stopwatch()..start();
     try {
       request = _request = await _client.getUrl(url);
+      // A retarget or a stop while connecting found no request to abort.
+      if (_interrupted) {
+        request.abort();
+        return _Attempt.interrupted;
+      }
       _requests++;
       request.headers.set(HttpHeaders.rangeHeader, end == null ? 'bytes=$start-' : 'bytes=$start-${end - 1}');
       final lastModified = file.lastModified;
       if (lastModified != null) request.headers.set(HttpHeaders.ifRangeHeader, lastModified);
       if (authorization != null) request.headers.set(HttpHeaders.authorizationHeader, authorization!);
-      response = await request.close().timeout(_silenceLeft());
+      response = await request.close().timeout(_answerWait());
     } on Object catch (e) {
+      _awaitingAnswer = false;
       if (_interrupted) return _Attempt.interrupted;
       final timedOut = e is TimeoutException || (e is SocketException && e.message.contains('timed out'));
       if (timedOut && _suspendedAt != null) return _Attempt.interrupted;
@@ -498,6 +553,11 @@ class Fetcher {
       return _Attempt.failed;
     }
 
+    _awaitingAnswer = false;
+    _cutUnanswered = false;
+    _sinceAnswer
+      ..reset()
+      ..start();
     // A body that is not taken is abandoned, not drained: it can be the whole file.
     final lastModified = response.headers.value(HttpHeaders.lastModifiedHeader);
     int offset;
@@ -652,11 +712,15 @@ class Fetcher {
     }
   }
 
-  /// What is left of [silenceTimeout] since the server last said anything, for the answer to the request being made.
-  Duration _silenceLeft() {
+  /// How long the request being made waits for its answer: what is left of [silenceTimeout] since the server last said
+  /// anything, but at least [_answerAllowance] — a silence that began before a retarget is not to leave the new
+  /// connection no time to be answered — and never more than [silenceTimeout].
+  Duration _answerWait() {
     final since = _quietSince;
     final left = since == null ? silenceTimeout : silenceTimeout - _now().difference(since);
-    return left > Duration.zero ? left : Duration.zero;
+    final allowance = _answerAllowance;
+    final floor = allowance < silenceTimeout ? allowance : silenceTimeout;
+    return left > floor ? left : floor;
   }
 
   /// The server said nothing for [silenceTimeout]: the request in flight is dropped, and a failure it starts is dated
