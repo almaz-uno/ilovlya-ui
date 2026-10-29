@@ -1,6 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+typedef _GoogleFont = TextStyle Function({TextStyle? textStyle});
+
+TextTheme _applyGoogleFont(TextTheme textTheme, _GoogleFont font) {
+  return TextTheme(
+    displayLarge: font(textStyle: textTheme.displayLarge),
+    displayMedium: font(textStyle: textTheme.displayMedium),
+    displaySmall: font(textStyle: textTheme.displaySmall),
+    headlineLarge: font(textStyle: textTheme.headlineLarge),
+    headlineMedium: font(textStyle: textTheme.headlineMedium),
+    headlineSmall: font(textStyle: textTheme.headlineSmall),
+    titleLarge: font(textStyle: textTheme.titleLarge),
+    titleMedium: font(textStyle: textTheme.titleMedium),
+    titleSmall: font(textStyle: textTheme.titleSmall),
+    bodyLarge: font(textStyle: textTheme.bodyLarge),
+    bodyMedium: font(textStyle: textTheme.bodyMedium),
+    bodySmall: font(textStyle: textTheme.bodySmall),
+    labelLarge: font(textStyle: textTheme.labelLarge),
+    labelMedium: font(textStyle: textTheme.labelMedium),
+    labelSmall: font(textStyle: textTheme.labelSmall),
+  );
+}
+
 /// Тёплые цветовые схемы для приложения
 class WarmTheme {
   // Тёплая светлая тема с золотистыми и персиковыми оттенками
@@ -36,8 +58,9 @@ class WarmTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       colorScheme: _lightColorScheme,
-      textTheme: GoogleFonts.ptSansCaptionTextTheme(
+      textTheme: _applyGoogleFont(
         ThemeData.light().textTheme,
+        GoogleFonts.ptSansCaption,
       ).apply(
         bodyColor: _lightColorScheme.onSurface,
         displayColor: _lightColorScheme.onSurface,
@@ -85,8 +108,9 @@ class WarmTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       colorScheme: _darkColorScheme,
-      textTheme: GoogleFonts.ptSansTextTheme(
+      textTheme: _applyGoogleFont(
         ThemeData.dark().textTheme,
+        GoogleFonts.ptSans,
       ).apply(
         bodyColor: _darkColorScheme.onSurface,
         displayColor: _darkColorScheme.onSurface,
