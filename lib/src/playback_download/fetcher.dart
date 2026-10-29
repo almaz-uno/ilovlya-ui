@@ -78,8 +78,8 @@ class Fetcher {
   /// reconnect, about that answer time; the rest of the gap would arrive meanwhile anyway.
   static const closingTime = Duration(seconds: 1);
 
-  /// The most the answer time counts for in [closingTime]: an answer that took longer was a stall, not the cost of a
-  /// reconnect, and would make a seek wait for many MiB.
+  /// The most one answer counts for in the usual answer time: an answer that took longer — a stall, or an iOS suspend
+  /// while it was awaited — was not the cost of a reconnect, and would make seeks wait for many MiB long after it.
   static const maxAnswerTime = Duration(seconds: 3);
 
   /// Weight of the newest answer in the usual answer time.
@@ -406,7 +406,7 @@ class Fetcher {
     final r = rate;
     if (_pinned) return r == 0 || left <= r * maxPinTime.inMicroseconds / 1e6;
     if (r == 0) return left <= closingFloor;
-    final within = max(closingTime.inMicroseconds, min(_answerTime.inMicroseconds, maxAnswerTime.inMicroseconds));
+    final within = max(closingTime.inMicroseconds, _answerTime.inMicroseconds);
     return left <= r * within / 1e6;
   }
 
@@ -536,7 +536,7 @@ class Fetcher {
     }
 
     _answered();
-    final took = asked.elapsed;
+    final took = asked.elapsed < maxAnswerTime ? asked.elapsed : maxAnswerTime;
     _answerTime = _answerTime == Duration.zero ? took : took * answerAlpha + _answerTime * (1 - answerAlpha);
     _sinceSign.reset();
     final reconnecting = _reconnectingSince;
@@ -556,18 +556,13 @@ class Fetcher {
         // Leaving the loop cancels the subscription, which closes the connection; `abort` alone does not stop a body
         // that is already arriving.
         if (_interrupted) break;
-        if (!pinChecked) {
-          // What follows `mdat` is not always the index; anything else is fetched by the usual rules. Only a request
-          // from where the index begins shows its type; one from its middle — after a resume — keeps the pin.
-          pinChecked = true;
-          if (start == _pinAt && offset == start && chunk.length >= 8 && String.fromCharCodes(chunk, 4, 8) != 'moov') _pinned = false;
-        }
         try {
           await file.write(offset, chunk);
         } on FileSystemException catch (e) {
           return _cannotWrite(file.dataPath, e);
         }
         offset += chunk.length;
+        if (!pinChecked) pinChecked = await _checkPin(offset);
         _position = offset;
         _sinceSign.reset();
         _measure(chunk.length);
@@ -598,6 +593,21 @@ class Fetcher {
   }
 
   bool get _interrupted => _stopped || _retargetTo != null;
+
+  /// What follows `mdat` is not always the index; anything else is fetched by the usual rules. Its type is read once
+  /// the first 8 bytes from where it begins are stored, whichever requests and chunks brought them. Returns whether
+  /// the pin is settled for the request that has reached [offset]: a request from the middle of the index, after a
+  /// resume, past those bytes and without them, keeps the pin.
+  Future<bool> _checkPin(int offset) async {
+    final at = _pinAt;
+    if (at == null) return true;
+    if (file.ranges.end(at) >= at + 8) {
+      final head = await file.read(at, 8);
+      if (String.fromCharCodes(head, 4, 8) != 'moov') _pinned = false;
+      return true;
+    }
+    return offset >= at + 8;
+  }
 
   /// Fetches the end of the file next if the first bytes show an MP4 whose index follows `mdat`: the player reads it
   /// before it plays anything, and it is a fraction of the file.
