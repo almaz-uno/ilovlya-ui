@@ -1,39 +1,27 @@
 PODS:
-  - external_path (2.0.1):
-    - Flutter
   - Flutter (1.0.0)
   - media_kit_libs_ios_video (1.0.4):
     - Flutter
   - media_kit_video (0.0.1):
     - Flutter
-  - open_filex (0.0.2):
-    - Flutter
 
 DEPENDENCIES:
-  - external_path (from `.symlinks/plugins/external_path/ios`)
   - Flutter (from `Flutter`)
   - media_kit_libs_ios_video (from `.symlinks/plugins/media_kit_libs_ios_video/ios`)
   - media_kit_video (from `.symlinks/plugins/media_kit_video/ios`)
-  - open_filex (from `.symlinks/plugins/open_filex/ios`)
 
 EXTERNAL SOURCES:
-  external_path:
-    :path: ".symlinks/plugins/external_path/ios"
   Flutter:
     :path: Flutter
   media_kit_libs_ios_video:
     :path: ".symlinks/plugins/media_kit_libs_ios_video/ios"
   media_kit_video:
     :path: ".symlinks/plugins/media_kit_video/ios"
-  open_filex:
-    :path: ".symlinks/plugins/open_filex/ios"
 
 SPEC CHECKSUMS:
-  external_path: fd37c654b69a1336e33a2403f48383ae6100e443
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
   media_kit_libs_ios_video: 5a18affdb97d1f5d466dc79988b13eff6c5e2854
   media_kit_video: 1746e198cb697d1ffb734b1d05ec429d1fcd1474
-  open_filex: 432f3cd11432da3e39f47fcc0df2b1603854eff1
 
 PODFILE CHECKSUM: 9c46fd01abff66081b39f5fa5767b3f1d0b11d76
 
