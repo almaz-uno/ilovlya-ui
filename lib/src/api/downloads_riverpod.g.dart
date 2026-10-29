@@ -50,7 +50,7 @@ final class DownloadsNotifierProvider
   }
 }
 
-String _$downloadsNotifierHash() => r'1203ff919d04ae09de5ae8700f4580ea2c4e3ab4';
+String _$downloadsNotifierHash() => r'ec529b87c75c483d36386511a63c2acbdcbc7713';
 
 final class DownloadsNotifierFamily extends $Family
     with
@@ -84,7 +84,7 @@ abstract class _$DownloadsNotifier extends $AsyncNotifier<List<Download>> {
   FutureOr<List<Download>> build(String recordingId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<List<Download>>, List<Download>>;
     final element =
         ref.element
@@ -94,6 +94,6 @@ abstract class _$DownloadsNotifier extends $AsyncNotifier<List<Download>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

@@ -83,18 +83,8 @@ class MediaListNotifier extends _$MediaListNotifier {
     return recordings;
   }
 
-  List<RecordingInfo> _readAndFilterFromDisk(StorePlaces sp, Settings settings, {List<RecordingInfo> serverRecordings = const []}) {
-    final recordingsById = {for (final recording in _readAllFromDisk(sp)) recording.id: recording};
-    final mediaDir = sp.media();
-    final mediaNames = mediaDir.existsSync() ? mediaDir.listSync().whereType<File>().map((file) => p.basename(file.path)).toSet() : <String>{};
-
-    for (final recording in serverRecordings) {
-      final localRecording = recordingsById[recording.id];
-      recording.hasLocalFile = recording.hasLocalFile || (localRecording?.hasLocalFile ?? false) || recording.files.any(mediaNames.contains);
-      recordingsById[recording.id] = recording;
-    }
-
-    final result = recordingsById.values.where((recording) {
+  List<RecordingInfo> _readAndFilterFromDisk(StorePlaces sp, Settings settings) {
+    final result = _readAllFromDisk(sp).where((recording) {
       if (recording.seenAt != null && !settings.showSeen) return false;
       if (recording.hiddenAt != null && !settings.showHidden) return false;
       if (settings.withServerFile && !recording.hasFile) return false;
@@ -161,8 +151,6 @@ class MediaListNotifier extends _$MediaListNotifier {
     try {
       final container = ref.container;
       final placesFuture = container.read(storePlacesProvider.future);
-      final settingsFuture = container.read(settingsProvider.future);
-      final phrase = container.read(searchPhraseProvider).trim();
       final sp = await placesFuture;
       final recordings = await container.refresh(listRecordingsProvider(0, limit).future);
       if (recordings.any((r) => r.id.isEmpty)) throw const FormatException('Server recording has no ID');
@@ -173,8 +161,9 @@ class MediaListNotifier extends _$MediaListNotifier {
         await writeLocalJson(File(p.join(recordingsDir.path, recording.id)), recording.toJson(), flush: false);
       }
 
-      final settings = await settingsFuture;
-      return await _filterWithPhrase(phrase, Future.value(_readAndFilterFromDisk(sp, settings, serverRecordings: recordings)));
+      final settings = await container.read(settingsProvider.future);
+      final phrase = container.read(searchPhraseProvider).trim();
+      return await _filterWithPhrase(phrase, Future.value(_readAndFilterFromDisk(sp, settings)));
     } catch (e, s) {
       AppLoggers.media.e('Failed to pull recordings from server', error: e, stackTrace: s);
       rethrow;

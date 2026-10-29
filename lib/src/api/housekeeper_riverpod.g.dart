@@ -40,7 +40,7 @@ abstract class _$LocalMediaHousekeeper extends $AsyncNotifier<(int, int)> {
   FutureOr<(int, int)> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<(int, int)>, (int, int)>;
     final element =
         ref.element
@@ -50,7 +50,7 @@ abstract class _$LocalMediaHousekeeper extends $AsyncNotifier<(int, int)> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -84,7 +84,7 @@ abstract class _$LocalDataNotifier extends $AsyncNotifier<int> {
   FutureOr<int> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<int>, int>;
     final element =
         ref.element
@@ -94,6 +94,6 @@ abstract class _$LocalDataNotifier extends $AsyncNotifier<int> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

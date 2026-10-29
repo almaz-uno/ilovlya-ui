@@ -104,7 +104,7 @@ abstract class _$PlaybackDownloads extends $Notifier<Map<String, SourceState>> {
   Map<String, SourceState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<Map<String, SourceState>, Map<String, SourceState>>;
     final element =
@@ -115,6 +115,6 @@ abstract class _$PlaybackDownloads extends $Notifier<Map<String, SourceState>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

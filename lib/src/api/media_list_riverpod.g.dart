@@ -33,13 +33,13 @@ final class MediaListNotifierProvider
   MediaListNotifier create() => MediaListNotifier();
 }
 
-String _$mediaListNotifierHash() => r'0ef4c512d760b612f73d35b1e34e2260b6f26e4e';
+String _$mediaListNotifierHash() => r'e7485b7666aec4f711d1df0aed30c0f673b81fcc';
 
 abstract class _$MediaListNotifier extends $AsyncNotifier<List<RecordingInfo>> {
   FutureOr<List<RecordingInfo>> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<List<RecordingInfo>>, List<RecordingInfo>>;
     final element =
@@ -50,7 +50,7 @@ abstract class _$MediaListNotifier extends $AsyncNotifier<List<RecordingInfo>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -93,7 +93,7 @@ abstract class _$SearchPhraseNotifier extends $Notifier<String> {
   String build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<String, String>;
     final element =
         ref.element
@@ -103,6 +103,6 @@ abstract class _$SearchPhraseNotifier extends $Notifier<String> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

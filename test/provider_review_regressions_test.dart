@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -25,6 +26,11 @@ class _Settings extends SettingsNotifier {
 class _PlaybackDownloads extends PlaybackDownloads {
   @override
   Future<void> discard(String downloadId) async {}
+}
+
+class _RefreshableMediaList extends MediaListNotifier {
+  @override
+  Future<List<RecordingInfo>> build() async => [];
 }
 
 void main() {
@@ -88,6 +94,56 @@ void main() {
 
     final ids = c.read(mediaListProvider).requireValue.map((r) => r.id).toSet();
     expect(ids, {'r1', 'r2'});
+    subscription.close();
+  });
+
+  test('server refresh uses the search phrase changed while the request is pending', () async {
+    final response = Completer<List<RecordingInfo>>();
+    final started = Completer<void>();
+    final c = container(
+      overrides: [
+        mediaListProvider.overrideWith(_RefreshableMediaList.new),
+        listRecordingsProvider(0, MediaListNotifier.limit).overrideWith((ref) {
+          started.complete();
+          return response.future;
+        }),
+      ],
+    );
+    addTearDown(c.dispose);
+    final subscription = c.listen(mediaListProvider, (_, _) {});
+    final phraseSubscription = c.listen(searchPhraseProvider, (_, _) {});
+    await c.read(mediaListProvider.future);
+
+    final refresh = c.read(mediaListProvider.notifier).refreshFromServer();
+    await started.future;
+    c.read(searchPhraseProvider.notifier).setPhrase('needle_exact_token_597');
+    response.complete([recording('match', title: 'A needle_exact_token_597 in the title'), recording('other', title: 'Unrelated title')]);
+    await refresh;
+
+    expect(c.read(mediaListProvider).requireValue.map((r) => r.id), ['match']);
+    subscription.close();
+    phraseSubscription.close();
+  });
+
+  test('server refresh preserves duplicate recording IDs from disk', () async {
+    final duplicate = recording('r1', title: 'Local copy');
+    File(p.join(places.recordings().path, 'legacy-copy')).writeAsStringSync(jsonEncode(duplicate.toJson()));
+    final response = recording('r1', title: 'Server copy');
+    final c = container(
+      overrides: [
+        mediaListProvider.overrideWith(_RefreshableMediaList.new),
+        listRecordingsProvider(0, MediaListNotifier.limit).overrideWith((ref) async => [response]),
+      ],
+    );
+    addTearDown(c.dispose);
+    final subscription = c.listen(mediaListProvider, (_, _) {});
+    await c.read(mediaListProvider.future);
+
+    await c.read(mediaListProvider.notifier).refreshFromServer();
+
+    final recordings = c.read(mediaListProvider).requireValue.where((r) => r.id == 'r1').toList();
+    expect(recordings, hasLength(2));
+    expect(recordings.map((r) => r.title), containsAll(['Local copy', 'Server copy']));
     subscription.close();
   });
 }

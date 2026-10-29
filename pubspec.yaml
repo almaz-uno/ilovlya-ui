@@ -55,8 +55,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   build_runner: ^2.6.1
   json_serializable: ^6.11.2
-  riverpod_generator: ^4.0.0+1
-  riverpod_lint: ^3.1.0
+  riverpod_generator: 4.0.4
+  riverpod_lint: 3.1.4
 
 # media_kit_video 2.0.1 renders video in software on Linux with Flutter 3.38 and later, X11 and XWayland included:
 # no EGL context is current on the platform thread (media-kit/media-kit#1404). media-kit/media-kit#1466 fixes it.

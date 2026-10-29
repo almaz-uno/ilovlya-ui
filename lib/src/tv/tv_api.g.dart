@@ -231,7 +231,7 @@ abstract class _$TvSessionState extends $AsyncNotifier<TvSession> {
   FutureOr<TvSession> build(String sessionId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<TvSession>, TvSession>;
     final element =
         ref.element
@@ -241,6 +241,6 @@ abstract class _$TvSessionState extends $AsyncNotifier<TvSession> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

@@ -1,10 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'helpers/provider_container.dart';
+import 'package:ilovlya/src/utils/provider_retry.dart';
 
 void main() {
-  test('test containers disable Riverpod automatic retries', () async {
+  test('the production retry policy disables Riverpod automatic retries', () async {
     var defaultCalls = 0;
     final defaultProvider = FutureProvider<int>((ref) {
       defaultCalls++;
@@ -22,7 +21,7 @@ void main() {
       testCalls++;
       throw Exception('expected failure');
     });
-    final container = createTestProviderContainer();
+    final container = ProviderContainer(retry: disableProviderRetry);
     addTearDown(container.dispose);
     final subscription = container.listen(provider, (_, _) {});
     addTearDown(subscription.close);

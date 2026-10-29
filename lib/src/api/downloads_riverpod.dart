@@ -32,12 +32,6 @@ class DownloadsNotifier extends _$DownloadsNotifier {
     try {
       final sp = await ref.watch(storePlacesProvider.future);
       return await _readFromDiskOrWeb(sp, _fromWeb);
-    } on PathNotFoundException {
-      try {
-        return await _fromWeb();
-      } catch (_) {
-        return [];
-      }
     } catch (e, s) {
       AppLoggers.download.e('Failed to load downloads from disk', error: e, stackTrace: s);
       return [];

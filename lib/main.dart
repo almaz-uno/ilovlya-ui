@@ -7,6 +7,7 @@ import 'package:universal_platform/universal_platform.dart';
 
 import 'src/app.dart';
 import 'src/media/media_kit/audio_handler.dart';
+import 'src/utils/provider_retry.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,6 @@ void main() async {
     );
   }
 
-  runApp(ProviderScope(retry: (retryCount, error) => null, child: const MyApp()));
+  runApp(ProviderScope(retry: disableProviderRetry, child: const MyApp()));
 }
 

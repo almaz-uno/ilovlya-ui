@@ -31,7 +31,7 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        run: dart analyze --fatal-warnings lib test tool
+        run: dart analyze --fatal-warnings
 
       - name: Test
         if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
