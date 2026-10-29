@@ -249,7 +249,9 @@ void main() {
     expect(r.body, big);
     expect(source.state, SourceState.passThrough);
     expect(source.writeFailed, isTrue);
-    expect(up.bytesServed, lessThan(big.length + (1 << 20)), reason: 'what was stored is read from the file, not fetched again');
+    // At most the whole first answer, which the server may have pushed into the socket before the abort, and the 1 MiB
+    // that was not stored; fetching the stored bytes again would add 8 MiB.
+    expect(up.bytesServed, lessThanOrEqualTo(big.length + (1 << 20)), reason: 'what was stored is read from the file, not fetched again');
   });
 
   test('a partial file whose server file changed meanwhile is started over, and serves none of the old bytes', () async {
