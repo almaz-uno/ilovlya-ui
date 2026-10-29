@@ -71,8 +71,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get lookupMediaInfo => 'Поиск информации о медиа';
 
   @override
-  String get toViewInfoPressLookup =>
-      'Для просмотра информации нажмите кнопку поиска выше';
+  String get toViewInfoPressLookup => 'Для просмотра информации нажмите кнопку поиска выше';
 
   @override
   String get successfullyAdded => 'успешно добавлено';
@@ -96,12 +95,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get darkTheme => 'Тёмная тема';
 
   @override
-  String get autoMarkViewedWhenPlayed =>
-      'Автоматически отмечать запись как просмотренную при полном воспроизведении';
+  String get autoMarkViewedWhenPlayed => 'Автоматически отмечать запись как просмотренную при полном воспроизведении';
 
   @override
-  String get updateThumbnailProgress =>
-      'Обновлять миниатюру в соответствии с прогрессом просмотра видео';
+  String get updateThumbnailProgress => 'Обновлять миниатюру в соответствии с прогрессом просмотра видео';
 
   @override
   String get localMediaInfo => 'Информация о локальных медиа';
@@ -125,8 +122,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get recordingsCleaned => 'записей очищено';
 
   @override
-  String get cleaningStaleFiles =>
-      'очистка устаревших локальных медиафайлов...';
+  String get cleaningStaleFiles => 'очистка устаревших локальных медиафайлов...';
 
   @override
   String get loading => 'загрузка...';
@@ -146,12 +142,10 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get noRecordingsCheckFilters =>
-      'Нет записей. Проверьте настройки фильтра.';
+  String get noRecordingsCheckFilters => 'Нет записей. Проверьте настройки фильтра.';
 
   @override
-  String get unauthorizedCheckTokenAndServer =>
-      'Не авторизован: проверьте и укажите токен и URL сервера в настройках';
+  String get unauthorizedCheckTokenAndServer => 'Не авторизован: проверьте и укажите токен и URL сервера в настройках';
 
   @override
   String get recordingsLoadFailed => 'Не удалось загрузить записи';
@@ -166,16 +160,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get addFromClipboard => 'Добавить из буфера обмена';
 
   @override
-  String quotaUsageInfo(
-      String quota, String usage, int files, String free, String store) {
-    String _temp0 = intl.Intl.pluralLogic(
-      files,
-      locale: localeName,
-      other: '$files файла',
-      many: '$files файлов',
-      few: '$files файла',
-      one: '$files файл',
-    );
+  String quotaUsageInfo(String quota, String usage, int files, String free, String store) {
+    String _temp0 = intl.Intl.pluralLogic(files, locale: localeName, other: '$files файла', many: '$files файлов', few: '$files файла', one: '$files файл');
     return 'квота: $quota использовано: $usage ($_temp0) свободно: $free$store';
   }
 
@@ -209,27 +195,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ago => 'назад';
 
   @override
-  String get copyFileLinkToClipboard =>
-      'Скопировать ссылку на файл в буфер обмена';
+  String get copyFileLinkToClipboard => 'Скопировать ссылку на файл в буфер обмена';
 
   @override
-  String get copyCurlCommandToClipboard =>
-      'Скопировать команду curl в буфер обмена';
+  String get copyCurlCommandToClipboard => 'Скопировать команду curl в буфер обмена';
 
   @override
-  String get playWithEmbeddedMpvPlayer =>
-      'Воспроизвести с помощью встроенного mpv плеера';
+  String get playWithEmbeddedMpvPlayer => 'Воспроизвести с помощью встроенного mpv плеера';
 
   @override
-  String get playWithEmbeddedMpvPlayerHorizontalFlip =>
-      'Воспроизвести с помощью встроенного mpv плеера с горизонтальным отражением';
+  String get playWithEmbeddedMpvPlayerHorizontalFlip => 'Воспроизвести с помощью встроенного mpv плеера с горизонтальным отражением';
 
   @override
   String get openInDefaultApplication => 'Открыть в приложении по умолчанию';
 
   @override
-  String get deleteFileOnServerAndFreeQuota =>
-      'Удалить файл с сервера и освободить квоту';
+  String get deleteFileOnServerAndFreeQuota => 'Удалить файл с сервера и освободить квоту';
 
   @override
   String get deleteLocalFile => 'Удалить локальный файл';
@@ -246,8 +227,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get downloadServerFormat =>
-      'Загрузить этот формат снова на сервер (подготовить для просмотра)';
+  String get downloadServerFormat => 'Загрузить этот формат снова на сервер (подготовить для просмотра)';
 
   @override
   String get openMediaKit => 'Открыть с MediaKit с обработчиком';
@@ -262,8 +242,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get deleteServerMediaFile => 'Удалить медиафайл на сервере?';
 
   @override
-  String get deleteLocalDownloadedMediaFile =>
-      'Удалить локальный загруженный медиафайл?';
+  String get deleteLocalDownloadedMediaFile => 'Удалить локальный загруженный медиафайл?';
 
   @override
   String unexpectedDownloadStatus(String status) {
@@ -271,8 +250,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get localFileDownloaded =>
-      'Локальный файл загружен. Нажмите для воспроизведения.';
+  String get localFileDownloaded => 'Локальный файл загружен. Нажмите для воспроизведения.';
 
   @override
   String get downloadToLocalStorage => 'Загрузить медиа в локальное хранилище';
@@ -341,8 +319,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get copyVideoUrl => 'Копировать URL видео в буфер';
 
   @override
-  String get cleanServerContent =>
-      'Очистить весь загруженный контент на сервере';
+  String get cleanServerContent => 'Очистить весь загруженный контент на сервере';
 
   @override
   String get cleanDeviceMedia => 'Очистить все загруженные медиа с устройства';
@@ -360,15 +337,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get playEmbeddedMpv => 'Воспроизвести во встроенном mpv плеере';
 
   @override
-  String get playEmbeddedMpvFlipped =>
-      'Воспроизвести во встроенном mpv плеере с горизонтальным отражением';
+  String get playEmbeddedMpvFlipped => 'Воспроизвести во встроенном mpv плеере с горизонтальным отражением';
 
   @override
   String get openDefaultApp => 'Открыть в приложении по умолчанию';
 
   @override
-  String get deleteServerFile =>
-      'Удалить файл на сервере и освободить серверную квоту';
+  String get deleteServerFile => 'Удалить файл на сервере и освободить серверную квоту';
 
   @override
   String get shareDownloadUrl => 'Поделиться ссылкой для загрузки в...';
@@ -432,8 +407,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get unauthorized =>
-      'Не авторизован: проверьте и укажите токен и URL сервера в настройках';
+  String get unauthorized => 'Не авторизован: проверьте и укажите токен и URL сервера в настройках';
 
   @override
   String get noRecordings => 'Нет записей. Проверьте настройки фильтра.';
@@ -448,12 +422,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get downloadWhilePlaying => 'Загружать во время проигрывания';
 
   @override
-  String get downloadWhilePlayingDescription =>
-      'Сохранять файл во время проигрывания. Проигрывание идёт из загружаемого файла, ничего не скачивается дважды.';
+  String get downloadWhilePlayingDescription => 'Сохранять файл во время проигрывания. Проигрывание идёт из загружаемого файла, ничего не скачивается дважды.';
 
   @override
-  String get playbackDownloadNotSaved =>
-      'Файл не удаётся сохранить. Проигрывание продолжается без сохранения.';
+  String get playbackDownloadNotSaved => 'Файл не удаётся сохранить. Проигрывание продолжается без сохранения.';
 
   @override
   String playbackInterrupted(String position) {
@@ -481,19 +453,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mediaDirectory => 'Директория медиафайлов';
 
   @override
-  String get deleteAllDownloadedMediaFiles =>
-      'Это удалит ВСЕ загруженные медиафайлы';
+  String get deleteAllDownloadedMediaFiles => 'Это удалит ВСЕ загруженные медиафайлы';
 
   @override
   String deleteAllMetadataMessage(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count записи',
-      many: '$count записей',
-      few: '$count записей',
-      one: '$count записи',
-    );
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count записи', many: '$count записей', few: '$count записей', one: '$count записи');
     return 'Это удалит ВСЕ метаданные для $_temp0,\nзагруженные медиафайлы будут сохранены.\nЭти данные можно загрузить с сервера.';
   }
 
@@ -501,19 +465,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get deleteAllFilesOnServer => 'Удалить все файлы на сервере?';
 
   @override
-  String get deleteAllLocalFilesOnDevice =>
-      'Удалить все локальные файлы с устройства?';
+  String get deleteAllLocalFilesOnDevice => 'Удалить все локальные файлы с устройства?';
 
   @override
   String get continueButton => 'Продолжить';
 
   @override
-  String get downloadThisFormatOnServer =>
-      'Загрузить этот формат и лучшее аудио на сервер (подготовить для просмотра)';
+  String get downloadThisFormatOnServer => 'Загрузить этот формат и лучшее аудио на сервер (подготовить для просмотра)';
 
   @override
-  String get copyUrlFragmentToClipboard =>
-      'Скопировать URL этого фрагмента в буфер обмена';
+  String get copyUrlFragmentToClipboard => 'Скопировать URL этого фрагмента в буфер обмена';
 
   @override
   String get bestVideoAudio => 'Лучшее видео и аудио (b)';
@@ -529,20 +490,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String formatsCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count формата',
-      many: '$count форматов',
-      few: '$count формата',
-      one: '$count формат',
-    );
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count формата', many: '$count форматов', few: '$count формата', one: '$count формат');
     return '$_temp0';
   }
 
   @override
-  String get downloadExactFormat =>
-      'Скачать именно этот формат (подготовить для просмотра)';
+  String get downloadExactFormat => 'Скачать именно этот формат (подготовить для просмотра)';
 
   @override
   String selectedPosition(String position) {
@@ -550,16 +503,13 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get positionExceedsVideoDuration =>
-      'Позиция превышает длительность видео';
+  String get positionExceedsVideoDuration => 'Позиция превышает длительность видео';
 
   @override
-  String get cleanAllDownloadedContentOnServer =>
-      'Очистить все загруженное содержимое на сервере';
+  String get cleanAllDownloadedContentOnServer => 'Очистить все загруженное содержимое на сервере';
 
   @override
-  String get cleanAllDownloadedMediaFromDevice =>
-      'Очистить все загруженные медиа с устройства';
+  String get cleanAllDownloadedMediaFromDevice => 'Очистить все загруженные медиа с устройства';
 
   @override
   String get downloadsInfoIsLoading => 'Информация о загрузках загружается...';
@@ -568,15 +518,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get copyVideoUrlToClipboard => 'Копировать URL видео в буфер обмена';
 
   @override
-  String get downloadThisFormatAgainOnServer =>
-      'Загрузить этот формат снова на сервере (подготовить для просмотра)';
+  String get downloadThisFormatAgainOnServer => 'Загрузить этот формат снова на сервере (подготовить для просмотра)';
 
   @override
   String get openWithMediaKitHandler => 'Открыть с помощью MediaKit';
 
   @override
-  String get playWithEmbeddedMpvPlayerWithHorizontalFlip =>
-      'Воспроизвести с помощью встроенного mpv плеера с горизонтальным отражением';
+  String get playWithEmbeddedMpvPlayerWithHorizontalFlip => 'Воспроизвести с помощью встроенного mpv плеера с горизонтальным отражением';
 
   @override
   String get couldNotOpenFile => 'Не удалось открыть файл';
@@ -585,8 +533,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get openFileLocation => 'Открыть местоположение...';
 
   @override
-  String get couldNotOpenFileLocation =>
-      'Не удалось открыть местоположение файла';
+  String get couldNotOpenFileLocation => 'Не удалось открыть местоположение файла';
 
   @override
   String get copyToDownloads => 'Скопировать в Downloads';
@@ -603,12 +550,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get shareFile => 'Отправить файл...';
 
   @override
-  String get localFileDownloadedClickToPlay =>
-      'Локальный файл загружен. Нажмите для воспроизведения.';
+  String get localFileDownloadedClickToPlay => 'Локальный файл загружен. Нажмите для воспроизведения.';
 
   @override
-  String get downloadMediaToLocalStorage =>
-      'Загрузить медиа в локальное хранилище';
+  String get downloadMediaToLocalStorage => 'Загрузить медиа в локальное хранилище';
 
   @override
   String get markRecordingAsSeen => 'Отметить эту запись как просмотренную';
@@ -633,14 +578,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String files(int files) {
-    String _temp0 = intl.Intl.pluralLogic(
-      files,
-      locale: localeName,
-      other: '$files файла',
-      many: '$files файлов',
-      few: '$files файла',
-      one: '$files файл',
-    );
+    String _temp0 = intl.Intl.pluralLogic(files, locale: localeName, other: '$files файла', many: '$files файлов', few: '$files файла', one: '$files файл');
     return '$_temp0';
   }
 
@@ -656,27 +594,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String recordings(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count записи',
-      many: '$count записей',
-      few: '$count записи',
-      one: '$count запись',
-    );
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count записи', many: '$count записей', few: '$count записи', one: '$count запись');
     return '$_temp0';
   }
 
   @override
   String filesWithSize(int number, String size) {
-    String _temp0 = intl.Intl.pluralLogic(
-      number,
-      locale: localeName,
-      other: '$number файла',
-      many: '$number файлов',
-      few: '$number файла',
-      one: '$number файл',
-    );
+    String _temp0 = intl.Intl.pluralLogic(number, locale: localeName, other: '$number файла', many: '$number файлов', few: '$number файла', one: '$number файл');
     return '$_temp0, общий размер: $size';
   }
 
@@ -701,14 +625,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String cleanAllMetadataForRecordings(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count записи',
-      many: '$count записей',
-      few: '$count записей',
-      one: '$count записи',
-    );
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count записи', many: '$count записей', few: '$count записей', one: '$count записи');
     return 'Очистить ВСЕ метаданные для $_temp0';
   }
 
@@ -723,8 +640,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get cleaningStaleMediaLocalFiles =>
-      'очистка старых локальных медиафайлов...';
+  String get cleaningStaleMediaLocalFiles => 'очистка старых локальных медиафайлов...';
 
   @override
   String tapToPlayInEmbeddingPlayer(String filename) {
@@ -791,21 +707,13 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String localDownloadingStatus(
-      String status, String filename, String estimate) {
+  String localDownloadingStatus(String status, String filename, String estimate) {
     return 'Локальная загрузка $status: $filename $estimate';
   }
 
   @override
   String recordingsCleanedMessage(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Очищено $count записи',
-      many: 'Очищено $count записей',
-      few: 'Очищено $count записи',
-      one: 'Очищена $count запись',
-    );
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'Очищено $count записи', many: 'Очищено $count записей', few: 'Очищено $count записи', one: 'Очищена $count запись');
     return '$_temp0';
   }
 
@@ -831,14 +739,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String filesLabel(int files) {
-    String _temp0 = intl.Intl.pluralLogic(
-      files,
-      locale: localeName,
-      other: '$files файла',
-      many: '$files файлов',
-      few: '$files файла',
-      one: '$files файл',
-    );
+    String _temp0 = intl.Intl.pluralLogic(files, locale: localeName, other: '$files файла', many: '$files файлов', few: '$files файла', one: '$files файл');
     return '$_temp0';
   }
 
@@ -854,27 +755,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String recordingsLabel(int recordings) {
-    String _temp0 = intl.Intl.pluralLogic(
-      recordings,
-      locale: localeName,
-      other: '$recordings записи',
-      many: '$recordings записей',
-      few: '$recordings записи',
-      one: '$recordings запись',
-    );
+    String _temp0 = intl.Intl.pluralLogic(recordings, locale: localeName, other: '$recordings записи', many: '$recordings записей', few: '$recordings записи', one: '$recordings запись');
     return '$_temp0';
   }
 
   @override
   String filesTotalSizeLabel(int count, String size) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count файла',
-      many: '$count файлов',
-      few: '$count файла',
-      one: '$count файл',
-    );
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count файла', many: '$count файлов', few: '$count файла', one: '$count файл');
     return '$_temp0, общий размер: $size';
   }
 
@@ -926,8 +813,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get taskStatusPaused => 'приостановлена';
 
   @override
-  String get cachingMedia =>
-      'Кэширование медиа. После загрузки проигрывание будет производиться из закачанного файла.';
+  String get cachingMedia => 'Кэширование медиа. После загрузки проигрывание будет производиться из закачанного файла.';
 
   @override
   String nowPlayingFromLocalFile(String filename) {
@@ -954,8 +840,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tvPairTitle => 'Подключение к телевизору';
 
   @override
-  String get tvPairHint =>
-      'Откройте страницу /tv в браузере телевизора и введите показанный код';
+  String get tvPairHint => 'Откройте страницу /tv в браузере телевизора и введите показанный код';
 
   @override
   String get tvPairCodeLabel => 'Код подключения';
@@ -1009,8 +894,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tvSessionLost => 'Связь с телевизором потеряна';
 
   @override
-  String get tvErrorUnsupportedMedia =>
-      'Телевизор не может воспроизвести этот формат';
+  String get tvErrorUnsupportedMedia => 'Телевизор не может воспроизвести этот формат';
 
   @override
   String get tvErrorPlayback => 'Ошибка воспроизведения на телевизоре';
@@ -1081,4 +965,4 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get showDialogShortcutHelp => '? — показать справку по окну';
-  }
+}

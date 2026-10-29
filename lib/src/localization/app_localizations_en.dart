@@ -95,12 +95,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get darkTheme => 'Dark Theme';
 
   @override
-  String get autoMarkViewedWhenPlayed =>
-      'Auto mark recording as viewed when fully played';
+  String get autoMarkViewedWhenPlayed => 'Auto mark recording as viewed when fully played';
 
   @override
-  String get updateThumbnailProgress =>
-      'Update thumbnail according to video viewing progress';
+  String get updateThumbnailProgress => 'Update thumbnail according to video viewing progress';
 
   @override
   String get localMediaInfo => 'Local media info';
@@ -147,8 +145,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noRecordingsCheckFilters => 'No recordings. Check the filters.';
 
   @override
-  String get unauthorizedCheckTokenAndServer =>
-      'Unauthorized: please check and specify token and server URL in settings';
+  String get unauthorizedCheckTokenAndServer => 'Unauthorized: please check and specify token and server URL in settings';
 
   @override
   String get recordingsLoadFailed => 'Could not load recordings';
@@ -163,14 +160,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addFromClipboard => 'Add from clipboard';
 
   @override
-  String quotaUsageInfo(
-      String quota, String usage, int files, String free, String store) {
-    String _temp0 = intl.Intl.pluralLogic(
-      files,
-      locale: localeName,
-      other: '$files files',
-      one: '$files file',
-    );
+  String quotaUsageInfo(String quota, String usage, int files, String free, String store) {
+    String _temp0 = intl.Intl.pluralLogic(files, locale: localeName, other: '$files files', one: '$files file');
     return 'quota: $quota usage: $usage ($_temp0) free: $free$store';
   }
 
@@ -213,15 +204,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playWithEmbeddedMpvPlayer => 'Play with embedded mpv player';
 
   @override
-  String get playWithEmbeddedMpvPlayerHorizontalFlip =>
-      'Play with embedded mpv player with horizontal flip';
+  String get playWithEmbeddedMpvPlayerHorizontalFlip => 'Play with embedded mpv player with horizontal flip';
 
   @override
   String get openInDefaultApplication => 'Open in default application';
 
   @override
-  String get deleteFileOnServerAndFreeQuota =>
-      'Delete file on the server and free server usage quota';
+  String get deleteFileOnServerAndFreeQuota => 'Delete file on the server and free server usage quota';
 
   @override
   String get deleteLocalFile => 'Delete local file';
@@ -238,8 +227,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get downloadServerFormat =>
-      'Download this format again on the server (prepare for viewing)';
+  String get downloadServerFormat => 'Download this format again on the server (prepare for viewing)';
 
   @override
   String get openMediaKit => 'Open with MediaKit with handler';
@@ -254,8 +242,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteServerMediaFile => 'Delete server media file?';
 
   @override
-  String get deleteLocalDownloadedMediaFile =>
-      'Delete local downloaded media file?';
+  String get deleteLocalDownloadedMediaFile => 'Delete local downloaded media file?';
 
   @override
   String unexpectedDownloadStatus(String status) {
@@ -350,15 +337,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playEmbeddedMpv => 'Play with embedded mpv player';
 
   @override
-  String get playEmbeddedMpvFlipped =>
-      'Play with embedded mpv player with horizontal flip';
+  String get playEmbeddedMpvFlipped => 'Play with embedded mpv player with horizontal flip';
 
   @override
   String get openDefaultApp => 'Open in default application';
 
   @override
-  String get deleteServerFile =>
-      'Delete file on the server and free server usage quota';
+  String get deleteServerFile => 'Delete file on the server and free server usage quota';
 
   @override
   String get shareDownloadUrl => 'Share the download URL in...';
@@ -422,8 +407,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get unauthorized =>
-      'Unauthorized: please check and specify token and server URL in settings';
+  String get unauthorized => 'Unauthorized: please check and specify token and server URL in settings';
 
   @override
   String get noRecordings => 'No recordings. Check the filters.';
@@ -438,12 +422,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get downloadWhilePlaying => 'Download while playing';
 
   @override
-  String get downloadWhilePlayingDescription =>
-      'Save the file while playing. Playback runs from the file being downloaded, and nothing is downloaded twice.';
+  String get downloadWhilePlayingDescription => 'Save the file while playing. Playback runs from the file being downloaded, and nothing is downloaded twice.';
 
   @override
-  String get playbackDownloadNotSaved =>
-      'The file cannot be saved. Playback continues without saving.';
+  String get playbackDownloadNotSaved => 'The file cannot be saved. Playback continues without saving.';
 
   @override
   String playbackInterrupted(String position) {
@@ -471,17 +453,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mediaDirectory => 'Media directory';
 
   @override
-  String get deleteAllDownloadedMediaFiles =>
-      'This will delete ALL downloaded media files';
+  String get deleteAllDownloadedMediaFiles => 'This will delete ALL downloaded media files';
 
   @override
   String deleteAllMetadataMessage(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count recordings',
-      one: '$count recording',
-    );
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count recordings', one: '$count recording');
     return 'This will delete ALL metadata for $_temp0,\ndownloaded media files will be retained.\nThis data can be downloaded from the server.';
   }
 
@@ -489,19 +465,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteAllFilesOnServer => 'Delete all files on the server?';
 
   @override
-  String get deleteAllLocalFilesOnDevice =>
-      'Delete all local files on the device?';
+  String get deleteAllLocalFilesOnDevice => 'Delete all local files on the device?';
 
   @override
   String get continueButton => 'Continue';
 
   @override
-  String get downloadThisFormatOnServer =>
-      'Download this format and the best audio on the server (prepare for viewing)';
+  String get downloadThisFormatOnServer => 'Download this format and the best audio on the server (prepare for viewing)';
 
   @override
-  String get copyUrlFragmentToClipboard =>
-      'Copy URL this fragment into clipboard';
+  String get copyUrlFragmentToClipboard => 'Copy URL this fragment into clipboard';
 
   @override
   String get bestVideoAudio => 'Best video and audio (b)';
@@ -517,18 +490,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String formatsCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count formats',
-      one: '$count format',
-    );
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count formats', one: '$count format');
     return '$_temp0';
   }
 
   @override
-  String get downloadExactFormat =>
-      'Download exact this format (prepare this format for viewing)';
+  String get downloadExactFormat => 'Download exact this format (prepare this format for viewing)';
 
   @override
   String selectedPosition(String position) {
@@ -539,12 +506,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get positionExceedsVideoDuration => 'Position exceeds video duration';
 
   @override
-  String get cleanAllDownloadedContentOnServer =>
-      'Clean all downloaded content on the server';
+  String get cleanAllDownloadedContentOnServer => 'Clean all downloaded content on the server';
 
   @override
-  String get cleanAllDownloadedMediaFromDevice =>
-      'Clean all downloaded media from the device';
+  String get cleanAllDownloadedMediaFromDevice => 'Clean all downloaded media from the device';
 
   @override
   String get downloadsInfoIsLoading => 'Downloads info is loading...';
@@ -553,15 +518,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copyVideoUrlToClipboard => 'Copy video URL to the clipboard';
 
   @override
-  String get downloadThisFormatAgainOnServer =>
-      'Download this format again on the server (prepare for viewing)';
+  String get downloadThisFormatAgainOnServer => 'Download this format again on the server (prepare for viewing)';
 
   @override
   String get openWithMediaKitHandler => 'Open with MediaKit with handler';
 
   @override
-  String get playWithEmbeddedMpvPlayerWithHorizontalFlip =>
-      'Play with embedded mpv player with horizontal flip';
+  String get playWithEmbeddedMpvPlayerWithHorizontalFlip => 'Play with embedded mpv player with horizontal flip';
 
   @override
   String get couldNotOpenFile => 'Could not open file';
@@ -587,8 +550,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareFile => 'Share file...';
 
   @override
-  String get localFileDownloadedClickToPlay =>
-      'Local file is downloaded. Click to play.';
+  String get localFileDownloadedClickToPlay => 'Local file is downloaded. Click to play.';
 
   @override
   String get downloadMediaToLocalStorage => 'Download media to local storage';
@@ -616,12 +578,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String files(int files) {
-    String _temp0 = intl.Intl.pluralLogic(
-      files,
-      locale: localeName,
-      other: '$files files',
-      one: '$files file',
-    );
+    String _temp0 = intl.Intl.pluralLogic(files, locale: localeName, other: '$files files', one: '$files file');
     return '$_temp0';
   }
 
@@ -637,23 +594,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String recordings(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count recordings',
-      one: '$count recording',
-    );
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count recordings', one: '$count recording');
     return '$_temp0';
   }
 
   @override
   String filesWithSize(int number, String size) {
-    String _temp0 = intl.Intl.pluralLogic(
-      number,
-      locale: localeName,
-      other: '$number files',
-      one: '$number file',
-    );
+    String _temp0 = intl.Intl.pluralLogic(number, locale: localeName, other: '$number files', one: '$number file');
     return '$_temp0, total size: $size';
   }
 
@@ -662,12 +609,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String filesCleanedMessage(int count, String size) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Cleaned $count files, $size',
-      one: 'Cleaned $count file, $size',
-    );
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'Cleaned $count files, $size', one: 'Cleaned $count file, $size');
     return '$_temp0';
   }
 
@@ -676,12 +618,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String cleanAllMetadataForRecordings(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count recordings',
-      one: '$count recording',
-    );
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count recordings', one: '$count recording');
     return 'Clean ALL metadata for $_temp0';
   }
 
@@ -696,8 +633,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get cleaningStaleMediaLocalFiles =>
-      'cleaning stale media local files...';
+  String get cleaningStaleMediaLocalFiles => 'cleaning stale media local files...';
 
   @override
   String tapToPlayInEmbeddingPlayer(String filename) {
@@ -764,19 +700,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String localDownloadingStatus(
-      String status, String filename, String estimate) {
+  String localDownloadingStatus(String status, String filename, String estimate) {
     return 'Local downloading $status: $filename $estimate';
   }
 
   @override
   String recordingsCleanedMessage(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Cleaned $count recordings',
-      one: 'Cleaned $count recording',
-    );
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'Cleaned $count recordings', one: 'Cleaned $count recording');
     return '$_temp0';
   }
 
@@ -802,12 +732,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String filesLabel(int files) {
-    String _temp0 = intl.Intl.pluralLogic(
-      files,
-      locale: localeName,
-      other: '$files files',
-      one: '$files file',
-    );
+    String _temp0 = intl.Intl.pluralLogic(files, locale: localeName, other: '$files files', one: '$files file');
     return '$_temp0';
   }
 
@@ -823,23 +748,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String recordingsLabel(int recordings) {
-    String _temp0 = intl.Intl.pluralLogic(
-      recordings,
-      locale: localeName,
-      other: '$recordings recordings',
-      one: '$recordings recording',
-    );
+    String _temp0 = intl.Intl.pluralLogic(recordings, locale: localeName, other: '$recordings recordings', one: '$recordings recording');
     return '$_temp0';
   }
 
   @override
   String filesTotalSizeLabel(int count, String size) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count files',
-      one: '$count file',
-    );
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count files', one: '$count file');
     return '$_temp0, total size: $size';
   }
 
@@ -891,8 +806,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taskStatusPaused => 'paused';
 
   @override
-  String get cachingMedia =>
-      'Caching media. After download completes, playback will use the downloaded file.';
+  String get cachingMedia => 'Caching media. After download completes, playback will use the downloaded file.';
 
   @override
   String nowPlayingFromLocalFile(String filename) {
@@ -919,8 +833,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tvPairTitle => 'Connect to a television';
 
   @override
-  String get tvPairHint =>
-      'Open the /tv page in the television browser and type the code it shows';
+  String get tvPairHint => 'Open the /tv page in the television browser and type the code it shows';
 
   @override
   String get tvPairCodeLabel => 'Pairing code';
@@ -974,8 +887,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tvSessionLost => 'Lost the connection to the television';
 
   @override
-  String get tvErrorUnsupportedMedia =>
-      'The television cannot play this format';
+  String get tvErrorUnsupportedMedia => 'The television cannot play this format';
 
   @override
   String get tvErrorPlayback => 'Playback failed on the television';
@@ -1046,4 +958,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get showDialogShortcutHelp => '? — show dialog help';
-  }
+}
