@@ -9,6 +9,7 @@ import 'package:ilovlya/src/api/media_list_riverpod.dart';
 import 'package:ilovlya/src/model/recording_info.dart';
 import 'package:ilovlya/src/model/settings.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
+import 'package:ilovlya/src/utils/provider_retry.dart';
 import 'package:path/path.dart' as p;
 
 class BenchmarkSettings extends SettingsNotifier {
@@ -35,7 +36,7 @@ Future<void> runCacheRefreshBenchmark() async {
       File(p.join(places.recordings().path, entry.id))
   ];
   final epoch = DateTime.utc(2020);
-  final container = ProviderContainer(retry: (_, _) => null, overrides: [
+  final container = ProviderContainer(retry: disableProviderRetry, overrides: [
     storePlacesProvider.overrideWith((ref) async => places),
     settingsProvider.overrideWith(() => BenchmarkSettings(Settings(
         dataStorageDirectory: places.dataDir,

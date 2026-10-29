@@ -25,6 +25,7 @@ import 'package:ilovlya/src/model/settings.dart';
 import 'package:ilovlya/src/model/tenant.dart';
 import 'package:ilovlya/src/settings/settings_provider.dart';
 import 'package:ilovlya/src/settings/settings_view.dart';
+import 'package:ilovlya/src/utils/provider_retry.dart';
 
 class _TestMediaListNotifier extends MediaListNotifier {
   _TestMediaListNotifier(this.recordings);
@@ -181,7 +182,7 @@ Route<dynamic> _route(RouteSettings settings) {
 }
 
 Widget _app({Future<RecordingInfo> Function(String url)? addRecording}) => ProviderScope(
-      retry: (_, _) => null,
+      retry: disableProviderRetry,
       overrides: _overrides(addRecording: addRecording),
       child: MaterialApp(
         restorationScopeId: 'shortcuts-test',
@@ -394,7 +395,7 @@ void main() {
     final request = Completer<void>();
     final recording = RecordingInfo(id: 'one', title: 'Jazz recording', thumbnailUrl: 'thumb:seen');
     await tester.pumpWidget(ProviderScope(
-      retry: (_, _) => null,
+      retry: disableProviderRetry,
       overrides: _detailsOverrides(recording: recording, setSeen: () => request.future),
       child: _detailsApp(recording),
     ));
@@ -415,7 +416,7 @@ void main() {
     var refreshCalls = 0;
     final recording = RecordingInfo(id: 'one', title: 'Jazz recording', thumbnailUrl: 'thumb:periodic');
     await tester.pumpWidget(ProviderScope(
-      retry: (_, _) => null,
+      retry: disableProviderRetry,
       overrides: _detailsOverrides(recording: recording, onRefresh: () async {
         refreshCalls++;
         await pendingRefresh.future;
@@ -444,7 +445,7 @@ void main() {
     ];
     late _TestDownloadsNotifier notifier;
     await tester.pumpWidget(ProviderScope(
-      retry: (_, _) => null,
+      retry: disableProviderRetry,
       overrides: [
         settingsProvider.overrideWith(_TestSettingsNotifier.new),
         localDTProvider.overrideWith(_TestLocalDTNotifier.new),
