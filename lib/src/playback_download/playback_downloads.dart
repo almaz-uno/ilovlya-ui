@@ -50,14 +50,16 @@ class PlaybackDownloads extends _$PlaybackDownloads {
   /// How long [open] waits for the server's first answer before handing the player the URL regardless.
   static const lengthWait = Duration(seconds: 5);
 
-  /// [Fetcher.silenceTimeout], [Fetcher.flowingWithin] and [Fetcher.recoveredAfter] of the downloads opened from now
-  /// on; tests shorten them.
+  /// [Fetcher.silenceTimeout], [Fetcher.flowingWithin], [Fetcher.recoveredAfter] and [PartialSource.giveUpAfter] of the
+  /// downloads opened from now on; tests shorten them.
   @visibleForTesting
   Duration silenceTimeout = Fetcher.defaultSilenceTimeout;
   @visibleForTesting
   Duration flowingWithin = Fetcher.defaultFlowingWithin;
   @visibleForTesting
   Duration recoveredAfter = Fetcher.defaultRecoveredAfter;
+  @visibleForTesting
+  Duration giveUpAfter = PartialSource.defaultGiveUpAfter;
 
   final Map<String, _Session> _sessions = {};
   Future<LocalMediaEndpoint>? _endpoint;
@@ -146,7 +148,7 @@ class PlaybackDownloads extends _$PlaybackDownloads {
       final authorization = await _authorization();
       if (!ref.mounted) return Uri.parse(d.url);
       final source = PartialSource(
-          file: file, url: Uri.parse(d.url), authorization: authorization, silenceTimeout: silenceTimeout, flowingWithin: flowingWithin, recoveredAfter: recoveredAfter);
+          file: file, url: Uri.parse(d.url), authorization: authorization, silenceTimeout: silenceTimeout, flowingWithin: flowingWithin, recoveredAfter: recoveredAfter, giveUpAfter: giveUpAfter);
       s = _Session(d, source);
       source.onChange = () => _changed(d.id);
       _sessions[d.id] = s;
@@ -170,6 +172,14 @@ class PlaybackDownloads extends _$PlaybackDownloads {
         return Uri.parse(d.url);
       } on TimeoutException {
         // The server is slow to answer. The endpoint keeps waiting for the length, as the player would on a stream.
+      } on UpstreamUnavailable catch (e) {
+        // The server has been away for long already. The endpoint answers the player that it is unavailable, and serves
+        // the URL once the server is back.
+        AppLoggers.download.w('Playback download of ${d.id} opened while the server is away: $e');
+      } on TransferStopped {
+        // Stopped meanwhile: paused for another download that opened, turned into a pass-through when the media was
+        // cleaned, or closed. The endpoint answers the player as for a server away. A discard — the download removed, or
+        // its file cleaned — ends the wait with [SourceGone] above instead, and the player streams.
       }
     }
     return url;

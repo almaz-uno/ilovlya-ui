@@ -52,9 +52,11 @@ class Fetcher {
   /// would otherwise keep the transfer waiting for ever, with no failure for the retries and the endpoint's give-up to
   /// act on. The failure is dated from the moment the request fell silent, so the endpoint still gives a read up 45 s
   /// after its bytes stopped (`PartialSource.defaultGiveUpAfter`), within libmpv's 60 s on the endpoint
-  /// (`MKPlayerHandler.loopbackNetworkTimeout`), whatever this value. 15 s: a server that answers at all answers within
-  /// a round trip and sends without pausing, while a mobile link may stall for some seconds at a handover; three
-  /// silent tries fit into the 45 s.
+  /// (`MKPlayerHandler.loopbackNetworkTimeout`), whatever this value. A wait for the length waits, besides, for a try
+  /// started after it came to fail: it is given up within the longer of what is left of the 45 s and two silences and a
+  /// backoff (15 + 15 + 1 s) — at most 45 s after the player's request, when the server fell silent as it came. 15 s:
+  /// a server that answers at all answers within a round trip and sends without pausing, while a mobile link may stall
+  /// for some seconds at a handover; three silent tries fit into the 45 s.
   static const defaultSilenceTimeout = Duration(seconds: 15);
 
   /// A transfer that has received no byte for this long is not flowing: no time remaining can be estimated for it.
@@ -195,6 +197,8 @@ class Fetcher {
   bool _stopped = false;
   bool _running = false;
   int _requests = 0;
+  int _attempts = 0;
+  int _lastFailedAttempt = 0;
 
   Fetcher(
       {required this.file,
@@ -232,6 +236,13 @@ class Fetcher {
 
   /// Requests made so far; what a test or a log line counts.
   int get requests => _requests;
+
+  /// Tries made so far, each counted as it starts — a request, or a connect that never became one.
+  int get attempts => _attempts;
+
+  /// The number in [attempts] of the latest try that failed; 0 for none. A failure of a try made after some moment is a
+  /// judgement of the server since then, which [failingFor] alone is not.
+  int get lastFailedAttempt => _lastFailedAttempt;
 
   /// The time the transfer is measured by: wall-clock time without the time the application spent suspended, and
   /// standing still while it is. On iOS the process is suspended in the background while nothing plays (spec 004, "On
@@ -371,6 +382,7 @@ class Fetcher {
             break;
           case _Attempt.failed:
             _reconnectingSince = null;
+            _lastFailedAttempt = _attempts;
             failures++;
             _failingSince ??= _silentSince ?? _now();
             _quietSince = null;
@@ -526,6 +538,7 @@ class Fetcher {
   }
 
   Future<_Attempt> _fetchGap(int start, int? end) async {
+    _attempts++;
     _silentSince = null;
     _quietSince ??= _now();
     _request = null;
