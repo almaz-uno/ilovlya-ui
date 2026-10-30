@@ -213,6 +213,19 @@ void main() {
     await downloads().discard('d1');
   });
 
+  test('a download discarded while its length is awaited is streamed from the server, not served by the endpoint', () async {
+    // A discard during open()'s wait — the download removed, or its file cleaned — ended the wait as a stop, and open()
+    // handed the player the endpoint's URL, which the discard had just unregistered: 404 instead of the stream.
+    downloads().silenceTimeout = const Duration(seconds: 30);
+    up.silent = true;
+    final d = download('d1');
+    final opening = downloads().open(d);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await downloads().discardFile(d.filename);
+    expect(await opening.timeout(const Duration(seconds: 2)), Uri.parse(d.url));
+    up.silent = false;
+  });
+
   group('time spent suspended is not silence', () {
     // On iOS a paused player in the background lets the process be suspended (spec 004, "On iOS"): no byte arrives, and
     // wall-clock time goes on. Here the process runs on, so the suspension is played by a server that falls silent at the

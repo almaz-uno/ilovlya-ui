@@ -177,7 +177,9 @@ class PlaybackDownloads extends _$PlaybackDownloads {
         // the URL once the server is back.
         AppLoggers.download.w('Playback download of ${d.id} opened while the server is away: $e');
       } on TransferStopped {
-        // Stopped meanwhile — another download opened. The endpoint answers the player as for a server away.
+        // Stopped meanwhile: paused for another download that opened, turned into a pass-through when the media was
+        // cleaned, or closed. The endpoint answers the player as for a server away. A discard — the download removed, or
+        // its file cleaned — ends the wait with [SourceGone] above instead, and the player streams.
       }
     }
     return url;

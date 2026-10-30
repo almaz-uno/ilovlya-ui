@@ -486,6 +486,40 @@ void main() {
     }
   });
 
+  test('a wait for the length ends as gone when the source is discarded meanwhile, not as stopped', () async {
+    // A discard stops the transfer before it marks the source gone: the wait took the stop for a pause, and the player
+    // was told the server is away (503), not that the file is gone (404).
+    up.silent = true;
+    final (source, url) = serve(silence: const Duration(seconds: 30));
+    final waiting = expectLater(source.length().timeout(const Duration(seconds: 2)), throwsA(isA<SourceGone>()));
+    final player = fetch(HttpClient(), url, range: 'bytes=0-');
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await source.discard('discarded');
+    await waiting;
+    expect((await player.timeout(const Duration(seconds: 2))).status, HttpStatus.notFound);
+    expect(source.isRunning, isFalse, reason: 'nothing started the transfer again');
+  });
+
+  test('waits on a silent server leave no listener behind, for the length or for bytes', () async {
+    // `changes.first.timeout(...)` kept its listener once the time was up, until the next change: four more a second for
+    // every wait while the server said nothing.
+    up.silent = true;
+    final (source, url) = serve(silence: const Duration(seconds: 30));
+    unawaited(fetch(HttpClient(), url, range: 'bytes=0-').then((_) {}, onError: (_) {}));
+    await Future<void>.delayed(const Duration(seconds: 2));
+    expect(source.file.changeListeners, lessThanOrEqualTo(2), reason: 'the length watch and one wait for the length');
+    await source.dispose();
+
+    up.silent = false;
+    up.silentNextAfter = 1 << 20;
+    final (reading, again) = serve(id: 'd2', silence: const Duration(seconds: 30));
+    unawaited(fetch(HttpClient(), again, range: 'bytes=${3 << 20}-').then((_) {}, onError: (_) {}));
+    await Future<void>.delayed(const Duration(seconds: 2));
+    expect(reading.confirmed, isTrue);
+    expect(reading.file.ranges.stored, lessThan(3 << 20), reason: 'the read is still waiting');
+    expect(reading.file.changeListeners, lessThanOrEqualTo(2), reason: 'the length watch and one wait for bytes');
+  });
+
   test('a resumed download whose server is away answers unavailable, not the length it kept', () async {
     // The length stored with the partial file is not handed to the player until the server confirms the file.
     up.rate = 4 << 20;

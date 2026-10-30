@@ -47,6 +47,9 @@ class PartialSource implements EndpointSource {
 
   SourceState _state = SourceState.idle;
   String? _goneReason;
+  /// Why the source is being discarded, from the moment [discard] is called: what stops the transfer then is not a
+  /// pause, and nothing starts it again.
+  String? _discarding;
   bool _writeFailed = false;
   Future<void>? _run;
   int _readers = 0;
@@ -102,7 +105,9 @@ class PartialSource implements EndpointSource {
 
   /// Starts the transfer at [from], unless it is running, finished or impossible.
   void resume(int from) {
-    if (_run != null || _state == SourceState.complete || _state == SourceState.gone || _state == SourceState.passThrough) return;
+    if (_run != null || _discarding != null || _state == SourceState.complete || _state == SourceState.gone || _state == SourceState.passThrough) {
+      return;
+    }
     _setState(SourceState.running);
     _run = fetcher.run(from).then(_finished, onError: (Object e) {
       AppLoggers.download.e('Playback download of ${file.downloadId} stopped by an error', error: e);
@@ -118,6 +123,8 @@ class PartialSource implements EndpointSource {
 
   /// Ends the source: the transfer stops, the file is discarded, readers get [SourceGone].
   Future<void> discard(String reason) async {
+    // Marked before the transfer stops: a length awaited meanwhile ends with [SourceGone], not [TransferStopped].
+    _discarding ??= reason;
     fetcher.stop();
     await _run;
     await file.discard();
@@ -162,7 +169,8 @@ class PartialSource implements EndpointSource {
   Future<int> length() {
     final known = file.length;
     if (known != null && _confirmed) return Future.value(known);
-    if (isGone) return Future.error(SourceGone(_goneReason!));
+    final gone = _goneReason ?? _discarding;
+    if (gone != null) return Future.error(SourceGone(gone));
     _lengthWatch ??= file.changes.listen((_) => _deliverLength());
     final since = fetcher.attempts;
     resume(0);
@@ -183,7 +191,7 @@ class PartialSource implements EndpointSource {
       while (true) {
         _settleLengthWaiters();
         if (_lengthWaiters.isEmpty) return;
-        await file.changes.first.timeout(const Duration(milliseconds: 250), onTimeout: () {});
+        await _nextChange(const Duration(milliseconds: 250));
       }
     } finally {
       _readers--;
@@ -203,8 +211,9 @@ class PartialSource implements EndpointSource {
       _lengthWaiters.clear();
       return;
     }
-    if (isGone) {
-      error = SourceGone(_goneReason!);
+    final gone = _goneReason ?? _discarding;
+    if (gone != null) {
+      error = SourceGone(gone);
     } else if (!isRunning) {
       error = const TransferStopped();
     }
@@ -256,7 +265,8 @@ class PartialSource implements EndpointSource {
     final grace = giveUpAfter < retryGrace ? giveUpAfter : retryGrace;
     try {
       while (true) {
-        if (isGone) throw SourceGone(_goneReason!);
+        final gone = _goneReason ?? _discarding;
+        if (gone != null) throw SourceGone(gone);
         if (_confirmed) {
           final end = file.ranges.end(offset);
           if (end > offset) return end - offset;
@@ -267,12 +277,30 @@ class PartialSource implements EndpointSource {
         if (failing != null && failing >= giveUpAfter && DateTime.now().difference(arrived) >= grace) throw UpstreamUnavailable(failing);
         if (isCancelled()) return 0;
         _steer(offset);
-        await file.changes.first.timeout(const Duration(milliseconds: 250), onTimeout: () {});
+        await _nextChange(const Duration(milliseconds: 250));
       }
     } finally {
       _readers--;
       fetcher.readerWaiting = _readers > 0;
     }
+  }
+
+  /// Completes on the file's next change, or after [limit]. Unlike `changes.first.timeout(...)`, whose listener stays
+  /// until the next change however long that takes, it leaves no listener behind: a wait on a silent server ticks every
+  /// 250 ms.
+  Future<void> _nextChange(Duration limit) {
+    final done = Completer<void>();
+    late final StreamSubscription<void> sub;
+    final timer = Timer(limit, () {
+      sub.cancel();
+      if (!done.isCompleted) done.complete();
+    });
+    sub = file.changes.listen((_) {
+      timer.cancel();
+      sub.cancel();
+      if (!done.isCompleted) done.complete();
+    });
+    return done.future;
   }
 
   @override

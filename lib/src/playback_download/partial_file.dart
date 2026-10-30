@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart' as p;
 
 import 'range_set.dart';
@@ -37,6 +38,7 @@ class PartialFile {
   final RangeSet ranges;
 
   final _changes = StreamController<void>.broadcast();
+  int _changeListeners = 0;
   int? _length;
   String? _lastModified;
   RandomAccessFile? _writer;
@@ -115,7 +117,18 @@ class PartialFile {
   bool get isCompleted => _completed;
 
   /// Fires after every write that added bytes to [ranges]; a reader waiting for an offset listens here.
-  Stream<void> get changes => _changes.stream;
+  Stream<void> get changes => Stream.multi((c) {
+        _changeListeners++;
+        final sub = _changes.stream.listen(c.add);
+        c.onCancel = () {
+          _changeListeners--;
+          return sub.cancel();
+        };
+      }, isBroadcast: true);
+
+  /// How many listen to [changes] now: for tests that a wait leaves none behind.
+  @visibleForTesting
+  int get changeListeners => _changeListeners;
 
   /// Fixes the length and `Last-Modified` of a download that has none yet.
   void setLength(int length, String? lastModified) {
