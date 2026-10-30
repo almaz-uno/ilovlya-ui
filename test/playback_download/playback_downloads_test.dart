@@ -226,6 +226,19 @@ void main() {
     up.silent = false;
   });
 
+  test('a download whose media is cleaned before the server first answers is streamed from the server', () async {
+    // #200: the pass-through has no length to serve from, so every request to the endpoint was answered 503; open()
+    // handed the player the endpoint's URL all the same.
+    downloads().silenceTimeout = const Duration(seconds: 30);
+    up.silent = true;
+    final d = download('d1');
+    final opening = downloads().open(d);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await downloads().stopAll();
+    expect(await opening.timeout(const Duration(seconds: 2)), Uri.parse(d.url));
+    up.silent = false;
+  });
+
   group('time spent suspended is not silence', () {
     // On iOS a paused player in the background lets the process be suspended (spec 004, "On iOS"): no byte arrives, and
     // wall-clock time goes on. Here the process runs on, so the suspension is played by a server that falls silent at the
