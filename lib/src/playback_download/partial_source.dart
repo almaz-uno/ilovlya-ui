@@ -50,6 +50,9 @@ class PartialSource implements EndpointSource {
   /// Why the source is being discarded, from the moment [discard] is called: what stops the transfer then is not a
   /// pause, and nothing starts it again.
   String? _discarding;
+  /// Set when [passThrough] is called, before the transfer stops: what stops it then is not a pause, and nothing starts it
+  /// again.
+  bool _passingThrough = false;
   bool _writeFailed = false;
   Future<void>? _run;
   int _readers = 0;
@@ -88,6 +91,10 @@ class PartialSource implements EndpointSource {
 
   bool get isRunning => _run != null;
 
+  /// Whether the source passes through, or is turning into a pass-through: from the moment [passThrough] is called,
+  /// while [state] follows only once the transfer has stopped and the file is discarded.
+  bool get passesThrough => _passingThrough || _state == SourceState.passThrough;
+
   /// Whether reads beyond what is stored are given up, the server having failed for [giveUpAfter]. Asking prompts a
   /// try, so that a server that has come back is noticed without waiting out the backoff.
   bool get serverAway {
@@ -105,7 +112,7 @@ class PartialSource implements EndpointSource {
 
   /// Starts the transfer at [from], unless it is running, finished or impossible.
   void resume(int from) {
-    if (_run != null || _discarding != null || _state == SourceState.complete || _state == SourceState.gone || _state == SourceState.passThrough) {
+    if (_run != null || _discarding != null || _passingThrough || _state == SourceState.complete || _state == SourceState.gone || _state == SourceState.passThrough) {
       return;
     }
     _setState(SourceState.running);
@@ -133,6 +140,7 @@ class PartialSource implements EndpointSource {
 
   /// Stops storing: the partial file is removed and every read from now on is piped from the server.
   Future<void> passThrough(String reason) async {
+    _passingThrough = true;
     fetcher.stop();
     await _run;
     await file.discard();

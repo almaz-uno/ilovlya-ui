@@ -177,9 +177,15 @@ class PlaybackDownloads extends _$PlaybackDownloads {
         // the URL once the server is back.
         AppLoggers.download.w('Playback download of ${d.id} opened while the server is away: $e');
       } on TransferStopped {
-        // Stopped meanwhile: paused for another download that opened, turned into a pass-through when the media was
-        // cleaned, or closed. The endpoint answers the player as for a server away. A discard — the download removed, or
-        // its file cleaned — ends the wait with [SourceGone] above instead, and the player streams.
+        // Turned into a pass-through before the server confirmed a length — the media cleaned meanwhile: the endpoint
+        // has no length to serve from, and would answer every request 503. The player streams instead (#200).
+        if (s.source.passesThrough) {
+          AppLoggers.download.w('Playback download of ${d.id} passes through with no length confirmed, streaming instead');
+          return Uri.parse(d.url);
+        }
+        // Otherwise stopped meanwhile: paused for another download that opened, or closed. The endpoint answers the
+        // player as for a server away. A discard — the download removed, or its file cleaned — ends the wait with
+        // [SourceGone] above instead, and the player streams.
       }
     }
     return url;
