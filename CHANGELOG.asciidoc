@@ -9,7 +9,7 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
-== [3.12.1] - 2026-11-01
+== [3.12.1] - 2026-11-02
 
 .Fixed
 - Playing a recording while it downloads from a server that cannot be reached from the start fails within 45 s instead of waiting for ever; a recording removed, or its media cleaned, while playback waits for it is streamed from the server instead (#195, #199, #200, #202)
