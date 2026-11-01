@@ -83,7 +83,7 @@ final class PlaybackDownloadsProvider
   }
 }
 
-String _$playbackDownloadsHash() => r'62997831a6069e1ee6297bea8577368092ee06e7';
+String _$playbackDownloadsHash() => r'51552ecafeddfb7fb87d7a2ba9b10372e01c123a';
 
 /// The owner of the playback downloads: one [PartialSource] per download, served by one [LocalMediaEndpoint].
 ///
