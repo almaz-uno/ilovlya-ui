@@ -9,8 +9,16 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
+== [3.12.1] - 2026-11-02
+
+.Fixed
+- Playing a recording while it downloads from a server that cannot be reached from the start fails within 45 s instead of waiting for ever; a recording removed, or its media cleaned, while playback waits for it is streamed from the server instead (#195, #199, #200, #202)
+- The web client the server serves is built with the dependency versions the app is tested with; the one of 3.12.0 was built with older ones (ilovlya#64)
+
 .Changed
 - The client requires Flutter 3.47 or later to build, no longer 3.44; the server's web image builds it with the version pinned in `.fvmrc`, as everywhere else (ilovlya#64)
+- Google Fonts 9; the look of the app does not change (#177)
+- Riverpod and build_runner updates (#194, #203)
 
 == [3.12.0] - 2026-10-30
 
