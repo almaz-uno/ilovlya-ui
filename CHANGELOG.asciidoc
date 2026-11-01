@@ -9,6 +9,9 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
+.Changed
+- The client requires Flutter 3.47 or later to build, no longer 3.44; the server's web image builds it with the version pinned in `.fvmrc`, as everywhere else (ilovlya#64)
+
 == [3.12.0] - 2026-10-30
 
 .Fixed
