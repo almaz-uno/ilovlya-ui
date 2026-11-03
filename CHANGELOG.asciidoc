@@ -11,6 +11,7 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 .Fixed
 - Adding a pasted link shows one progress indicator instead of two, and none once the add has failed (#207)
+- A playback streamed from the server that the player has left no longer raises an unhandled error when the download is closed meanwhile (#201)
 
 == [3.12.1] - 2026-11-02
 

@@ -558,18 +558,26 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 300));
     await endpoint.suspend();
     expect(endpoint.isListening, isFalse);
-    final cut = await open;
-    expect(cut.error ?? (cut.body.length < src.length ? 'short' : null), isNotNull, reason: 'the open response is reset');
+    // The open response is reset: in its body, or before its header when the endpoint had not answered yet, as on a
+    // loaded machine 300 ms may not be enough for (#201).
+    Uint8List kept;
+    try {
+      final cut = await open;
+      expect(cut.error ?? (cut.body.length < src.length ? 'short' : null), isNotNull, reason: 'the open response is reset');
+      kept = cut.body;
+    } on HttpException {
+      kept = Uint8List(0);
+    }
     await expectLater(fetch(player, url, range: 'bytes=0-'), throwsA(isA<SocketException>()));
 
     up.rate = null;
     await endpoint.resume();
     expect(endpoint.isListening, isTrue);
     expect(endpoint.port, port);
-    final back = await fetch(player, url, range: 'bytes=${cut.body.length}-');
+    final back = await fetch(player, url, range: 'bytes=${kept.length}-');
     expect(back.error, isNull);
     expect(back.status, 206);
-    expect(back.body, Uint8List.sublistView(src, cut.body.length));
+    expect(back.body, Uint8List.sublistView(src, kept.length));
     expect((await fetch(player, url.replace(pathSegments: ['wrong', ...url.pathSegments.skip(1)]))).status, 404, reason: 'the token is kept, and still required');
   });
 
@@ -596,5 +604,24 @@ void main() {
     } finally {
       await squatter.close();
     }
+  });
+
+  test('a pass-through the player has left is let go quietly when the source is disposed under its request', () async {
+    // The endpoint pipes a pass-through into the player's socket; a player that has gone cancels it, possibly while its
+    // request waits for the server. Disposing the source then closes the client under that request (#201).
+    final (source, _) = serve();
+    up.silent = true;
+    final sub = source.upstream(0, 1000).listen(null);
+    final asked = Stopwatch()..start();
+    while (up.log.isEmpty) {
+      if (asked.elapsed > const Duration(seconds: 5)) fail('the pass-through never reached the server');
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    unawaited(sub.cancel());
+    sources.remove(source);
+    await source.dispose();
+    // An error raised after the cancel would surface here, uncaught, and fail the test.
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    up.silent = false;
   });
 }

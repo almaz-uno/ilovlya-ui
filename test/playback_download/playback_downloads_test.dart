@@ -243,9 +243,16 @@ void main() {
     // On iOS a paused player in the background lets the process be suspended (spec 004, "On iOS"): no byte arrives, and
     // wall-clock time goes on. Here the process runs on, so the suspension is played by a server that falls silent at the
     // same moment, which is what the transfer sees of it.
+    //
+    // The times are short, as the production ones (15 s, 2 s, 5 s) would make the tests long, but not shorter than a
+    // loaded scheduler keeps: back from the suspension the transfer reconnects, and the connect and its answer must come
+    // within the silence timeout, which 300 ms did not always leave on two busy cores (#201). The suspension lasts three
+    // silence timeouts, so that a suspension counted as silence would still trip it.
+    const silence = Duration(seconds: 1);
+    const suspension = Duration(seconds: 3);
     void short() => downloads()
-      ..silenceTimeout = const Duration(milliseconds: 300)
-      ..flowingWithin = const Duration(milliseconds: 100)
+      ..silenceTimeout = silence
+      ..flowingWithin = const Duration(milliseconds: 250)
       ..recoveredAfter = const Duration(seconds: 1);
 
     Future<void> suspendFor(Duration d) async {
@@ -262,12 +269,13 @@ void main() {
       await fetch(player, url, range: 'bytes=0-', take: 50000);
       await until(() => task('d1')?.status == TaskStatus.running && task('d1')?.networkSpeed != null);
 
-      await suspendFor(const Duration(milliseconds: 1500));
+      await suspendFor(suspension);
       up.silent = false;
       downloads().inFront = true;
       expect(downloads().notAnsweringFor('d1'), isNull, reason: 'the server did nothing wrong; the application was away');
+      // Long enough for the request made on the return to be given up, had its silence timeout carried the suspension.
       final clock = Stopwatch()..start();
-      while (clock.elapsed < const Duration(seconds: 1)) {
+      while (clock.elapsed < silence * 2) {
         expect(task('d1')!.status, isNot(TaskStatus.waitingToRetry), reason: 'at ${clock.elapsed} after the return');
         await Future.delayed(const Duration(milliseconds: 50));
       }
@@ -285,10 +293,10 @@ void main() {
       await until(() => downloads().notAnsweringFor('d1') != null);
       final before = downloads().notAnsweringFor('d1')!;
 
-      await suspendFor(const Duration(milliseconds: 1500));
+      await suspendFor(suspension);
       downloads().inFront = true;
       final after = downloads().notAnsweringFor('d1')!;
-      expect(after - before, lessThan(const Duration(milliseconds: 300)), reason: 'only the time in front counts: $before, then $after');
+      expect(after - before, lessThan(silence), reason: 'only the time in front counts: $before, then $after');
       up
         ..silent = false
         ..down = false;
@@ -297,23 +305,23 @@ void main() {
 
     test('a server that is in fact silent after the return is still reported after the silence timeout', () async {
       short();
-      // Well above the 64 KiB per 300 ms the window asks for, so that only the silence after the return can trip it.
+      // Well above the 64 KiB per silence timeout the window asks for, so that only the silence after the return can trip it.
       up.rate = 512 * 1024;
       final url = await downloads().open(download('d1'));
       await fetch(player, url, range: 'bytes=0-', take: 50000);
       await until(() => task('d1')?.status == TaskStatus.running && task('d1')?.networkSpeed != null);
 
-      await suspendFor(const Duration(milliseconds: 1500));
+      await suspendFor(suspension);
       downloads().inFront = true; // up stays silent
       expect(downloads().notAnsweringFor('d1'), isNull);
       final clock = Stopwatch()..start();
       await until(() => downloads().notAnsweringFor('d1') != null);
-      // The window still holds what came just before the suspension; it runs out 300 ms less the time 64 KiB took at
-      // 512 KiB/s, about 175 ms after the return. Before the fix the report came at once, carrying the suspension.
-      expect(clock.elapsed, greaterThanOrEqualTo(const Duration(milliseconds: 100)), reason: 'not at once');
-      // Counted from the return, less the 300 ms window, however late this looks: the suspension took 1.5 s.
+      // The window still holds what came just before the suspension; it runs out one silence timeout less the time 64 KiB
+      // took at 512 KiB/s, about 875 ms after the return. Before the fix the report came at once, carrying the suspension.
+      expect(clock.elapsed, greaterThanOrEqualTo(silence ~/ 2), reason: 'not at once');
+      // Counted from the return, less the window of one silence timeout, however late this looks: the suspension took three.
       final notAnswering = downloads().notAnsweringFor('d1')!;
-      expect(notAnswering, lessThanOrEqualTo(clock.elapsed + const Duration(milliseconds: 300)), reason: 'counted from the return, not from the suspension');
+      expect(notAnswering, lessThanOrEqualTo(clock.elapsed + silence), reason: 'counted from the return, not from the suspension');
       expect(clock.elapsed, lessThan(const Duration(seconds: 5)), reason: 'a safety net');
       up.silent = false;
       await downloads().discard('d1');

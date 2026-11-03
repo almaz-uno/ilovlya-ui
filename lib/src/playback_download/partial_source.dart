@@ -314,21 +314,60 @@ class PartialSource implements EndpointSource {
   @override
   Future<List<int>> read(int offset, int count) => file.read(offset, count);
 
+  /// Not an `async*` generator: the endpoint cancels the stream when the player has gone, possibly while the request
+  /// still connects or waits for its answer, and a generator would then raise that request's failure — the client
+  /// closed by [dispose], say — where nobody listens. Cancelled, the request is aborted and its failure let go.
   @override
-  Stream<List<int>> upstream(int start, int end) async* {
-    final req = await _client.getUrl(url);
-    req.headers.set(HttpHeaders.rangeHeader, 'bytes=$start-${end - 1}');
-    if (authorization != null) req.headers.set(HttpHeaders.authorizationHeader, authorization!);
-    // Silent as the fetcher would be: the endpoint resets the player's response, and the player asks again.
-    final res = await req.close().timeout(silenceTimeout, onTimeout: () {
-      req.abort();
-      throw TimeoutException('Pass-through for [$start, $end) got no answer', silenceTimeout);
-    });
-    if (res.statusCode != HttpStatus.partialContent) {
-      await res.drain<void>();
-      throw HttpException('Pass-through for [$start, $end) got ${res.statusCode}', uri: url);
+  Stream<List<int>> upstream(int start, int end) {
+    final out = StreamController<List<int>>(sync: true);
+    HttpClientRequest? request;
+    StreamSubscription<List<int>>? body;
+    var cancelled = false;
+
+    Future<void> pipe() async {
+      try {
+        final req = request = await _client.getUrl(url);
+        if (cancelled) {
+          req.abort();
+          return;
+        }
+        req.headers.set(HttpHeaders.rangeHeader, 'bytes=$start-${end - 1}');
+        if (authorization != null) req.headers.set(HttpHeaders.authorizationHeader, authorization!);
+        // Silent as the fetcher would be: the endpoint resets the player's response, and the player asks again.
+        final res = await req.close().timeout(silenceTimeout, onTimeout: () {
+          req.abort();
+          throw TimeoutException('Pass-through for [$start, $end) got no answer', silenceTimeout);
+        });
+        if (cancelled) {
+          await res.listen(null).cancel();
+          return;
+        }
+        if (res.statusCode != HttpStatus.partialContent) {
+          await res.drain<void>();
+          throw HttpException('Pass-through for [$start, $end) got ${res.statusCode}', uri: url);
+        }
+        body = res.timeout(silenceTimeout).listen(out.add, onError: (Object e, StackTrace st) {
+          out.addError(e, st);
+          out.close();
+        }, onDone: out.close, cancelOnError: true);
+        if (out.isPaused) body!.pause();
+      } on Object catch (e, st) {
+        if (cancelled) return;
+        out.addError(e, st);
+        await out.close();
+      }
     }
-    yield* res.timeout(silenceTimeout);
+
+    out
+      ..onListen = (() => unawaited(pipe()))
+      ..onPause = (() => body?.pause())
+      ..onResume = (() => body?.resume())
+      ..onCancel = (() {
+        cancelled = true;
+        request?.abort();
+        return body?.cancel();
+      });
+    return out.stream;
   }
 
   void _steer(int offset) {
