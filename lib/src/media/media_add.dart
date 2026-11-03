@@ -231,12 +231,8 @@ class _MediaAddViewState extends ConsumerState<MediaAddView> {
                 if (mounted && !_isAdding) _addMedia(context, u, true);
               });
             }
-            return Column(
-              children: [
-                Text(AppLocalizations.of(context)!.addingUrlWithVariable(u)),
-                const CircularProgressIndicator(),
-              ],
-            );
+            // The indicator below shows the add while it runs, and only then.
+            return Text(AppLocalizations.of(context)!.addingUrlWithVariable(u));
           }
 
           return snapshot.data!.infos == null
