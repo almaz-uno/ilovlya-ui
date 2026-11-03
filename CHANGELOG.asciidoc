@@ -9,13 +9,22 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
+== [3.13.0] - 2026-11-03
+
+.Added
+- The server starts without Telegram when `TG_TOKEN` is empty, for a stand or a test run: there is no bot, a link to a message sent to the bot is refused with the reason, and the server says once in its log that Telegram is off (ilovlya#75)
+
 .Fixed
 - Lists scroll with a trackpad and with a Magic Mouse on macOS, and with a touchpad on Linux (#216)
+- The macOS app, sandboxed, can reach the server and serve a recording to its player while it downloads: it has the network client and server entitlements (#197)
 - Adding a pasted link shows one progress indicator instead of two, and none once the add has failed (#207)
 - A playback streamed from the server that the player has left no longer raises an unhandled error when the download is closed meanwhile (#201)
 - The app no longer polls the server every 30 s with no token, or with a token the server has refused; the list says that the token is not accepted, a refresh asked for still goes out, and a new token or server URL is tried at once (#211)
 - A local download shows its percentage, speed and time remaining on a line of their own under the file name, the percentage first, on the player and on the recording's screen alike; the recording's screen no longer writes "Mb/s" (#213)
 - Opening another recording while one plays from a download no longer leaves the first download running alongside the new one, restarted by a request the player had left (#215)
+
+.Changed
+- The server's image runs on debian:trixie-slim instead of cirruslabs/flutter: 934 MB instead of 6.3 GB; yt-dlp in it now gets versions of requests and websockets it supports, where before it marked them unsupported (ilovlya#95)
 
 == [3.12.1] - 2026-11-02
 
