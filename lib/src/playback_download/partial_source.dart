@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart' as p;
 
 import '../utils/logger_provider.dart';
@@ -122,11 +123,18 @@ class PartialSource implements EndpointSource {
     });
   }
 
-  /// Stops the transfer, keeping what was stored for a later [resume].
+  /// Stops the transfer, keeping what was stored for a later [resume]. A reader that came before the pause no longer
+  /// steers the transfer, and so does not start it again: the owner paused it to open another download, and the
+  /// response that reader serves is one the player has left, still open until the endpoint sees the socket closed
+  /// (#215). A reader that comes after the pause steers it as ever.
   Future<void> pause() async {
+    _pauses++;
     fetcher.stop();
     await _run;
   }
+
+  /// The pauses so far: a reader takes the count as it comes, and steers the transfer only while it stays the same.
+  int _pauses = 0;
 
   /// Ends the source: the transfer stops, the file is discarded, readers get [SourceGone].
   Future<void> discard(String reason) async {
@@ -262,8 +270,15 @@ class PartialSource implements EndpointSource {
     _deliverLength();
   }
 
+  /// The rounds the waits in [available] have gone so far, all of them together: a test waits for a waiting reader
+  /// to look again.
+  @visibleForTesting
+  int get readerRounds => _readerRounds;
+  int _readerRounds = 0;
+
   @override
   Future<int> available(int offset, bool Function() isCancelled) async {
+    final pauses = _pauses;
     _readers++;
     fetcher.readerWaiting = true;
     // A new reader while the server fails — the player reconnecting, or reopening — is worth a try at once, and the
@@ -273,6 +288,7 @@ class PartialSource implements EndpointSource {
     final grace = giveUpAfter < retryGrace ? giveUpAfter : retryGrace;
     try {
       while (true) {
+        _readerRounds++;
         final gone = _goneReason ?? _discarding;
         if (gone != null) throw SourceGone(gone);
         if (_confirmed) {
@@ -284,7 +300,7 @@ class PartialSource implements EndpointSource {
         final failing = fetcher.failingFor;
         if (failing != null && failing >= giveUpAfter && DateTime.now().difference(arrived) >= grace) throw UpstreamUnavailable(failing);
         if (isCancelled()) return 0;
-        _steer(offset);
+        if (_pauses == pauses) _steer(offset);
         await _nextChange(const Duration(milliseconds: 250));
       }
     } finally {

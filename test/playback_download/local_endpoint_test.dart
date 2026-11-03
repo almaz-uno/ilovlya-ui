@@ -624,4 +624,39 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 200));
     up.silent = false;
   });
+
+  test('a pause is not lifted by a reader that came before it; a reader after it resumes the transfer', () async {
+    // The owner pauses a download to open another (#215). A response of the paused one that the player has left still
+    // waits for bytes until the endpoint sees the socket closed, and must not start the transfer again meanwhile.
+    up.rate = 256 * 1024;
+    final (source, _) = serve();
+    source.resume(0);
+    Future<void> until(bool Function() condition, String what) async {
+      final clock = Stopwatch()..start();
+      while (!condition()) {
+        if (clock.elapsed > const Duration(seconds: 5)) fail('not $what within 5 s');
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+    }
+
+    await until(() => source.confirmed && source.file.ranges.stored > 0, 'answered');
+    var left = false;
+    final early = source.available(src.length - 1, () => left); // far ahead of what is stored: it waits
+    await until(() => source.readerRounds > 0, 'waiting');
+
+    await source.pause();
+    expect(source.isRunning, isFalse);
+    final rounds = source.readerRounds;
+    await until(() => source.readerRounds >= rounds + 2, 'looked again twice');
+    expect(source.isRunning, isFalse, reason: 'the reader from before the pause does not resume the transfer');
+
+    var gone = false;
+    final late = source.available(src.length - 1, () => gone);
+    await until(() => source.isRunning, 'resumed by the reader after the pause');
+
+    left = true;
+    gone = true;
+    await early; // both end: on the bytes, now that the transfer runs, or as left
+    await late;
+  });
 }
