@@ -197,11 +197,26 @@ recipe).
 
 - Gatekeeper on a Mac that never ran the app: needs the signed and notarized
   artifact.
-- Sign-in, the list, a download and its playback against the production server
-  with the release entitlements: waiting for the owner.
+
+## Checked against production
+
+A release build with these entitlements, re-signed ad-hoc with the hardened
+runtime, under a temporary bundle id:
+
+- the owner signed in, and the list of 3221 recordings arrived;
+- one recording was downloaded to the client while it played: 190 MB arrived in
+  the container's `media/.partial` and was moved into `media/` in about 20 s;
+- `LocalMediaEndpoint` listened on `127.0.0.1` and libmpv held two connections
+  to it;
+- the owner saw the video and heard the sound.
 
 ## Observations
 
 - Without a token the app keeps polling `GET /api/recordings` and gets `401`:
   about 250 requests in two hours of waiting at the sign-in. A fresh install
   does the same against the production server until the user signs in.
+- On macOS the recording screen keeps logging `MPV IPC error` for
+  `/tmp/<recording id>`: it polls the socket of an external mpv that is only
+  ever started through `flatpak-spawn` on Linux.
+- Lists did not scroll with a trackpad or a Magic Mouse; fixed by #216
+  «Lists do not scroll with a trackpad or a Magic Mouse on macOS».
