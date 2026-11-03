@@ -32,6 +32,21 @@ Locale? _parseLocale(String? localeString) {
   return null; // Fallback to system locale for invalid format
 }
 
+/// Lists scroll by dragging with any pointer, a mouse included.
+///
+/// The trackpad has to stay among the drag devices: on macOS the scroll gestures
+/// of a trackpad and of a Magic Mouse arrive as pan-zoom events of a trackpad,
+/// and on Linux those of a touchpad do, and a list follows them only then.
+final ScrollBehavior appScrollBehavior = const MaterialScrollBehavior().copyWith(
+  dragDevices: {
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.touch,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.unknown,
+  },
+);
+
 /// The Widget that configures your application.
 class MyApp extends ConsumerWidget {
   const MyApp({
@@ -47,14 +62,7 @@ class MyApp extends ConsumerWidget {
     ));
 
     return MaterialApp(
-      scrollBehavior: const MaterialScrollBehavior().copyWith(
-        dragDevices: {
-          PointerDeviceKind.mouse,
-          PointerDeviceKind.touch,
-          PointerDeviceKind.stylus,
-          PointerDeviceKind.unknown,
-        },
-      ),
+      scrollBehavior: appScrollBehavior,
       // Providing a restorationScopeId allows the Navigator built by the
       // MaterialApp to restore the navigation stack when a user leaves and
       // returns to the app after it has been killed while running in the
