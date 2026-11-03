@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import '../api/api_riverpod.dart';
+import '../api/server_access_riverpod.dart';
 import '../api/exceptions.dart';
 import '../api/local_download_task_riverpod.dart';
 import '../api/media_list_riverpod.dart';
@@ -87,6 +88,10 @@ class _ThumbnailPlaceholder extends StatelessWidget {
   }
 }
 
+/// Whether the player plays: the list is not pulled meanwhile. Tests replace it, the player needing media_kit.
+@visibleForTesting
+bool Function() mediaListPlayerPlaying = () => MKPlayerHandler.player.state.playing;
+
 class MediaListViewRiverpod extends ConsumerStatefulWidget {
   const MediaListViewRiverpod({super.key});
 
@@ -109,10 +114,16 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   void initState() {
     super.initState();
 
-    _refreshList();
+    // The server is polled only with a token it has not refused (#211). Whenever there is a server and a token to poll
+    // that were not polled just before — the settings have loaded, the server URL or the token has changed, a refusal
+    // has been lifted — the list is pulled at once; the tenant follows, the build watching it only while it may poll.
+    ref.listenManual(serverAccessProvider.select((a) => a.canPoll ? (a.serverUrl, a.token) : null), (previous, polled) {
+      if (polled != null && polled != previous) _refreshList();
+    }, fireImmediately: true);
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
-      if (MKPlayerHandler.player.state.playing) {
+      if (!ref.read(serverAccessProvider).canPoll) return;
+      if (mediaListPlayerPlaying()) {
         AppLoggers.ui.d('Skip pull list while playing');
         return;
       }
@@ -227,9 +238,14 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
     final mediaList = ref.watch(mediaListProvider);
     final settings = ref.watch(settingsProvider);
     final primary = Theme.of(context).colorScheme.primary;
-    final tenant = ref.watch(getTenantProvider);
+    final access = ref.watch(serverAccessProvider);
+    // Without a token, or with one the server refused, the tenant is not asked for: the user is told to check the
+    // token instead of being shown a list that silently stays as it was.
+    final tenant = access.canPoll ? ref.watch(getTenantProvider) : null;
     String usageInfo = "";
-    if (tenant.hasValue) {
+    if (access.noToken || access.rejected) {
+      usageInfo = AppLocalizations.of(context)!.unauthorizedCheckTokenAndServer;
+    } else if (tenant != null && tenant.hasValue) {
       final t = tenant.requireValue;
       final storeStr = t.storeUsage > 0 ? " 🏠${t.localUsageStr()}/☁️${t.storeUsageStr()} " : "";
 

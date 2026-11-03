@@ -215,7 +215,7 @@ final class ListRecordingsProvider
   }
 }
 
-String _$listRecordingsHash() => r'cab404bf5bfcb1b81acf988d0fbf8a36ff944a4c';
+String _$listRecordingsHash() => r'857553be0e5188612a238d8511add59f9621a052';
 
 final class ListRecordingsFamily extends $Family
     with
@@ -917,7 +917,7 @@ final class GetTenantProvider
   }
 }
 
-String _$getTenantHash() => r'6f9949ff4dcd1860b81715b966bab7b4eaee40ac';
+String _$getTenantHash() => r'5b8c44adcb7f57cc52f01aa4be1f77c003a66f46';
 
 @ProviderFor(deleteDownloadContent)
 final deleteDownloadContentProvider = DeleteDownloadContentFamily._();
