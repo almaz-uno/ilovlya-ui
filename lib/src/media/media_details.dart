@@ -32,9 +32,9 @@ import '../settings/settings_view.dart';
 import '../theme/media_player_theme.dart';
 import '../utils/file_opener.dart';
 import '../utils/logger_provider.dart';
-import '../utils/task_status_localization.dart';
 import 'downloads_table.dart';
 import 'format.dart';
+import 'local_download_progress.dart';
 import 'formats_table.dart';
 import 'intents.dart';
 import '../tv/tv_api.dart';
@@ -1237,45 +1237,6 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     );
   }
 
-  Widget ldline(LocalDownloadTask dt) {
-    final l10n = AppLocalizations.of(context)!;
-
-    // Use localized status if available, otherwise fallback to cleaned enum name
-    String localizedStatus;
-    if (dt.status != null) {
-      localizedStatus = TaskStatusLocalization.getLocalizedStatusWithFallback(dt.status!, l10n);
-    } else {
-      localizedStatus = "";
-    }
-
-    var eta = dt.timeRemaining == null ? "" : formatDuration(dt.timeRemaining!);
-    var est = dt.networkSpeed == null || dt.networkSpeed! < 0 ? "" : " ≈ ${dt.networkSpeed?.toStringAsFixed(2) ?? ''} Mb/s, ETA: $eta";
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                l10n.localDownloadingStatus(localizedStatus, dt.filename, est),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-            if (dt.progress != null)
-              Text(
-                '${(dt.progress! * 100).round()}%',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        LinearProgressIndicator(value: dt.progress, minHeight: 2),
-      ],
-    );
-  }
-
   Widget _localDownloadsTable(BuildContext context, RecordingInfo recording, List<Download> downloads) {
     final downloadTasks = ref.watch(localDTProvider.select((value) {
       return <String, LocalDownloadTask>{
@@ -1291,7 +1252,7 @@ class _MediaDetailsViewState extends ConsumerState<MediaDetailsView> {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
-        children: [for (final dt in downloadTasks.values) ldline(dt)],
+        children: [for (final dt in downloadTasks.values) LocalDownloadProgress(task: dt)],
       ),
     );
   }

@@ -706,9 +706,9 @@
     }
   },
 
-  "playbackDownloadNoAnswer": "— no answer from the server for {duration}",
+  "playbackDownloadNoAnswer": "no answer from the server for {duration}",
   "@playbackDownloadNoAnswer": {
-    "description": "Appended to the player's progress line while a playback download waits to retry a server that does not answer, instead of the speed and the time remaining",
+    "description": "On the figures line of a playback download waiting to retry a server that does not answer, instead of the speed and the time remaining",
     "placeholders": {
       "duration": {
         "type": "String"
@@ -1144,17 +1144,29 @@
     }
   },
 
-  "localDownloadingStatus": "Local downloading {status}: {filename} {estimate}",
-  "@localDownloadingStatus": {
-    "description": "Local downloading status with details",
+  "localDownloadHeader": "Local download {status}:",
+  "@localDownloadHeader": {
+    "description": "The first line of a local download in progress: its status",
     "placeholders": {
       "status": {
         "type": "String"
-      },
-      "filename": {
+      }
+    }
+  },
+  "localDownloadSpeed": "≈ {speed} MB/s",
+  "@localDownloadSpeed": {
+    "description": "The speed of a local download, in MB/s, on its figures line",
+    "placeholders": {
+      "speed": {
         "type": "String"
-      },
-      "estimate": {
+      }
+    }
+  },
+  "localDownloadEta": "ETA {eta}",
+  "@localDownloadEta": {
+    "description": "The time a local download has left, on its figures line",
+    "placeholders": {
+      "eta": {
         "type": "String"
       }
     }

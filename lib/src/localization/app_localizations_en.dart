@@ -434,7 +434,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String playbackDownloadNoAnswer(String duration) {
-    return '— no answer from the server for $duration';
+    return 'no answer from the server for $duration';
   }
 
   @override
@@ -700,8 +700,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String localDownloadingStatus(String status, String filename, String estimate) {
-    return 'Local downloading $status: $filename $estimate';
+  String localDownloadHeader(String status) {
+    return 'Local download $status:';
+  }
+
+  @override
+  String localDownloadSpeed(String speed) {
+    return '≈ $speed MB/s';
+  }
+
+  @override
+  String localDownloadEta(String eta) {
+    return 'ETA $eta';
   }
 
   @override

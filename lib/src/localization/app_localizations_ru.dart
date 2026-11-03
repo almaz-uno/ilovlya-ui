@@ -434,7 +434,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String playbackDownloadNoAnswer(String duration) {
-    return '— сервер не отвечает уже $duration';
+    return 'сервер не отвечает уже $duration';
   }
 
   @override
@@ -707,8 +707,18 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String localDownloadingStatus(String status, String filename, String estimate) {
-    return 'Локальная загрузка $status: $filename $estimate';
+  String localDownloadHeader(String status) {
+    return 'Локальная загрузка $status:';
+  }
+
+  @override
+  String localDownloadSpeed(String speed) {
+    return '≈ $speed MB/s';
+  }
+
+  @override
+  String localDownloadEta(String eta) {
+    return 'ETA $eta';
   }
 
   @override
