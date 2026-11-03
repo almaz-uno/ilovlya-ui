@@ -29,16 +29,16 @@ class _LocalDT extends LocalDTNotifier {
 }
 
 class _Settings extends SettingsNotifier {
-  _Settings(this.token, this.serverUrl);
-  String token;
-  String serverUrl;
+  _Settings(this._token, this._serverUrl);
+  String _token;
+  String _serverUrl;
 
   @override
-  Future<Settings> build() async => Settings(token: token, serverUrl: serverUrl);
+  Future<Settings> build() async => Settings(token: _token, serverUrl: _serverUrl);
 
-  void setToken(String token) => state = AsyncData(Settings(token: this.token = token, serverUrl: serverUrl));
+  void setToken(String token) => state = AsyncData(Settings(token: _token = token, serverUrl: _serverUrl));
 
-  void setServerUrl(String serverUrl) => state = AsyncData(Settings(token: token, serverUrl: this.serverUrl = serverUrl));
+  void setServerUrl(String serverUrl) => state = AsyncData(Settings(token: _token, serverUrl: _serverUrl = serverUrl));
 }
 
 /// The server the list polls: the requests it got, with the time since the list was shown, and what it answers.
