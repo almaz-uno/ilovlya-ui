@@ -1,7 +1,10 @@
+import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../localization/app_localizations.dart';
 import '../model/local_download.dart';
+import '../playback_download/playback_downloads.dart';
 import '../utils/task_status_localization.dart';
 import 'format.dart';
 
@@ -49,6 +52,27 @@ class LocalDownloadProgress extends StatelessWidget {
         const SizedBox(height: 4),
         LinearProgressIndicator(value: progress != null && progress >= 0 ? progress : null, minHeight: 2),
       ],
+    );
+  }
+}
+
+/// A local download under the player. A playback download waiting to retry also tells how long its server has not
+/// answered.
+class PlayerDownloadProgress extends ConsumerWidget {
+  const PlayerDownloadProgress({super.key, required this.task, required this.downloadId, required this.playbackDownload});
+
+  final LocalDownloadTask task;
+  final String downloadId;
+
+  /// Whether the player reads [downloadId] while it arrives, from a playback download.
+  final bool playbackDownload;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final failing = playbackDownload && task.status == TaskStatus.waitingToRetry ? ref.read(playbackDownloadsProvider.notifier).notAnsweringFor(downloadId) : null;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: LocalDownloadProgress(task: task, notAnsweringFor: failing),
     );
   }
 }

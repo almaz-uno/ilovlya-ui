@@ -750,12 +750,7 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
                           // Show progress only if task exists, is not complete, and has progress
                           if (task != null && task.status != null) {
-                            // A playback download waiting to retry tells how long its server has not answered
-                            final failing = widget.source != null && task.status == TaskStatus.waitingToRetry ? ref.read(playbackDownloadsProvider.notifier).notAnsweringFor(widget.download.id) : null;
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                              child: LocalDownloadProgress(task: task, notAnsweringFor: failing),
-                            );
+                            return PlayerDownloadProgress(task: task, downloadId: widget.download.id, playbackDownload: widget.source != null);
                           }
                           return const SizedBox.shrink();
                         },
