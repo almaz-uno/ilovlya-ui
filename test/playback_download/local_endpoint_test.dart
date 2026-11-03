@@ -597,4 +597,23 @@ void main() {
       await squatter.close();
     }
   });
+
+  test('a pass-through the player has left is let go quietly when the source is disposed under its request', () async {
+    // The endpoint pipes a pass-through into the player's socket; a player that has gone cancels it, possibly while its
+    // request waits for the server. Disposing the source then closes the client under that request (#201).
+    final (source, _) = serve();
+    up.silent = true;
+    final sub = source.upstream(0, 1000).listen(null);
+    final asked = Stopwatch()..start();
+    while (up.log.isEmpty) {
+      if (asked.elapsed > const Duration(seconds: 5)) fail('the pass-through never reached the server');
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    unawaited(sub.cancel());
+    sources.remove(source);
+    await source.dispose();
+    // An error raised after the cancel would surface here, uncaught, and fail the test.
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    up.silent = false;
+  });
 }
