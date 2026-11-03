@@ -104,6 +104,20 @@ void main() {
       expect(_lines(tester), ['Local download running:', _file], reason: 'nothing known: no line of figures at all');
     });
 
+    testWidgets('failed or canceled: the bar stands empty, and the line has no percentage', (tester) async {
+      // As background_downloader reports them: the progress is the state's code, and so are the speed and the time.
+      for (final (status, code) in [(TaskStatus.failed, -1.0), (TaskStatus.canceled, -2.0)]) {
+        await tester.pumpWidget(_app(LocalDownloadProgress(task: _task(status: status, progress: code, speed: -1, eta: const Duration(seconds: -1)))));
+        expect(tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator)).value, 0.0, reason: '$status: not running');
+        expect(_lines(tester).length, 2, reason: '$status: no line of figures, no percentage');
+        expect(find.textContaining('%'), findsNothing);
+
+        await tester.pumpWidget(_app(LocalDownloadProgress(task: _task(status: status, progress: code))));
+        expect(tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator)).value, 0.0);
+        expect(_lines(tester).last, '≈ 11.86 MB/s · ETA 00:11', reason: '$status: the figures that are known, without a percentage');
+      }
+    });
+
     testWidgets('waiting to retry: the time the server has not answered, in place of the speed and the time remaining', (tester) async {
       await tester.pumpWidget(_app(LocalDownloadProgress(task: _task(status: TaskStatus.waitingToRetry), notAnsweringFor: const Duration(seconds: 42))));
       expect(_lines(tester).last, '63% · no answer from the server for 00:42');

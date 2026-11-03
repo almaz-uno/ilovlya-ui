@@ -9,7 +9,8 @@ import '../utils/task_status_localization.dart';
 import 'format.dart';
 
 /// The figures of a local download on a line of their own: `63% · ≈ 11.86 MB/s · ETA 00:11`. A part that is not known
-/// is left out with its separator; the line is empty when none is. A download whose server does not answer shows that
+/// is left out with its separator; the line is empty when none is. A negative progress, speed or time remaining is
+/// background_downloader's code for a state, not a figure, and is left out too. A download whose server does not answer shows that
 /// instead of the speed and the time remaining, which say nothing then (#213).
 String localDownloadFigures(AppLocalizations l10n, LocalDownloadTask task, {Duration? notAnsweringFor}) {
   final progress = task.progress;
@@ -50,7 +51,10 @@ class LocalDownloadProgress extends StatelessWidget {
         Text(task.filename, style: style),
         if (figures.isNotEmpty) Text(figures, style: style),
         const SizedBox(height: 4),
-        LinearProgressIndicator(value: progress != null && progress >= 0 ? progress : null, minHeight: 2),
+        // Running without a value only while the progress is not known yet. A negative one is background_downloader's
+        // code for a state (failed, canceled, not found, waiting to retry, paused), which has replaced the last value:
+        // the bar stands, empty, as it did before, rather than run as if the download went on.
+        LinearProgressIndicator(value: progress == null ? null : (progress < 0 ? 0.0 : progress), minHeight: 2),
       ],
     );
   }
