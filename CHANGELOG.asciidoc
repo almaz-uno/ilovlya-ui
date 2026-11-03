@@ -12,6 +12,7 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 .Fixed
 - Adding a pasted link shows one progress indicator instead of two, and none once the add has failed (#207)
 - A playback streamed from the server that the player has left no longer raises an unhandled error when the download is closed meanwhile (#201)
+- The app no longer polls the server every 30 s with no token, or with a token the server has refused; the list says that the token is not accepted, a refresh asked for still goes out, and a new token is tried at once (#211)
 
 == [3.12.1] - 2026-11-02
 

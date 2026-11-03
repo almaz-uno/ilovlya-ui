@@ -13,10 +13,20 @@ import '../model/url_info.dart';
 import '../settings/settings_provider.dart';
 import 'api.dart';
 import 'exceptions.dart';
+import 'server_access_riverpod.dart';
 
 part 'api_riverpod.g.dart';
 
 typedef HttpMethod = Future<http.Response> Function(Uri, {Map<String, String>? headers});
+
+/// What reports to [serverAccessProvider] how the server took the token of a request about to be sent. Only the
+/// requests the list polls report it: their answer decides whether the polling goes on (#211). Taken before the
+/// request: a provider nobody listens to, refreshed for one answer, may be disposed by the time it comes.
+void Function(int statusCode) serverAccess(Ref ref) {
+  final token = ref.read(settingsProvider).requireValue.token;
+  final access = ref.read(serverAccessProvider.notifier);
+  return (statusCode) => access.answered(token, statusCode);
+}
 
 Map<String, String> getAuthHeader(Ref ref) {
   return <String, String>{"Authorization": ref.watch(settingsProvider.select((value) => value.requireValue.token))};
@@ -93,7 +103,10 @@ Future<List<RecordingInfo>> listRecordings(Ref ref, int offset, int limit, {Stri
   const path = '/api/recordings';
 
   try {
-    final res = await http.get(Uri.parse("$serverURL$path?offset=$offset&limit=$limit&sort_by=$sortBy"), headers: getAuthHeader(ref)).timeout(requestTimeout);
+    final headers = getAuthHeader(ref);
+    final access = serverAccess(ref);
+    final res = await http.get(Uri.parse("$serverURL$path?offset=$offset&limit=$limit&sort_by=$sortBy"), headers: headers).timeout(requestTimeout);
+    access(res.statusCode);
 
     AppLoggers.api.i('List recordings response: statusCode=${res.statusCode}');
 
@@ -267,7 +280,10 @@ Future<Tenant> getTenant(Ref ref) async {
   final serverURL = ref.watch(settingsProvider.select((value) => value.requireValue.serverUrl));
   const path = '/api/tenant';
 
-  final res = await http.get(Uri.parse("$serverURL$path"), headers: getAuthHeader(ref)).timeout(requestTimeout);
+  final headers = getAuthHeader(ref);
+  final access = serverAccess(ref);
+  final res = await http.get(Uri.parse("$serverURL$path"), headers: headers).timeout(requestTimeout);
+  access(res.statusCode);
 
   if (res.statusCode >= 400) {
     throw HttpStatusError.by("Unable to get tenant info", res);
