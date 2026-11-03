@@ -8,18 +8,21 @@ part of 'server_access_riverpod.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Whether the server accepts the token of the settings, as the requests that poll it have found (#211). A new token
-/// starts afresh, not rejected: the user has changed it to be tried.
+/// Whether the server of the settings accepts their token, as the requests that poll it have found (#211). A new token
+/// or server URL starts afresh, not rejected: the user has changed it to be tried, and what another server answered
+/// says nothing about this one.
 
 @ProviderFor(ServerAccessNotifier)
 final serverAccessProvider = ServerAccessNotifierProvider._();
 
-/// Whether the server accepts the token of the settings, as the requests that poll it have found (#211). A new token
-/// starts afresh, not rejected: the user has changed it to be tried.
+/// Whether the server of the settings accepts their token, as the requests that poll it have found (#211). A new token
+/// or server URL starts afresh, not rejected: the user has changed it to be tried, and what another server answered
+/// says nothing about this one.
 final class ServerAccessNotifierProvider
     extends $NotifierProvider<ServerAccessNotifier, ServerAccess> {
-  /// Whether the server accepts the token of the settings, as the requests that poll it have found (#211). A new token
-  /// starts afresh, not rejected: the user has changed it to be tried.
+  /// Whether the server of the settings accepts their token, as the requests that poll it have found (#211). A new token
+  /// or server URL starts afresh, not rejected: the user has changed it to be tried, and what another server answered
+  /// says nothing about this one.
   ServerAccessNotifierProvider._()
     : super(
         from: null,
@@ -48,10 +51,11 @@ final class ServerAccessNotifierProvider
 }
 
 String _$serverAccessNotifierHash() =>
-    r'cb4e6614a6f610a914a92f262371ce2eb15fd503';
+    r'120d7511bd191736432b72e3a1df3086230009b5';
 
-/// Whether the server accepts the token of the settings, as the requests that poll it have found (#211). A new token
-/// starts afresh, not rejected: the user has changed it to be tried.
+/// Whether the server of the settings accepts their token, as the requests that poll it have found (#211). A new token
+/// or server URL starts afresh, not rejected: the user has changed it to be tried, and what another server answered
+/// says nothing about this one.
 
 abstract class _$ServerAccessNotifier extends $Notifier<ServerAccess> {
   ServerAccess build();

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -17,6 +18,9 @@ import 'package:ilovlya/src/utils/provider_retry.dart';
 /// The token the server accepts; any other is answered 401.
 const _good = 'good';
 
+/// The server URL of the settings unless a test sets another.
+const _server = 'https://server.test';
+
 const _unauthorized = 'Unauthorized: please check and specify token and server URL in settings';
 
 class _LocalDT extends LocalDTNotifier {
@@ -25,24 +29,38 @@ class _LocalDT extends LocalDTNotifier {
 }
 
 class _Settings extends SettingsNotifier {
-  _Settings(this.token);
-  final String token;
+  _Settings(this.token, this.serverUrl);
+  String token;
+  String serverUrl;
 
   @override
-  Future<Settings> build() async => Settings(token: token);
+  Future<Settings> build() async => Settings(token: token, serverUrl: serverUrl);
 
-  void setToken(String token) => state = AsyncData(Settings(token: token));
+  void setToken(String token) => state = AsyncData(Settings(token: this.token = token, serverUrl: serverUrl));
+
+  void setServerUrl(String serverUrl) => state = AsyncData(Settings(token: token, serverUrl: this.serverUrl = serverUrl));
 }
 
 /// The server the list polls: the requests it got, with the time since the list was shown, and what it answers.
 class _Server {
-  final requests = <(Duration, String)>[];
+  final requests = <(Duration, String, String)>[];
   Duration now = Duration.zero;
   String accepted = _good;
 
+  /// The host whose token is [accepted]; any other host answers 401 to every token. `null`: every host accepts it.
+  String? acceptingHost;
+
+  /// While set, the answers of [heldHost] wait for it.
+  Completer<void>? hold;
+  String? heldHost;
+
   late final client = MockClient((req) async {
-    requests.add((now, req.url.path));
-    if (req.headers['Authorization'] != accepted) return http.Response('{"message":"code=401, message=auth token is invalid"}', 401);
+    requests.add((now, req.url.host, req.url.path));
+    if (hold != null && req.url.host == heldHost) await hold!.future;
+    final host = acceptingHost;
+    if (req.headers['Authorization'] != accepted || (host != null && req.url.host != host)) {
+      return http.Response('{"message":"code=401, message=auth token is invalid"}', 401);
+    }
     return switch (req.url.path) {
       '/api/recordings' => http.Response('[]', 200),
       '/api/tenant' => http.Response('{"id":"t","telegram_id":1}', 200),
@@ -50,8 +68,9 @@ class _Server {
     };
   });
 
-  /// When [path] was asked for, in whole seconds since the list was shown.
-  List<int> of(String path) => [for (final (at, p) in requests) if (p == path) (at.inMilliseconds + 500) ~/ 1000];
+  /// When [path] was asked for, of [host] if given, in whole seconds since the list was shown.
+  List<int> of(String path, {String? host}) =>
+      [for (final (at, h, p) in requests) if (p == path && (host == null || h == host)) (at.inMilliseconds + 500) ~/ 1000];
 }
 
 void main() {
@@ -75,8 +94,8 @@ void main() {
   }
 
   /// Shows the list with [token], then lets [seconds] of fake time pass, all requests going to [server].
-  Future<void> show(WidgetTester tester, String token, int seconds) async {
-    settings = _Settings(token);
+  Future<void> show(WidgetTester tester, String token, int seconds, {String serverUrl = _server}) async {
+    settings = _Settings(token, serverUrl);
     await tester.pumpWidget(ProviderScope(
       retry: disableProviderRetry,
       overrides: [
@@ -146,6 +165,42 @@ void main() {
       final pulls = [for (var s = 0; s <= 150; s += 30) s];
       expect(server.of('/api/recordings'), pulls);
       expect(server.of('/api/tenant'), pulls);
+    });
+  });
+
+  testWidgets('after a 401 a new server URL with the same token is tried at once, and polled', (tester) async {
+    await run(tester, () async {
+      server.acceptingHost = 'right.test';
+      await show(tester, _good, 60, serverUrl: 'https://wrong.test');
+      expect(server.of('/api/recordings', host: 'wrong.test'), [0], reason: 'refused: no more polling of the wrong server');
+      expect(find.text(_unauthorized), findsOneWidget);
+
+      final changed = server.now;
+      settings.setServerUrl('https://right.test');
+      await pass(tester, 65);
+      final right = server.of('/api/recordings', host: 'right.test');
+      expect(right.first - changed.inSeconds, lessThanOrEqualTo(1), reason: 'the new server is tried at once');
+      expect(right, hasLength(greaterThanOrEqualTo(3)), reason: 'and polled: at once, then every 30 s');
+      expect(server.of('/api/recordings', host: 'wrong.test'), [0]);
+      expect(find.text(_unauthorized), findsNothing);
+    });
+  });
+
+  testWidgets('a 401 to a request sent to the former server URL says nothing about the new one', (tester) async {
+    await run(tester, () async {
+      server
+        ..acceptingHost = 'right.test'
+        ..hold = Completer<void>()
+        ..heldHost = 'wrong.test';
+      await show(tester, _good, 1, serverUrl: 'https://wrong.test');
+      expect(server.of('/api/recordings', host: 'wrong.test'), [0], reason: 'sent, its answer held');
+
+      settings.setServerUrl('https://right.test');
+      await pass(tester, 1);
+      server.hold!.complete(); // the former server refuses the token now, after the change
+      await pass(tester, 65);
+      expect(server.of('/api/recordings', host: 'right.test'), hasLength(greaterThanOrEqualTo(3)), reason: 'polling goes on');
+      expect(find.text(_unauthorized), findsNothing);
     });
   });
 }

@@ -114,11 +114,11 @@ class _MediaListViewRiverpodState extends ConsumerState<MediaListViewRiverpod> {
   void initState() {
     super.initState();
 
-    // The server is polled only with a token it has not refused (#211). Once polling may start — the settings have
-    // loaded with a token, or the token has changed after a 401 — the list is pulled at once; the tenant follows, the
-    // build watching it only then.
-    ref.listenManual(serverAccessProvider.select((a) => a.canPoll), (previous, canPoll) {
-      if (canPoll && previous != true) _refreshList();
+    // The server is polled only with a token it has not refused (#211). Whenever there is a server and a token to poll
+    // that were not polled just before — the settings have loaded, the server URL or the token has changed, a refusal
+    // has been lifted — the list is pulled at once; the tenant follows, the build watching it only while it may poll.
+    ref.listenManual(serverAccessProvider.select((a) => a.canPoll ? (a.serverUrl, a.token) : null), (previous, polled) {
+      if (polled != null && polled != previous) _refreshList();
     }, fireImmediately: true);
 
     _updatePullSubs = Stream.periodic(_updatePullPeriod).listen((event) {
