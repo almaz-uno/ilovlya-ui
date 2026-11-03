@@ -558,18 +558,26 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 300));
     await endpoint.suspend();
     expect(endpoint.isListening, isFalse);
-    final cut = await open;
-    expect(cut.error ?? (cut.body.length < src.length ? 'short' : null), isNotNull, reason: 'the open response is reset');
+    // The open response is reset: in its body, or before its header when the endpoint had not answered yet, as on a
+    // loaded machine 300 ms may not be enough for (#201).
+    Uint8List kept;
+    try {
+      final cut = await open;
+      expect(cut.error ?? (cut.body.length < src.length ? 'short' : null), isNotNull, reason: 'the open response is reset');
+      kept = cut.body;
+    } on HttpException {
+      kept = Uint8List(0);
+    }
     await expectLater(fetch(player, url, range: 'bytes=0-'), throwsA(isA<SocketException>()));
 
     up.rate = null;
     await endpoint.resume();
     expect(endpoint.isListening, isTrue);
     expect(endpoint.port, port);
-    final back = await fetch(player, url, range: 'bytes=${cut.body.length}-');
+    final back = await fetch(player, url, range: 'bytes=${kept.length}-');
     expect(back.error, isNull);
     expect(back.status, 206);
-    expect(back.body, Uint8List.sublistView(src, cut.body.length));
+    expect(back.body, Uint8List.sublistView(src, kept.length));
     expect((await fetch(player, url.replace(pathSegments: ['wrong', ...url.pathSegments.skip(1)]))).status, 404, reason: 'the token is kept, and still required');
   });
 
