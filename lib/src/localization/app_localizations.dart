@@ -902,10 +902,10 @@ abstract class AppLocalizations {
   /// **'Playback was interrupted. Press play to continue from {position}.'**
   String playbackInterrupted(String position);
 
-  /// Appended to the player's progress line while a playback download waits to retry a server that does not answer, instead of the speed and the time remaining
+  /// On the figures line of a playback download waiting to retry a server that does not answer, instead of the speed and the time remaining
   ///
   /// In en, this message translates to:
-  /// **'— no answer from the server for {duration}'**
+  /// **'no answer from the server for {duration}'**
   String playbackDownloadNoAnswer(String duration);
 
   /// Token input field label
@@ -1334,11 +1334,23 @@ abstract class AppLocalizations {
   /// **'Updated at: {date} ({timeAgo})'**
   String updatedAtWithDate(String date, String timeAgo);
 
-  /// Local downloading status with details
+  /// The first line of a local download in progress: its status
   ///
   /// In en, this message translates to:
-  /// **'Local downloading {status}: {filename} {estimate}'**
-  String localDownloadingStatus(String status, String filename, String estimate);
+  /// **'Local download {status}:'**
+  String localDownloadHeader(String status);
+
+  /// The speed of a local download, in MB/s, on its figures line
+  ///
+  /// In en, this message translates to:
+  /// **'≈ {speed} MB/s'**
+  String localDownloadSpeed(String speed);
+
+  /// The time a local download has left, on its figures line
+  ///
+  /// In en, this message translates to:
+  /// **'ETA {eta}'**
+  String localDownloadEta(String eta);
 
   /// Recordings cleaned message
   ///

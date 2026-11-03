@@ -28,8 +28,8 @@ import '../../playback_download/playback_downloads.dart';
 import '../../settings/settings_provider.dart';
 import '../../theme/media_player_theme.dart';
 import '../../utils/logger_provider.dart';
-import '../../utils/task_status_localization.dart';
 import '../format.dart';
+import '../local_download_progress.dart';
 import '../intents.dart';
 import '../../keyboard_shortcuts.dart';
 import '../media_details.dart';
@@ -750,45 +750,11 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
 
                           // Show progress only if task exists, is not complete, and has progress
                           if (task != null && task.status != null) {
-                            final l10n = AppLocalizations.of(context)!;
-
-                            // Localize status
-                            final localizedStatus = TaskStatusLocalization.getLocalizedStatusWithFallback(task.status!, l10n);
-
-                            // Format estimate (speed and ETA); a playback download waiting to retry tells how long its server has not answered
-                            final eta = task.timeRemaining == null ? "" : formatDuration(task.timeRemaining!);
+                            // A playback download waiting to retry tells how long its server has not answered
                             final failing = widget.source != null && task.status == TaskStatus.waitingToRetry ? ref.read(playbackDownloadsProvider.notifier).notAnsweringFor(widget.download.id) : null;
-                            final est = failing != null
-                                ? " ${l10n.playbackDownloadNoAnswer(formatDuration(failing))}"
-                                : task.networkSpeed == null || task.networkSpeed! < 0
-                                    ? ""
-                                    : " ≈ ${task.networkSpeed!.toStringAsFixed(2)} MB/s${eta.isEmpty ? '' : ', ETA: $eta'}";
-
                             return Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          l10n.localDownloadingStatus(localizedStatus, task.filename, est),
-                                          style: Theme.of(context).textTheme.bodySmall,
-                                        ),
-                                      ),
-                                      if (task.progress != null)
-                                        Text(
-                                          '${(task.progress! * 100).round()}%',
-                                          style: Theme.of(context).textTheme.bodySmall,
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  LinearProgressIndicator(value: task.progress, minHeight: 2),
-                                ],
-                              ),
+                              child: LocalDownloadProgress(task: task, notAnsweringFor: failing),
                             );
                           }
                           return const SizedBox.shrink();
