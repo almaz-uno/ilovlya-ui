@@ -512,6 +512,9 @@ void main() {
 
     up.silent = false;
     up.silentNextAfter = 1 << 20;
+    // The read at 3 MiB moves the transfer at once; that request, and any after it, must fall silent too, or the rest
+    // of the file arrives within the wait on a fast machine.
+    up.silentEveryAfter = 0;
     final (reading, again) = serve(id: 'd2', silence: const Duration(seconds: 30));
     unawaited(fetch(HttpClient(), again, range: 'bytes=${3 << 20}-').then((_) {}, onError: (_) {}));
     await Future<void>.delayed(const Duration(seconds: 2));
