@@ -9,6 +9,12 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
+.Added
+- With "Update thumbnail according to video viewing progress" on, the thumbnail is also taken a second after a pause or after a seek while paused, and every 30 s while playing, so a session that ends in a crash or a killed app still leaves a recent one; leaving the player takes one as before (#224)
+
+.Changed
+- A thumbnail taken from the player is a JPEG 640 px wide, about 25 KB, instead of a full-size PNG of 0.5 to 6 MB; taking it holds the player for tens of milliseconds instead of 0.3 to 3 s, so a seek issued meanwhile no longer waits for it (#224)
+
 == [3.13.0] - 2026-11-03
 
 .Added
