@@ -34,6 +34,8 @@ import '../intents.dart';
 import '../../keyboard_shortcuts.dart';
 import '../media_details.dart';
 import '../media_list.dart';
+import '../thumbnail_capture.dart';
+import '../thumbnail_refresher.dart';
 import 'audio_handler.dart';
 
 String _formatDuration(Duration duration) {
@@ -88,6 +90,8 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
   StreamSubscription? _positionSendSubs;
   StreamSubscription? _uiUpdateSubs;
   StreamSubscription? _playingSubs;
+  ThumbnailRefresher? _thumbnails;
+  final _thumbnailSubs = <StreamSubscription>[];
   Duration _rewinding = Duration.zero;
   Timer? _rewindTimer;
   bool _hasAttemptedSwitch = false; // Flag to prevent multiple switch attempts
@@ -157,6 +161,21 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
       if (!mounted) return;
       setState(() {});
     });
+
+    if (!UniversalPlatform.isWeb && mounted) {
+      // `ref` is gone once the player is closed, and the last capture comes after that.
+      final container = ProviderScope.containerOf(context, listen: false);
+      final thumbnailUrl = widget.recording.thumbnailUrl;
+      final thumbnails = ThumbnailRefresher(
+        canCapture: () => _loaded && (container.read(settingsProvider).value?.updateThumbnails ?? false),
+        capture: () => _captureThumbnail(container, thumbnailUrl),
+      );
+      _thumbnails = thumbnails;
+      _thumbnailSubs.addAll([
+        _player.stream.playing.listen(thumbnails.onPlaying),
+        _player.stream.position.listen(thumbnails.onPosition),
+      ]);
+    }
 
     // While it plays from a playback download, the local endpoint keeps listening with the application in the background.
     if (widget.source != null) {
@@ -461,9 +480,27 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     );
   }
 
+  /// Takes the thumbnail from the frame shown and stores it in place of the recording's.
+  static Future<bool> _captureThumbnail(ProviderContainer container, String thumbnailUrl) async {
+    try {
+      final thumbnail = await captureThumbnail(MKPlayerHandler.player);
+      if (thumbnail == null) return false;
+      await container.read(thumbnailDataProvider(thumbnailUrl).notifier).updateThumbnailImg(thumbnail);
+      return true;
+    } catch (e) {
+      AppLoggers.player.w('Capturing the thumbnail failed: $e');
+      return false;
+    }
+  }
+
   @override
   void deactivate() {
     // Stop UI-updating streams immediately.
+    for (final subs in _thumbnailSubs) {
+      subs.cancel();
+    }
+    _thumbnailSubs.clear();
+    _thumbnails?.stop();
     _positionSendSubs?.cancel();
     _uiUpdateSubs?.cancel();
     _playingSubs?.cancel();
@@ -576,22 +613,18 @@ class _RecordingViewMediaKitHandlerState extends ConsumerState<RecordingViewMedi
     final techInfoStyle = GoogleFonts.ptMono();
     return PopScope(
       onPopInvokedWithResult: (bool didPop, Object? result) {
-        final updateThumbnails = ref.read(settingsProvider.select((value) => value.requireValue.updateThumbnails));
+        // No more captures while playing or paused; the last one follows the pop.
+        final thumbnails = _thumbnails?..stop();
         // Capture the container now: `ref` becomes invalid once this widget is
         // disposed by the pop, but the container outlives it.
         final container = ProviderScope.containerOf(context, listen: false);
         final recId = widget.recording.id;
-        final thumbUrl = widget.recording.thumbnailUrl;
         // Defer the teardown (thumbnail screenshot + provider invalidations)
         // past the pop transition. Run synchronously here it rebuilds/refetches
         // the details and the whole media list underneath, blocking the button's
         // programmatic pop animation (a swipe hides it — it is finger-driven).
         Future.delayed(const Duration(milliseconds: 350), () {
-          if (!UniversalPlatform.isWeb && updateThumbnails) {
-            MKPlayerHandler.player.screenshot(format: "image/png").then((imgData) {
-              container.read(thumbnailDataProvider(thumbUrl).notifier).updateThumbnailImg(imgData);
-            });
-          }
+          if (thumbnails != null) unawaited(thumbnails.captureLast());
           container.invalidate(recordingProvider(recId));
           container.invalidate(mediaListProvider);
         });
