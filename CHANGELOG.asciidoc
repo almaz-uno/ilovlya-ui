@@ -9,6 +9,8 @@ The format is based on https://keepachangelog.com/[Keep a Changelog], and this p
 
 == [Unreleased]
 
+== [3.14.0] - 2026-11-11
+
 .Added
 - With "Update thumbnail according to video viewing progress" on, the thumbnail is also taken a second after a pause or after a seek while paused, and every 30 s while playing, so a session that ends in a crash or a killed app still leaves a recent one; leaving the player takes one as before (#224)
 
