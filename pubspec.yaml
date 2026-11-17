@@ -19,13 +19,13 @@ dependencies:
   async: ^2.13.1
   audio_service: ^0.18.19
   audio_video_progress_bar: ^2.0.2
-  background_downloader: ^9.5.6
+  background_downloader: ^9.6.6
   device_info_plus: ^13.2.0
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  flutter_riverpod: ^3.4.3
+  flutter_riverpod: ^3.5.0
   fuzzywuzzy: ^1.1.6
   google_fonts: ^9.0.0
   http: ^1.6.0
@@ -36,12 +36,12 @@ dependencies:
   media_kit: ^1.2.6
   media_kit_libs_video: ^1.0.7
   media_kit_video: ^2.0.1
-  mobile_scanner: ^7.4.2
+  mobile_scanner: ^7.5.0
   open_filex: ^5.0.0
   package_info_plus: ^10.2.1
   path: ^1.8.3
   path_provider: ^2.1.6
-  riverpod_annotation: ^4.0.7
+  riverpod_annotation: ^4.0.8
   share_plus: ^13.2.1
   shared_preferences: ^2.5.6
   timeago: ^3.7.0
@@ -55,10 +55,10 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^6.0.0
-  build_runner: ^2.16.2
+  build_runner: ^2.17.1
   json_serializable: ^6.11.2
-  riverpod_generator: 4.0.9
-  riverpod_lint: 3.1.9
+  riverpod_generator: 4.0.10
+  riverpod_lint: 3.2.0
 
 # media_kit_video 2.0.1 renders video in software on Linux with Flutter 3.38 and later, X11 and XWayland included:
 # no EGL context is current on the platform thread (media-kit/media-kit#1404). media-kit/media-kit#1466 fixes it.
